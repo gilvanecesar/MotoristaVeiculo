@@ -220,9 +220,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // API routes for clients
-  app.get("/api/clients", async (req: Request, res: Response) => {
+  app.get("/api/clients", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const search = req.query.search as string;
+      
+      // Se não for admin, só retorna o cliente do próprio usuário
+      if (req.user?.profileType !== "admin") {
+        // Verificar se o usuário tem um cliente associado
+        if (!req.user?.clientId) {
+          return res.json([]);
+        }
+        
+        // Retornar apenas o cliente do usuário
+        const client = await storage.getClient(req.user.clientId);
+        return res.json(client ? [client] : []);
+      }
+      
+      // Administradores podem pesquisar e ver todos os clientes
       if (search) {
         const clients = await storage.searchClients(search);
         return res.json(clients);
@@ -236,7 +250,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/clients/:id", async (req: Request, res: Response) => {
+  app.get("/api/clients/:id", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -246,6 +260,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const client = await storage.getClient(id);
       if (!client) {
         return res.status(404).json({ message: "Client not found" });
+      }
+
+      // Se não for admin, verifica se é o próprio cliente do usuário
+      if (req.user?.profileType !== "admin" && req.user?.clientId !== id) {
+        return res.status(403).json({ message: "Acesso não autorizado a este cliente" });
       }
 
       res.json(client);
@@ -317,9 +336,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // API routes for freights
-  app.get("/api/freights", async (req: Request, res: Response) => {
+  app.get("/api/freights", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const search = req.query.search as string;
+
+      // Se não for admin, retorna apenas os fretes do cliente do usuário
+      if (req.user?.profileType !== "admin") {
+        // Verificar se o usuário tem um cliente associado
+        if (!req.user?.clientId) {
+          return res.json([]);
+        }
+
+        // Obter todos os fretes
+        let freights;
+        if (search) {
+          freights = await storage.searchFreights(search);
+        } else {
+          freights = await storage.getFreights();
+        }
+
+        // Filtrar apenas os fretes do cliente do usuário
+        const filteredFreights = freights.filter(freight => freight.clientId === req.user?.clientId);
+        return res.json(filteredFreights);
+      }
+
+      // Administradores podem ver todos os fretes
       if (search) {
         const freights = await storage.searchFreights(search);
         return res.json(freights);
@@ -333,7 +374,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/freights/:id", async (req: Request, res: Response) => {
+  app.get("/api/freights/:id", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -343,6 +384,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const freight = await storage.getFreight(id);
       if (!freight) {
         return res.status(404).json({ message: "Freight not found" });
+      }
+
+      // Se não for admin, verifica se o frete pertence ao cliente do usuário
+      if (req.user?.profileType !== "admin" && freight.clientId !== req.user?.clientId) {
+        return res.status(403).json({ message: "Acesso não autorizado a este frete" });
       }
 
       res.json(freight);
@@ -414,12 +460,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // API routes for freight destinations
-  app.get("/api/freight-destinations", async (req: Request, res: Response) => {
+  app.get("/api/freight-destinations", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const freightId = req.query.freightId ? parseInt(req.query.freightId as string) : undefined;
       
       if (!freightId) {
         return res.status(400).json({ message: "Freight ID is required" });
+      }
+      
+      // Verificar se o usuário tem acesso ao frete
+      if (req.user?.profileType !== "admin") {
+        const freight = await storage.getFreight(freightId);
+        if (!freight) {
+          return res.status(404).json({ message: "Freight not found" });
+        }
+        
+        // Verificar se o frete pertence ao cliente do usuário
+        if (freight.clientId !== req.user?.clientId) {
+          return res.status(403).json({ message: "Acesso não autorizado a este destino de frete" });
+        }
       }
       
       const destinations = await storage.getFreightDestinations(freightId);
@@ -430,9 +489,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/freight-destinations", async (req: Request, res: Response) => {
+  app.post("/api/freight-destinations", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const destinationData = freightDestinationValidator.parse(req.body);
+      
+      // Verificar se o usuário tem acesso ao frete associado ao destino
+      if (req.user?.profileType !== "admin") {
+        const freight = await storage.getFreight(destinationData.freightId);
+        if (!freight) {
+          return res.status(404).json({ message: "Freight not found" });
+        }
+        
+        // Verificar se o frete pertence ao cliente do usuário
+        if (freight.clientId !== req.user?.clientId) {
+          return res.status(403).json({ message: "Acesso não autorizado para adicionar destinos a este frete" });
+        }
+      }
+      
       const destination = await storage.createFreightDestination(destinationData);
       res.status(201).json(destination);
     } catch (error) {
@@ -446,11 +519,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/freight-destinations/:id", async (req: Request, res: Response) => {
+  app.delete("/api/freight-destinations/:id", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid ID format" });
+      }
+
+      // Buscar o destino do frete para verificar a permissão
+      const destinations = await storage.getFreightDestinations(-1); // Obter todos os destinos
+      const destination = destinations.find(d => d.id === id);
+      
+      if (!destination) {
+        return res.status(404).json({ message: "Freight destination not found" });
+      }
+      
+      // Verificar se o usuário tem acesso ao frete associado ao destino
+      if (req.user?.profileType !== "admin") {
+        const freight = await storage.getFreight(destination.freightId);
+        if (!freight) {
+          return res.status(404).json({ message: "Freight not found" });
+        }
+        
+        // Verificar se o frete pertence ao cliente do usuário
+        if (freight.clientId !== req.user?.clientId) {
+          return res.status(403).json({ message: "Acesso não autorizado para excluir este destino de frete" });
+        }
       }
 
       const success = await storage.deleteFreightDestination(id);
