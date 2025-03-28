@@ -336,31 +336,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // API routes for freights
-  app.get("/api/freights", isAuthenticated, async (req: Request, res: Response) => {
+  app.get("/api/freights", async (req: Request, res: Response) => {
     try {
       const search = req.query.search as string;
-
-      // Se não for admin, retorna apenas os fretes do cliente do usuário
-      if (req.user?.profileType !== "admin") {
-        // Verificar se o usuário tem um cliente associado
-        if (!req.user?.clientId) {
-          return res.json([]);
-        }
-
-        // Obter todos os fretes
-        let freights;
-        if (search) {
-          freights = await storage.searchFreights(search);
-        } else {
-          freights = await storage.getFreights();
-        }
-
-        // Filtrar apenas os fretes do cliente do usuário
-        const filteredFreights = freights.filter(freight => freight.clientId === req.user?.clientId);
-        return res.json(filteredFreights);
-      }
-
-      // Administradores podem ver todos os fretes
+      
       if (search) {
         const freights = await storage.searchFreights(search);
         return res.json(freights);
@@ -420,9 +399,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid ID format" });
       }
-
+      
+      // Obter o frete existente para preservar o clientId
+      const existingFreight = await storage.getFreight(id);
+      if (!existingFreight) {
+        return res.status(404).json({ message: "Freight not found" });
+      }
+      
+      // Validar os dados do frete
       const freightData = freightValidator.parse(req.body);
-      const freight = await storage.updateFreight(id, freightData);
+      
+      // Preservar o clientId original, garantindo que o dono do frete não mude
+      const updatedFreightData = {
+        ...freightData,
+        clientId: existingFreight.clientId
+      };
+      
+      // Atualizar o frete mantendo o clientId original
+      const freight = await storage.updateFreight(id, updatedFreightData);
       
       if (!freight) {
         return res.status(404).json({ message: "Freight not found" });
