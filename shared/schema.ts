@@ -341,7 +341,10 @@ export const users = pgTable("users", {
   avatarUrl: text("avatar_url"),
   isVerified: boolean("is_verified").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-  lastLogin: timestamp("last_login")
+  lastLogin: timestamp("last_login"),
+  // Referências opcionais para ligar o usuário aos perfis específicos
+  driverId: integer("driver_id").references(() => drivers.id),
+  clientId: integer("client_id").references(() => clients.id)
 });
 
 // Insert and validation schemas

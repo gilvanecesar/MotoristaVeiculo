@@ -5,16 +5,29 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { User as UserType } from "@shared/schema";
-import createMemoryStore from "memorystore";
+import { User } from "@shared/schema";
 
 declare global {
   namespace Express {
-    interface User extends UserType {}
+    // Use the User type from schema as the User in Express
+    interface User {
+      id: number;
+      email: string;
+      password: string | null;
+      name: string;
+      profileType: string;
+      authProvider: string;
+      providerId: string | null;
+      avatarUrl: string | null;
+      isVerified: boolean;
+      createdAt: Date;
+      lastLogin: Date | null;
+      driverId?: number | null;
+      clientId?: number | null;
+    }
   }
 }
 
-const MemoryStore = createMemoryStore(session);
 const scryptAsync = promisify(scrypt);
 
 async function hashPassword(password: string) {
@@ -35,11 +48,9 @@ export function setupAuth(app: Express) {
     secret: process.env.SESSION_SECRET || "querofretes-secret-key",
     resave: false,
     saveUninitialized: false,
-    store: new MemoryStore({
-      checkPeriod: 86400000 // prune expired entries every 24h
-    }),
+    store: storage.sessionStore,
     cookie: {
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 dias
     }
   };
 
@@ -49,89 +60,86 @@ export function setupAuth(app: Express) {
   app.use(passport.session());
 
   passport.use(
-    new LocalStrategy(async (username, password, done) => {
-      const user = await storage.getUserByEmail(username);
-      if (!user || !user.password) {
-        return done(null, false, { message: "Nome de usuário ou senha incorretos" });
+    new LocalStrategy({
+      usernameField: 'email',
+      passwordField: 'password'
+    },
+    async (email, password, done) => {
+      try {
+        const user = await storage.getUserByEmail(email);
+        if (!user || !user.password || !(await comparePasswords(password, user.password))) {
+          return done(null, false, { message: "Credenciais inválidas" });
+        }
+        // Atualiza último login
+        await storage.updateLastLogin(user.id);
+        return done(null, user);
+      } catch (error) {
+        return done(error);
       }
-      
-      const isPasswordValid = await comparePasswords(password, user.password);
-      if (!isPasswordValid) {
-        return done(null, false, { message: "Nome de usuário ou senha incorretos" });
-      }
-      
-      // Atualizar último login
-      await storage.updateLastLogin(user.id);
-      return done(null, user);
-    }),
+    })
   );
 
-  passport.serializeUser((user: Express.User, done) => done(null, user.id));
+  passport.serializeUser((user: Express.User, done) => {
+    done(null, user.id);
+  });
+  
   passport.deserializeUser(async (id: number, done) => {
-    const user = await storage.getUserById(id);
-    done(null, user);
+    try {
+      const user = await storage.getUserById(id);
+      done(null, user);
+    } catch (error) {
+      done(error, null);
+    }
   });
 
   app.post("/api/register", async (req, res, next) => {
     try {
       const { email, password, name, profileType } = req.body;
       
-      // Verificar se o usuário já existe
+      // Verifica se o usuário já existe
       const existingUser = await storage.getUserByEmail(email);
       if (existingUser) {
-        return res.status(400).json({ message: "Este e-mail já está em uso" });
+        return res.status(400).json({ message: "E-mail já cadastrado" });
       }
-      
-      // Criar usuário com senha hash
+
+      // Cria novo usuário
       const hashedPassword = await hashPassword(password);
-      const user = await storage.createUser({
+      const newUser = await storage.createUser({
         email,
         name,
         password: hashedPassword,
         profileType,
-        authProvider: "local"
+        authProvider: "local",
+        isVerified: false,
+        avatarUrl: null,
+        providerId: null
       });
-      
-      // Remover a senha do objeto retornado
-      const userResponse = { ...user } as any;
-      if (userResponse.password) {
-        delete userResponse.password;
-      }
-      
-      // Realizar login
-      req.login(user, (err) => {
+
+      // Efetua login automaticamente
+      req.login(newUser, (err: any) => {
         if (err) return next(err);
-        res.status(201).json(userResponse);
+        res.status(201).json(newUser);
       });
     } catch (error) {
-      console.error("Erro no registro:", error);
-      res.status(500).json({ message: "Erro ao registrar usuário" });
+      next(error);
     }
   });
 
   app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err: any, user: Express.User | false, info: { message?: string } | undefined) => {
+    passport.authenticate("local", (err: any, user: Express.User | false, info: { message: string }) => {
       if (err) return next(err);
       if (!user) {
         return res.status(401).json({ message: info?.message || "Credenciais inválidas" });
       }
-      
-      req.login(user, (loginErr) => {
-        if (loginErr) return next(loginErr);
-        
-        // Remover a senha do objeto retornado
-        const userResponse = { ...user } as any;
-        if (userResponse.password) {
-          delete userResponse.password;
-        }
-        
-        return res.status(200).json(userResponse);
+      req.login(user, (err: any) => {
+        if (err) return next(err);
+        res.status(200).json(user);
       });
     })(req, res, next);
   });
 
   app.post("/api/logout", (req, res, next) => {
-    req.logout((err) => {
+    req.logout((err: any) => {
       if (err) return next(err);
       res.sendStatus(200);
     });
@@ -141,13 +149,6 @@ export function setupAuth(app: Express) {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ message: "Não autenticado" });
     }
-    
-    // Remover a senha do objeto retornado
-    const userResponse = { ...req.user } as any;
-    if (userResponse && userResponse.password) {
-      delete userResponse.password;
-    }
-    
-    res.json(userResponse);
+    res.json(req.user);
   });
 }

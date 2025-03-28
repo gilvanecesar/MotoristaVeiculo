@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { LogIn, LogOut, User, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/hooks/use-auth";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,55 +29,33 @@ import {
 } from "@/components/ui/select";
 
 export function ClientSelector() {
-  const { currentClient, login, logout, isLoading } = useAuth();
+  const { user, loginMutation, logoutMutation, isLoading } = useAuth();
   const [loginDialogOpen, setLoginDialogOpen] = useState(false);
-  const [selectedClientId, setSelectedClientId] = useState<string>("");
   const { toast } = useToast();
 
-  // Buscar lista de clientes
-  const { data: clients = [] } = useQuery({
-    queryKey: ['/api/clients'],
-    enabled: true,
-  });
-
-  // Reset do cliente selecionado quando o diálogo é aberto
-  useEffect(() => {
-    if (loginDialogOpen) {
-      setSelectedClientId("");
-    }
-  }, [loginDialogOpen]);
-
   const handleLogin = async () => {
-    if (!selectedClientId) {
-      toast({
-        title: "Selecione um cliente",
-        description: "Por favor, selecione um cliente para continuar.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const success = await login(parseInt(selectedClientId));
-    if (success) {
-      toast({
-        title: "Login realizado",
-        description: "Você está logado como cliente.",
-      });
-      setLoginDialogOpen(false);
-    } else {
-      toast({
-        title: "Falha no login",
-        description: "Não foi possível fazer login como este cliente.",
-        variant: "destructive",
-      });
-    }
+    loginMutation.mutate({ 
+      email: "usuario@exemplo.com", 
+      password: "senha123"
+    }, {
+      onSuccess: () => {
+        toast({
+          title: "Login realizado",
+          description: "Você está logado no sistema.",
+        });
+        setLoginDialogOpen(false);
+      }
+    });
   };
 
   const handleLogout = () => {
-    logout();
-    toast({
-      title: "Logout realizado",
-      description: "Você desconectou da sua conta de cliente.",
+    logoutMutation.mutate(undefined, {
+      onSuccess: () => {
+        toast({
+          title: "Logout realizado",
+          description: "Você desconectou da sua conta de cliente.",
+        });
+      }
     });
   };
 
@@ -92,17 +70,17 @@ export function ClientSelector() {
 
   return (
     <>
-      {currentClient ? (
+      {user ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="flex items-center justify-center gap-2">
               <User className="h-4 w-4" />
-              <span className="max-w-[120px] truncate">{currentClient.name}</span>
+              <span className="max-w-[120px] truncate">{user.name}</span>
               <ChevronDown className="h-3 w-3 opacity-50" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Cliente logado</DropdownMenuLabel>
+            <DropdownMenuLabel>Usuário: {user.profileType}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="text-red-500 focus:text-red-500">
               <LogOut className="h-4 w-4 mr-2" />
@@ -126,34 +104,51 @@ export function ClientSelector() {
       <Dialog open={loginDialogOpen} onOpenChange={setLoginDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Login como Cliente</DialogTitle>
+            <DialogTitle>Login de Usuário</DialogTitle>
             <DialogDescription>
-              Selecione o cliente que você deseja representar.
+              Entre com seu email e senha para acessar o sistema.
             </DialogDescription>
           </DialogHeader>
           
-          <div className="py-4">
-            <Select value={selectedClientId} onValueChange={setSelectedClientId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione um cliente" />
-              </SelectTrigger>
-              <SelectContent>
-                {clients.map((client: any) => (
-                  <SelectItem key={client.id} value={client.id.toString()}>
-                    {client.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="py-4 space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Email</label>
+              <input 
+                type="email" 
+                className="w-full px-3 py-2 border rounded-md" 
+                placeholder="seu@email.com"
+                value="usuario@exemplo.com"
+                readOnly
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Senha</label>
+              <input 
+                type="password" 
+                className="w-full px-3 py-2 border rounded-md" 
+                placeholder="********"
+                value="senha123"
+                readOnly
+              />
+            </div>
           </div>
           
           <DialogFooter>
             <Button variant="outline" onClick={() => setLoginDialogOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleLogin}>
-              <LogIn className="h-4 w-4 mr-2" />
-              Login
+            <Button onClick={handleLogin} disabled={loginMutation.isPending}>
+              {loginMutation.isPending ? (
+                <span className="flex items-center">
+                  <span className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-t-transparent"></span>
+                  Carregando...
+                </span>
+              ) : (
+                <span className="flex items-center">
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Login
+                </span>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

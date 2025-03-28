@@ -10,7 +10,7 @@ import Navigation from "@/components/layout/navigation";
 import Footer from "@/components/layout/footer";
 import Home from "@/pages/home";
 import Dashboard from "@/pages/dashboard";
-import AuthPage from "@/pages/auth-page";
+import AuthPage from "@/pages/auth-page-fixed";
 import DriversPage from "@/pages/drivers/index";
 import DriverForm from "@/pages/drivers/driver-form";
 import VehiclesPage from "@/pages/vehicles/index";
@@ -19,6 +19,7 @@ import FreightsPage from "@/pages/freights/index";
 import FreightForm from "@/pages/freights/freight-form";
 import ClientsPage from "@/pages/clients/index";
 import ClientForm from "@/pages/clients/client-form";
+import AdminPage from "@/pages/admin/index";
 
 function Router() {
   return (
@@ -36,6 +37,7 @@ function Router() {
       <ProtectedRoute path="/clients/new" component={ClientForm} />
       <ProtectedRoute path="/clients/:id" component={ClientForm} />
       <ProtectedRoute path="/reports" component={ReportsPage} />
+      <ProtectedRoute path="/admin" component={AdminPage} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>
@@ -58,6 +60,7 @@ function App() {
               <Footer />
             </div>
           </div>
+          <Toaster />
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>

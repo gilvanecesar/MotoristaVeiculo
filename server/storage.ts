@@ -9,8 +9,14 @@ import {
   type DriverWithVehicles,
   type FreightWithDestinations
 } from "@shared/schema";
+import session from "express-session";
+import createMemoryStore from "memorystore";
+import { Store as SessionStore } from "express-session";
 
 export interface IStorage {
+  // Session store
+  sessionStore: SessionStore;
+  
   // User operations
   getUsers(): Promise<User[]>;
   getUserById(id: number): Promise<User | undefined>;
@@ -73,8 +79,14 @@ export class MemStorage implements IStorage {
   private freightCurrentId: number;
   private freightDestinationCurrentId: number;
   private userCurrentId: number;
+  sessionStore: SessionStore;
 
   constructor() {
+    const MemoryStore = createMemoryStore(session);
+    this.sessionStore = new MemoryStore({
+      checkPeriod: 86400000, // Prune expired entries every 24h
+    });
+    
     this.driversData = new Map();
     this.vehiclesData = new Map();
     this.clientsData = new Map();
