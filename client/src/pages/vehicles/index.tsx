@@ -39,9 +39,9 @@ export default function VehiclesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [vehicleToDelete, setVehicleToDelete] = useState<Vehicle | null>(null);
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
-  const [categoryFilter, setCategoryFilter] = useState<string>("");
-  const [typeFilter, setTypeFilter] = useState<string>("");
-  const [bodyTypeFilter, setBodyTypeFilter] = useState<string>("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [bodyTypeFilter, setBodyTypeFilter] = useState<string>("all");
   const { toast } = useToast();
   const itemsPerPage = 10;
 
@@ -143,12 +143,12 @@ export default function VehiclesPage() {
   const filteredVehicles = useMemo(() => {
     return vehicles.filter(vehicle => {
       // Filtrar por categoria
-      if (categoryFilter && !vehicle.vehicleType.startsWith(categoryFilter.toLowerCase() + "_")) {
+      if (categoryFilter && categoryFilter !== "all" && !vehicle.vehicleType.startsWith(categoryFilter.toLowerCase() + "_")) {
         return false;
       }
       
       // Filtrar por tipo específico
-      if (typeFilter) {
+      if (typeFilter && typeFilter !== "all") {
         const specificType = getSpecificVehicleType(vehicle).toLowerCase();
         if (specificType !== "todos" && specificType !== typeFilter.toLowerCase()) {
           return false;
@@ -156,7 +156,7 @@ export default function VehiclesPage() {
       }
       
       // Filtrar por tipo de carroceria
-      if (bodyTypeFilter && vehicle.bodyType !== bodyTypeFilter) {
+      if (bodyTypeFilter && bodyTypeFilter !== "all" && vehicle.bodyType !== bodyTypeFilter) {
         return false;
       }
       
@@ -252,7 +252,7 @@ export default function VehiclesPage() {
                 <SelectValue placeholder="Todas categorias" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas categorias</SelectItem>
+                <SelectItem value="all">Todas categorias</SelectItem>
                 <SelectItem value="leve">Leve</SelectItem>
                 <SelectItem value="medio">Médio</SelectItem>
                 <SelectItem value="pesado">Pesado</SelectItem>
@@ -269,7 +269,7 @@ export default function VehiclesPage() {
                 <SelectValue placeholder="Todos tipos" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos tipos</SelectItem>
+                <SelectItem value="all">Todos tipos</SelectItem>
                 <SelectItem value="fiorino">Fiorino</SelectItem>
                 <SelectItem value="toco">Toco</SelectItem>
                 <SelectItem value="vlc">VLC</SelectItem>
@@ -293,7 +293,7 @@ export default function VehiclesPage() {
                 <SelectValue placeholder="Todas carrocerias" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas carrocerias</SelectItem>
+                <SelectItem value="all">Todas carrocerias</SelectItem>
                 <SelectItem value={BODY_TYPES.BAU}>Baú</SelectItem>
                 <SelectItem value={BODY_TYPES.GRANELEIRA}>Graneleira</SelectItem>
                 <SelectItem value={BODY_TYPES.BASCULANTE}>Basculante</SelectItem>
@@ -310,15 +310,15 @@ export default function VehiclesPage() {
           </div>
         </div>
         
-        {(categoryFilter || typeFilter || bodyTypeFilter) && (
+        {(categoryFilter && categoryFilter !== "all" || typeFilter && typeFilter !== "all" || bodyTypeFilter && bodyTypeFilter !== "all") && (
           <div className="mt-3 flex justify-end">
             <Button 
               variant="outline" 
               size="sm"
               onClick={() => {
-                setCategoryFilter("");
-                setTypeFilter("");
-                setBodyTypeFilter("");
+                setCategoryFilter("all");
+                setTypeFilter("all");
+                setBodyTypeFilter("all");
               }}
             >
               Limpar filtros
