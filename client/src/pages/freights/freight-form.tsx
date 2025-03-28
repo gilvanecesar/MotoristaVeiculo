@@ -198,6 +198,11 @@ export default function FreightForm() {
       // Add destinations to the form data if has multiple destinations
       const submitData = {
         ...data,
+        // Garantir que os campos numéricos sejam enviados como string
+        cargoWeight: String(data.cargoWeight),
+        freightValue: String(data.freightValue),
+        // Garantir que status seja enviado
+        status: data.status || "aberto"
       };
 
       // For create or update
@@ -237,7 +242,7 @@ export default function FreightForm() {
         );
 
         // Handle destinations separately for new freight
-        if (data.hasMultipleDestinations && response && response.id) {
+        if (data.hasMultipleDestinations && response) {
           for (const dest of destinations) {
             await apiRequest(
               `/api/freight-destinations`,
