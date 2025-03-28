@@ -1,10 +1,19 @@
-import type { Express, Request, Response } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { driverValidator, vehicleValidator, clientValidator, freightValidator, freightDestinationValidator } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { setupAuth } from "./auth";
+import { 
+  isAuthenticated, 
+  isAdmin, 
+  isAdminOrSelf,
+  hasClientAccess,
+  hasDriverAccess,
+  hasFreightAccess,
+  hasVehicleAccess
+} from "./middlewares";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configurar autenticação
@@ -61,7 +70,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/drivers/:id", async (req: Request, res: Response) => {
+  app.put("/api/drivers/:id", hasDriverAccess, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -87,7 +96,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/drivers/:id", async (req: Request, res: Response) => {
+  app.delete("/api/drivers/:id", hasDriverAccess, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -165,7 +174,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/vehicles/:id", async (req: Request, res: Response) => {
+  app.put("/api/vehicles/:id", hasVehicleAccess, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -191,7 +200,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/vehicles/:id", async (req: Request, res: Response) => {
+  app.delete("/api/vehicles/:id", hasVehicleAccess, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -262,7 +271,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/clients/:id", async (req: Request, res: Response) => {
+  app.put("/api/clients/:id", hasClientAccess, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -288,7 +297,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/clients/:id", async (req: Request, res: Response) => {
+  app.delete("/api/clients/:id", hasClientAccess, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -359,7 +368,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/freights/:id", async (req: Request, res: Response) => {
+  app.put("/api/freights/:id", hasFreightAccess, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -385,7 +394,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/freights/:id", async (req: Request, res: Response) => {
+  app.delete("/api/freights/:id", hasFreightAccess, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
