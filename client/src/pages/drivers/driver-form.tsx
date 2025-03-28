@@ -108,8 +108,23 @@ export default function DriverForm() {
     mutationFn: async (data: FormValues) => {
       const { vehicles, ...driverData } = data;
       
+      // Format dates properly for the API
+      const formattedData = {
+        ...driverData,
+        // Convert dates to ISO string format for API
+        birthdate: driverData.birthdate instanceof Date 
+          ? driverData.birthdate.toISOString() 
+          : new Date(driverData.birthdate).toISOString(),
+        cnhExpiration: driverData.cnhExpiration instanceof Date 
+          ? driverData.cnhExpiration.toISOString() 
+          : new Date(driverData.cnhExpiration).toISOString(),
+        cnhIssueDate: driverData.cnhIssueDate instanceof Date 
+          ? driverData.cnhIssueDate.toISOString() 
+          : new Date(driverData.cnhIssueDate).toISOString(),
+      };
+      
       // First create the driver
-      const driverRes = await apiRequest("POST", "/api/drivers", driverData);
+      const driverRes = await apiRequest("POST", "/api/drivers", formattedData);
       const newDriver = await driverRes.json();
       
       // Then create vehicles if any
@@ -148,8 +163,23 @@ export default function DriverForm() {
       
       const { vehicles, ...driverData } = data;
       
+      // Format dates properly for the API
+      const formattedData = {
+        ...driverData,
+        // Convert dates to ISO string format for API
+        birthdate: driverData.birthdate instanceof Date 
+          ? driverData.birthdate.toISOString() 
+          : new Date(driverData.birthdate).toISOString(),
+        cnhExpiration: driverData.cnhExpiration instanceof Date 
+          ? driverData.cnhExpiration.toISOString() 
+          : new Date(driverData.cnhExpiration).toISOString(),
+        cnhIssueDate: driverData.cnhIssueDate instanceof Date 
+          ? driverData.cnhIssueDate.toISOString() 
+          : new Date(driverData.cnhIssueDate).toISOString(),
+      };
+      
       // Update driver
-      const driverRes = await apiRequest("PUT", `/api/drivers/${driverId}`, driverData);
+      const driverRes = await apiRequest("PUT", `/api/drivers/${driverId}`, formattedData);
       const updatedDriver = await driverRes.json();
       
       // Handle vehicles - this is simplified, a real app might need more complex logic
