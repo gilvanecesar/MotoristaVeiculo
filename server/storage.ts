@@ -35,6 +35,188 @@ export class MemStorage implements IStorage {
     this.vehiclesData = new Map();
     this.driverCurrentId = 1;
     this.vehicleCurrentId = 1;
+    
+    // Criar uma população fictícia de motoristas e veículos
+    this.createDummyData();
+  }
+  
+  // Método para criar dados fictícios
+  private createDummyData() {
+    // Drivers
+    const drivers: InsertDriver[] = [
+      {
+        name: "João Silva",
+        email: "joao.silva@email.com",
+        cpf: "123.456.789-00",
+        phone: "(11) 98765-4321",
+        whatsapp: "11987654321",
+        birthdate: "1985-05-15",
+        cnh: "12345678901",
+        cnhCategory: "AB",
+        cnhExpiration: "2027-05-15",
+        cnhIssueDate: "2022-05-15",
+        street: "Av. Paulista",
+        number: "1000",
+        complement: "Apto 123",
+        neighborhood: "Bela Vista",
+        city: "São Paulo",
+        state: "SP",
+        zipcode: "01310-100"
+      },
+      {
+        name: "Maria Oliveira",
+        email: "maria.oliveira@email.com",
+        cpf: "987.654.321-00",
+        phone: "(11) 91234-5678",
+        whatsapp: "11912345678",
+        birthdate: "1990-10-20",
+        cnh: "98765432109",
+        cnhCategory: "B",
+        cnhExpiration: "2026-10-20",
+        cnhIssueDate: "2021-10-20",
+        street: "Rua Augusta",
+        number: "500",
+        complement: null,
+        neighborhood: "Consolação",
+        city: "São Paulo",
+        state: "SP",
+        zipcode: "01305-000"
+      },
+      {
+        name: "Pedro Santos",
+        email: "pedro.santos@email.com",
+        cpf: "456.789.123-00",
+        phone: "(11) 95555-9999",
+        whatsapp: "11955559999",
+        birthdate: "1982-03-08",
+        cnh: "45678912345",
+        cnhCategory: "D",
+        cnhExpiration: "2025-03-08",
+        cnhIssueDate: "2020-03-08",
+        street: "Rua Teodoro Sampaio",
+        number: "1500",
+        complement: "Bloco B, Apto 45",
+        neighborhood: "Pinheiros",
+        city: "São Paulo",
+        state: "SP",
+        zipcode: "05406-100"
+      },
+      {
+        name: "Ana Ferreira",
+        email: "ana.ferreira@email.com",
+        cpf: "111.222.333-44",
+        phone: "(11) 97777-8888",
+        whatsapp: "11977778888",
+        birthdate: "1995-12-25",
+        cnh: "11122233344",
+        cnhCategory: "B",
+        cnhExpiration: "2028-12-25",
+        cnhIssueDate: "2023-12-25",
+        street: "Avenida Rebouças",
+        number: "3000",
+        complement: null,
+        neighborhood: "Jardim Paulista",
+        city: "São Paulo",
+        state: "SP",
+        zipcode: "05402-600"
+      },
+      {
+        name: "Carlos Souza",
+        email: "carlos.souza@email.com",
+        cpf: "555.666.777-88",
+        phone: "(11) 96666-3333",
+        whatsapp: "11966663333",
+        birthdate: "1988-07-30",
+        cnh: "55566677788",
+        cnhCategory: "AE",
+        cnhExpiration: "2026-07-30",
+        cnhIssueDate: "2021-07-30",
+        street: "Rua Oscar Freire",
+        number: "1200",
+        complement: "Casa 2",
+        neighborhood: "Jardins",
+        city: "São Paulo",
+        state: "SP",
+        zipcode: "01426-001"
+      }
+    ];
+    
+    // Adicionar os motoristas
+    drivers.forEach(driver => {
+      this.createDriver(driver);
+    });
+    
+    // Vehicles para os drivers criados
+    const vehicles: InsertVehicle[] = [
+      {
+        driverId: 1,
+        plate: "ABC1234",
+        brand: "Volkswagen",
+        model: "Gol",
+        year: 2020,
+        color: "Branco",
+        renavam: "12345678901"
+      },
+      {
+        driverId: 1,
+        plate: "DEF5678",
+        brand: "Honda",
+        model: "Fit",
+        year: 2022,
+        color: "Preto",
+        renavam: "23456789012"
+      },
+      {
+        driverId: 2,
+        plate: "GHI9012",
+        brand: "Toyota",
+        model: "Corolla",
+        year: 2023,
+        color: "Prata",
+        renavam: "34567890123"
+      },
+      {
+        driverId: 3,
+        plate: "JKL3456",
+        brand: "Mercedes-Benz",
+        model: "Sprinter",
+        year: 2021,
+        color: "Branco",
+        renavam: "45678901234"
+      },
+      {
+        driverId: 3,
+        plate: "MNO7890",
+        brand: "Volvo",
+        model: "FH 540",
+        year: 2022,
+        color: "Vermelho",
+        renavam: "56789012345"
+      },
+      {
+        driverId: 4,
+        plate: "PQR1357",
+        brand: "Fiat",
+        model: "Uno",
+        year: 2019,
+        color: "Azul",
+        renavam: "67890123456"
+      },
+      {
+        driverId: 5,
+        plate: "STU2468",
+        brand: "Scania",
+        model: "R 450",
+        year: 2020,
+        color: "Verde",
+        renavam: "78901234567"
+      }
+    ];
+    
+    // Adicionar os veículos
+    vehicles.forEach(vehicle => {
+      this.createVehicle(vehicle);
+    });
   }
 
   // Helper methods
