@@ -9,7 +9,7 @@ export default function Home() {
       <div className="text-center max-w-3xl mx-auto py-6">
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-3">
           <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600 dark:from-primary dark:to-blue-400">
-            Sistema de Gestão de Frotas
+            Sistema de Gestão de Fretes
           </span>
         </h1>
         <p className="text-slate-600 dark:text-slate-400">
@@ -50,7 +50,7 @@ export default function Home() {
           </CardHeader>
           <CardContent className="pt-4">
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-              Cadastre e gerencie os veículos da sua frota.
+              Cadastre e gerencie os veículos para fretes.
             </p>
             <Link href="/vehicles">
               <Button className="w-full">Acessar</Button>

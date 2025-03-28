@@ -31,7 +31,7 @@ export default function Header() {
         } else if (location.startsWith("/drivers/")) {
           return "Detalhes do Motorista";
         }
-        return "Sistema de Gestão de Frotas";
+        return "Sistema de Gestão de Fretes";
     }
   };
 
@@ -40,7 +40,7 @@ export default function Header() {
       <div className={`${isMobile ? 'container mx-auto' : ''} px-6 py-4 flex justify-between items-center`}>
         <div>
           <h1 className="text-xl font-semibold text-slate-800">{getPageTitle()}</h1>
-          <p className="text-sm text-slate-500">Sistema de Gestão de Frotas</p>
+          <p className="text-sm text-slate-500">Sistema de Gestão de Fretes</p>
         </div>
         <div>
           <DropdownMenu>
