@@ -32,7 +32,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { clientValidator } from "@shared/schema";
+import { clientValidator, CLIENT_TYPES } from "@shared/schema";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -83,8 +83,6 @@ export default function ClientForm() {
     defaultValues: {
       name: "",
       email: "",
-      documentType: "CNPJ",
-      document: "",
       phone: "",
       whatsapp: "",
       street: "",
@@ -98,6 +96,8 @@ export default function ClientForm() {
       contactPhone: "",
       notes: "",
       logoUrl: "",
+      cnpj: "",
+      clientType: CLIENT_TYPES.SHIPPER,
     },
   });
 
@@ -223,6 +223,36 @@ export default function ClientForm() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <h3 className="text-lg font-medium">Dados Básicos</h3>
               <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
+                {/* Client Type */}
+                <FormField
+                  control={form.control}
+                  name="clientType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tipo de Cliente</FormLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o tipo de cliente" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value={CLIENT_TYPES.SHIPPER}>Embarcador</SelectItem>
+                          <SelectItem value={CLIENT_TYPES.CARRIER}>Transportador</SelectItem>
+                          <SelectItem value={CLIENT_TYPES.AGENT}>Agente</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Tipo de operação do cliente no sistema.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
                 {/* Name */}
                 <FormField
                   control={form.control}
@@ -253,47 +283,22 @@ export default function ClientForm() {
                   )}
                 />
 
-                {/* Document Type */}
+                {/* CNPJ */}
                 <FormField
                   control={form.control}
-                  name="documentType"
+                  name="cnpj"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Tipo de Documento</FormLabel>
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o tipo" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="CPF">CPF</SelectItem>
-                          <SelectItem value="CNPJ">CNPJ</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Document */}
-                <FormField
-                  control={form.control}
-                  name="document"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        {form.watch("documentType") === "CPF" ? "CPF" : "CNPJ"}
-                      </FormLabel>
+                      <FormLabel>CNPJ</FormLabel>
                       <FormControl>
                         <Input 
-                          placeholder={form.watch("documentType") === "CPF" ? "123.456.789-00" : "00.123.456/0001-00"} 
+                          placeholder="00.123.456/0001-00" 
                           {...field} 
                         />
                       </FormControl>
+                      <FormDescription>
+                        Formato: XX.XXX.XXX/XXXX-XX ou XXXXXXXXXXXXXX
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

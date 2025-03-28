@@ -1,5 +1,6 @@
 import { 
   drivers, vehicles, clients, freights, freightDestinations, users,
+  CLIENT_TYPES, USER_TYPES, AUTH_PROVIDERS,
   type Driver, type InsertDriver,
   type Vehicle, type InsertVehicle, 
   type Client, type InsertClient,

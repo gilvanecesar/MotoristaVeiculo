@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider as UserAuthProvider } from "@/hooks/use-auth";
 import { AuthProvider as ClientAuthProvider } from "@/lib/auth-context";
 import { ProtectedRoute } from "@/lib/protected-route";
+import { ClientRegistrationCheck } from "@/components/client-registration-check";
 import NotFound from "@/pages/not-found";
 import Navigation from "@/components/layout/navigation";
 import Footer from "@/components/layout/footer";
@@ -51,6 +52,7 @@ function App() {
       <ThemeProvider>
         <UserAuthProvider>
           <ClientAuthProvider>
+            <ClientRegistrationCheck />
             <div className="flex flex-col min-h-screen bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-200">
               <Navigation />
               <div className="flex flex-col flex-grow">
