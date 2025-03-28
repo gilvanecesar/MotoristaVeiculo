@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useAuth } from "@/lib/auth-context";
+import { useAuth as useUserAuth } from "@/hooks/use-auth";
 import { 
   Plus, 
   Search, 
@@ -80,6 +81,7 @@ export default function FreightsPage() {
   const [expandedFreight, setExpandedFreight] = useState<number | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const { currentClient, isClientAuthorized } = useAuth();
+  const { user } = useUserAuth();
   const [filters, setFilters] = useState({
     origin: "",
     destination: "",
@@ -549,7 +551,7 @@ export default function FreightsPage() {
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          {isClientAuthorized(freight.clientId) && (
+                          {(user?.profileType === "admin" || user?.clientId === freight.clientId) && (
                             <Button
                               variant="ghost"
                               size="icon"
@@ -562,7 +564,7 @@ export default function FreightsPage() {
                               <Edit className="h-4 w-4" />
                             </Button>
                           )}
-                          {isClientAuthorized(freight.clientId) && (
+                          {(user?.profileType === "admin" || user?.clientId === freight.clientId) && (
                             <Button
                               variant="ghost"
                               size="icon"
