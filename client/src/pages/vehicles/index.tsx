@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Link, useLocation } from "wouter";
 import { 
   Search, Plus, Edit, Eye, Trash, CarFront, ChevronDown, ChevronRight, 
-  User, Phone, Mail, MapPin, CreditCard, Calendar
+  User, Phone, Mail, MapPin, CreditCard, Calendar, Filter
 } from "lucide-react";
 import { format } from "date-fns";
 import { Vehicle, VEHICLE_TYPES, BODY_TYPES } from "@shared/schema";
@@ -25,6 +25,13 @@ import { Badge } from "@/components/ui/badge";
 import { Pagination } from "@/components/ui/pagination";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function VehiclesPage() {
   const [, navigate] = useLocation();
@@ -32,6 +39,9 @@ export default function VehiclesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [vehicleToDelete, setVehicleToDelete] = useState<Vehicle | null>(null);
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
+  const [categoryFilter, setCategoryFilter] = useState<string>("");
+  const [typeFilter, setTypeFilter] = useState<string>("");
+  const [bodyTypeFilter, setBodyTypeFilter] = useState<string>("");
   const { toast } = useToast();
   const itemsPerPage = 10;
 
@@ -51,30 +61,52 @@ export default function VehiclesPage() {
     queryKey: ["/api/drivers"],
   });
 
-  // Formatar o tipo de veículo para exibição
-  const getVehicleTypeDisplay = (vehicle: Vehicle) => {
+  // Obter categoria do veículo (leve, médio, pesado)
+  const getVehicleCategory = (vehicle: Vehicle): string => {
+    if (!vehicle) return "Desconhecido";
+    
+    // Leves
+    if (vehicle.vehicleType.startsWith("leve_")) return "Leve";
+    
+    // Médios
+    if (vehicle.vehicleType.startsWith("medio_")) return "Médio";
+    
+    // Pesados
+    if (vehicle.vehicleType.startsWith("pesado_")) return "Pesado";
+    
+    return "Desconhecido";
+  };
+
+  // Obter o tipo específico do veículo
+  const getSpecificVehicleType = (vehicle: Vehicle): string => {
     if (!vehicle) return "Não definido";
     
     // Leves
-    if (vehicle.vehicleType === VEHICLE_TYPES.LEVE_TODOS) return "Leve (Todos)";
-    if (vehicle.vehicleType === VEHICLE_TYPES.LEVE_FIORINO) return "Leve (Fiorino)";
-    if (vehicle.vehicleType === VEHICLE_TYPES.LEVE_TOCO) return "Leve (Toco)";
-    if (vehicle.vehicleType === VEHICLE_TYPES.LEVE_VLC) return "Leve (VLC)";
+    if (vehicle.vehicleType === VEHICLE_TYPES.LEVE_TODOS) return "Todos";
+    if (vehicle.vehicleType === VEHICLE_TYPES.LEVE_FIORINO) return "Fiorino";
+    if (vehicle.vehicleType === VEHICLE_TYPES.LEVE_TOCO) return "Toco";
+    if (vehicle.vehicleType === VEHICLE_TYPES.LEVE_VLC) return "VLC";
     
     // Médios
-    if (vehicle.vehicleType === VEHICLE_TYPES.MEDIO_TODOS) return "Médio (Todos)";
-    if (vehicle.vehicleType === VEHICLE_TYPES.MEDIO_BITRUCK) return "Médio (Bitruck)";
-    if (vehicle.vehicleType === VEHICLE_TYPES.MEDIO_TRUCK) return "Médio (Truck)";
+    if (vehicle.vehicleType === VEHICLE_TYPES.MEDIO_TODOS) return "Todos";
+    if (vehicle.vehicleType === VEHICLE_TYPES.MEDIO_BITRUCK) return "Bitruck";
+    if (vehicle.vehicleType === VEHICLE_TYPES.MEDIO_TRUCK) return "Truck";
     
     // Pesados
-    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_TODOS) return "Pesado (Todos)";
-    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_BITREM) return "Pesado (Bitrem)";
-    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_CARRETA) return "Pesado (Carreta)";
-    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_CARRETA_LS) return "Pesado (Carreta LS)";
-    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_RODOTREM) return "Pesado (Rodotrem)";
-    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_VANDERLEIA) return "Pesado (Vanderléia)";
+    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_TODOS) return "Todos";
+    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_BITREM) return "Bitrem";
+    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_CARRETA) return "Carreta";
+    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_CARRETA_LS) return "Carreta LS";
+    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_RODOTREM) return "Rodotrem";
+    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_VANDERLEIA) return "Vanderléia";
     
     return "Desconhecido";
+  };
+  
+  // Formatar o tipo de veículo para exibição (mantido para compatibilidade)
+  const getVehicleTypeDisplay = (vehicle: Vehicle) => {
+    if (!vehicle) return "Não definido";
+    return `${getVehicleCategory(vehicle)} (${getSpecificVehicleType(vehicle)})`;
   };
   
   // Formatar o tipo de carroceria para exibição
@@ -107,9 +139,34 @@ export default function VehiclesPage() {
     });
   };
   
+  // Filtrar veículos
+  const filteredVehicles = useMemo(() => {
+    return vehicles.filter(vehicle => {
+      // Filtrar por categoria
+      if (categoryFilter && !vehicle.vehicleType.startsWith(categoryFilter.toLowerCase() + "_")) {
+        return false;
+      }
+      
+      // Filtrar por tipo específico
+      if (typeFilter) {
+        const specificType = getSpecificVehicleType(vehicle).toLowerCase();
+        if (specificType !== "todos" && specificType !== typeFilter.toLowerCase()) {
+          return false;
+        }
+      }
+      
+      // Filtrar por tipo de carroceria
+      if (bodyTypeFilter && vehicle.bodyType !== bodyTypeFilter) {
+        return false;
+      }
+      
+      return true;
+    });
+  }, [vehicles, categoryFilter, typeFilter, bodyTypeFilter]);
+  
   // Pagination
-  const totalPages = Math.ceil(vehicles.length / itemsPerPage);
-  const paginatedVehicles = vehicles.slice(
+  const totalPages = Math.ceil(filteredVehicles.length / itemsPerPage);
+  const paginatedVehicles = filteredVehicles.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -179,6 +236,97 @@ export default function VehiclesPage() {
         </div>
       </div>
 
+      {/* Filtros */}
+      <div className="mb-4 bg-slate-50 border border-slate-200 rounded-md p-3">
+        <div className="flex items-center gap-2 mb-2">
+          <Filter className="h-4 w-4 text-slate-500" />
+          <h3 className="text-sm font-medium">Filtros</h3>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label htmlFor="categoryFilter" className="text-xs text-slate-500 mb-1 block">
+              Categoria
+            </label>
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger id="categoryFilter" className="h-9">
+                <SelectValue placeholder="Todas categorias" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todas categorias</SelectItem>
+                <SelectItem value="leve">Leve</SelectItem>
+                <SelectItem value="medio">Médio</SelectItem>
+                <SelectItem value="pesado">Pesado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div>
+            <label htmlFor="typeFilter" className="text-xs text-slate-500 mb-1 block">
+              Tipo específico
+            </label>
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger id="typeFilter" className="h-9">
+                <SelectValue placeholder="Todos tipos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todos tipos</SelectItem>
+                <SelectItem value="fiorino">Fiorino</SelectItem>
+                <SelectItem value="toco">Toco</SelectItem>
+                <SelectItem value="vlc">VLC</SelectItem>
+                <SelectItem value="truck">Truck</SelectItem>
+                <SelectItem value="bitruck">Bitruck</SelectItem>
+                <SelectItem value="carreta">Carreta</SelectItem>
+                <SelectItem value="carreta ls">Carreta LS</SelectItem>
+                <SelectItem value="bitrem">Bitrem</SelectItem>
+                <SelectItem value="rodotrem">Rodotrem</SelectItem>
+                <SelectItem value="vanderléia">Vanderléia</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div>
+            <label htmlFor="bodyTypeFilter" className="text-xs text-slate-500 mb-1 block">
+              Carroceria
+            </label>
+            <Select value={bodyTypeFilter} onValueChange={setBodyTypeFilter}>
+              <SelectTrigger id="bodyTypeFilter" className="h-9">
+                <SelectValue placeholder="Todas carrocerias" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todas carrocerias</SelectItem>
+                <SelectItem value={BODY_TYPES.BAU}>Baú</SelectItem>
+                <SelectItem value={BODY_TYPES.GRANELEIRA}>Graneleira</SelectItem>
+                <SelectItem value={BODY_TYPES.BASCULANTE}>Basculante</SelectItem>
+                <SelectItem value={BODY_TYPES.PLATAFORMA}>Plataforma</SelectItem>
+                <SelectItem value={BODY_TYPES.TANQUE}>Tanque</SelectItem>
+                <SelectItem value={BODY_TYPES.FRIGORIFICA}>Frigorífica</SelectItem>
+                <SelectItem value={BODY_TYPES.PORTA_CONTEINER}>Porta Contêiner</SelectItem>
+                <SelectItem value={BODY_TYPES.SIDER}>Sider</SelectItem>
+                <SelectItem value={BODY_TYPES.CACAMBA}>Caçamba</SelectItem>
+                <SelectItem value={BODY_TYPES.ABERTA}>Aberta</SelectItem>
+                <SelectItem value={BODY_TYPES.FECHADA}>Fechada</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        
+        {(categoryFilter || typeFilter || bodyTypeFilter) && (
+          <div className="mt-3 flex justify-end">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                setCategoryFilter("");
+                setTypeFilter("");
+                setBodyTypeFilter("");
+              }}
+            >
+              Limpar filtros
+            </Button>
+          </div>
+        )}
+      </div>
+
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
@@ -191,6 +339,7 @@ export default function VehiclesPage() {
                   <TableHead>Ano</TableHead>
                   <TableHead>Cor</TableHead>
                   <TableHead>Motorista</TableHead>
+                  <TableHead>Categoria</TableHead>
                   <TableHead>Tipo</TableHead>
                   <TableHead>Carroceria</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
@@ -264,8 +413,16 @@ export default function VehiclesPage() {
                           </TableCell>
                           <TableCell>{getDriverName(vehicle.driverId)}</TableCell>
                           <TableCell>
+                            <Badge 
+                              variant="secondary" 
+                              className="font-medium text-xs"
+                            >
+                              {getVehicleCategory(vehicle)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
                             <div className="text-sm text-slate-900">
-                              {getVehicleTypeDisplay(vehicle)}
+                              {getSpecificVehicleType(vehicle)}
                             </div>
                           </TableCell>
                           <TableCell>
@@ -341,8 +498,16 @@ export default function VehiclesPage() {
                                         <p className="text-sm">{format(createdDate, 'dd/MM/yyyy')}</p>
                                       </div>
                                       <div>
-                                        <p className="text-xs text-slate-500 dark:text-slate-400">Tipo de Veículo</p>
-                                        <p className="text-sm">{getVehicleTypeDisplay(vehicle)}</p>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400">Categoria</p>
+                                        <p className="text-sm">
+                                          <Badge variant="secondary" className="font-medium text-xs">
+                                            {getVehicleCategory(vehicle)}
+                                          </Badge>
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400">Tipo Específico</p>
+                                        <p className="text-sm">{getSpecificVehicleType(vehicle)}</p>
                                       </div>
                                       <div>
                                         <p className="text-xs text-slate-500 dark:text-slate-400">Tipo de Carroceria</p>
