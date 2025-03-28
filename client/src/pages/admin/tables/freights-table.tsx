@@ -119,8 +119,16 @@ export default function FreightsTable() {
 
   // Encontrar o nome do cliente com base no ID
   const getClientName = (clientId: number) => {
+    if (!clients || !Array.isArray(clients)) {
+      return 'Carregando clientes...';
+    }
+    
     const client = clients.find((c: any) => c.id === clientId);
-    return client ? client.name : 'Cliente não encontrado';
+    if (!client) {
+      console.log(`Cliente com ID ${clientId} não encontrado`);
+      return `Cliente ID ${clientId}`;
+    }
+    return client.name;
   };
 
   if (isLoadingFreights || isLoadingClients) {

@@ -292,15 +292,16 @@ export default function FreightsPage() {
   
   // Função para obter informações do cliente
   const getClientInfo = (clientId: number) => {
-    if (!clients) return null;
+    if (!clients) return { name: "Carregando clientes..." };
     if (!Array.isArray(clients)) {
       console.log("Erro: 'clients' não é um array:", clients);
-      return null;
+      return { name: "Erro ao carregar clientes" };
     }
     
     const clientFound = clients.find((client: Client) => client.id === clientId);
     if (!clientFound) {
       console.log(`Cliente com ID ${clientId} não encontrado`);
+      return { name: `Cliente ID ${clientId}` };
     }
     return clientFound;
   };
