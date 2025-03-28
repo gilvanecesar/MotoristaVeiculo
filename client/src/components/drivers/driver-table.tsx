@@ -292,10 +292,24 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
                                           <div>
                                             <p className="text-slate-500 dark:text-slate-400">Tipo</p>
                                             <p className="font-medium">
-                                              {vehicle.vehicleType === VEHICLE_TYPES.LEVE && "Leve"}
-                                              {vehicle.vehicleType === VEHICLE_TYPES.MEDIO && "Médio"}
-                                              {vehicle.vehicleType === VEHICLE_TYPES.PESADO && "Pesado"}
-                                              {vehicle.vehicleType === VEHICLE_TYPES.EXTRA_PESADO && "Extra Pesado"}
+                                              {/* Leves */}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.LEVE_TODOS && "Leve (Todos)"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.LEVE_FIORINO && "Leve (Fiorino)"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.LEVE_TOCO && "Leve (Toco)"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.LEVE_VLC && "Leve (VLC)"}
+                                              
+                                              {/* Médios */}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.MEDIO_TODOS && "Médio (Todos)"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.MEDIO_BITRUCK && "Médio (Bitruck)"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.MEDIO_TRUCK && "Médio (Truck)"}
+                                              
+                                              {/* Pesados */}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.PESADO_TODOS && "Pesado (Todos)"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.PESADO_BITREM && "Pesado (Bitrem)"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.PESADO_CARRETA && "Pesado (Carreta)"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.PESADO_CARRETA_LS && "Pesado (Carreta LS)"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.PESADO_RODOTREM && "Pesado (Rodotrem)"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.PESADO_VANDERLEIA && "Pesado (Vanderléia)"}
                                             </p>
                                           </div>
                                           <div>

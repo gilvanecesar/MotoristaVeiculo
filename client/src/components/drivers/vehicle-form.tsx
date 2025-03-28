@@ -156,7 +156,7 @@ export function VehicleForm({ index, control, onRemove }: VehicleFormProps) {
               </FormLabel>
               <Select 
                 onValueChange={field.onChange} 
-                defaultValue={field.value || VEHICLE_TYPES.LEVE}
+                defaultValue={field.value || VEHICLE_TYPES.LEVE_TODOS}
               >
                 <FormControl>
                   <SelectTrigger>
@@ -164,10 +164,33 @@ export function VehicleForm({ index, control, onRemove }: VehicleFormProps) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value={VEHICLE_TYPES.LEVE}>Leve</SelectItem>
-                  <SelectItem value={VEHICLE_TYPES.MEDIO}>Médio</SelectItem>
-                  <SelectItem value={VEHICLE_TYPES.PESADO}>Pesado</SelectItem>
-                  <SelectItem value={VEHICLE_TYPES.EXTRA_PESADO}>Extra Pesado</SelectItem>
+                  {/* Veículos Leves */}
+                  <SelectItem value="" disabled className="font-semibold text-primary">
+                    -- Veículos Leves --
+                  </SelectItem>
+                  <SelectItem value={VEHICLE_TYPES.LEVE_TODOS}>Todos os leves</SelectItem>
+                  <SelectItem value={VEHICLE_TYPES.LEVE_FIORINO}>Fiorino</SelectItem>
+                  <SelectItem value={VEHICLE_TYPES.LEVE_TOCO}>Toco</SelectItem>
+                  <SelectItem value={VEHICLE_TYPES.LEVE_VLC}>VLC</SelectItem>
+                  
+                  {/* Veículos Médios */}
+                  <SelectItem value="" disabled className="font-semibold text-primary mt-2">
+                    -- Veículos Médios --
+                  </SelectItem>
+                  <SelectItem value={VEHICLE_TYPES.MEDIO_TODOS}>Todos os médios</SelectItem>
+                  <SelectItem value={VEHICLE_TYPES.MEDIO_BITRUCK}>Bitruck</SelectItem>
+                  <SelectItem value={VEHICLE_TYPES.MEDIO_TRUCK}>Truck</SelectItem>
+                  
+                  {/* Veículos Pesados */}
+                  <SelectItem value="" disabled className="font-semibold text-primary mt-2">
+                    -- Veículos Pesados --
+                  </SelectItem>
+                  <SelectItem value={VEHICLE_TYPES.PESADO_TODOS}>Todos os pesados</SelectItem>
+                  <SelectItem value={VEHICLE_TYPES.PESADO_BITREM}>Bitrem</SelectItem>
+                  <SelectItem value={VEHICLE_TYPES.PESADO_CARRETA}>Carreta</SelectItem>
+                  <SelectItem value={VEHICLE_TYPES.PESADO_CARRETA_LS}>Carreta LS</SelectItem>
+                  <SelectItem value={VEHICLE_TYPES.PESADO_RODOTREM}>Rodotrem</SelectItem>
+                  <SelectItem value={VEHICLE_TYPES.PESADO_VANDERLEIA}>Vanderléia</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />

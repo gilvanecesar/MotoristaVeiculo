@@ -247,7 +247,7 @@ export default function DriverForm() {
       year: new Date().getFullYear(),
       color: "",
       renavam: "",
-      vehicleType: VEHICLE_TYPES.LEVE,
+      vehicleType: VEHICLE_TYPES.LEVE_TODOS,
       bodyType: BODY_TYPES.FECHADA,
     });
   };

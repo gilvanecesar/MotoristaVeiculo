@@ -4,10 +4,24 @@ import { z } from "zod";
 
 // Enums para tipos de veículos e carrocerias
 export const VEHICLE_TYPES = {
-  LEVE: "leve",
-  MEDIO: "medio",
-  PESADO: "pesado",
-  EXTRA_PESADO: "extra_pesado"
+  // Leves
+  LEVE_TODOS: "leve_todos",
+  LEVE_FIORINO: "leve_fiorino",
+  LEVE_TOCO: "leve_toco",
+  LEVE_VLC: "leve_vlc",
+  
+  // Médios
+  MEDIO_TODOS: "medio_todos",
+  MEDIO_BITRUCK: "medio_bitruck",
+  MEDIO_TRUCK: "medio_truck",
+  
+  // Pesados
+  PESADO_TODOS: "pesado_todos",
+  PESADO_BITREM: "pesado_bitrem",
+  PESADO_CARRETA: "pesado_carreta",
+  PESADO_CARRETA_LS: "pesado_carreta_ls",
+  PESADO_RODOTREM: "pesado_rodotrem",
+  PESADO_VANDERLEIA: "pesado_vanderleia"
 } as const;
 
 export const BODY_TYPES = {
@@ -95,10 +109,24 @@ export const vehicleValidator = insertVehicleSchema.extend({
   plate: z.string().min(7).max(8),
   year: z.coerce.number().min(1900).max(new Date().getFullYear() + 1),
   vehicleType: z.enum([
-    VEHICLE_TYPES.LEVE,
-    VEHICLE_TYPES.MEDIO,
-    VEHICLE_TYPES.PESADO,
-    VEHICLE_TYPES.EXTRA_PESADO
+    // Leves
+    VEHICLE_TYPES.LEVE_TODOS,
+    VEHICLE_TYPES.LEVE_FIORINO,
+    VEHICLE_TYPES.LEVE_TOCO,
+    VEHICLE_TYPES.LEVE_VLC,
+    
+    // Médios
+    VEHICLE_TYPES.MEDIO_TODOS,
+    VEHICLE_TYPES.MEDIO_BITRUCK,
+    VEHICLE_TYPES.MEDIO_TRUCK,
+    
+    // Pesados
+    VEHICLE_TYPES.PESADO_TODOS,
+    VEHICLE_TYPES.PESADO_BITREM,
+    VEHICLE_TYPES.PESADO_CARRETA,
+    VEHICLE_TYPES.PESADO_CARRETA_LS,
+    VEHICLE_TYPES.PESADO_RODOTREM,
+    VEHICLE_TYPES.PESADO_VANDERLEIA
   ]),
   bodyType: z.enum([
     BODY_TYPES.BAU,

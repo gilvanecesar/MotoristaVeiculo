@@ -155,7 +155,9 @@ export class MemStorage implements IStorage {
         model: "Gol",
         year: 2020,
         color: "Branco",
-        renavam: "12345678901"
+        renavam: "12345678901",
+        vehicleType: "leve_fiorino",
+        bodyType: "fechada"
       },
       {
         driverId: 1,
@@ -164,7 +166,9 @@ export class MemStorage implements IStorage {
         model: "Fit",
         year: 2022,
         color: "Preto",
-        renavam: "23456789012"
+        renavam: "23456789012",
+        vehicleType: "leve_vlc",
+        bodyType: "fechada"
       },
       {
         driverId: 2,
@@ -173,7 +177,9 @@ export class MemStorage implements IStorage {
         model: "Corolla",
         year: 2023,
         color: "Prata",
-        renavam: "34567890123"
+        renavam: "34567890123",
+        vehicleType: "leve_toco",
+        bodyType: "aberta"
       },
       {
         driverId: 3,
@@ -182,7 +188,9 @@ export class MemStorage implements IStorage {
         model: "Sprinter",
         year: 2021,
         color: "Branco",
-        renavam: "45678901234"
+        renavam: "45678901234",
+        vehicleType: "medio_truck",
+        bodyType: "bau"
       },
       {
         driverId: 3,
@@ -191,7 +199,9 @@ export class MemStorage implements IStorage {
         model: "FH 540",
         year: 2022,
         color: "Vermelho",
-        renavam: "56789012345"
+        renavam: "56789012345",
+        vehicleType: "pesado_carreta",
+        bodyType: "graneleira"
       },
       {
         driverId: 4,
@@ -200,7 +210,9 @@ export class MemStorage implements IStorage {
         model: "Uno",
         year: 2019,
         color: "Azul",
-        renavam: "67890123456"
+        renavam: "67890123456",
+        vehicleType: "leve_todos",
+        bodyType: "fechada"
       },
       {
         driverId: 5,
@@ -209,7 +221,9 @@ export class MemStorage implements IStorage {
         model: "R 450",
         year: 2020,
         color: "Verde",
-        renavam: "78901234567"
+        renavam: "78901234567",
+        vehicleType: "pesado_vanderleia",
+        bodyType: "tanque"
       }
     ];
     
@@ -322,7 +336,7 @@ export class MemStorage implements IStorage {
     const newVehicle: Vehicle = {
       ...vehicle,
       id,
-      vehicleType: vehicle.vehicleType || "leve",
+      vehicleType: vehicle.vehicleType || "leve_todos",
       bodyType: vehicle.bodyType || "fechada",
       createdAt: now
     };
