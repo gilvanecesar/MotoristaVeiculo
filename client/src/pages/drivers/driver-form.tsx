@@ -39,7 +39,10 @@ export default function DriverForm() {
   const [match] = useRoute("/drivers/:id");
   const { toast } = useToast();
   const isEditing = !!match;
-  const driverId = params.id ? parseInt(params.id) : undefined;
+  // Adicionando log para depuração
+  console.log("Match:", match, "Params:", params);
+  const driverId = params?.id ? parseInt(params.id) : undefined;
+  console.log("Driver ID:", driverId);
 
   // Form with validation
   const form = useForm<FormValues>({
