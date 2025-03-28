@@ -32,6 +32,7 @@ export default function Dashboard() {
     // Adiciona estados de origem
     if (Array.isArray(freights)) {
       freights.forEach(freight => {
+        if (!freight.originState) return;
         const state = freight.originState;
         statesMap[state] = (statesMap[state] || 0) + 1;
       });
@@ -41,23 +42,28 @@ export default function Dashboard() {
         // Se tiver destinos múltiplos
         if (freight.hasMultipleDestinations && freight.destinations && freight.destinations.length > 0) {
           freight.destinations.forEach(dest => {
+            if (!dest || !dest.state) return;
             const state = dest.state;
             statesMap[state] = (statesMap[state] || 0) + 1;
           });
         } else {
           // Destino único
+          if (!freight.destinationState) return;
           const state = freight.destinationState;
           statesMap[state] = (statesMap[state] || 0) + 1;
         }
       });
     }
     
-    // Converte o objeto para um array para uso no Recharts
-    return Object.entries(statesMap).map(([state, count]) => ({ 
-      state, 
-      count,
-      fill: getRandomColor(state) // Cor baseada no estado
-    })).sort((a, b) => b.count - a.count); // Ordenamos por contagem decrescente
+    // Converte o objeto para um array para uso no Recharts, excluindo undefined e null
+    return Object.entries(statesMap)
+      .filter(([state]) => state && state !== "undefined" && state !== "null")
+      .map(([state, count]) => ({ 
+        state, 
+        count,
+        fill: getRandomColor(state) // Cor baseada no estado
+      }))
+      .sort((a, b) => b.count - a.count); // Ordenamos por contagem decrescente
   }, [freights, isLoadingFreights]);
   
   // Função para gerar cores consistentes para cada estado
@@ -97,6 +103,8 @@ export default function Dashboard() {
   
   // Para formatar o nome dos estados no tooltip
   const formatStateName = (state) => {
+    if (!state) return "Não definido";
+    
     const stateNames = {
       'SP': 'São Paulo',
       'RJ': 'Rio de Janeiro',
@@ -188,7 +196,7 @@ export default function Dashboard() {
               <div className="text-2xl font-bold">
                 {isLoadingDrivers || isLoadingVehicles
                   ? "..."
-                  : drivers?.length && vehicles?.length
+                  : Array.isArray(drivers) && Array.isArray(vehicles) && drivers.length > 0
                   ? (vehicles.length / drivers.length).toFixed(1)
                   : "0"}
               </div>
@@ -206,7 +214,9 @@ export default function Dashboard() {
               <div className="text-2xl font-bold">
                 {isLoadingDrivers
                   ? "..."
-                  : drivers?.filter(d => !d.vehicles || d.vehicles.length === 0)?.length || 0}
+                  : Array.isArray(drivers)
+                    ? drivers.filter(d => !d.vehicles || d.vehicles.length === 0).length
+                    : 0}
               </div>
             </div>
           </CardContent>
@@ -305,23 +315,23 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold mb-2">
-              {isLoadingFreights ? "..." : freights?.length || 0}
+              {isLoadingFreights ? "..." : Array.isArray(freights) ? freights.length : 0}
             </div>
             <div className="flex flex-col gap-2">
               <div className="text-sm">
                 <span className="font-medium">Fretes Abertos: </span>
                 {isLoadingFreights ? "..." : 
-                  freights?.filter(f => f.status === "aberto")?.length || 0}
+                  Array.isArray(freights) ? freights.filter(f => f.status === "aberto").length : 0}
               </div>
               <div className="text-sm">
                 <span className="font-medium">Em Andamento: </span>
                 {isLoadingFreights ? "..." : 
-                  freights?.filter(f => f.status === "em_andamento")?.length || 0}
+                  Array.isArray(freights) ? freights.filter(f => f.status === "em_andamento").length : 0}
               </div>
               <div className="text-sm">
                 <span className="font-medium">Concluídos: </span>
                 {isLoadingFreights ? "..." : 
-                  freights?.filter(f => f.status === "concluido")?.length || 0}
+                  Array.isArray(freights) ? freights.filter(f => f.status === "concluido").length : 0}
               </div>
             </div>
             <Link href="/freights">
@@ -339,12 +349,12 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold mb-2">
-              {isLoadingClients ? "..." : clients?.length || 0}
+              {isLoadingClients ? "..." : Array.isArray(clients) ? clients.length : 0}
             </div>
             <p className="text-sm text-slate-600">
               {isLoadingClients 
                 ? "Carregando informações..." 
-                : `${clients?.length || 0} clientes ativos no sistema`}
+                : `${Array.isArray(clients) ? clients.length : 0} clientes ativos no sistema`}
             </p>
             <Link href="/clients">
               <p className="text-xs text-primary mt-3 underline underline-offset-2 cursor-pointer">
