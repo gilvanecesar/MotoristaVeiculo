@@ -34,7 +34,7 @@ function App() {
         <Navigation />
         <div className="flex flex-col flex-grow">
           <Header />
-          <main className="container mx-auto px-4 py-6 flex-grow">
+          <main className="px-6 py-6 flex-grow">
             <Router />
           </main>
           <Footer />
