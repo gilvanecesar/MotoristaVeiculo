@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation, useRoute } from "wouter";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -53,11 +53,12 @@ export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   const [_, navigate] = useLocation();
 
-  // Redirecionamento se o usuário já estiver logado
-  if (user) {
-    navigate("/dashboard");
-    return null;
-  }
+  // Usando useEffect para redirecionamento em vez de retorno condicional
+  useEffect(() => {
+    if (user) {
+      navigate("/dashboard");
+    }
+  }, [user, navigate]);
 
   // Formulário de login
   const loginForm = useForm<LoginFormValues>({
