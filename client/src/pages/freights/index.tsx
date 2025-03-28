@@ -1,7 +1,21 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { Plus, Search, Edit, Eye, Trash2, Truck, Filter } from "lucide-react";
+import { 
+  Plus, 
+  Search, 
+  Edit, 
+  Eye, 
+  Trash2, 
+  Truck, 
+  Filter, 
+  PhoneCall, 
+  MapPin, 
+  Package, 
+  DollarSign,
+  ExternalLink,
+  MessageSquare
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -35,9 +49,16 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import { FreightWithDestinations, CARGO_TYPES, TARP_OPTIONS, TOLL_OPTIONS } from "@shared/schema";
+import { 
+  FreightWithDestinations, 
+  Client,
+  CARGO_TYPES, 
+  TARP_OPTIONS, 
+  TOLL_OPTIONS, 
+  VEHICLE_TYPES,
+  BODY_TYPES
+} from "@shared/schema";
 import {
   Accordion,
   AccordionContent,
@@ -47,6 +68,7 @@ import {
 import { queryClient } from "@/lib/queryClient";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/utils/format";
+import { FaWhatsapp } from "react-icons/fa";
 
 export default function FreightsPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -54,6 +76,7 @@ export default function FreightsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedFreight, setSelectedFreight] = useState<FreightWithDestinations | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>("todos");
+  const [expandedFreight, setExpandedFreight] = useState<number | null>(null);
 
   // Fetch data
   const { data: freights, isLoading } = useQuery({
@@ -62,6 +85,10 @@ export default function FreightsPage() {
       if (filterStatus === "todos") return data;
       return data.filter(freight => freight.status === filterStatus);
     }
+  });
+  
+  const { data: clients } = useQuery({
+    queryKey: ['/api/clients'],
   });
 
   const handleSearch = (e: React.FormEvent) => {
@@ -131,6 +158,52 @@ export default function FreightsPage() {
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
+  };
+  
+  const getVehicleTypeDisplay = (type: string) => {
+    const vehicleTypesMap = {
+      leve_fiorino: "Fiorino",
+      leve_toco: "Toco (Leve)",
+      leve_vlc: "VLC",
+      leve_todos: "Veículo Leve (Qualquer)",
+      medio_truck: "Truck",
+      medio_bitruck: "Bitruck",
+      medio_todos: "Veículo Médio (Qualquer)",
+      pesado_carreta: "Carreta",
+      pesado_carreta_ls: "Carreta LS",
+      pesado_bitrem: "Bitrem",
+      pesado_rodotrem: "Rodotrem",
+      pesado_vanderleia: "Vanderleia",
+      pesado_todos: "Veículo Pesado (Qualquer)"
+    };
+    
+    return vehicleTypesMap[type] || type;
+  };
+  
+  const getBodyTypeDisplay = (type: string) => {
+    const bodyTypesMap = {
+      bau: "Baú",
+      bau_frigorifico: "Baú Frigorífico",
+      sider: "Sider",
+      graneleiro: "Graneleiro",
+      tanque: "Tanque",
+      cacamba: "Caçamba",
+      basculante: "Basculante",
+      plataforma: "Plataforma",
+      prancha: "Prancha",
+      porta_container: "Porta Container",
+      madeireiro: "Madeireiro",
+      cegonha: "Cegonha",
+      gaiola: "Gaiola"
+    };
+    
+    return bodyTypesMap[type] || type;
+  };
+  
+  // Função para obter informações do cliente
+  const getClientInfo = (clientId: number) => {
+    if (!clients) return null;
+    return clients.find(client => client.id === clientId);
   };
 
   const toggleDeleteDialog = (freight: FreightWithDestinations | null) => {
@@ -214,50 +287,197 @@ export default function FreightsPage() {
               </TableHeader>
               <TableBody>
                 {freights.map((freight) => (
-                  <TableRow key={freight.id}>
-                    <TableCell>{getStatusBadge(freight.status)}</TableCell>
-                    <TableCell>
-                      <div className="font-medium">
-                        {freight.origin}, {freight.originState}
-                      </div>
-                      <div className="text-sm text-slate-500">
-                        {freight.destination}, {freight.destinationState}
-                      </div>
-                      {freight.hasMultipleDestinations && (
-                        <Badge variant="outline" className="mt-1 text-xs">
-                          Múltiplos destinos
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>{getCargoTypeDisplay(freight.cargoType)}</TableCell>
-                    <TableCell>{freight.productType}</TableCell>
-                    <TableCell>{formatCurrency(Number(freight.freightValue))}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => navigate(`/freights/${freight.id}`)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => navigate(`/freights/${freight.id}`)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => toggleDeleteDialog(freight)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                  <>
+                    <TableRow key={freight.id} className="cursor-pointer" onClick={() => setExpandedFreight(expandedFreight === freight.id ? null : freight.id)}>
+                      <TableCell>{getStatusBadge(freight.status)}</TableCell>
+                      <TableCell>
+                        <div className="font-medium">
+                          {freight.origin}, {freight.originState}
+                        </div>
+                        <div className="text-sm text-slate-500">
+                          {freight.destination}, {freight.destinationState}
+                        </div>
+                        {freight.hasMultipleDestinations && (
+                          <Badge variant="outline" className="mt-1 text-xs">
+                            Múltiplos destinos
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>{getCargoTypeDisplay(freight.cargoType)}</TableCell>
+                      <TableCell>{freight.productType}</TableCell>
+                      <TableCell>{formatCurrency(Number(freight.freightValue))}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/freights/${freight.id}`);
+                            }}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/freights/${freight.id}`);
+                            }}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleDeleteDialog(freight);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                    
+                    {expandedFreight === freight.id && (
+                      <TableRow className="bg-slate-50 dark:bg-slate-800/50">
+                        <TableCell colSpan={6}>
+                          <div className="p-4 space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              {/* Informações do Veículo */}
+                              <div className="bg-white dark:bg-slate-900 rounded-lg p-4 shadow-sm border border-slate-200 dark:border-slate-700">
+                                <h3 className="text-md font-semibold flex items-center mb-2">
+                                  <Truck className="h-4 w-4 mr-2 text-primary" />
+                                  Informações do Veículo
+                                </h3>
+                                <div className="space-y-2 text-sm">
+                                  <div>
+                                    <span className="font-medium">Tipo:</span> {getVehicleTypeDisplay(freight.vehicleType)}
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">Carroceria:</span> {getBodyTypeDisplay(freight.bodyType)}
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">Peso da Carga:</span> {freight.cargoWeight} kg
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">Lona:</span> {getTarpDisplay(freight.needsTarp)}
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">Pedágio:</span> {getTollDisplay(freight.toll)}
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              {/* Detalhes do Frete */}
+                              <div className="bg-white dark:bg-slate-900 rounded-lg p-4 shadow-sm border border-slate-200 dark:border-slate-700">
+                                <h3 className="text-md font-semibold flex items-center mb-2">
+                                  <Package className="h-4 w-4 mr-2 text-primary" />
+                                  Detalhes da Carga
+                                </h3>
+                                <div className="space-y-2 text-sm">
+                                  <div>
+                                    <span className="font-medium">Tipo de Carga:</span> {getCargoTypeDisplay(freight.cargoType)}
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">Produto:</span> {freight.productType}
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">Valor do Frete:</span> {formatCurrency(Number(freight.freightValue))}
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">Data de Criação:</span> {new Date(freight.createdAt).toLocaleDateString('pt-BR')}
+                                  </div>
+                                  {freight.clientId && (
+                                    <div>
+                                      <span className="font-medium">Cliente:</span> {getClientInfo(freight.clientId)?.name || 'Não especificado'}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              {/* Informações de Contato */}
+                              <div className="bg-white dark:bg-slate-900 rounded-lg p-4 shadow-sm border border-slate-200 dark:border-slate-700">
+                                <h3 className="text-md font-semibold flex items-center mb-2">
+                                  <PhoneCall className="h-4 w-4 mr-2 text-primary" />
+                                  Informações de Contato
+                                </h3>
+                                <div className="space-y-3 text-sm">
+                                  <div className="flex items-center">
+                                    <span className="font-medium mr-2">Contato:</span> {freight.contactName || 'Não especificado'}
+                                  </div>
+                                  
+                                  {freight.contactPhone && (
+                                    <div className="flex items-center">
+                                      <span className="font-medium mr-2">Telefone:</span> {freight.contactPhone}
+                                      <a 
+                                        href={`tel:${freight.contactPhone}`}
+                                        className="ml-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
+                                        <PhoneCall className="h-4 w-4" />
+                                      </a>
+                                    </div>
+                                  )}
+                                  
+                                  {freight.contactPhone && (
+                                    <div className="mt-2">
+                                      <a 
+                                        href={`https://wa.me/55${freight.contactPhone.replace(/\D/g, '')}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-2 text-white bg-green-500 hover:bg-green-600 transition-colors px-3 py-1.5 rounded-md text-sm"
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
+                                        <FaWhatsapp className="h-4 w-4" />
+                                        Contato via WhatsApp
+                                      </a>
+                                    </div>
+                                  )}
+                                  
+                                  {freight.observations && (
+                                    <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+                                      <span className="font-medium block mb-1">Observações:</span>
+                                      <p className="text-slate-600 dark:text-slate-300 text-sm">
+                                        {freight.observations}
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Múltiplos Destinos */}
+                            {freight.hasMultipleDestinations && freight.destinations && freight.destinations.length > 0 && (
+                              <div className="bg-white dark:bg-slate-900 rounded-lg p-4 shadow-sm border border-slate-200 dark:border-slate-700 mt-4">
+                                <h3 className="text-md font-semibold flex items-center mb-3">
+                                  <MapPin className="h-4 w-4 mr-2 text-primary" />
+                                  Múltiplos Destinos
+                                </h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                  {freight.destinations.map((dest, index) => (
+                                    <div key={dest.id || index} className="p-3 border border-slate-200 dark:border-slate-700 rounded-md">
+                                      <div className="text-sm">
+                                        <div className="font-medium text-slate-800 dark:text-slate-200">
+                                          {index + 1}. {dest.city}, {dest.state}
+                                        </div>
+                                        <div className="text-slate-500 dark:text-slate-400 text-xs mt-1">
+                                          Sequência de entrega: {index + 1}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </>
                 ))}
               </TableBody>
             </Table>

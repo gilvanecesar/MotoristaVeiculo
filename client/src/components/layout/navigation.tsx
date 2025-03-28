@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useTheme } from "@/lib/theme-provider";
+import logoImage from "../../assets/logo.png";
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -87,7 +88,7 @@ export default function Navigation() {
         } else if (location.startsWith("/clients/")) {
           return "Detalhes do Cliente";
         }
-        return "Sistema de Gestão de Frotas";
+        return "QUERO FRETES";
     }
   };
 
@@ -98,10 +99,10 @@ export default function Navigation() {
         <div className="flex items-center justify-between px-4 py-3">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <Car className="h-6 w-6 text-primary" />
+            <img src={logoImage} alt="QUERO FRETES" className="h-10 w-10" />
             <div>
-              <h1 className="text-lg font-bold text-slate-800 dark:text-white">Gestão de Frotas</h1>
-              <p className="text-xs text-slate-500 dark:text-slate-400 hidden md:block">Sistema de gerenciamento</p>
+              <h1 className="text-lg font-bold text-slate-800 dark:text-white bg-gradient-to-r from-cyan-500 to-blue-500 text-transparent bg-clip-text">QUERO FRETES</h1>
+              <p className="text-xs text-slate-500 dark:text-slate-400 hidden md:block">Sistema de gerenciamento de cargas</p>
             </div>
           </div>
 
