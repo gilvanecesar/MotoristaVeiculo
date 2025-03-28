@@ -40,9 +40,9 @@ import {
   CARGO_TYPES, 
   TARP_OPTIONS, 
   TOLL_OPTIONS, 
-  freightValidator, 
   FreightWithDestinations
 } from "@shared/schema";
+import { freightFormSchema } from "@/lib/validation";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Separator } from "@/components/ui/separator";
 import { getVehicleTypeDisplay, getBodyTypeDisplay } from "@/lib/utils/vehicle-types";
@@ -87,11 +87,8 @@ const destinationSchema = z.object({
   order: z.number().int().positive(),
 });
 
-// Extend the freight form with destinations
-const freightFormSchema = freightValidator.extend({
-  destinations: z.array(destinationSchema).optional(),
-});
-
+// Use the imported freight form schema 
+// and create a destination schema separately
 type FreightFormValues = z.infer<typeof freightFormSchema>;
 type DestinationFormValues = z.infer<typeof destinationSchema>;
 
@@ -146,6 +143,8 @@ export default function FreightForm() {
       clientId: null,
       status: "aberto",
       hasMultipleDestinations: false,
+      contactName: "",
+      contactPhone: "",
     },
   });
 
@@ -626,6 +625,44 @@ export default function FreightForm() {
 
               <Separator className="my-4" />
               
+              <h3 className="text-lg font-medium mb-4">Informações de Contato</h3>
+              <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
+                {/* Contact Name */}
+                <FormField
+                  control={form.control}
+                  name="contactName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nome de Contato</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nome da pessoa de contato" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Contact Phone */}
+                <FormField
+                  control={form.control}
+                  name="contactPhone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Telefone de Contato (WhatsApp)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="(00) 00000-0000" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Este número será usado para contato via WhatsApp
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <Separator className="my-4" />
+              
               <h3 className="text-lg font-medium mb-4">Veículo e Valores</h3>
               <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
                 {/* Vehicle Type */}
@@ -810,6 +847,46 @@ export default function FreightForm() {
                           {...field} 
                         />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Contact Info Section */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                <FormField
+                  control={form.control}
+                  name="contactName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nome do Contato</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="Nome da pessoa de contato" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="contactPhone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Telefone do Contato (WhatsApp)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="(00) 00000-0000" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Será usado como contato de WhatsApp
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

@@ -161,6 +161,10 @@ export const freights = pgTable("freights", {
   observations: text("observations"),
   status: text("status").default("aberto").notNull(), // aberto, em andamento, concluído, cancelado
   
+  // Informações de contato
+  contactName: text("contact_name").notNull(),
+  contactPhone: text("contact_phone").notNull(),
+  
   // Para fretes com múltiplos destinos
   hasMultipleDestinations: boolean("has_multiple_destinations").default(false),
   
@@ -257,6 +261,8 @@ export const freightValidator = insertFreightSchema.extend({
   observations: z.string().max(500).optional().or(z.literal('')),
   cargoWeight: z.coerce.number().positive(),
   freightValue: z.coerce.number().positive(),
+  contactName: z.string().min(3),
+  contactPhone: z.string().min(10).max(15),
   vehicleType: z.enum([
     // Leves
     VEHICLE_TYPES.LEVE_TODOS,

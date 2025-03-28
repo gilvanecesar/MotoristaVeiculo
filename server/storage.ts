@@ -345,7 +345,9 @@ export class MemStorage implements IStorage {
         paymentMethod: "30_dias",
         observations: "Carga de alto valor, requer cuidados especiais no transporte",
         hasMultipleDestinations: true,
-        status: "aberto"
+        status: "aberto",
+        contactName: "Roberto Carlos",
+        contactPhone: "(11) 98765-4321"
       },
       {
         clientId: 2,
@@ -364,7 +366,9 @@ export class MemStorage implements IStorage {
         paymentMethod: "a_vista",
         observations: "Produto perigoso, motorista com treinamento para transportes de produtos químicos",
         hasMultipleDestinations: false,
-        status: "aberto"
+        status: "aberto",
+        contactName: "Ana Paula Silva",
+        contactPhone: "(11) 97777-8888"
       },
       {
         clientId: 3,
@@ -383,7 +387,9 @@ export class MemStorage implements IStorage {
         paymentMethod: "15_dias",
         observations: "Alimentos perecíveis, necessário controle de temperatura",
         hasMultipleDestinations: false,
-        status: "aberto"
+        status: "aberto",
+        contactName: "Carlos Eduardo Lima",
+        contactPhone: "(16) 98765-1234"
       }
     ];
     

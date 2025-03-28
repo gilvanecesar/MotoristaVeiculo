@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { driverValidator, vehicleValidator } from "@shared/schema";
+import { driverValidator, vehicleValidator, freightValidator } from "@shared/schema";
 
 // Extended schemas with more specific validations for UI forms
 
@@ -26,6 +26,16 @@ export const vehicleFormSchema = vehicleValidator.extend({
   brand: z.string().min(2, "Marca inválida"),
   model: z.string().min(2, "Modelo inválido"),
   year: z.number().min(1900, "Ano inválido").max(new Date().getFullYear() + 1),
+});
+
+// Freight form validation schema
+export const freightFormSchema = freightValidator.extend({
+  // Add client-side specific validations
+  origin: z.string().min(2, "Origem inválida"),
+  destination: z.string().min(2, "Destino inválido"),
+  productType: z.string().min(2, "Tipo de produto inválido"),
+  contactName: z.string().min(3, "Nome do contato deve ter pelo menos 3 caracteres"),
+  contactPhone: z.string().min(10, "Telefone de contato inválido").max(15, "Telefone de contato muito longo"),
 });
 
 // Helper functions
