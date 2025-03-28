@@ -148,7 +148,6 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
               <TableRow>
                 <TableHead></TableHead>
                 <TableHead>Nome</TableHead>
-                <TableHead>CPF</TableHead>
                 <TableHead>CNH</TableHead>
                 <TableHead>WhatsApp</TableHead>
                 <TableHead>Veículos</TableHead>
@@ -218,9 +217,7 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>
-                          <div className="text-sm text-slate-900">{driver.cpf}</div>
-                        </TableCell>
+
                         <TableCell>
                           <div className="text-sm text-slate-900">{driver.cnh}</div>
                           <div className="text-xs text-slate-500">Categoria {driver.cnhCategory}</div>
