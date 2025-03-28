@@ -1,15 +1,26 @@
 import { 
-  drivers, vehicles, clients, freights, freightDestinations,
+  drivers, vehicles, clients, freights, freightDestinations, users,
   type Driver, type InsertDriver,
   type Vehicle, type InsertVehicle, 
   type Client, type InsertClient,
   type Freight, type InsertFreight,
   type FreightDestination, type InsertFreightDestination,
+  type User, type InsertUser,
   type DriverWithVehicles,
   type FreightWithDestinations
 } from "@shared/schema";
 
 export interface IStorage {
+  // User operations
+  getUsers(): Promise<User[]>;
+  getUserById(id: number): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
+  verifyUser(id: number): Promise<User | undefined>;
+  updateLastLogin(id: number): Promise<User | undefined>;
+  deleteUser(id: number): Promise<boolean>;
+  
   // Driver operations
   getDrivers(): Promise<DriverWithVehicles[]>;
   getDriver(id: number): Promise<DriverWithVehicles | undefined>;
@@ -55,11 +66,13 @@ export class MemStorage implements IStorage {
   private clientsData: Map<number, Client>;
   private freightsData: Map<number, Freight>;
   private freightDestinationsData: Map<number, FreightDestination>;
+  private usersData: Map<number, User>;
   private driverCurrentId: number;
   private vehicleCurrentId: number;
   private clientCurrentId: number;
   private freightCurrentId: number;
   private freightDestinationCurrentId: number;
+  private userCurrentId: number;
 
   constructor() {
     this.driversData = new Map();
@@ -67,11 +80,13 @@ export class MemStorage implements IStorage {
     this.clientsData = new Map();
     this.freightsData = new Map();
     this.freightDestinationsData = new Map();
+    this.usersData = new Map();
     this.driverCurrentId = 1;
     this.vehicleCurrentId = 1;
     this.clientCurrentId = 1;
     this.freightCurrentId = 1;
     this.freightDestinationCurrentId = 1;
+    this.userCurrentId = 1;
     
     // Criar uma população fictícia de motoristas e veículos
     this.createDummyData();
@@ -79,6 +94,38 @@ export class MemStorage implements IStorage {
   
   // Método para criar dados fictícios
   private createDummyData() {
+    // Usuários
+    const users: InsertUser[] = [
+      {
+        name: "Admin User",
+        email: "admin@querofretes.com",
+        password: "admin123",
+        profileType: "admin",
+        authProvider: "local"
+      },
+      {
+        name: "Cliente Transportadora",
+        email: "cliente@transportadorarapida.com.br",
+        password: "cliente123",
+        profileType: "shipper",
+        authProvider: "local",
+        clientId: 1
+      },
+      {
+        name: "Motorista João",
+        email: "joao.silva@email.com",
+        password: "motorista123",
+        profileType: "driver",
+        authProvider: "local",
+        driverId: 1
+      }
+    ];
+    
+    // Adicionar os usuários
+    users.forEach(user => {
+      this.createUser(user);
+    });
+    
     // Drivers
     const drivers: InsertDriver[] = [
       {
@@ -740,6 +787,81 @@ export class MemStorage implements IStorage {
   
   async deleteFreightDestination(id: number): Promise<boolean> {
     return this.freightDestinationsData.delete(id);
+  }
+
+  // User methods
+  async getUsers(): Promise<User[]> {
+    return Array.from(this.usersData.values())
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  async getUserById(id: number): Promise<User | undefined> {
+    return this.usersData.get(id);
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return Array.from(this.usersData.values()).find(user => 
+      user.email.toLowerCase() === email.toLowerCase()
+    );
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const id = this.userCurrentId++;
+    const now = new Date();
+    
+    const newUser: User = {
+      ...user,
+      id,
+      isVerified: false,
+      createdAt: now,
+      lastLogin: null
+    };
+    
+    this.usersData.set(id, newUser);
+    return newUser;
+  }
+
+  async updateUser(id: number, userUpdate: Partial<InsertUser>): Promise<User | undefined> {
+    const user = this.usersData.get(id);
+    if (!user) return undefined;
+    
+    const updatedUser: User = {
+      ...user,
+      ...userUpdate
+    };
+    
+    this.usersData.set(id, updatedUser);
+    return updatedUser;
+  }
+
+  async verifyUser(id: number): Promise<User | undefined> {
+    const user = this.usersData.get(id);
+    if (!user) return undefined;
+    
+    const verifiedUser: User = {
+      ...user,
+      isVerified: true
+    };
+    
+    this.usersData.set(id, verifiedUser);
+    return verifiedUser;
+  }
+
+  async updateLastLogin(id: number): Promise<User | undefined> {
+    const user = this.usersData.get(id);
+    if (!user) return undefined;
+    
+    const updatedUser: User = {
+      ...user,
+      lastLogin: new Date()
+    };
+    
+    this.usersData.set(id, updatedUser);
+    return updatedUser;
+  }
+
+  async deleteUser(id: number): Promise<boolean> {
+    return this.usersData.delete(id);
   }
 }
 

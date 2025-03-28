@@ -2,13 +2,15 @@ import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "./lib/theme-provider";
-import { AuthProvider } from "./lib/auth-context";
+import { Toaster } from "@/components/ui/toaster";
+import { AuthProvider } from "@/hooks/use-auth";
+import { ProtectedRoute } from "@/lib/protected-route";
 import NotFound from "@/pages/not-found";
-import Header from "@/components/layout/header";
 import Navigation from "@/components/layout/navigation";
 import Footer from "@/components/layout/footer";
 import Home from "@/pages/home";
 import Dashboard from "@/pages/dashboard";
+import AuthPage from "@/pages/auth-page";
 import DriversPage from "@/pages/drivers/index";
 import DriverForm from "@/pages/drivers/driver-form";
 import VehiclesPage from "@/pages/vehicles/index";
@@ -21,19 +23,20 @@ import ClientForm from "@/pages/clients/client-form";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Home} />
-      <Route path="/dashboard" component={Dashboard} />
-      <Route path="/drivers" component={DriversPage} />
-      <Route path="/drivers/new" component={DriverForm} />
-      <Route path="/drivers/:id" component={DriverForm} />
-      <Route path="/vehicles" component={VehiclesPage} />
-      <Route path="/freights" component={FreightsPage} />
-      <Route path="/freights/new" component={FreightForm} />
-      <Route path="/freights/:id" component={FreightForm} />
-      <Route path="/clients" component={ClientsPage} />
-      <Route path="/clients/new" component={ClientForm} />
-      <Route path="/clients/:id" component={ClientForm} />
-      <Route path="/reports" component={ReportsPage} />
+      <ProtectedRoute path="/" component={Home} />
+      <ProtectedRoute path="/dashboard" component={Dashboard} />
+      <ProtectedRoute path="/drivers" component={DriversPage} />
+      <ProtectedRoute path="/drivers/new" component={DriverForm} />
+      <ProtectedRoute path="/drivers/:id" component={DriverForm} />
+      <ProtectedRoute path="/vehicles" component={VehiclesPage} />
+      <ProtectedRoute path="/freights" component={FreightsPage} />
+      <ProtectedRoute path="/freights/new" component={FreightForm} />
+      <ProtectedRoute path="/freights/:id" component={FreightForm} />
+      <ProtectedRoute path="/clients" component={ClientsPage} />
+      <ProtectedRoute path="/clients/new" component={ClientForm} />
+      <ProtectedRoute path="/clients/:id" component={ClientForm} />
+      <ProtectedRoute path="/reports" component={ReportsPage} />
+      <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>
   );

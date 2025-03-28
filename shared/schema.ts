@@ -315,5 +315,62 @@ export type FreightDestination = typeof freightDestinations.$inferSelect;
 export type InsertFreightDestination = z.infer<typeof insertFreightDestinationSchema>;
 
 // Types for forms
+// User profile types
+export const USER_TYPES = {
+  DRIVER: "driver",
+  AGENT: "agent",
+  SHIPPER: "shipper",
+  ADMIN: "admin"
+} as const;
+
+// Authentication providers
+export const AUTH_PROVIDERS = {
+  LOCAL: "local",
+  GOOGLE: "google"
+} as const;
+
+// User table
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  password: text("password"),
+  name: text("name").notNull(),
+  profileType: text("profile_type").notNull(),
+  authProvider: text("auth_provider").notNull().default(AUTH_PROVIDERS.LOCAL),
+  providerId: text("provider_id"),
+  avatarUrl: text("avatar_url"),
+  isVerified: boolean("is_verified").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  lastLogin: timestamp("last_login")
+});
+
+// Insert and validation schemas
+export const insertUserSchema = createInsertSchema(users)
+  .omit({ id: true, createdAt: true });
+
+export const userValidator = insertUserSchema.extend({
+  email: z.string().email("Informe um e-mail válido"),
+  password: z.string().min(6, "A senha deve ter pelo menos 6 caracteres").optional(),
+  name: z.string().min(3, "O nome deve ter pelo menos 3 caracteres"),
+  profileType: z.enum([
+    USER_TYPES.DRIVER, 
+    USER_TYPES.AGENT, 
+    USER_TYPES.SHIPPER, 
+    USER_TYPES.ADMIN
+  ], {
+    errorMap: () => ({ message: "Selecione um tipo de perfil válido" })
+  }),
+  authProvider: z.enum([
+    AUTH_PROVIDERS.LOCAL,
+    AUTH_PROVIDERS.GOOGLE
+  ]).default(AUTH_PROVIDERS.LOCAL)
+});
+
+// Export user types
+export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type UserType = typeof USER_TYPES[keyof typeof USER_TYPES];
+export type AuthProvider = typeof AUTH_PROVIDERS[keyof typeof AUTH_PROVIDERS];
+
 export type DriverWithVehicles = Driver & { vehicles: Vehicle[] };
 export type FreightWithDestinations = Freight & { destinations?: FreightDestination[] };
