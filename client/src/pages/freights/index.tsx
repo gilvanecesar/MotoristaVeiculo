@@ -233,7 +233,7 @@ export default function FreightsPage() {
   };
   
   const getVehicleTypeDisplay = (type: string) => {
-    const vehicleTypesMap = {
+    const vehicleTypesMap: Record<string, string> = {
       leve_fiorino: "Fiorino",
       leve_toco: "Toco (Leve)",
       leve_vlc: "VLC",
@@ -253,7 +253,7 @@ export default function FreightsPage() {
   };
   
   const getBodyTypeDisplay = (type: string) => {
-    const bodyTypesMap = {
+    const bodyTypesMap: Record<string, string> = {
       bau: "Baú",
       bau_frigorifico: "Baú Frigorífico",
       sider: "Sider",
@@ -274,8 +274,8 @@ export default function FreightsPage() {
   
   // Função para obter informações do cliente
   const getClientInfo = (clientId: number) => {
-    if (!clients) return null;
-    return clients.find(client => client.id === clientId);
+    if (!clients || !Array.isArray(clients)) return null;
+    return clients.find((client: Client) => client.id === clientId);
   };
 
   const toggleDeleteDialog = (freight: FreightWithDestinations | null) => {
@@ -508,6 +508,7 @@ export default function FreightsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Status</TableHead>
+                  <TableHead>Cliente</TableHead>
                   <TableHead>Origem</TableHead>
                   <TableHead>Destino</TableHead>
                   <TableHead>Destinos Adicionais</TableHead>
@@ -524,6 +525,15 @@ export default function FreightsPage() {
                   <>
                     <TableRow key={freight.id} className="cursor-pointer" onClick={() => setExpandedFreight(expandedFreight === freight.id ? null : freight.id)}>
                       <TableCell>{getStatusBadge(freight.status)}</TableCell>
+                      <TableCell>
+                        {freight.clientId ? (
+                          <div className="font-medium text-primary">
+                            {getClientInfo(freight.clientId)?.name || 'Cliente não encontrado'}
+                          </div>
+                        ) : (
+                          <span className="text-slate-400 text-sm">Sem cliente</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <div className="font-medium">
                           {freight.origin}, {freight.originState}
@@ -592,7 +602,7 @@ export default function FreightsPage() {
                     
                     {expandedFreight === freight.id && (
                       <TableRow className="bg-slate-50 dark:bg-slate-800/50">
-                        <TableCell colSpan={10}>
+                        <TableCell colSpan={11}>
                           <div className="p-4 space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                               {/* Informações do Veículo */}
@@ -615,7 +625,7 @@ export default function FreightsPage() {
                                     <span className="font-medium">Lona:</span> {getTarpDisplay(freight.needsTarp)}
                                   </div>
                                   <div>
-                                    <span className="font-medium">Pedágio:</span> {getTollDisplay(freight.toll || "a_parte")}
+                                    <span className="font-medium">Pedágio:</span> {getTollDisplay("a_parte")}
                                   </div>
                                 </div>
                               </div>
