@@ -55,7 +55,7 @@ export default function ClientsPage() {
 
   // Filter clients based on user role
   useEffect(() => {
-    if (!clients) return;
+    if (!clients || !Array.isArray(clients)) return;
 
     if (isAdmin) {
       // Admin sees all clients
@@ -72,8 +72,11 @@ export default function ClientsPage() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!searchQuery.trim() || !clients) {
-      setFilteredClients(isAdmin ? clients : clients?.filter((client: Client) => client.id === user?.clientId) || []);
+    if (!searchQuery.trim() || !clients || !Array.isArray(clients)) {
+      setFilteredClients(isAdmin ? 
+        (Array.isArray(clients) ? clients : []) : 
+        (Array.isArray(clients) ? clients.filter((client: Client) => client.id === user?.clientId) : [])
+      );
       return;
     }
 
@@ -170,10 +173,13 @@ export default function ClientsPage() {
             </Button>
           </form>
 
-          <Button onClick={() => navigate("/clients/new")}>
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Cliente
-          </Button>
+          {/* Mostrar botão de novo cliente apenas para administradores ou quando o usuário não tem cliente */}
+          {(isAdmin || !user?.clientId) && (
+            <Button onClick={() => navigate("/clients/new")}>
+              <Plus className="h-4 w-4 mr-2" />
+              {!user?.clientId ? "Cadastrar meu cliente" : "Novo Cliente"}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -313,7 +319,7 @@ export default function ClientsPage() {
         <CardFooter className="border-t border-slate-100 dark:border-slate-700">
           <div className="text-xs text-slate-500">
             Total de registros: {filteredClients.length}
-            {isAdmin && clients && filteredClients.length !== clients.length && (
+            {isAdmin && clients && Array.isArray(clients) && filteredClients.length !== clients.length && (
               <span className="ml-2">(Total no sistema: {clients.length})</span>
             )}
           </div>

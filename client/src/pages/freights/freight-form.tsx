@@ -105,7 +105,7 @@ export default function FreightForm() {
   const { user } = useUserAuth();
 
   // Fetch clients for dropdown
-  const { data: clients } = useQuery({
+  const { data: clients = [] } = useQuery({
     queryKey: ['/api/clients'],
     enabled: true,
   });
@@ -117,7 +117,7 @@ export default function FreightForm() {
   });
 
   // Fetch destinations if freight has multiple destinations
-  const { data: freightDestinations } = useQuery({
+  const { data: freightDestinations = [] } = useQuery({
     queryKey: ['/api/freight-destinations', { freightId }],
     queryFn: async () => {
       const res = await fetch(`/api/freight-destinations?freightId=${freightId}`);
