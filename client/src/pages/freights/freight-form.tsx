@@ -5,7 +5,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowLeft, Plus, Trash2, Truck } from "lucide-react";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth as useClientAuth } from "@/lib/auth-context";
+import { useAuth as useUserAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -100,7 +101,8 @@ export default function FreightForm() {
   const [destinations, setDestinations] = useState<DestinationFormValues[]>([]);
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const { currentClient } = useAuth();
+  const { currentClient } = useClientAuth();
+  const { user } = useUserAuth();
 
   // Fetch clients for dropdown
   const { data: clients } = useQuery({
@@ -156,8 +158,15 @@ export default function FreightForm() {
   useEffect(() => {
     if (currentClient && !isEditing) {
       form.setValue("clientId", currentClient.id);
+    } else if (user?.clientId && !isEditing) {
+      // Se não tem cliente atual mas o usuário tem um clientId associado,
+      // usamos o clientId do usuário logado
+      form.setValue("clientId", user.clientId);
+      
+      // Loga para depuração
+      console.log("Usando clientId do usuário:", user.clientId);
     }
-  }, [currentClient, isEditing, form]);
+  }, [currentClient, user, isEditing, form]);
 
   useEffect(() => {
     if (freight && !isLoading) {
@@ -321,11 +330,19 @@ export default function FreightForm() {
                       <Select
                         value={field.value?.toString() || "null"}
                         onValueChange={(value) => field.onChange(value !== "null" ? parseInt(value) : null)}
-                        disabled={currentClient !== null && !isEditing}
+                        disabled={(currentClient !== null || user?.clientId !== null) && !isEditing}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecione um cliente" />
+                            {currentClient && !isEditing ? (
+                              <div className="text-foreground">{currentClient.name}</div>
+                            ) : user?.clientId && !isEditing && clients ? (
+                              <div className="text-foreground">
+                                {clients.find((c: any) => c.id === user.clientId)?.name || "Cliente do usuário"}
+                              </div>
+                            ) : (
+                              <SelectValue placeholder="Selecione um cliente" />
+                            )}
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -337,9 +354,13 @@ export default function FreightForm() {
                           ))}
                         </SelectContent>
                       </Select>
-                      {currentClient && !isEditing && (
+                      {(currentClient || user?.clientId) && !isEditing && (
                         <FormDescription>
-                          O frete será associado automaticamente ao cliente logado ({currentClient.name})
+                          {currentClient ? (
+                            <>O frete será associado automaticamente ao cliente logado ({currentClient.name})</>
+                          ) : user?.clientId && clients ? (
+                            <>O frete será associado automaticamente ao seu cliente ({clients.find((c: any) => c.id === user.clientId)?.name || "Cliente associado"})</>
+                          ) : null}
                         </FormDescription>
                       )}
                       <FormMessage />

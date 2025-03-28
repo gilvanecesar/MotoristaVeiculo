@@ -164,13 +164,31 @@ export default function FreightsPage() {
     if (!selectedFreight) return;
     
     try {
+      console.log("Tentando excluir frete ID:", selectedFreight.id);
+      
       const response = await fetch(`/api/freights/${selectedFreight.id}`, {
         method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include' // Importante para enviar cookies de autenticação
       });
       
+      // Log da resposta para debugging
+      console.log("Status da resposta:", response.status);
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Error deleting freight:", errorData);
+        const errorText = await response.text();
+        console.error("Erro ao excluir frete - Status:", response.status);
+        console.error("Resposta do servidor:", errorText);
+        
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { message: errorText || 'Erro desconhecido' };
+        }
+        
         alert(`Erro ao excluir frete: ${errorData.message || 'Falha na operação'}`);
         return;
       }
@@ -179,7 +197,7 @@ export default function FreightsPage() {
       setDeleteDialogOpen(false);
       alert('Frete excluído com sucesso!');
     } catch (error) {
-      console.error("Error deleting freight:", error);
+      console.error("Erro ao excluir frete:", error);
       alert('Erro ao excluir frete. Verifique o console para mais detalhes.');
     }
   };
