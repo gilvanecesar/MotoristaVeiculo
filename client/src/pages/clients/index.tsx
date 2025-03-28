@@ -28,6 +28,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Client } from "@shared/schema";
 import { queryClient } from "@/lib/queryClient";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -134,8 +135,20 @@ export default function ClientsPage() {
                 {clients.map((client: Client) => (
                   <TableRow key={client.id}>
                     <TableCell>
-                      <div className="font-medium">{client.name}</div>
-                      <div className="text-sm text-slate-500">{client.email}</div>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          {client.logoUrl ? (
+                            <AvatarImage src={client.logoUrl} alt={client.name} />
+                          ) : null}
+                          <AvatarFallback className="bg-primary/10 text-primary">
+                            {client.name.substring(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="font-medium">{client.name}</div>
+                          <div className="text-sm text-slate-500">{client.email}</div>
+                        </div>
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div>{client.documentType}: {client.document}</div>
@@ -220,17 +233,31 @@ export default function ClientsPage() {
           </DialogHeader>
           <div>
             {selectedClient && (
-              <>
-                <div className="mb-4">
-                  <span className="font-medium">Nome:</span> {selectedClient.name}
+              <div className="flex flex-col">
+                <div className="flex items-center gap-4 mb-4">
+                  <Avatar className="h-16 w-16">
+                    {selectedClient.logoUrl ? (
+                      <AvatarImage src={selectedClient.logoUrl} alt={selectedClient.name} />
+                    ) : null}
+                    <AvatarFallback className="bg-primary/10 text-primary text-xl">
+                      {selectedClient.name.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <div className="font-medium text-lg">{selectedClient.name}</div>
+                    <div className="text-sm text-slate-500">{selectedClient.email}</div>
+                  </div>
                 </div>
                 <div className="mb-4">
                   <span className="font-medium">Documento:</span> {selectedClient.documentType}: {selectedClient.document}
                 </div>
-                <div>
-                  <span className="font-medium">Email:</span> {selectedClient.email}
+                <div className="mb-4">
+                  <span className="font-medium">Telefone:</span> {formatPhoneNumber(selectedClient.phone)}
                 </div>
-              </>
+                <div>
+                  <span className="font-medium">Localização:</span> {selectedClient.city}, {selectedClient.state}
+                </div>
+              </div>
             )}
           </div>
           <DialogFooter>

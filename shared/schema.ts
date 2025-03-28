@@ -134,6 +134,9 @@ export const clients = pgTable("clients", {
   contactPhone: text("contact_phone"),
   notes: text("notes"),
   
+  // Logo
+  logoUrl: text("logo_url"),
+  
   // Metadata
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -244,6 +247,7 @@ export const clientValidator = insertClientSchema.extend({
   phone: z.string().min(10).max(15),
   whatsapp: z.string().min(10).max(15).optional().or(z.literal('')),
   notes: z.string().max(500).optional().or(z.literal('')),
+  logoUrl: z.string().optional().or(z.literal('')),
 });
 
 export const freightValidator = insertFreightSchema.extend({

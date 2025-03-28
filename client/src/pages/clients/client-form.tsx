@@ -1,9 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useLocation, useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Building2 } from "lucide-react";
+import { ArrowLeft, Building2, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -35,6 +35,7 @@ import { useToast } from "@/hooks/use-toast";
 import { clientValidator } from "@shared/schema";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 // Brazilian states
 const BRAZILIAN_STATES = [
@@ -73,6 +74,8 @@ export default function ClientForm() {
   const clientId = parseInt(params.id || "0");
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
   // Form definition
   const form = useForm({
@@ -94,6 +97,7 @@ export default function ClientForm() {
       contactName: "",
       contactPhone: "",
       notes: "",
+      logoUrl: "",
     },
   });
 
@@ -106,8 +110,51 @@ export default function ClientForm() {
   useEffect(() => {
     if (client && !isLoading) {
       form.reset(client);
+      if (client.logoUrl) {
+        setLogoPreview(client.logoUrl);
+      }
     }
   }, [client, isLoading, form]);
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Formato inválido",
+        description: "Por favor, selecione uma imagem válida (PNG, JPG, JPEG).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Máximo de 2MB
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: "Arquivo muito grande",
+        description: "A imagem deve ter no máximo 2MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const logoUrl = event.target?.result as string;
+      setLogoPreview(logoUrl);
+      form.setValue("logoUrl", logoUrl);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeLogo = () => {
+    setLogoPreview(null);
+    form.setValue("logoUrl", "");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   const onSubmit = async (data: any) => {
     try {
@@ -447,6 +494,82 @@ export default function ClientForm() {
                       <FormDescription>
                         Opcional. Telefone direto da pessoa de contato.
                       </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Logo Upload */}
+                <FormField
+                  control={form.control}
+                  name="logoUrl"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>Logomarca</FormLabel>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <div className="flex flex-col gap-4">
+                            <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary/50 transition-colors">
+                              <input 
+                                type="file" 
+                                ref={fileInputRef}
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handleLogoUpload}
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => fileInputRef.current?.click()}
+                                className="mb-2"
+                              >
+                                <Upload className="h-4 w-4 mr-2" />
+                                Escolher arquivo
+                              </Button>
+                              <FormDescription>
+                                Tamanho recomendado: 200x200px (máximo 2MB)
+                              </FormDescription>
+                              <FormDescription>
+                                Formatos aceitos: PNG, JPG, JPEG
+                              </FormDescription>
+                            </div>
+                          </div>
+                        </div>
+                        <div>
+                          {logoPreview ? (
+                            <div className="flex flex-col items-center gap-4">
+                              <div className="relative w-40 h-40 border rounded-lg overflow-hidden flex items-center justify-center p-2 bg-white">
+                                <img 
+                                  src={logoPreview} 
+                                  alt="Logo preview" 
+                                  className="max-w-full max-h-full object-contain"
+                                />
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  size="icon"
+                                  className="absolute top-2 right-2 h-6 w-6"
+                                  onClick={removeLogo}
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+                              <FormDescription>Prévia da logomarca</FormDescription>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center justify-center h-40 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                              <Avatar className="w-20 h-20">
+                                <AvatarFallback className="bg-primary/10 text-primary">
+                                  <Building2 className="h-10 w-10" />
+                                </AvatarFallback>
+                              </Avatar>
+                              <p className="text-sm text-slate-500 mt-2">
+                                Nenhuma logo selecionada
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
