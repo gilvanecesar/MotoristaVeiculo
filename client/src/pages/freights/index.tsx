@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useAuth } from "@/lib/auth-context";
@@ -292,8 +292,17 @@ export default function FreightsPage() {
   
   // Função para obter informações do cliente
   const getClientInfo = (clientId: number) => {
-    if (!clients || !Array.isArray(clients)) return null;
-    return clients.find((client: Client) => client.id === clientId);
+    if (!clients) return null;
+    if (!Array.isArray(clients)) {
+      console.log("Erro: 'clients' não é um array:", clients);
+      return null;
+    }
+    
+    const clientFound = clients.find((client: Client) => client.id === clientId);
+    if (!clientFound) {
+      console.log(`Cliente com ID ${clientId} não encontrado`);
+    }
+    return clientFound;
   };
 
   const toggleDeleteDialog = (freight: FreightWithDestinations | null) => {
@@ -466,42 +475,42 @@ export default function FreightsPage() {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Peso Mínimo (kg)</label>
                 <Input 
-                  type="number" 
                   placeholder="Peso mínimo" 
                   value={filters.minWeight}
                   onChange={(e) => setFilters({...filters, minWeight: e.target.value})}
+                  type="number"
                 />
               </div>
               
               <div className="space-y-2">
                 <label className="text-sm font-medium">Peso Máximo (kg)</label>
                 <Input 
-                  type="number" 
                   placeholder="Peso máximo" 
                   value={filters.maxWeight}
                   onChange={(e) => setFilters({...filters, maxWeight: e.target.value})}
+                  type="number"
                 />
               </div>
             </div>
-            
-            <div className="mt-4 flex justify-end gap-2">
-              <Button 
-                variant="outline" 
-                onClick={() => setFilters({
-                  origin: "",
-                  destination: "",
-                  vehicleType: "todos",
-                  bodyType: "todos",
-                  cargoType: "todos",
-                  paymentMethod: "todos",
-                  minWeight: "",
-                  maxWeight: ""
-                })}
-              >
-                Limpar Filtros
-              </Button>
-            </div>
           </CardContent>
+          <CardFooter>
+            <Button 
+              variant="outline" 
+              className="mr-2"
+              onClick={() => setFilters({
+                origin: "",
+                destination: "",
+                vehicleType: "todos",
+                bodyType: "todos",
+                cargoType: "todos",
+                paymentMethod: "todos",
+                minWeight: "",
+                maxWeight: ""
+              })}
+            >
+              Limpar Filtros
+            </Button>
+          </CardFooter>
         </Card>
       )}
 
@@ -509,17 +518,16 @@ export default function FreightsPage() {
         <CardHeader className="pb-3">
           <CardTitle>Lista de Fretes</CardTitle>
           <CardDescription>
-            Gerenciamento de fretes com detalhes de origem, destino e carga
+            Visualize e gerencie todos os fretes cadastrados no sistema
           </CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <div className="space-y-3">
-              {[...Array(5)].map((_, idx) => (
-                <div key={idx} className="flex items-center space-x-4">
-                  <Skeleton className="h-12 w-full" />
-                </div>
-              ))}
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
             </div>
           ) : freights && freights.length > 0 ? (
             <Table>
@@ -529,10 +537,10 @@ export default function FreightsPage() {
                   <TableHead>Cliente</TableHead>
                   <TableHead>Origem</TableHead>
                   <TableHead>Destino</TableHead>
-                  <TableHead>Destinos Adicionais</TableHead>
+                  <TableHead>Múltiplos destinos</TableHead>
                   <TableHead>Tipo de Carga</TableHead>
                   <TableHead>Produto</TableHead>
-                  <TableHead>Peso</TableHead>
+                  <TableHead>Peso (kg)</TableHead>
                   <TableHead>Pagamento</TableHead>
                   <TableHead>Valor</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
@@ -540,8 +548,8 @@ export default function FreightsPage() {
               </TableHeader>
               <TableBody>
                 {freights.map((freight) => (
-                  <>
-                    <TableRow key={freight.id} className="cursor-pointer" onClick={() => setExpandedFreight(expandedFreight === freight.id ? null : freight.id)}>
+                  <React.Fragment key={freight.id}>
+                    <TableRow className="cursor-pointer" onClick={() => setExpandedFreight(expandedFreight === freight.id ? null : freight.id)}>
                       <TableCell>{getStatusBadge(freight.status)}</TableCell>
                       <TableCell>
                         {freight.clientId ? (
@@ -753,7 +761,7 @@ export default function FreightsPage() {
                         </TableCell>
                       </TableRow>
                     )}
-                  </>
+                  </React.Fragment>
                 ))}
               </TableBody>
             </Table>
