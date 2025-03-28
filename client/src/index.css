@@ -11,3 +11,35 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 }
+
+/* Temas personalizados */
+.theme-toggle-icon {
+  @apply h-5 w-5 transition-all;
+}
+
+/* Estilos para o componente de navegação com suporte a temas */
+.nav-menu {
+  @apply transition-colors duration-200;
+}
+
+.nav-link {
+  @apply transition-colors duration-200 hover:text-primary;
+}
+
+.nav-active {
+  @apply font-semibold text-primary;
+}
+
+/* Dark mode card styles */
+.card {
+  @apply bg-white dark:bg-slate-800 transition-colors duration-200;
+}
+
+/* Apply dark mode styles to tables */
+table {
+  @apply text-slate-900 dark:text-slate-100;
+}
+
+th {
+  @apply bg-slate-100 dark:bg-slate-700;
+}

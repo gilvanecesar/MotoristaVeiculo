@@ -1,6 +1,7 @@
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { ThemeProvider } from "./lib/theme-provider";
 import NotFound from "@/pages/not-found";
 import Header from "@/components/layout/header";
 import Navigation from "@/components/layout/navigation";
@@ -30,17 +31,19 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="flex flex-col min-h-screen">
-        <Navigation />
-        <div className="flex flex-col flex-grow">
-          <main className="px-6 py-6 flex-grow max-w-full overflow-x-hidden">
-            <div className="container mx-auto">
-              <Router />
-            </div>
-          </main>
-          <Footer />
+      <ThemeProvider>
+        <div className="flex flex-col min-h-screen bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-200">
+          <Navigation />
+          <div className="flex flex-col flex-grow">
+            <main className="px-6 py-6 flex-grow max-w-full overflow-x-hidden">
+              <div className="container mx-auto">
+                <Router />
+              </div>
+            </main>
+            <Footer />
+          </div>
         </div>
-      </div>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
