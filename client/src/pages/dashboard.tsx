@@ -26,32 +26,34 @@ export default function Dashboard() {
   const freightsByState = useMemo(() => {
     if (!freights || isLoadingFreights) return [];
     
-    // Combinamos as origens e destinos para contabilizar todos os estados onde há fretes
-    const statesMap = new Map();
+    // Usamos um objeto regular em vez de Map
+    const statesMap = {};
     
     // Adiciona estados de origem
-    freights.forEach(freight => {
-      const state = freight.originState;
-      statesMap.set(state, (statesMap.get(state) || 0) + 1);
-    });
+    if (Array.isArray(freights)) {
+      freights.forEach(freight => {
+        const state = freight.originState;
+        statesMap[state] = (statesMap[state] || 0) + 1;
+      });
+      
+      // Adiciona estados de destino (incluindo destinos múltiplos)
+      freights.forEach(freight => {
+        // Se tiver destinos múltiplos
+        if (freight.hasMultipleDestinations && freight.destinations && freight.destinations.length > 0) {
+          freight.destinations.forEach(dest => {
+            const state = dest.state;
+            statesMap[state] = (statesMap[state] || 0) + 1;
+          });
+        } else {
+          // Destino único
+          const state = freight.destinationState;
+          statesMap[state] = (statesMap[state] || 0) + 1;
+        }
+      });
+    }
     
-    // Adiciona estados de destino (incluindo destinos múltiplos)
-    freights.forEach(freight => {
-      // Se tiver destinos múltiplos
-      if (freight.hasMultipleDestinations && freight.destinations && freight.destinations.length > 0) {
-        freight.destinations.forEach(dest => {
-          const state = dest.destinationState;
-          statesMap.set(state, (statesMap.get(state) || 0) + 1);
-        });
-      } else {
-        // Destino único
-        const state = freight.destinationState;
-        statesMap.set(state, (statesMap.get(state) || 0) + 1);
-      }
-    });
-    
-    // Converte o Map para um array para uso no Recharts
-    return Array.from(statesMap, ([state, count]) => ({ 
+    // Converte o objeto para um array para uso no Recharts
+    return Object.entries(statesMap).map(([state, count]) => ({ 
       state, 
       count,
       fill: getRandomColor(state) // Cor baseada no estado

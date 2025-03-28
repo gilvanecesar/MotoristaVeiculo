@@ -367,7 +367,7 @@ export default function FreightsPage() {
                                     <span className="font-medium">Lona:</span> {getTarpDisplay(freight.needsTarp)}
                                   </div>
                                   <div>
-                                    <span className="font-medium">Pedágio:</span> {getTollDisplay(freight.toll)}
+                                    <span className="font-medium">Pedágio:</span> {getTollDisplay(freight.toll || "a_parte")}
                                   </div>
                                 </div>
                               </div>
@@ -389,7 +389,7 @@ export default function FreightsPage() {
                                     <span className="font-medium">Valor do Frete:</span> {formatCurrency(Number(freight.freightValue))}
                                   </div>
                                   <div>
-                                    <span className="font-medium">Data de Criação:</span> {new Date(freight.createdAt).toLocaleDateString('pt-BR')}
+                                    <span className="font-medium">Data de Criação:</span> {freight.createdAt ? new Date(freight.createdAt).toLocaleDateString('pt-BR') : "N/A"}
                                   </div>
                                   {freight.clientId && (
                                     <div>
@@ -462,7 +462,7 @@ export default function FreightsPage() {
                                     <div key={dest.id || index} className="p-3 border border-slate-200 dark:border-slate-700 rounded-md">
                                       <div className="text-sm">
                                         <div className="font-medium text-slate-800 dark:text-slate-200">
-                                          {index + 1}. {dest.city}, {dest.state}
+                                          {index + 1}. {dest.destination}, {dest.destinationState}
                                         </div>
                                         <div className="text-slate-500 dark:text-slate-400 text-xs mt-1">
                                           Sequência de entrega: {index + 1}
