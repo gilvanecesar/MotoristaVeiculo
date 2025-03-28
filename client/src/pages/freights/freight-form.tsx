@@ -304,8 +304,8 @@ export default function FreightForm() {
                     <FormItem>
                       <FormLabel>Cliente</FormLabel>
                       <Select
-                        value={field.value?.toString() || ""}
-                        onValueChange={(value) => field.onChange(value ? parseInt(value) : null)}
+                        value={field.value?.toString() || "null"}
+                        onValueChange={(value) => field.onChange(value !== "null" ? parseInt(value) : null)}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -313,7 +313,7 @@ export default function FreightForm() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">Sem cliente</SelectItem>
+                          <SelectItem value="null">Sem cliente</SelectItem>
                           {clients?.map((client: any) => (
                             <SelectItem key={client.id} value={client.id.toString()}>
                               {client.name}
