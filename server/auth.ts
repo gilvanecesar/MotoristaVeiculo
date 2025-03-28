@@ -37,10 +37,17 @@ async function hashPassword(password: string) {
 }
 
 async function comparePasswords(supplied: string, stored: string) {
-  const [hashed, salt] = stored.split(".");
-  const hashedBuf = Buffer.from(hashed, "hex");
-  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-  return timingSafeEqual(hashedBuf, suppliedBuf);
+  // Verificar se a senha armazenada tem o formato hash.salt
+  if (stored.includes('.')) {
+    // Formato hash.salt - usa algoritmo scrypt
+    const [hashed, salt] = stored.split(".");
+    const hashedBuf = Buffer.from(hashed, "hex");
+    const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+    return timingSafeEqual(hashedBuf, suppliedBuf);
+  } else {
+    // Para desenvolvimento - permite senhas em texto simples
+    return supplied === stored;
+  }
 }
 
 export function setupAuth(app: Express) {
