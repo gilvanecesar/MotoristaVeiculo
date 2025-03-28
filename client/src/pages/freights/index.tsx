@@ -278,9 +278,13 @@ export default function FreightsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Status</TableHead>
-                  <TableHead>Origem / Destino</TableHead>
+                  <TableHead>Origem</TableHead>
+                  <TableHead>Destino</TableHead>
+                  <TableHead>Destinos Adicionais</TableHead>
                   <TableHead>Tipo de Carga</TableHead>
                   <TableHead>Produto</TableHead>
+                  <TableHead>Peso</TableHead>
+                  <TableHead>Pagamento</TableHead>
                   <TableHead>Valor</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
@@ -294,17 +298,25 @@ export default function FreightsPage() {
                         <div className="font-medium">
                           {freight.origin}, {freight.originState}
                         </div>
-                        <div className="text-sm text-slate-500">
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium">
                           {freight.destination}, {freight.destinationState}
                         </div>
-                        {freight.hasMultipleDestinations && (
-                          <Badge variant="outline" className="mt-1 text-xs">
-                            Múltiplos destinos
+                      </TableCell>
+                      <TableCell>
+                        {freight.hasMultipleDestinations && freight.destinations && freight.destinations.length > 0 ? (
+                          <Badge variant="outline" className="text-xs">
+                            {freight.destinations.length} destinos adicionais
                           </Badge>
+                        ) : (
+                          <span className="text-slate-400 text-sm">Não</span>
                         )}
                       </TableCell>
                       <TableCell>{getCargoTypeDisplay(freight.cargoType)}</TableCell>
                       <TableCell>{freight.productType}</TableCell>
+                      <TableCell>{freight.cargoWeight} kg</TableCell>
+                      <TableCell>{freight.paymentMethod || "À vista"}</TableCell>
                       <TableCell>{formatCurrency(Number(freight.freightValue))}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
@@ -344,7 +356,7 @@ export default function FreightsPage() {
                     
                     {expandedFreight === freight.id && (
                       <TableRow className="bg-slate-50 dark:bg-slate-800/50">
-                        <TableCell colSpan={6}>
+                        <TableCell colSpan={10}>
                           <div className="p-4 space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                               {/* Informações do Veículo */}
