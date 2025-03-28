@@ -228,16 +228,16 @@ export default function FreightForm() {
           // Add new destinations
           for (const dest of destinations) {
             await apiRequest(
-              `/api/freight-destinations`,
               'POST',
+              `/api/freight-destinations`,
               { ...dest, freightId }
             );
           }
         }
       } else {
         response = await apiRequest(
-          '/api/freights',
           'POST',
+          '/api/freights',
           submitData
         );
 
@@ -245,8 +245,8 @@ export default function FreightForm() {
         if (data.hasMultipleDestinations && response) {
           for (const dest of destinations) {
             await apiRequest(
-              `/api/freight-destinations`,
               'POST',
+              `/api/freight-destinations`,
               { ...dest, freightId: response.id }
             );
           }
