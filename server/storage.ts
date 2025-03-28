@@ -335,8 +335,8 @@ export class MemStorage implements IStorage {
         email: "contato@transportadorarapida.com.br",
         phone: "(11) 3333-4444",
         whatsapp: "11933334444",
-        documentType: "cnpj",
-        document: "12.345.678/0001-90",
+        cnpj: "12.345.678/0001-90",
+        clientType: CLIENT_TYPES.CARRIER,
         street: "Av. das Nações Unidas",
         number: "12000",
         complement: "Sala 1500",
@@ -351,8 +351,8 @@ export class MemStorage implements IStorage {
         email: "comercial@disnacional.com.br",
         phone: "(11) 2222-7777",
         whatsapp: "11922227777",
-        documentType: "cnpj",
-        document: "98.765.432/0001-10",
+        cnpj: "98.765.432/0001-10",
+        clientType: CLIENT_TYPES.SHIPPER,
         street: "Rodovia Anhanguera",
         number: "5000",
         complement: "Galpão 15",
@@ -367,8 +367,8 @@ export class MemStorage implements IStorage {
         email: "contato@agromercantil.com.br",
         phone: "(16) 3555-8877",
         whatsapp: "16935558877",
-        documentType: "cnpj",
-        document: "45.678.901/0001-23",
+        cnpj: "45.678.901/0001-23",
+        clientType: CLIENT_TYPES.AGENT,
         street: "Rodovia Washington Luís",
         number: "230",
         complement: "Km 230",
@@ -685,8 +685,9 @@ export class MemStorage implements IStorage {
       .filter(client => 
         client.name.toLowerCase().includes(normalizedQuery) ||
         client.email.toLowerCase().includes(normalizedQuery) ||
-        (client.document && client.document.includes(normalizedQuery)) ||
-        client.phone.includes(normalizedQuery)
+        client.cnpj.includes(normalizedQuery) ||
+        client.phone.includes(normalizedQuery) ||
+        (client.clientType && client.clientType.toLowerCase().includes(normalizedQuery))
       );
   }
   

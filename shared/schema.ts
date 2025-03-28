@@ -111,14 +111,22 @@ export const vehicles = pgTable("vehicles", {
 });
 
 // Tabela de clientes
+export const CLIENT_TYPES = {
+  SHIPPER: "shipper",     // Embarcador
+  CARRIER: "carrier",     // Transportador
+  AGENT: "agent"          // Agente
+} as const;
+
 export const clients = pgTable("clients", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  documentType: text("document_type").notNull(), // CPF ou CNPJ
-  document: text("document").notNull().unique(),
+  cnpj: text("cnpj").notNull().unique(),  // Apenas CNPJ, obrigatório
   email: text("email").notNull(),
   phone: text("phone").notNull(),
   whatsapp: text("whatsapp"),
+  
+  // Tipo de cliente
+  clientType: text("client_type").notNull(),
   
   // Address information
   street: text("street").notNull(),
@@ -246,8 +254,17 @@ export const vehicleValidator = insertVehicleSchema.extend({
 });
 
 export const clientValidator = insertClientSchema.extend({
-  documentType: z.enum(["CPF", "CNPJ"]),
-  document: z.string().min(11).max(18),
+  cnpj: z.string().min(14).max(18).refine(
+    (value) => /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/.test(value) || /^\d{14}$/.test(value),
+    { message: "CNPJ inválido. Use o formato XX.XXX.XXX/XXXX-XX ou XXXXXXXXXXXXXX" }
+  ),
+  clientType: z.enum([
+    CLIENT_TYPES.SHIPPER, 
+    CLIENT_TYPES.CARRIER, 
+    CLIENT_TYPES.AGENT
+  ], {
+    errorMap: () => ({ message: "Selecione um tipo de cliente válido" })
+  }),
   phone: z.string().min(10).max(15),
   whatsapp: z.string().min(10).max(15).optional().or(z.literal('')),
   notes: z.string().max(500).optional().or(z.literal('')),
