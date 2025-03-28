@@ -79,28 +79,33 @@ export default function ClientForm() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
-  // Form definition
+  // Form definition com valores padrão
+  const defaultValues = {
+    name: user?.name || "",
+    email: user?.email || "",
+    phone: "",
+    whatsapp: "",
+    street: "",
+    number: "",
+    complement: "",
+    neighborhood: "",
+    city: "",
+    state: "",
+    zipcode: "",
+    contactName: user?.name || "",
+    contactPhone: "",
+    notes: "",
+    logoUrl: user?.avatarUrl || "",
+    cnpj: "",
+    clientType: CLIENT_TYPES.SHIPPER,
+  };
+
+  // Registra os valores iniciais no console para debug
+  console.log("Valores iniciais do formulário:", defaultValues);
+
   const form = useForm({
     resolver: zodResolver(clientValidator),
-    defaultValues: {
-      name: user?.name || "",
-      email: user?.email || "",
-      phone: "",
-      whatsapp: "",
-      street: "",
-      number: "",
-      complement: "",
-      neighborhood: "",
-      city: "",
-      state: "",
-      zipcode: "",
-      contactName: user?.name || "",
-      contactPhone: "",
-      notes: "",
-      logoUrl: user?.avatarUrl || "",
-      cnpj: "",
-      clientType: CLIENT_TYPES.SHIPPER,
-    },
+    defaultValues,
   });
 
   // Fetch client data for editing
@@ -116,7 +121,7 @@ export default function ClientForm() {
   });
 
   useEffect(() => {
-    // If editing an existing client
+    // Se estiver editando um cliente existente
     if (client && !isClientLoading) {
       form.reset(client);
       const clientLogoUrl = client.logoUrl as string | undefined;
@@ -124,7 +129,7 @@ export default function ClientForm() {
         setLogoPreview(clientLogoUrl);
       }
     } 
-    // If creating a new client and user already has a client
+    // Se estiver criando um novo cliente e o usuário já tiver um cliente
     else if (userClient && !isUserClientLoading) {
       form.reset(userClient);
       const userClientLogoUrl = userClient.logoUrl as string | undefined;
@@ -132,22 +137,26 @@ export default function ClientForm() {
         setLogoPreview(userClientLogoUrl);
       }
       
-      // Show toast notification to user
+      // Exibe notificação para o usuário
       toast({
         title: "Dados pré-preenchidos",
         description: "Os dados do seu cliente já registrado foram carregados para edição.",
       });
     }
-    // If user data is available but no client data yet
-    else if (user && !isEditing && !userClient) {
-      // Pre-fill some fields with user data
-      form.setValue("name", user.name || "");
-      form.setValue("email", user.email || "");
-      form.setValue("contactName", user.name || "");
-      if (user.avatarUrl) {
-        form.setValue("logoUrl", user.avatarUrl);
-        setLogoPreview(user.avatarUrl);
-      }
+    // Se os dados do usuário estiverem disponíveis, mas não houver cliente ainda
+    else if (user && !isEditing) {
+      console.log("Preenchendo com dados do usuário:", user);
+      
+      // Preenche os campos com dados do usuário
+      setTimeout(() => {
+        form.setValue("name", user.name || "");
+        form.setValue("email", user.email || "");
+        form.setValue("contactName", user.name || "");
+        if (user.avatarUrl) {
+          form.setValue("logoUrl", user.avatarUrl);
+          setLogoPreview(user.avatarUrl);
+        }
+      }, 0);
     }
   }, [client, isClientLoading, userClient, isUserClientLoading, user, form, isEditing, toast]);
 
