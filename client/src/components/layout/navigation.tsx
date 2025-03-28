@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
-import { LayoutDashboard, Users, Car, BarChart3, Menu, X, Moon, Sun, Truck, Building2 } from "lucide-react";
+import { LayoutDashboard, Users, Car, BarChart3, Menu, X, Moon, Sun, Truck, Building2, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -15,6 +15,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const navItems = [
+  { 
+    label: "Home", 
+    path: "/",
+    icon: Home
+  },
   { 
     label: "Dashboard", 
     path: "/dashboard",
