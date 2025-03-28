@@ -12,6 +12,10 @@ import DriversPage from "@/pages/drivers/index";
 import DriverForm from "@/pages/drivers/driver-form";
 import VehiclesPage from "@/pages/vehicles/index";
 import ReportsPage from "@/pages/reports";
+import FreightsPage from "@/pages/freights/index";
+import FreightForm from "@/pages/freights/freight-form";
+import ClientsPage from "@/pages/clients/index";
+import ClientForm from "@/pages/clients/client-form";
 
 function Router() {
   return (
@@ -22,6 +26,12 @@ function Router() {
       <Route path="/drivers/new" component={DriverForm} />
       <Route path="/drivers/:id" component={DriverForm} />
       <Route path="/vehicles" component={VehiclesPage} />
+      <Route path="/freights" component={FreightsPage} />
+      <Route path="/freights/new" component={FreightForm} />
+      <Route path="/freights/:id" component={FreightForm} />
+      <Route path="/clients" component={ClientsPage} />
+      <Route path="/clients/new" component={ClientForm} />
+      <Route path="/clients/:id" component={ClientForm} />
       <Route path="/reports" component={ReportsPage} />
       <Route component={NotFound} />
     </Switch>

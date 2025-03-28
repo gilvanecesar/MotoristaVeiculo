@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
-import { LayoutDashboard, Users, Car, BarChart3, Menu, X, Moon, Sun } from "lucide-react";
+import { LayoutDashboard, Users, Car, BarChart3, Menu, X, Moon, Sun, Truck, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -31,6 +31,16 @@ const navItems = [
     icon: Car
   },
   { 
+    label: "Fretes", 
+    path: "/freights",
+    icon: Truck
+  },
+  { 
+    label: "Clientes", 
+    path: "/clients",
+    icon: Building2
+  },
+  { 
     label: "Relatórios", 
     path: "/reports",
     icon: BarChart3
@@ -52,6 +62,10 @@ export default function Navigation() {
         return "Motoristas";
       case "/vehicles":
         return "Veículos";
+      case "/freights":
+        return "Fretes";
+      case "/clients":
+        return "Clientes";
       case "/reports":
         return "Relatórios";
       default:
@@ -59,6 +73,14 @@ export default function Navigation() {
           return "Cadastrar Motorista";
         } else if (location.startsWith("/drivers/")) {
           return "Detalhes do Motorista";
+        } else if (location.startsWith("/freights/new")) {
+          return "Cadastrar Frete";
+        } else if (location.startsWith("/freights/")) {
+          return "Detalhes do Frete";
+        } else if (location.startsWith("/clients/new")) {
+          return "Cadastrar Cliente";
+        } else if (location.startsWith("/clients/")) {
+          return "Detalhes do Cliente";
         }
         return "Sistema de Gestão de Frotas";
     }
