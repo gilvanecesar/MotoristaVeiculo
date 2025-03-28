@@ -47,7 +47,7 @@ export default function VehiclesPage() {
     }
   });
 
-  const { data: drivers = [] } = useQuery({
+  const { data: drivers = [] } = useQuery<any[]>({
     queryKey: ["/api/drivers"],
   });
 
@@ -146,6 +146,7 @@ export default function VehiclesPage() {
   };
 
   const getDriverName = (driverId: number) => {
+    if (!Array.isArray(drivers)) return "Motorista não encontrado";
     const driver = drivers.find((d: any) => d.id === driverId);
     return driver ? driver.name : "Motorista não encontrado";
   };
@@ -218,7 +219,7 @@ export default function VehiclesPage() {
                   paginatedVehicles.map((vehicle) => {
                     const isExpanded = expandedRows.includes(vehicle.id);
                     // Find driver info
-                    const driver = drivers.find((d: any) => d.id === vehicle.driverId);
+                    const driver = Array.isArray(drivers) ? drivers.find((d: any) => d.id === vehicle.driverId) : null;
                     const createdDate = vehicle.createdAt ? new Date(vehicle.createdAt) : new Date();
                     
                     return (
