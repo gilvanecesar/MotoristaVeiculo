@@ -36,13 +36,12 @@ type FormValues = z.infer<typeof driverWithVehiclesSchema>;
 export default function DriverForm() {
   const [, navigate] = useLocation();
   const params = useParams();
-  const [match] = useRoute("/drivers/:id");
+  const [match, routeParams] = useRoute("/drivers/:id");
   const { toast } = useToast();
-  const isEditing = !!match;
-  // Adicionando log para depuração
-  console.log("Match:", match, "Params:", params);
-  const driverId = params?.id ? parseInt(params.id) : undefined;
-  console.log("Driver ID:", driverId);
+  
+  // Usar routeParams ao invés de params
+  const isEditing = match && routeParams?.id && routeParams.id !== "new";
+  const driverId = isEditing ? parseInt(routeParams.id) : undefined;
 
   // Form with validation
   const form = useForm<FormValues>({
@@ -83,7 +82,7 @@ export default function DriverForm() {
       if (!res.ok) throw new Error("Failed to fetch driver");
       return res.json();
     },
-    enabled: isEditing,
+    enabled: !!isEditing && !!driverId,
   });
 
   // Load driver data into form when available
