@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -32,6 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { AdvancedFilter, FilterOption, FilterState } from "@/components/shared/advanced-filter";
 
 export default function VehiclesPage() {
   const [, navigate] = useLocation();
@@ -39,9 +40,11 @@ export default function VehiclesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [vehicleToDelete, setVehicleToDelete] = useState<Vehicle | null>(null);
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [bodyTypeFilter, setBodyTypeFilter] = useState<string>("all");
+  const [filterState, setFilterState] = useState<FilterState>({
+    category: "all",
+    specificType: "all",
+    bodyType: "all"
+  });
   const { toast } = useToast();
   const itemsPerPage = 10;
 
@@ -143,26 +146,26 @@ export default function VehiclesPage() {
   const filteredVehicles = useMemo(() => {
     return vehicles.filter(vehicle => {
       // Filtrar por categoria
-      if (categoryFilter && categoryFilter !== "all" && !vehicle.vehicleType.startsWith(categoryFilter.toLowerCase() + "_")) {
+      if (filterState.category && filterState.category !== "all" && !vehicle.vehicleType.startsWith(filterState.category.toLowerCase() + "_")) {
         return false;
       }
       
       // Filtrar por tipo específico
-      if (typeFilter && typeFilter !== "all") {
+      if (filterState.specificType && filterState.specificType !== "all") {
         const specificType = getSpecificVehicleType(vehicle).toLowerCase();
-        if (specificType !== "todos" && specificType !== typeFilter.toLowerCase()) {
+        if (specificType !== "todos" && specificType !== filterState.specificType.toLowerCase()) {
           return false;
         }
       }
       
       // Filtrar por tipo de carroceria
-      if (bodyTypeFilter && bodyTypeFilter !== "all" && vehicle.bodyType !== bodyTypeFilter) {
+      if (filterState.bodyType && filterState.bodyType !== "all" && vehicle.bodyType !== filterState.bodyType) {
         return false;
       }
       
       return true;
     });
-  }, [vehicles, categoryFilter, typeFilter, bodyTypeFilter]);
+  }, [vehicles, filterState]);
   
   // Pagination
   const totalPages = Math.ceil(filteredVehicles.length / itemsPerPage);
@@ -236,96 +239,61 @@ export default function VehiclesPage() {
         </div>
       </div>
 
-      {/* Filtros */}
-      <div className="mb-4 bg-slate-50 border border-slate-200 rounded-md p-3">
-        <div className="flex items-center gap-2 mb-2">
-          <Filter className="h-4 w-4 text-slate-500" />
-          <h3 className="text-sm font-medium">Filtros</h3>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div>
-            <label htmlFor="categoryFilter" className="text-xs text-slate-500 mb-1 block">
-              Categoria
-            </label>
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger id="categoryFilter" className="h-9">
-                <SelectValue placeholder="Todas categorias" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas categorias</SelectItem>
-                <SelectItem value="leve">Leve</SelectItem>
-                <SelectItem value="medio">Médio</SelectItem>
-                <SelectItem value="pesado">Pesado</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div>
-            <label htmlFor="typeFilter" className="text-xs text-slate-500 mb-1 block">
-              Tipo específico
-            </label>
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger id="typeFilter" className="h-9">
-                <SelectValue placeholder="Todos tipos" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos tipos</SelectItem>
-                <SelectItem value="fiorino">Fiorino</SelectItem>
-                <SelectItem value="toco">Toco</SelectItem>
-                <SelectItem value="vlc">VLC</SelectItem>
-                <SelectItem value="truck">Truck</SelectItem>
-                <SelectItem value="bitruck">Bitruck</SelectItem>
-                <SelectItem value="carreta">Carreta</SelectItem>
-                <SelectItem value="carreta ls">Carreta LS</SelectItem>
-                <SelectItem value="bitrem">Bitrem</SelectItem>
-                <SelectItem value="rodotrem">Rodotrem</SelectItem>
-                <SelectItem value="vanderléia">Vanderléia</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div>
-            <label htmlFor="bodyTypeFilter" className="text-xs text-slate-500 mb-1 block">
-              Carroceria
-            </label>
-            <Select value={bodyTypeFilter} onValueChange={setBodyTypeFilter}>
-              <SelectTrigger id="bodyTypeFilter" className="h-9">
-                <SelectValue placeholder="Todas carrocerias" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas carrocerias</SelectItem>
-                <SelectItem value={BODY_TYPES.BAU}>Baú</SelectItem>
-                <SelectItem value={BODY_TYPES.GRANELEIRA}>Graneleira</SelectItem>
-                <SelectItem value={BODY_TYPES.BASCULANTE}>Basculante</SelectItem>
-                <SelectItem value={BODY_TYPES.PLATAFORMA}>Plataforma</SelectItem>
-                <SelectItem value={BODY_TYPES.TANQUE}>Tanque</SelectItem>
-                <SelectItem value={BODY_TYPES.FRIGORIFICA}>Frigorífica</SelectItem>
-                <SelectItem value={BODY_TYPES.PORTA_CONTEINER}>Porta Contêiner</SelectItem>
-                <SelectItem value={BODY_TYPES.SIDER}>Sider</SelectItem>
-                <SelectItem value={BODY_TYPES.CACAMBA}>Caçamba</SelectItem>
-                <SelectItem value={BODY_TYPES.ABERTA}>Aberta</SelectItem>
-                <SelectItem value={BODY_TYPES.FECHADA}>Fechada</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        
-        {(categoryFilter && categoryFilter !== "all" || typeFilter && typeFilter !== "all" || bodyTypeFilter && bodyTypeFilter !== "all") && (
-          <div className="mt-3 flex justify-end">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => {
-                setCategoryFilter("all");
-                setTypeFilter("all");
-                setBodyTypeFilter("all");
-              }}
-            >
-              Limpar filtros
-            </Button>
-          </div>
-        )}
-      </div>
+      {/* Filtros Avançados */}
+      <AdvancedFilter
+        filterOptions={[
+          {
+            id: "category",
+            label: "Categoria",
+            type: "select",
+            placeholder: "Selecione a categoria",
+            options: [
+              { value: "leve", label: "Leve" },
+              { value: "medio", label: "Médio" },
+              { value: "pesado", label: "Pesado" }
+            ]
+          },
+          {
+            id: "specificType",
+            label: "Tipo específico",
+            type: "select",
+            placeholder: "Selecione o tipo",
+            options: [
+              { value: "fiorino", label: "Fiorino" },
+              { value: "toco", label: "Toco" },
+              { value: "vlc", label: "VLC" },
+              { value: "truck", label: "Truck" },
+              { value: "bitruck", label: "Bitruck" },
+              { value: "carreta", label: "Carreta" },
+              { value: "carreta ls", label: "Carreta LS" },
+              { value: "bitrem", label: "Bitrem" },
+              { value: "rodotrem", label: "Rodotrem" },
+              { value: "vanderléia", label: "Vanderléia" }
+            ]
+          },
+          {
+            id: "bodyType",
+            label: "Carroceria",
+            type: "select",
+            placeholder: "Selecione a carroceria",
+            options: [
+              { value: BODY_TYPES.BAU, label: "Baú" },
+              { value: BODY_TYPES.GRANELEIRA, label: "Graneleira" },
+              { value: BODY_TYPES.BASCULANTE, label: "Basculante" },
+              { value: BODY_TYPES.PLATAFORMA, label: "Plataforma" },
+              { value: BODY_TYPES.TANQUE, label: "Tanque" },
+              { value: BODY_TYPES.FRIGORIFICA, label: "Frigorífica" },
+              { value: BODY_TYPES.PORTA_CONTEINER, label: "Porta Contêiner" },
+              { value: BODY_TYPES.SIDER, label: "Sider" },
+              { value: BODY_TYPES.CACAMBA, label: "Caçamba" },
+              { value: BODY_TYPES.ABERTA, label: "Aberta" },
+              { value: BODY_TYPES.FECHADA, label: "Fechada" }
+            ]
+          }
+        ]}
+        filterState={filterState}
+        onFilterChange={setFilterState}
+      />
 
       <Card>
         <CardContent className="p-0">
