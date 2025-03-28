@@ -162,11 +162,11 @@ export default function FreightForm() {
       // Se não tem cliente atual mas o usuário tem um clientId associado,
       // usamos o clientId do usuário logado
       form.setValue("clientId", user.clientId);
-      
-      // Loga para depuração
-      console.log("Usando clientId do usuário:", user.clientId);
+    } else if (isEditing && freight?.clientId) {
+      // Se estamos editando, mantemos o cliente original do frete
+      form.setValue("clientId", freight.clientId);
     }
-  }, [currentClient, user, isEditing, form]);
+  }, [currentClient, user, isEditing, form, freight]);
 
   useEffect(() => {
     if (freight && !isLoading) {
@@ -212,6 +212,16 @@ export default function FreightForm() {
 
   const onSubmit = async (data: FreightFormValues) => {
     try {
+      // Verificar se um cliente foi selecionado
+      if (!data.clientId) {
+        toast({
+          title: "Erro no formulário",
+          description: "É necessário selecionar um cliente para o frete",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       // Add destinations to the form data if has multiple destinations
       const submitData = {
         ...data,
@@ -328,7 +338,7 @@ export default function FreightForm() {
                     <FormItem>
                       <FormLabel>Cliente</FormLabel>
                       <Select
-                        value={field.value?.toString() || "null"}
+                        value={field.value?.toString() || ""}
                         onValueChange={(value) => field.onChange(value !== "null" ? parseInt(value) : null)}
                         disabled={(currentClient !== null || user?.clientId !== null) && !isEditing}
                       >
@@ -340,13 +350,16 @@ export default function FreightForm() {
                               <div className="text-foreground">
                                 {clients.find((c: any) => c.id === user.clientId)?.name || "Cliente do usuário"}
                               </div>
+                            ) : field.value && clients ? (
+                              <div className="text-foreground">
+                                {clients.find((c: any) => c.id === field.value)?.name || "Cliente selecionado"}
+                              </div>
                             ) : (
                               <SelectValue placeholder="Selecione um cliente" />
                             )}
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="null">Sem cliente</SelectItem>
                           {clients?.map((client: any) => (
                             <SelectItem key={client.id} value={client.id.toString()}>
                               {client.name}
