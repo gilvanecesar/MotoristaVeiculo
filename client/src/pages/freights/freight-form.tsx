@@ -46,8 +46,10 @@ import {
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Separator } from "@/components/ui/separator";
 import { getVehicleTypeDisplay, getBodyTypeDisplay } from "@/lib/utils/vehicle-types";
+import { StateSelect } from "@/components/state-select";
+import { CitySelect } from "@/components/city-select";
 
-// Brazilian states
+// Brazilian states para fallback caso a API do IBGE falhe
 const BRAZILIAN_STATES = [
   { value: "AC", label: "Acre" },
   { value: "AL", label: "Alagoas" },
@@ -359,21 +361,6 @@ export default function FreightForm() {
               
               <h3 className="text-lg font-medium mb-4">Origem e Destino</h3>
               <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
-                {/* Origin */}
-                <FormField
-                  control={form.control}
-                  name="origin"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Cidade de Origem</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Cidade de origem" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
                 {/* Origin State */}
                 <FormField
                   control={form.control}
@@ -381,23 +368,36 @@ export default function FreightForm() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Estado de Origem</FormLabel>
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o estado" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {BRAZILIAN_STATES.map((state) => (
-                            <SelectItem key={state.value} value={state.value}>
-                              {state.label} ({state.value})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <StateSelect
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Selecione o estado de origem"
+                          errorMessage={form.formState.errors.originState?.message}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Origin City */}
+                <FormField
+                  control={form.control}
+                  name="origin"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cidade de Origem</FormLabel>
+                      <FormControl>
+                        <CitySelect
+                          state={form.watch("originState")}
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Selecione a cidade de origem"
+                          disabled={!form.watch("originState")}
+                          errorMessage={form.formState.errors.origin?.message}
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -430,12 +430,17 @@ export default function FreightForm() {
                   <>
                     <FormField
                       control={form.control}
-                      name="destination"
+                      name="destinationState"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Cidade de Destino</FormLabel>
+                          <FormLabel>Estado de Destino</FormLabel>
                           <FormControl>
-                            <Input placeholder="Cidade de destino" {...field} />
+                            <StateSelect
+                              value={field.value}
+                              onChange={field.onChange}
+                              placeholder="Selecione o estado de destino"
+                              errorMessage={form.formState.errors.destinationState?.message}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -444,27 +449,20 @@ export default function FreightForm() {
 
                     <FormField
                       control={form.control}
-                      name="destinationState"
+                      name="destination"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Estado de Destino</FormLabel>
-                          <Select
-                            value={field.value}
-                            onValueChange={field.onChange}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecione o estado" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {BRAZILIAN_STATES.map((state) => (
-                                <SelectItem key={state.value} value={state.value}>
-                                  {state.label} ({state.value})
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <FormLabel>Cidade de Destino</FormLabel>
+                          <FormControl>
+                            <CitySelect
+                              state={form.watch("destinationState")}
+                              value={field.value}
+                              onChange={field.onChange}
+                              placeholder="Selecione a cidade de destino"
+                              disabled={!form.watch("destinationState")}
+                              errorMessage={form.formState.errors.destination?.message}
+                            />
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -494,30 +492,22 @@ export default function FreightForm() {
                             className="grid grid-cols-1 md:grid-cols-5 gap-4 p-4 border rounded-md bg-slate-50 dark:bg-slate-800"
                           >
                             <div className="md:col-span-2">
-                              <FormLabel>Cidade</FormLabel>
-                              <Input
-                                placeholder="Cidade de destino"
-                                value={dest.destination}
-                                onChange={(e) => updateDestination(index, 'destination', e.target.value)}
+                              <FormLabel>Estado</FormLabel>
+                              <StateSelect
+                                value={dest.destinationState}
+                                onChange={(value) => updateDestination(index, 'destinationState', value)}
+                                placeholder="Selecione o estado"
                               />
                             </div>
                             <div className="md:col-span-2">
-                              <FormLabel>Estado</FormLabel>
-                              <Select
-                                value={dest.destinationState}
-                                onValueChange={(value) => updateDestination(index, 'destinationState', value)}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Selecione o estado" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {BRAZILIAN_STATES.map((state) => (
-                                    <SelectItem key={state.value} value={state.value}>
-                                      {state.label} ({state.value})
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                              <FormLabel>Cidade</FormLabel>
+                              <CitySelect
+                                state={dest.destinationState}
+                                value={dest.destination}
+                                onChange={(value) => updateDestination(index, 'destination', value)}
+                                placeholder="Selecione a cidade de destino"
+                                disabled={!dest.destinationState}
+                              />
                             </div>
                             <div className="flex items-end">
                               <Button 
