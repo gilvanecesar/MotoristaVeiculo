@@ -59,6 +59,51 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
     return { count, plates };
   };
   
+  // Formatar o tipo de veículo para exibição
+  const getVehicleTypeDisplay = (vehicle: Vehicle) => {
+    if (!vehicle) return "Não definido";
+    
+    // Leves
+    if (vehicle.vehicleType === VEHICLE_TYPES.LEVE_TODOS) return "Leve (Todos)";
+    if (vehicle.vehicleType === VEHICLE_TYPES.LEVE_FIORINO) return "Leve (Fiorino)";
+    if (vehicle.vehicleType === VEHICLE_TYPES.LEVE_TOCO) return "Leve (Toco)";
+    if (vehicle.vehicleType === VEHICLE_TYPES.LEVE_VLC) return "Leve (VLC)";
+    
+    // Médios
+    if (vehicle.vehicleType === VEHICLE_TYPES.MEDIO_TODOS) return "Médio (Todos)";
+    if (vehicle.vehicleType === VEHICLE_TYPES.MEDIO_BITRUCK) return "Médio (Bitruck)";
+    if (vehicle.vehicleType === VEHICLE_TYPES.MEDIO_TRUCK) return "Médio (Truck)";
+    
+    // Pesados
+    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_TODOS) return "Pesado (Todos)";
+    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_BITREM) return "Pesado (Bitrem)";
+    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_CARRETA) return "Pesado (Carreta)";
+    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_CARRETA_LS) return "Pesado (Carreta LS)";
+    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_RODOTREM) return "Pesado (Rodotrem)";
+    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_VANDERLEIA) return "Pesado (Vanderléia)";
+    
+    return "Desconhecido";
+  };
+  
+  // Formatar o tipo de carroceria para exibição
+  const getBodyTypeDisplay = (vehicle: Vehicle) => {
+    if (!vehicle) return "Não definido";
+    
+    if (vehicle.bodyType === BODY_TYPES.BAU) return "Baú";
+    if (vehicle.bodyType === BODY_TYPES.GRANELEIRA) return "Graneleira";
+    if (vehicle.bodyType === BODY_TYPES.BASCULANTE) return "Basculante";
+    if (vehicle.bodyType === BODY_TYPES.PLATAFORMA) return "Plataforma";
+    if (vehicle.bodyType === BODY_TYPES.TANQUE) return "Tanque";
+    if (vehicle.bodyType === BODY_TYPES.FRIGORIFICA) return "Frigorífica";
+    if (vehicle.bodyType === BODY_TYPES.PORTA_CONTEINER) return "Porta Contêiner";
+    if (vehicle.bodyType === BODY_TYPES.SIDER) return "Sider";
+    if (vehicle.bodyType === BODY_TYPES.CACAMBA) return "Caçamba";
+    if (vehicle.bodyType === BODY_TYPES.ABERTA) return "Aberta";
+    if (vehicle.bodyType === BODY_TYPES.FECHADA) return "Fechada";
+    
+    return "Desconhecido";
+  };
+  
   // Function to format WhatsApp number for the wa.me link
   const formatWhatsAppLink = (phone: string | null) => {
     if (!phone) return null;
@@ -91,6 +136,8 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
                 <TableHead>CNH</TableHead>
                 <TableHead>WhatsApp</TableHead>
                 <TableHead>Veículos</TableHead>
+                <TableHead>Tipo de Veículo</TableHead>
+                <TableHead>Tipo de Carroceria</TableHead>
                 <TableHead>Cadastrado em</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
@@ -98,13 +145,13 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-4">
+                  <TableCell colSpan={10} className="text-center py-4">
                     Carregando motoristas...
                   </TableCell>
                 </TableRow>
               ) : paginatedDrivers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-4">
+                  <TableCell colSpan={10} className="text-center py-4">
                     <div className="flex flex-col items-center py-4 text-slate-500">
                       <Users className="h-12 w-12 mb-2 text-slate-300" />
                       <p className="mb-1">Nenhum motorista encontrado</p>
@@ -182,6 +229,26 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
                           <div className="text-xs text-slate-500">{vehicleInfo.plates}</div>
                         </TableCell>
                         <TableCell>
+                          {driver.vehicles.length > 0 ? (
+                            <div className="text-sm text-slate-900">
+                              {getVehicleTypeDisplay(driver.vehicles[0])}
+                            </div>
+                          ) : (
+                            <div className="text-xs text-slate-500">Não definido</div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {driver.vehicles.length > 0 ? (
+                            <div>
+                              <Badge variant="outline" className="font-normal text-xs h-5 px-1.5">
+                                {getBodyTypeDisplay(driver.vehicles[0])}
+                              </Badge>
+                            </div>
+                          ) : (
+                            <div className="text-xs text-slate-500">Não definido</div>
+                          )}
+                        </TableCell>
+                        <TableCell>
                           <div className="text-sm text-slate-500">
                             {format(createdDate, 'dd/MM/yyyy')}
                           </div>
@@ -222,7 +289,7 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
                       {/* Linha de detalhes expandida */}
                       {isExpanded && (
                         <TableRow>
-                          <TableCell colSpan={8}>
+                          <TableCell colSpan={10}>
                             <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700">
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                 <div>
