@@ -59,28 +59,44 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
     return { count, plates };
   };
   
-  // Formatar o tipo de veículo para exibição
-  const getVehicleTypeDisplay = (vehicle: Vehicle) => {
+  // Obter categoria do veículo (leve, médio, pesado)
+  const getVehicleCategory = (vehicle: Vehicle): string => {
+    if (!vehicle) return "Desconhecido";
+    
+    // Leves
+    if (vehicle.vehicleType.startsWith("leve_")) return "Leve";
+    
+    // Médios
+    if (vehicle.vehicleType.startsWith("medio_")) return "Médio";
+    
+    // Pesados
+    if (vehicle.vehicleType.startsWith("pesado_")) return "Pesado";
+    
+    return "Desconhecido";
+  };
+
+  // Obter o tipo específico do veículo
+  const getSpecificVehicleType = (vehicle: Vehicle): string => {
     if (!vehicle) return "Não definido";
     
     // Leves
-    if (vehicle.vehicleType === VEHICLE_TYPES.LEVE_TODOS) return "Leve (Todos)";
-    if (vehicle.vehicleType === VEHICLE_TYPES.LEVE_FIORINO) return "Leve (Fiorino)";
-    if (vehicle.vehicleType === VEHICLE_TYPES.LEVE_TOCO) return "Leve (Toco)";
-    if (vehicle.vehicleType === VEHICLE_TYPES.LEVE_VLC) return "Leve (VLC)";
+    if (vehicle.vehicleType === VEHICLE_TYPES.LEVE_TODOS) return "Todos";
+    if (vehicle.vehicleType === VEHICLE_TYPES.LEVE_FIORINO) return "Fiorino";
+    if (vehicle.vehicleType === VEHICLE_TYPES.LEVE_TOCO) return "Toco";
+    if (vehicle.vehicleType === VEHICLE_TYPES.LEVE_VLC) return "VLC";
     
     // Médios
-    if (vehicle.vehicleType === VEHICLE_TYPES.MEDIO_TODOS) return "Médio (Todos)";
-    if (vehicle.vehicleType === VEHICLE_TYPES.MEDIO_BITRUCK) return "Médio (Bitruck)";
-    if (vehicle.vehicleType === VEHICLE_TYPES.MEDIO_TRUCK) return "Médio (Truck)";
+    if (vehicle.vehicleType === VEHICLE_TYPES.MEDIO_TODOS) return "Todos";
+    if (vehicle.vehicleType === VEHICLE_TYPES.MEDIO_BITRUCK) return "Bitruck";
+    if (vehicle.vehicleType === VEHICLE_TYPES.MEDIO_TRUCK) return "Truck";
     
     // Pesados
-    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_TODOS) return "Pesado (Todos)";
-    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_BITREM) return "Pesado (Bitrem)";
-    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_CARRETA) return "Pesado (Carreta)";
-    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_CARRETA_LS) return "Pesado (Carreta LS)";
-    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_RODOTREM) return "Pesado (Rodotrem)";
-    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_VANDERLEIA) return "Pesado (Vanderléia)";
+    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_TODOS) return "Todos";
+    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_BITREM) return "Bitrem";
+    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_CARRETA) return "Carreta";
+    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_CARRETA_LS) return "Carreta LS";
+    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_RODOTREM) return "Rodotrem";
+    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_VANDERLEIA) return "Vanderléia";
     
     return "Desconhecido";
   };
@@ -136,8 +152,9 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
                 <TableHead>CNH</TableHead>
                 <TableHead>WhatsApp</TableHead>
                 <TableHead>Veículos</TableHead>
-                <TableHead>Tipo de Veículo</TableHead>
-                <TableHead>Tipo de Carroceria</TableHead>
+                <TableHead>Categoria</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Carroceria</TableHead>
                 <TableHead>Cadastrado em</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
@@ -230,8 +247,20 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
                         </TableCell>
                         <TableCell>
                           {driver.vehicles.length > 0 ? (
+                            <Badge 
+                              variant="secondary" 
+                              className="font-medium text-xs"
+                            >
+                              {getVehicleCategory(driver.vehicles[0])}
+                            </Badge>
+                          ) : (
+                            <div className="text-xs text-slate-500">Não definido</div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {driver.vehicles.length > 0 ? (
                             <div className="text-sm text-slate-900">
-                              {getVehicleTypeDisplay(driver.vehicles[0])}
+                              {getSpecificVehicleType(driver.vehicles[0])}
                             </div>
                           ) : (
                             <div className="text-xs text-slate-500">Não definido</div>
