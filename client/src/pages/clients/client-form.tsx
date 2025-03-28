@@ -204,14 +204,14 @@ export default function ClientForm() {
     try {
       if (isEditing) {
         await apiRequest(
-          `/api/clients/${clientId}`,
           'PUT',
+          `/api/clients/${clientId}`,
           data
         );
       } else {
         await apiRequest(
-          '/api/clients',
           'POST',
+          '/api/clients',
           data
         );
       }

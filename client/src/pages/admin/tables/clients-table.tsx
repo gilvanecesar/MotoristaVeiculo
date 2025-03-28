@@ -53,7 +53,6 @@ export default function ClientsTable() {
     queryKey: ["/api/clients"],
     queryFn: async () => {
       const res = await apiRequest("GET", "/api/clients");
-      if (!res.ok) throw new Error("Falha ao carregar clientes");
       return await res.json();
     }
   });
