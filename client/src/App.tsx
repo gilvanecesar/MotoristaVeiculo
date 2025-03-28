@@ -3,7 +3,8 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "./lib/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
-import { AuthProvider } from "@/hooks/use-auth";
+import { AuthProvider as UserAuthProvider } from "@/hooks/use-auth";
+import { AuthProvider as ClientAuthProvider } from "@/lib/auth-context";
 import { ProtectedRoute } from "@/lib/protected-route";
 import NotFound from "@/pages/not-found";
 import Navigation from "@/components/layout/navigation";
@@ -48,20 +49,22 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <AuthProvider>
-          <div className="flex flex-col min-h-screen bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-200">
-            <Navigation />
-            <div className="flex flex-col flex-grow">
-              <main className="px-6 py-6 flex-grow max-w-full overflow-x-hidden">
-                <div className="container mx-auto">
-                  <Router />
-                </div>
-              </main>
-              <Footer />
+        <UserAuthProvider>
+          <ClientAuthProvider>
+            <div className="flex flex-col min-h-screen bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-200">
+              <Navigation />
+              <div className="flex flex-col flex-grow">
+                <main className="px-6 py-6 flex-grow max-w-full overflow-x-hidden">
+                  <div className="container mx-auto">
+                    <Router />
+                  </div>
+                </main>
+                <Footer />
+              </div>
             </div>
-          </div>
-          <Toaster />
-        </AuthProvider>
+            <Toaster />
+          </ClientAuthProvider>
+        </UserAuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );
