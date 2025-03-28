@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { useAuth } from "@/lib/auth-context";
 import { 
   Plus, 
   Search, 
@@ -78,6 +79,7 @@ export default function FreightsPage() {
   const [filterStatus, setFilterStatus] = useState<string>("todos");
   const [expandedFreight, setExpandedFreight] = useState<number | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const { currentClient, isClientAuthorized } = useAuth();
   const [filters, setFilters] = useState({
     origin: "",
     destination: "",
@@ -547,26 +549,32 @@ export default function FreightsPage() {
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/freights/${freight.id}`);
-                            }}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleDeleteDialog(freight);
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          {isClientAuthorized(freight.clientId) && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/freights/edit/${freight.id}`);
+                              }}
+                              title="Editar frete"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {isClientAuthorized(freight.clientId) && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleDeleteDialog(freight);
+                              }}
+                              title="Excluir frete"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>

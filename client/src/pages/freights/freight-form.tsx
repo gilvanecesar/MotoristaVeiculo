@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowLeft, Plus, Trash2, Truck } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -99,6 +100,7 @@ export default function FreightForm() {
   const [destinations, setDestinations] = useState<DestinationFormValues[]>([]);
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { currentClient } = useAuth();
 
   // Fetch clients for dropdown
   const { data: clients } = useQuery({
@@ -149,6 +151,13 @@ export default function FreightForm() {
   });
 
   const hasMultipleDestinations = form.watch("hasMultipleDestinations");
+
+  // Definir o cliente autenticado como o cliente do frete quando estiver criando um novo frete
+  useEffect(() => {
+    if (currentClient && !isEditing) {
+      form.setValue("clientId", currentClient.id);
+    }
+  }, [currentClient, isEditing, form]);
 
   useEffect(() => {
     if (freight && !isLoading) {
@@ -312,6 +321,7 @@ export default function FreightForm() {
                       <Select
                         value={field.value?.toString() || "null"}
                         onValueChange={(value) => field.onChange(value !== "null" ? parseInt(value) : null)}
+                        disabled={currentClient !== null && !isEditing}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -327,6 +337,11 @@ export default function FreightForm() {
                           ))}
                         </SelectContent>
                       </Select>
+                      {currentClient && !isEditing && (
+                        <FormDescription>
+                          O frete será associado automaticamente ao cliente logado ({currentClient.name})
+                        </FormDescription>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}

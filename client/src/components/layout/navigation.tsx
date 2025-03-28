@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useTheme } from "@/lib/theme-provider";
+import { useAuth } from "@/lib/auth-context";
+import { ClientSelector } from "@/components/client-selector";
 import logoImage from "../../assets/logo.png";
 import { 
   DropdownMenu,
@@ -143,8 +145,11 @@ export default function Navigation() {
             })}
           </nav>
 
-          {/* Theme Toggle + User Profile */}
+          {/* Theme Toggle + Client Selector */}
           <div className="hidden md:flex items-center gap-2">
+            {/* Client Selector */}
+            <ClientSelector />
+            
             {/* Theme Toggle Button */}
             <Button
               variant="ghost"
