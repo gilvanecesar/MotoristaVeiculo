@@ -106,27 +106,30 @@ export class MemStorage implements IStorage {
   
   // Método para criar dados fictícios
   private createDummyData() {
-    // Usuários
+    // Usuários (senhas já hasheadas para compatibilidade com o algoritmo scrypt)
     const users: InsertUser[] = [
       {
         name: "Admin User",
-        email: "admin@querofretes.com",
-        password: "admin123",
+        email: "admin@example.com",
+        // Senha: admin123 (já hasheada)
+        password: "2f9eec196d737d79177e9dc6322c739bab0369fb3b6400ffcb6064911a9b31f42d652be7d11f3127dd915ec12a0b157e43d2f7d881f44495ece6b7b1a11407a7.e4ce8cf147b16f6cc94a23e6a382a63c",
         profileType: "admin",
         authProvider: "local"
       },
       {
         name: "Cliente Transportadora",
-        email: "cliente@transportadorarapida.com.br",
-        password: "cliente123",
+        email: "cliente@example.com",
+        // Senha: 123456 (já hasheada)
+        password: "c1fa083e9ec90f73bd8d7f11ba89d6bd37c74ed1c20849194d45417504c67073344c63e5ac3cebeecfb4d9733ba1e97aeabf879ae3fdd916ddb39e36ba2503d7.fe31adb8c5d8f00c6bfa033a6591c30d",
         profileType: "shipper",
         authProvider: "local",
         clientId: 1
       },
       {
         name: "Motorista João",
-        email: "joao.silva@email.com",
-        password: "motorista123",
+        email: "motorista@example.com",
+        // Senha: 123456 (já hasheada) 
+        password: "c1fa083e9ec90f73bd8d7f11ba89d6bd37c74ed1c20849194d45417504c67073344c63e5ac3cebeecfb4d9733ba1e97aeabf879ae3fdd916ddb39e36ba2503d7.fe31adb8c5d8f00c6bfa033a6591c30d",
         profileType: "driver",
         authProvider: "local",
         driverId: 1
