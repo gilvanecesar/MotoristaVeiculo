@@ -165,26 +165,26 @@ export function VehicleForm({ index, control, onRemove }: VehicleFormProps) {
                 </FormControl>
                 <SelectContent>
                   {/* Veículos Leves */}
-                  <SelectItem value="" disabled className="font-semibold text-primary">
+                  <div className="px-2 py-1.5 font-semibold text-primary">
                     -- Veículos Leves --
-                  </SelectItem>
+                  </div>
                   <SelectItem value={VEHICLE_TYPES.LEVE_TODOS}>Todos os leves</SelectItem>
                   <SelectItem value={VEHICLE_TYPES.LEVE_FIORINO}>Fiorino</SelectItem>
                   <SelectItem value={VEHICLE_TYPES.LEVE_TOCO}>Toco</SelectItem>
                   <SelectItem value={VEHICLE_TYPES.LEVE_VLC}>VLC</SelectItem>
                   
                   {/* Veículos Médios */}
-                  <SelectItem value="" disabled className="font-semibold text-primary mt-2">
+                  <div className="px-2 py-1.5 font-semibold text-primary mt-2">
                     -- Veículos Médios --
-                  </SelectItem>
+                  </div>
                   <SelectItem value={VEHICLE_TYPES.MEDIO_TODOS}>Todos os médios</SelectItem>
                   <SelectItem value={VEHICLE_TYPES.MEDIO_BITRUCK}>Bitruck</SelectItem>
                   <SelectItem value={VEHICLE_TYPES.MEDIO_TRUCK}>Truck</SelectItem>
                   
                   {/* Veículos Pesados */}
-                  <SelectItem value="" disabled className="font-semibold text-primary mt-2">
+                  <div className="px-2 py-1.5 font-semibold text-primary mt-2">
                     -- Veículos Pesados --
-                  </SelectItem>
+                  </div>
                   <SelectItem value={VEHICLE_TYPES.PESADO_TODOS}>Todos os pesados</SelectItem>
                   <SelectItem value={VEHICLE_TYPES.PESADO_BITREM}>Bitrem</SelectItem>
                   <SelectItem value={VEHICLE_TYPES.PESADO_CARRETA}>Carreta</SelectItem>
