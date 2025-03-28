@@ -77,14 +77,73 @@ export default function FreightsPage() {
   const [selectedFreight, setSelectedFreight] = useState<FreightWithDestinations | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>("todos");
   const [expandedFreight, setExpandedFreight] = useState<number | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({
+    origin: "",
+    destination: "",
+    vehicleType: "",
+    bodyType: "",
+    cargoType: "",
+    paymentMethod: "",
+    minWeight: "",
+    maxWeight: ""
+  });
+
+  // Função para filtrar os fretes de acordo com os critérios
+  const filterFreights = (data: FreightWithDestinations[]) => {
+    if (!data) return [];
+    
+    return data.filter(freight => {
+      // Filtro por status
+      if (filterStatus !== "todos" && freight.status !== filterStatus) {
+        return false;
+      }
+      
+      // Filtros adicionais
+      if (filters.origin && !freight.origin.toLowerCase().includes(filters.origin.toLowerCase()) && 
+          !freight.originState.toLowerCase().includes(filters.origin.toLowerCase())) {
+        return false;
+      }
+      
+      if (filters.destination && !freight.destination.toLowerCase().includes(filters.destination.toLowerCase()) && 
+          !freight.destinationState.toLowerCase().includes(filters.destination.toLowerCase())) {
+        return false;
+      }
+      
+      if (filters.vehicleType && freight.vehicleType !== filters.vehicleType) {
+        return false;
+      }
+      
+      if (filters.bodyType && freight.bodyType !== filters.bodyType) {
+        return false;
+      }
+      
+      if (filters.cargoType && freight.cargoType !== filters.cargoType) {
+        return false;
+      }
+      
+      if (filters.paymentMethod && freight.paymentMethod !== filters.paymentMethod) {
+        return false;
+      }
+      
+      // Filtro por peso
+      const weight = parseFloat(freight.cargoWeight);
+      if (filters.minWeight && weight < parseFloat(filters.minWeight)) {
+        return false;
+      }
+      
+      if (filters.maxWeight && weight > parseFloat(filters.maxWeight)) {
+        return false;
+      }
+      
+      return true;
+    });
+  };
 
   // Fetch data
   const { data: freights, isLoading } = useQuery({
     queryKey: ['/api/freights'],
-    select: (data: FreightWithDestinations[]) => {
-      if (filterStatus === "todos") return data;
-      return data.filter(freight => freight.status === filterStatus);
-    }
+    select: filterFreights
   });
   
   const { data: clients } = useQuery({
@@ -248,6 +307,15 @@ export default function FreightsPage() {
                 </SelectContent>
               </Select>
             </div>
+            
+            <Button 
+              variant="outline" 
+              onClick={() => setShowFilters(!showFilters)}
+              className="gap-2"
+            >
+              <Filter className="h-4 w-4" />
+              {showFilters ? "Ocultar Filtros" : "Mostrar Filtros"}
+            </Button>
 
             <Button onClick={() => navigate("/freights/new")}>
               <Plus className="h-4 w-4 mr-2" />
@@ -256,6 +324,155 @@ export default function FreightsPage() {
           </div>
         </div>
       </div>
+
+      {showFilters && (
+        <Card className="mb-4">
+          <CardHeader className="pb-3">
+            <CardTitle>Filtros Avançados</CardTitle>
+            <CardDescription>
+              Use os filtros abaixo para refinar os resultados
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Origem</label>
+                <Input 
+                  placeholder="Filtrar por origem" 
+                  value={filters.origin}
+                  onChange={(e) => setFilters({...filters, origin: e.target.value})}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Destino</label>
+                <Input 
+                  placeholder="Filtrar por destino" 
+                  value={filters.destination}
+                  onChange={(e) => setFilters({...filters, destination: e.target.value})}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Tipo de Veículo</label>
+                <Select 
+                  value={filters.vehicleType} 
+                  onValueChange={(value) => setFilters({...filters, vehicleType: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Todos</SelectItem>
+                    {Object.entries(VEHICLE_TYPES).map(([key, value]) => (
+                      <SelectItem key={key} value={value}>
+                        {getVehicleTypeDisplay(value)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Tipo de Carroceria</label>
+                <Select 
+                  value={filters.bodyType} 
+                  onValueChange={(value) => setFilters({...filters, bodyType: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Todos</SelectItem>
+                    {Object.entries(BODY_TYPES).map(([key, value]) => (
+                      <SelectItem key={key} value={value}>
+                        {getBodyTypeDisplay(value)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Tipo de Carga</label>
+                <Select 
+                  value={filters.cargoType} 
+                  onValueChange={(value) => setFilters({...filters, cargoType: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Todos</SelectItem>
+                    {Object.entries(CARGO_TYPES).map(([key, value]) => (
+                      <SelectItem key={key} value={value}>
+                        {getCargoTypeDisplay(value)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Forma de Pagamento</label>
+                <Select 
+                  value={filters.paymentMethod} 
+                  onValueChange={(value) => setFilters({...filters, paymentMethod: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Todos</SelectItem>
+                    <SelectItem value="a_vista">À Vista</SelectItem>
+                    <SelectItem value="30_dias">30 Dias</SelectItem>
+                    <SelectItem value="45_dias">45 Dias</SelectItem>
+                    <SelectItem value="60_dias">60 Dias</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Peso Mínimo (kg)</label>
+                <Input 
+                  type="number" 
+                  placeholder="Peso mínimo" 
+                  value={filters.minWeight}
+                  onChange={(e) => setFilters({...filters, minWeight: e.target.value})}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Peso Máximo (kg)</label>
+                <Input 
+                  type="number" 
+                  placeholder="Peso máximo" 
+                  value={filters.maxWeight}
+                  onChange={(e) => setFilters({...filters, maxWeight: e.target.value})}
+                />
+              </div>
+            </div>
+            
+            <div className="mt-4 flex justify-end gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setFilters({
+                  origin: "",
+                  destination: "",
+                  vehicleType: "",
+                  bodyType: "",
+                  cargoType: "",
+                  paymentMethod: "",
+                  minWeight: "",
+                  maxWeight: ""
+                })}
+              >
+                Limpar Filtros
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader className="pb-3">
