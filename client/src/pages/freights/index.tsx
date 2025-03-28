@@ -81,10 +81,10 @@ export default function FreightsPage() {
   const [filters, setFilters] = useState({
     origin: "",
     destination: "",
-    vehicleType: "",
-    bodyType: "",
-    cargoType: "",
-    paymentMethod: "",
+    vehicleType: "todos",
+    bodyType: "todos",
+    cargoType: "todos",
+    paymentMethod: "todos",
     minWeight: "",
     maxWeight: ""
   });
@@ -110,19 +110,19 @@ export default function FreightsPage() {
         return false;
       }
       
-      if (filters.vehicleType && freight.vehicleType !== filters.vehicleType) {
+      if (filters.vehicleType && filters.vehicleType !== 'todos' && freight.vehicleType !== filters.vehicleType) {
         return false;
       }
       
-      if (filters.bodyType && freight.bodyType !== filters.bodyType) {
+      if (filters.bodyType && filters.bodyType !== 'todos' && freight.bodyType !== filters.bodyType) {
         return false;
       }
       
-      if (filters.cargoType && freight.cargoType !== filters.cargoType) {
+      if (filters.cargoType && filters.cargoType !== 'todos' && freight.cargoType !== filters.cargoType) {
         return false;
       }
       
-      if (filters.paymentMethod && freight.paymentMethod !== filters.paymentMethod) {
+      if (filters.paymentMethod && filters.paymentMethod !== 'todos' && freight.paymentMethod !== filters.paymentMethod) {
         return false;
       }
       
@@ -363,7 +363,7 @@ export default function FreightsPage() {
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos</SelectItem>
+                    <SelectItem value="todos">Todos</SelectItem>
                     {Object.entries(VEHICLE_TYPES).map(([key, value]) => (
                       <SelectItem key={key} value={value}>
                         {getVehicleTypeDisplay(value)}
@@ -383,7 +383,7 @@ export default function FreightsPage() {
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos</SelectItem>
+                    <SelectItem value="todos">Todos</SelectItem>
                     {Object.entries(BODY_TYPES).map(([key, value]) => (
                       <SelectItem key={key} value={value}>
                         {getBodyTypeDisplay(value)}
@@ -403,7 +403,7 @@ export default function FreightsPage() {
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos</SelectItem>
+                    <SelectItem value="todos">Todos</SelectItem>
                     {Object.entries(CARGO_TYPES).map(([key, value]) => (
                       <SelectItem key={key} value={value}>
                         {getCargoTypeDisplay(value)}
@@ -423,7 +423,7 @@ export default function FreightsPage() {
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos</SelectItem>
+                    <SelectItem value="todos">Todos</SelectItem>
                     <SelectItem value="a_vista">À Vista</SelectItem>
                     <SelectItem value="30_dias">30 Dias</SelectItem>
                     <SelectItem value="45_dias">45 Dias</SelectItem>
@@ -459,10 +459,10 @@ export default function FreightsPage() {
                 onClick={() => setFilters({
                   origin: "",
                   destination: "",
-                  vehicleType: "",
-                  bodyType: "",
-                  cargoType: "",
-                  paymentMethod: "",
+                  vehicleType: "todos",
+                  bodyType: "todos",
+                  cargoType: "todos",
+                  paymentMethod: "todos",
                   minWeight: "",
                   maxWeight: ""
                 })}
