@@ -278,6 +278,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const clientData = clientValidator.parse(req.body);
       const client = await storage.createClient(clientData);
+      
+      // Se o usuário estiver autenticado, associa o cliente ao usuário
+      if (req.isAuthenticated() && req.user) {
+        const userId = req.user.id;
+        // Atualiza o usuário para ter o clientId
+        await storage.updateUser(userId, { clientId: client.id });
+        // Atualiza o objeto req.user para refletir a mudança
+        req.user.clientId = client.id;
+      }
+      
       res.status(201).json(client);
     } catch (error) {
       if (error instanceof ZodError) {
@@ -550,6 +560,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting freight destination:", error);
       res.status(500).json({ message: "Failed to delete freight destination" });
+    }
+  });
+
+  // Rota para associar um cliente existente ao usuário logado
+  app.post("/api/users/associate-client", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { clientId } = req.body;
+      
+      if (!clientId) {
+        return res.status(400).json({ message: "Client ID is required" });
+      }
+      
+      const id = parseInt(clientId);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid client ID format" });
+      }
+      
+      // Verificar se o cliente existe
+      const client = await storage.getClient(id);
+      if (!client) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+      
+      if (!req.user) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+      
+      // Atualizar o usuário com o clientId
+      const userId = req.user.id;
+      const user = await storage.updateUser(userId, { clientId: id });
+      
+      if (!user) {
+        return res.status(404).json({ message: "Failed to update user" });
+      }
+      
+      // Atualiza o objeto req.user para refletir a mudança
+      req.user.clientId = id;
+      
+      res.status(200).json({ message: "Client associated successfully", user });
+    } catch (error) {
+      console.error("Error associating client to user:", error);
+      res.status(500).json({ message: "Failed to associate client to user" });
     }
   });
 

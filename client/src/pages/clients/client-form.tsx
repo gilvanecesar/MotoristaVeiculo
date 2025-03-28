@@ -202,18 +202,24 @@ export default function ClientForm() {
 
   const onSubmit = async (data: any) => {
     try {
+      let clientResponse;
+      
       if (isEditing) {
-        await apiRequest(
+        clientResponse = await apiRequest(
           'PUT',
           `/api/clients/${clientId}`,
           data
         );
       } else {
-        await apiRequest(
+        // Quando estamos criando um novo cliente
+        clientResponse = await apiRequest(
           'POST',
           '/api/clients',
           data
         );
+        
+        // A associação automática ao usuário já é feita no backend
+        // O objeto req.user é atualizado automaticamente no servidor
       }
 
       toast({
@@ -223,7 +229,11 @@ export default function ClientForm() {
           : "O novo cliente foi cadastrado com sucesso.",
       });
 
+      // Atualiza o cache do React Query
       queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      
+      // Redireciona para a página de clientes
       navigate("/clients");
     } catch (error) {
       console.error("Error saving client:", error);
