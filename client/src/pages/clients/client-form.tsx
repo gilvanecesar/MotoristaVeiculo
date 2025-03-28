@@ -36,6 +36,7 @@ import { clientValidator, CLIENT_TYPES } from "@shared/schema";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/hooks/use-auth";
 
 // Brazilian states
 const BRAZILIAN_STATES = [
@@ -74,6 +75,7 @@ export default function ClientForm() {
   const clientId = parseInt(params.id || "0");
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
@@ -81,8 +83,8 @@ export default function ClientForm() {
   const form = useForm({
     resolver: zodResolver(clientValidator),
     defaultValues: {
-      name: "",
-      email: "",
+      name: user?.name || "",
+      email: user?.email || "",
       phone: "",
       whatsapp: "",
       street: "",
@@ -92,29 +94,62 @@ export default function ClientForm() {
       city: "",
       state: "",
       zipcode: "",
-      contactName: "",
+      contactName: user?.name || "",
       contactPhone: "",
       notes: "",
-      logoUrl: "",
+      logoUrl: user?.avatarUrl || "",
       cnpj: "",
       clientType: CLIENT_TYPES.SHIPPER,
     },
   });
 
   // Fetch client data for editing
-  const { data: client, isLoading } = useQuery({
+  const { data: client, isLoading: isClientLoading } = useQuery({
     queryKey: ['/api/clients', clientId],
     enabled: isEditing,
   });
 
+  // Fetch logged-in user's client data if they have a clientId
+  const { data: userClient, isLoading: isUserClientLoading } = useQuery({
+    queryKey: ['/api/clients', user?.clientId],
+    enabled: !isEditing && !!user?.clientId,
+  });
+
   useEffect(() => {
-    if (client && !isLoading) {
+    // If editing an existing client
+    if (client && !isClientLoading) {
       form.reset(client);
-      if (client.logoUrl) {
-        setLogoPreview(client.logoUrl);
+      const clientLogoUrl = client.logoUrl as string | undefined;
+      if (clientLogoUrl) {
+        setLogoPreview(clientLogoUrl);
+      }
+    } 
+    // If creating a new client and user already has a client
+    else if (userClient && !isUserClientLoading) {
+      form.reset(userClient);
+      const userClientLogoUrl = userClient.logoUrl as string | undefined;
+      if (userClientLogoUrl) {
+        setLogoPreview(userClientLogoUrl);
+      }
+      
+      // Show toast notification to user
+      toast({
+        title: "Dados pré-preenchidos",
+        description: "Os dados do seu cliente já registrado foram carregados para edição.",
+      });
+    }
+    // If user data is available but no client data yet
+    else if (user && !isEditing && !userClient) {
+      // Pre-fill some fields with user data
+      form.setValue("name", user.name || "");
+      form.setValue("email", user.email || "");
+      form.setValue("contactName", user.name || "");
+      if (user.avatarUrl) {
+        form.setValue("logoUrl", user.avatarUrl);
+        setLogoPreview(user.avatarUrl);
       }
     }
-  }, [client, isLoading, form]);
+  }, [client, isClientLoading, userClient, isUserClientLoading, user, form, isEditing, toast]);
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
