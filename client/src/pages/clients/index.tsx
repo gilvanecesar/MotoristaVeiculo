@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { Plus, Search, Edit, Eye, Trash2, Building2, Phone } from "lucide-react";
+import { Plus, Search, Edit, Eye, Trash2, Building2, Phone, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -33,26 +33,88 @@ import { Client } from "@shared/schema";
 import { queryClient } from "@/lib/queryClient";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatPhoneNumber } from "@/lib/utils/format";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function ClientsPage() {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [, navigate] = useLocation();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [filteredClients, setFilteredClients] = useState<Client[]>([]);
+
+  // Determine if user is admin
+  const isAdmin = user?.profileType === 'admin';
 
   // Fetch data
   const { data: clients, isLoading } = useQuery({
     queryKey: ['/api/clients'],
   });
 
+  // Filter clients based on user role
+  useEffect(() => {
+    if (!clients) return;
+
+    if (isAdmin) {
+      // Admin sees all clients
+      setFilteredClients(clients);
+    } else if (user?.clientId) {
+      // Regular user only sees their own client
+      const userClient = clients.find((client: Client) => client.id === user.clientId);
+      setFilteredClients(userClient ? [userClient] : []);
+    } else {
+      // User without client sees nothing, but can create their own
+      setFilteredClients([]);
+    }
+  }, [clients, user, isAdmin]);
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement search functionality
-    console.log("Searching for:", searchQuery);
+    if (!searchQuery.trim() || !clients) {
+      setFilteredClients(isAdmin ? clients : clients?.filter((client: Client) => client.id === user?.clientId) || []);
+      return;
+    }
+
+    const query = searchQuery.toLowerCase();
+    const results = clients.filter((client: Client) => {
+      // Admin can search all clients
+      if (isAdmin) {
+        return (
+          client.name.toLowerCase().includes(query) ||
+          client.email.toLowerCase().includes(query) ||
+          client.cnpj?.toLowerCase().includes(query) ||
+          client.city?.toLowerCase().includes(query)
+        );
+      } 
+      // Regular users can only search in their own client
+      else if (user?.clientId === client.id) {
+        return (
+          client.name.toLowerCase().includes(query) ||
+          client.email.toLowerCase().includes(query) ||
+          client.cnpj?.toLowerCase().includes(query) ||
+          client.city?.toLowerCase().includes(query)
+        );
+      }
+      return false;
+    });
+    
+    setFilteredClients(results);
   };
 
   const handleDelete = async () => {
     if (!selectedClient) return;
+    
+    // Only allow admin or the client owner to delete
+    if (!isAdmin && user?.clientId !== selectedClient.id) {
+      toast({
+        title: "Acesso negado",
+        description: "Você não tem permissão para excluir este cliente",
+        variant: "destructive",
+      });
+      return;
+    }
     
     try {
       await fetch(`/api/clients/${selectedClient.id}`, {
@@ -61,8 +123,19 @@ export default function ClientsPage() {
       
       queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
       setDeleteDialogOpen(false);
+      
+      toast({
+        title: "Cliente excluído",
+        description: "O cliente foi excluído com sucesso",
+        variant: "default",
+      });
     } catch (error) {
       console.error("Error deleting client:", error);
+      toast({
+        title: "Erro",
+        description: "Erro ao excluir cliente. Tente novamente.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -120,19 +193,19 @@ export default function ClientsPage() {
                 </div>
               ))}
             </div>
-          ) : clients && clients.length > 0 ? (
+          ) : filteredClients.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Nome</TableHead>
-                  <TableHead>Documento</TableHead>
+                  <TableHead>CNPJ</TableHead>
                   <TableHead>Contato</TableHead>
                   <TableHead>Localização</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {clients.map((client: Client) => (
+                {filteredClients.map((client: Client) => (
                   <TableRow key={client.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
@@ -151,7 +224,7 @@ export default function ClientsPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div>{client.documentType}: {client.document}</div>
+                      <div>{client.cnpj}</div>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col">
@@ -204,6 +277,25 @@ export default function ClientsPage() {
                 ))}
               </TableBody>
             </Table>
+          ) : user && !user.clientId ? (
+            <div className="text-center py-10">
+              <div className="flex justify-center mb-3">
+                <UserPlus className="h-12 w-12 text-primary/50" />
+              </div>
+              <h3 className="text-lg font-medium mb-2">Cadastre seu cliente</h3>
+              <p className="text-slate-500 mb-6 max-w-md mx-auto">
+                Você ainda não tem um cliente associado à sua conta. É necessário cadastrar seu cliente para utilizar 
+                todos os recursos do sistema.
+              </p>
+              <Button 
+                size="lg" 
+                className="gap-2"
+                onClick={() => navigate("/clients/new")}
+              >
+                <UserPlus className="h-4 w-4" />
+                Cadastrar meu cliente
+              </Button>
+            </div>
           ) : (
             <div className="text-center py-10 text-slate-500">
               <div className="flex justify-center mb-3">
@@ -211,14 +303,19 @@ export default function ClientsPage() {
               </div>
               <p>Nenhum cliente encontrado.</p>
               <p className="text-sm">
-                Comece cadastrando um novo cliente através do botão acima.
+                {isAdmin ? 
+                  "Cadastre um novo cliente através do botão acima." : 
+                  "Não há clientes associados à sua conta."}
               </p>
             </div>
           )}
         </CardContent>
         <CardFooter className="border-t border-slate-100 dark:border-slate-700">
           <div className="text-xs text-slate-500">
-            Total de registros: {clients?.length || 0}
+            Total de registros: {filteredClients.length}
+            {isAdmin && clients && filteredClients.length !== clients.length && (
+              <span className="ml-2">(Total no sistema: {clients.length})</span>
+            )}
           </div>
         </CardFooter>
       </Card>
@@ -249,7 +346,7 @@ export default function ClientsPage() {
                   </div>
                 </div>
                 <div className="mb-4">
-                  <span className="font-medium">Documento:</span> {selectedClient.documentType}: {selectedClient.document}
+                  <span className="font-medium">CNPJ:</span> {selectedClient.cnpj}
                 </div>
                 <div className="mb-4">
                   <span className="font-medium">Telefone:</span> {formatPhoneNumber(selectedClient.phone)}
