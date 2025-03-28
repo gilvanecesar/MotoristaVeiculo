@@ -8,9 +8,16 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 import { X } from "lucide-react";
 import { z } from "zod";
-import { vehicleValidator } from "@shared/schema";
+import { vehicleValidator, VEHICLE_TYPES, BODY_TYPES } from "@shared/schema";
 
 type VehicleFormProps = {
   index: number;
@@ -134,6 +141,71 @@ export function VehicleForm({ index, control, onRemove }: VehicleFormProps) {
               <FormControl>
                 <Input {...field} />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={control}
+          name={`vehicles.${index}.vehicleType`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="after:content-['*'] after:text-red-500 after:ml-0.5">
+                Tipo de Veículo
+              </FormLabel>
+              <Select 
+                onValueChange={field.onChange} 
+                defaultValue={field.value || VEHICLE_TYPES.LEVE}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o tipo" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value={VEHICLE_TYPES.LEVE}>Leve</SelectItem>
+                  <SelectItem value={VEHICLE_TYPES.MEDIO}>Médio</SelectItem>
+                  <SelectItem value={VEHICLE_TYPES.PESADO}>Pesado</SelectItem>
+                  <SelectItem value={VEHICLE_TYPES.EXTRA_PESADO}>Extra Pesado</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={control}
+          name={`vehicles.${index}.bodyType`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="after:content-['*'] after:text-red-500 after:ml-0.5">
+                Tipo de Carroceria
+              </FormLabel>
+              <Select 
+                onValueChange={field.onChange} 
+                defaultValue={field.value || BODY_TYPES.FECHADA}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a carroceria" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value={BODY_TYPES.BAU}>Baú</SelectItem>
+                  <SelectItem value={BODY_TYPES.GRANELEIRA}>Graneleira</SelectItem>
+                  <SelectItem value={BODY_TYPES.BASCULANTE}>Basculante</SelectItem>
+                  <SelectItem value={BODY_TYPES.PLATAFORMA}>Plataforma</SelectItem>
+                  <SelectItem value={BODY_TYPES.TANQUE}>Tanque</SelectItem>
+                  <SelectItem value={BODY_TYPES.FRIGORIFICA}>Frigorífica</SelectItem>
+                  <SelectItem value={BODY_TYPES.PORTA_CONTEINER}>Porta Contêiner</SelectItem>
+                  <SelectItem value={BODY_TYPES.SIDER}>Sider</SelectItem>
+                  <SelectItem value={BODY_TYPES.CACAMBA}>Caçamba</SelectItem>
+                  <SelectItem value={BODY_TYPES.ABERTA}>Aberta</SelectItem>
+                  <SelectItem value={BODY_TYPES.FECHADA}>Fechada</SelectItem>
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}

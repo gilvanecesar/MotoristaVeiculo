@@ -2,6 +2,31 @@ import { pgTable, text, serial, integer, boolean, timestamp, date } from "drizzl
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Enums para tipos de veículos e carrocerias
+export const VEHICLE_TYPES = {
+  LEVE: "leve",
+  MEDIO: "medio",
+  PESADO: "pesado",
+  EXTRA_PESADO: "extra_pesado"
+} as const;
+
+export const BODY_TYPES = {
+  BAU: "bau",
+  GRANELEIRA: "graneleira",
+  BASCULANTE: "basculante",
+  PLATAFORMA: "plataforma",
+  TANQUE: "tanque",
+  FRIGORIFICA: "frigorifica",
+  PORTA_CONTEINER: "porta_conteiner",
+  SIDER: "sider",
+  CACAMBA: "cacamba",
+  ABERTA: "aberta",
+  FECHADA: "fechada"
+} as const;
+
+export type VehicleType = typeof VEHICLE_TYPES[keyof typeof VEHICLE_TYPES];
+export type BodyType = typeof BODY_TYPES[keyof typeof BODY_TYPES];
+
 // Driver schema
 export const drivers = pgTable("drivers", {
   id: serial("id").primaryKey(),
@@ -42,6 +67,10 @@ export const vehicles = pgTable("vehicles", {
   color: text("color").notNull(),
   renavam: text("renavam"),
   
+  // Tipo de veículo e carroceria
+  vehicleType: text("vehicle_type").notNull().default("leve"),
+  bodyType: text("body_type").notNull().default("fechada"),
+  
   // Metadata
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -65,6 +94,25 @@ export const driverValidator = insertDriverSchema.extend({
 export const vehicleValidator = insertVehicleSchema.extend({
   plate: z.string().min(7).max(8),
   year: z.coerce.number().min(1900).max(new Date().getFullYear() + 1),
+  vehicleType: z.enum([
+    VEHICLE_TYPES.LEVE,
+    VEHICLE_TYPES.MEDIO,
+    VEHICLE_TYPES.PESADO,
+    VEHICLE_TYPES.EXTRA_PESADO
+  ]),
+  bodyType: z.enum([
+    BODY_TYPES.BAU,
+    BODY_TYPES.GRANELEIRA,
+    BODY_TYPES.BASCULANTE,
+    BODY_TYPES.PLATAFORMA,
+    BODY_TYPES.TANQUE,
+    BODY_TYPES.FRIGORIFICA,
+    BODY_TYPES.PORTA_CONTEINER,
+    BODY_TYPES.SIDER,
+    BODY_TYPES.CACAMBA,
+    BODY_TYPES.ABERTA,
+    BODY_TYPES.FECHADA
+  ]),
 });
 
 // Types

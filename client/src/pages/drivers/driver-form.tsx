@@ -17,7 +17,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { vehicleValidator, driverValidator } from "@shared/schema";
+import { 
+  vehicleValidator, 
+  driverValidator, 
+  VEHICLE_TYPES, 
+  BODY_TYPES 
+} from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { formatCPF, formatPhone, formatCEP } from "@/lib/utils/masks";
@@ -242,6 +247,8 @@ export default function DriverForm() {
       year: new Date().getFullYear(),
       color: "",
       renavam: "",
+      vehicleType: VEHICLE_TYPES.LEVE,
+      bodyType: BODY_TYPES.FECHADA,
     });
   };
 

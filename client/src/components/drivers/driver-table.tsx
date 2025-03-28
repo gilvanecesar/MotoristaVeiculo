@@ -1,4 +1,4 @@
-import { DriverWithVehicles, Vehicle } from "@shared/schema";
+import { DriverWithVehicles, Vehicle, VEHICLE_TYPES, BODY_TYPES } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -289,6 +289,31 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
                                               <p className="font-medium">{vehicle.renavam}</p>
                                             </div>
                                           )}
+                                          <div>
+                                            <p className="text-slate-500 dark:text-slate-400">Tipo</p>
+                                            <p className="font-medium">
+                                              {vehicle.vehicleType === VEHICLE_TYPES.LEVE && "Leve"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.MEDIO && "Médio"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.PESADO && "Pesado"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.EXTRA_PESADO && "Extra Pesado"}
+                                            </p>
+                                          </div>
+                                          <div>
+                                            <p className="text-slate-500 dark:text-slate-400">Carroceria</p>
+                                            <Badge variant="outline" className="font-normal text-xs h-5 px-1.5">
+                                              {vehicle.bodyType === BODY_TYPES.BAU && "Baú"}
+                                              {vehicle.bodyType === BODY_TYPES.GRANELEIRA && "Graneleira"}
+                                              {vehicle.bodyType === BODY_TYPES.BASCULANTE && "Basculante"}
+                                              {vehicle.bodyType === BODY_TYPES.PLATAFORMA && "Plataforma"}
+                                              {vehicle.bodyType === BODY_TYPES.TANQUE && "Tanque"}
+                                              {vehicle.bodyType === BODY_TYPES.FRIGORIFICA && "Frigorífica"}
+                                              {vehicle.bodyType === BODY_TYPES.PORTA_CONTEINER && "Porta Contêiner"}
+                                              {vehicle.bodyType === BODY_TYPES.SIDER && "Sider"}
+                                              {vehicle.bodyType === BODY_TYPES.CACAMBA && "Caçamba"}
+                                              {vehicle.bodyType === BODY_TYPES.ABERTA && "Aberta"}
+                                              {vehicle.bodyType === BODY_TYPES.FECHADA && "Fechada"}
+                                            </Badge>
+                                          </div>
                                         </div>
                                       </div>
                                     ))}

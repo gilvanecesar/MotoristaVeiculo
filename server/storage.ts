@@ -322,6 +322,8 @@ export class MemStorage implements IStorage {
     const newVehicle: Vehicle = {
       ...vehicle,
       id,
+      vehicleType: vehicle.vehicleType || "leve",
+      bodyType: vehicle.bodyType || "fechada",
       createdAt: now
     };
     
