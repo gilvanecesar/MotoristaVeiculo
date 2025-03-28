@@ -81,8 +81,13 @@ export async function hasFreightAccess(req: Request, res: Response, next: NextFu
     return res.status(404).json({ message: "Frete não encontrado" });
   }
   
-  // Se o usuário for cliente, verifica se o frete pertence a ele
-  if (req.user?.profileType === "shipper" && req.user?.clientId === freight.clientId) {
+  // Fretes sem cliente associado podem ser editados por qualquer usuário autenticado
+  if (freight.clientId === null) {
+    return next();
+  }
+  
+  // Verifica se o frete pertence ao cliente do usuário
+  if (req.user?.clientId === freight.clientId) {
     return next();
   }
   
