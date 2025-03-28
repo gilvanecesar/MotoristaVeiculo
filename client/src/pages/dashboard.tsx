@@ -13,7 +13,7 @@ export default function Dashboard() {
   });
 
   return (
-    <div>
+    <div className="w-full max-w-full overflow-x-hidden">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
         <div>
           <h2 className="text-xl font-bold text-slate-800">Dashboard</h2>
@@ -21,7 +21,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-slate-500">Total de Motoristas</CardTitle>

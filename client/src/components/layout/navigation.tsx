@@ -41,9 +41,9 @@ export default function Navigation() {
   }, [isMobile]);
 
   // Width values for different states
-  const desktopExpandedWidth = "w-64";
-  const desktopCollapsedWidth = "w-16";
-  const mobileWidth = mobileMenuOpen ? "w-64" : "w-0";
+  const desktopExpandedWidth = "w-60 max-w-[240px]";
+  const desktopCollapsedWidth = "w-16 max-w-[64px]";
+  const mobileWidth = mobileMenuOpen ? "w-60 max-w-[240px]" : "w-0";
   
   // Calculate sidebar width based on state
   const sidebarWidth = isMobile 
@@ -53,7 +53,7 @@ export default function Navigation() {
   // Calculate content margin based on sidebar state
   const contentMargin = isMobile 
     ? "ml-0" 
-    : (collapsed ? "ml-16" : "ml-64");
+    : (collapsed ? "ml-16" : "ml-60");
 
   return (
     <>

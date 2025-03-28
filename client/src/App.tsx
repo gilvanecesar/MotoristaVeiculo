@@ -34,8 +34,10 @@ function App() {
         <Navigation />
         <div className="flex flex-col flex-grow">
           <Header />
-          <main className="px-6 py-6 flex-grow">
-            <Router />
+          <main className="px-6 py-6 flex-grow max-w-full overflow-x-hidden">
+            <div className="max-w-[calc(100vw-80px)] md:max-w-[calc(100vw-16rem)]">
+              <Router />
+            </div>
           </main>
           <Footer />
         </div>
