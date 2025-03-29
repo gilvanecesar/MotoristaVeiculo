@@ -15,6 +15,7 @@ import {
   hasVehicleAccess
 } from "./middlewares";
 import { createCheckoutSession, createPortalSession, handleWebhook } from "./stripe";
+import Stripe from "stripe";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configurar autenticação
@@ -684,17 +685,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Em produção, isso buscaria assinaturas reais do Stripe
       // Dados simulados para desenvolvimento
       const subscriptions = [
-        { id: 1, clientName: "Transportadora Silva Ltda", email: "contato@silvatrans.com.br", status: "active", plan: "Premium", startDate: "2025-02-15", nextBillingDate: "2026-02-15", amount: 1198.80 },
-        { id: 2, clientName: "Expresso Rápido", email: "financeiro@expressorapido.com.br", status: "active", plan: "Premium", startDate: "2025-03-01", nextBillingDate: "2026-03-01", amount: 1198.80 },
-        { id: 3, clientName: "Logística Brasil", email: "admin@logisticabrasil.com", status: "canceled", plan: "Premium", startDate: "2025-01-10", nextBillingDate: "2025-03-10", amount: 1198.80 },
-        { id: 4, clientName: "Fretes São Paulo", email: "contato@fretessp.com.br", status: "active", plan: "Premium", startDate: "2025-03-12", nextBillingDate: "2026-03-12", amount: 1198.80 },
-        { id: 5, clientName: "Caminhoneiros Unidos", email: "financeiro@caminhoneirosunidos.com.br", status: "trial", plan: "Premium", startDate: "2025-03-25", nextBillingDate: "2025-04-25", amount: 0 },
+        { id: "sub_123456", clientName: "Transportadora Silva Ltda", email: "contato@silvatrans.com.br", status: "active", plan: "annual", startDate: "2025-02-15", endDate: "2026-02-15", amount: 99.90 },
+        { id: "sub_234567", clientName: "Expresso Rápido", email: "financeiro@expressorapido.com.br", status: "active", plan: "annual", startDate: "2025-03-01", endDate: "2026-03-01", amount: 99.90 },
+        { id: "sub_345678", clientName: "Logística Brasil", email: "admin@logisticabrasil.com", status: "canceled", plan: "annual", startDate: "2025-01-10", endDate: "2025-03-10", amount: 99.90 },
+        { id: "sub_456789", clientName: "Fretes São Paulo", email: "contato@fretessp.com.br", status: "active", plan: "monthly", startDate: "2025-03-12", endDate: "2025-04-12", amount: 99.90 },
+        { id: "sub_567890", clientName: "Caminhoneiros Unidos", email: "financeiro@caminhoneirosunidos.com.br", status: "trialing", plan: "trial", startDate: "2025-03-25", endDate: "2025-04-01", amount: 0 },
       ];
       
       res.json(subscriptions);
     } catch (error) {
       console.error("Error fetching subscriptions:", error);
       res.status(500).json({ message: "Failed to fetch subscriptions" });
+    }
+  });
+  
+  app.post("/api/admin/subscriptions", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const { clientName, email, plan, amount, status, startDate, endDate } = req.body;
+      
+      // Validar os dados recebidos
+      if (!clientName || !email || !plan || !amount || !status || !startDate || !endDate) {
+        return res.status(400).json({ message: "Todos os campos são obrigatórios" });
+      }
+      
+      // Em um ambiente real, aqui criaríamos uma assinatura no Stripe e 
+      // salvaríamos os dados no banco de dados.
+      // Para o propósito de simulação, criamos um objeto com um ID único
+      
+      const newSubscription = {
+        id: `sub_${Date.now().toString().substring(0, 6)}`,
+        clientName,
+        email,
+        plan,
+        status,
+        amount: parseFloat(amount),
+        startDate,
+        endDate
+      };
+      
+      // Em um cenário real, também precisaríamos atualizar os dados do usuário
+      // ou criar uma nova conta de usuário associada a esta assinatura
+      
+      console.log("Nova assinatura criada:", newSubscription);
+      
+      // Retornar os dados da nova assinatura
+      res.status(201).json(newSubscription);
+    } catch (error) {
+      console.error("Erro ao criar assinatura:", error);
+      res.status(500).json({ message: "Falha ao criar assinatura" });
     }
   });
   
@@ -745,6 +783,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to process webhook" });
     }
   });
+  
+  // Endpoint para criar uma intent de pagamento único
+  app.post("/api/create-payment-intent", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { amount } = req.body;
+      
+      if (!process.env.STRIPE_SECRET_KEY) {
+        throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
+      }
+      
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+        apiVersion: '2023-10-16',
+      });
+      
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(amount * 100), // Converte para centavos
+        currency: "brl",
+        payment_method_types: ["card"],
+        metadata: {
+          userId: req.user?.id.toString(),
+        },
+      });
+      
+      res.json({ clientSecret: paymentIntent.client_secret });
+    } catch (error: any) {
+      console.error("Error creating payment intent:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Endpoint para criar ou obter uma assinatura
+  app.post("/api/get-or-create-subscription", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = req.user;
+      
+      if (!user) {
+        return res.status(401).json({ error: 'Usuário não autenticado' });
+      }
+      
+      if (!process.env.STRIPE_SECRET_KEY) {
+        throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
+      }
+      
+      if (!process.env.STRIPE_PRICE_ID) {
+        throw new Error('Missing required Stripe config: STRIPE_PRICE_ID');
+      }
+      
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+        apiVersion: '2023-10-16',
+      });
+      
+      // Verifica se o usuário já tem uma assinatura ativa
+      if (user.stripeSubscriptionId) {
+        try {
+          const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+          
+          // Se a assinatura estiver ativa, retorna os dados relevantes
+          if (subscription.status === 'active') {
+            return res.json({
+              subscriptionId: subscription.id,
+              status: subscription.status,
+            });
+          }
+        } catch (error) {
+          console.log("Erro ao buscar assinatura existente, criando nova:", error);
+        }
+      }
+      
+      // Cria um cliente Stripe para o usuário se ele não tiver um
+      let customerId = user.stripeCustomerId;
+      if (!customerId) {
+        const customer = await stripe.customers.create({
+          email: user.email,
+          name: user.name,
+          metadata: {
+            userId: user.id.toString(),
+          },
+        });
+        customerId = customer.id;
+        
+        // Atualiza o usuário com o ID do cliente Stripe
+        await storage.updateUser(user.id, { stripeCustomerId: customerId });
+      }
+      
+      // Cria uma nova assinatura
+      const subscription = await stripe.subscriptions.create({
+        customer: customerId,
+        items: [{
+          price: process.env.STRIPE_PRICE_ID,
+        }],
+        payment_behavior: 'default_incomplete',
+        expand: ['latest_invoice.payment_intent'],
+      });
+      
+      // Atualiza o usuário com o ID da assinatura Stripe
+      await storage.updateUser(user.id, { 
+        stripeSubscriptionId: subscription.id,
+      });
+      
+      // Retorna os dados relevantes, incluindo o clientSecret para completar o pagamento
+      const invoice = subscription.latest_invoice as Stripe.Invoice;
+      const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
+      
+      res.json({
+        subscriptionId: subscription.id,
+        clientSecret: paymentIntent.client_secret,
+      });
+    } catch (error: any) {
+      console.error("Error creating subscription:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
 
   // Rotas de administração financeira
   app.get("/api/admin/finance/stats", isAdmin, async (req: Request, res: Response) => {
@@ -782,122 +932,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching finance stats:", error);
       res.status(500).json({ message: "Failed to fetch finance statistics" });
-    }
-  });
-  
-  app.get("/api/admin/subscriptions", isAdmin, async (req: Request, res: Response) => {
-    try {
-      // Dados simulados para desenvolvimento
-      const subscriptions = [
-        {
-          id: "sub_123456",
-          clientName: "Transportes Veloz Ltda",
-          email: "contato@transportesveloz.com.br",
-          plan: "Premium Anual",
-          status: "active",
-          amount: 99.90,
-          startDate: "2025-01-15",
-          endDate: "2026-01-15"
-        },
-        {
-          id: "sub_234567",
-          clientName: "LogTrans Serviços",
-          email: "financeiro@logtrans.com.br",
-          plan: "Premium Anual",
-          status: "active",
-          amount: 99.90,
-          startDate: "2025-02-03",
-          endDate: "2026-02-03"
-        },
-        {
-          id: "sub_345678",
-          clientName: "ExpressCargo Brasil",
-          email: "admin@expresscargo.com.br",
-          plan: "Premium Anual",
-          status: "canceled",
-          amount: 99.90,
-          startDate: "2025-01-10",
-          endDate: "2025-03-15"
-        },
-        {
-          id: "sub_456789",
-          clientName: "Transportadora RápidoSul",
-          email: "contato@rapidosul.com.br",
-          plan: "Premium Anual",
-          status: "trialing",
-          amount: 99.90,
-          startDate: "2025-03-20",
-          endDate: "2025-03-27"
-        },
-        {
-          id: "sub_567890",
-          clientName: "TransNorte Logística",
-          email: "financeiro@transnorte.com.br",
-          plan: "Premium Anual",
-          status: "past_due",
-          amount: 99.90,
-          startDate: "2025-02-15",
-          endDate: "2026-02-15"
-        }
-      ];
-      
-      res.json(subscriptions);
-    } catch (error) {
-      console.error("Error fetching subscriptions:", error);
-      res.status(500).json({ message: "Failed to fetch subscription data" });
-    }
-  });
-  
-  app.get("/api/admin/invoices", isAdmin, async (req: Request, res: Response) => {
-    try {
-      // Dados simulados para desenvolvimento
-      const invoices = [
-        {
-          id: "in_123456",
-          clientName: "Transportes Veloz Ltda",
-          email: "contato@transportesveloz.com.br",
-          amount: 1198.80,
-          status: "paid",
-          date: "2025-01-15"
-        },
-        {
-          id: "in_234567",
-          clientName: "LogTrans Serviços",
-          email: "financeiro@logtrans.com.br",
-          amount: 1198.80,
-          status: "paid",
-          date: "2025-02-03"
-        },
-        {
-          id: "in_345678",
-          clientName: "ExpressCargo Brasil",
-          email: "admin@expresscargo.com.br",
-          amount: 199.80,
-          status: "void",
-          date: "2025-01-10"
-        },
-        {
-          id: "in_456789",
-          clientName: "TransNorte Logística",
-          email: "financeiro@transnorte.com.br",
-          amount: 1198.80,
-          status: "open",
-          date: "2025-03-15"
-        },
-        {
-          id: "in_567890",
-          clientName: "DeltaFretes Transportes",
-          email: "contato@deltafretes.com.br",
-          amount: 1198.80,
-          status: "uncollectible",
-          date: "2025-02-10"
-        }
-      ];
-      
-      res.json(invoices);
-    } catch (error) {
-      console.error("Error fetching invoices:", error);
-      res.status(500).json({ message: "Failed to fetch invoice data" });
     }
   });
   

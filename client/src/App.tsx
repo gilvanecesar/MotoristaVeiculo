@@ -27,6 +27,8 @@ import FinanceDashboard from "@/pages/admin/finance/index";
 import FinanceSettings from "@/pages/admin/finance/settings";
 import PaymentSuccessPage from "@/pages/payment-success";
 import PaymentCancelPage from "@/pages/payment-cancel";
+import CheckoutPage from "@/pages/checkout";
+import SubscribePage from "@/pages/subscribe";
 
 function Router() {
   return (
@@ -49,6 +51,8 @@ function Router() {
       <ProtectedRoute path="/admin/finance/settings" component={FinanceSettings} />
       <Route path="/payment-success" component={PaymentSuccessPage} />
       <Route path="/payment-cancel" component={PaymentCancelPage} />
+      <Route path="/checkout" component={CheckoutPage} />
+      <Route path="/subscribe" component={SubscribePage} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Função para formatar valores monetários
@@ -10,8 +10,8 @@ function formatCurrency(value: number): string {
   }).format(value);
 }
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, PlusCircle, FileDown, Settings, LineChart, Users, DollarSign } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Loader2, PlusCircle, FileDown, Settings, LineChart, Users, DollarSign, X } from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -26,10 +26,37 @@ import {
   Legend
 } from "recharts";
 import { useToast } from "@/hooks/use-toast";
-import { getQueryFn } from "@/lib/queryClient";
+import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormDescription
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { CalendarIcon } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 // Tipos para os dados financeiros
 interface SubscriptionData {
@@ -119,10 +146,85 @@ const getInvoiceBadgeVariant = (status: string): "default" | "destructive" | "se
 
 // Removi a função duplicada formatCurrency
 
+// Schema de validação para o formulário de assinatura
+const subscriptionFormSchema = z.object({
+  clientName: z.string().min(3, { message: "Nome do cliente é obrigatório" }),
+  email: z.string().email({ message: "E-mail inválido" }),
+  plan: z.enum(["monthly", "annual", "trial"], { 
+    required_error: "Selecione um plano" 
+  }),
+  amount: z.string().min(1).refine(
+    (val) => !isNaN(parseFloat(val.replace(",", "."))),
+    { message: "Valor inválido" }
+  ),
+  status: z.enum(["active", "trialing"], { 
+    required_error: "Selecione um status" 
+  }),
+  startDate: z.date({ required_error: "Data de início é obrigatória" }),
+  endDate: z.date({ required_error: "Data de término é obrigatória" }),
+});
+
+type SubscriptionFormValues = z.infer<typeof subscriptionFormSchema>;
+
 // Componente principal de finanças
 export default function FinancePage() {
   const [activeTab, setActiveTab] = useState("overview");
+  const [showSubscriptionDialog, setShowSubscriptionDialog] = useState(false);
   const { toast } = useToast();
+  
+  // Configuração do formulário de assinatura
+  const subscriptionForm = useForm<SubscriptionFormValues>({
+    resolver: zodResolver(subscriptionFormSchema),
+    defaultValues: {
+      clientName: "",
+      email: "",
+      plan: "monthly",
+      amount: "99,90",
+      status: "active",
+      startDate: new Date(),
+      endDate: new Date(new Date().setMonth(new Date().getMonth() + 1))
+    }
+  });
+  
+  // Mutation para criar assinatura
+  const createSubscriptionMutation = useMutation({
+    mutationFn: async (data: SubscriptionFormValues) => {
+      // Converte o valor para um número
+      const numericAmount = parseFloat(data.amount.replace(",", "."));
+      
+      const payload = {
+        ...data,
+        amount: numericAmount,
+        startDate: data.startDate.toISOString(),
+        endDate: data.endDate.toISOString()
+      };
+      
+      const response = await apiRequest("POST", "/api/admin/subscriptions", payload);
+      return await response.json();
+    },
+    onSuccess: () => {
+      // Invalidar a query para buscar os dados atualizados
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/subscriptions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/finance/stats"] });
+      
+      // Fechar o modal e exibir mensagem de sucesso
+      setShowSubscriptionDialog(false);
+      toast({
+        title: "Assinatura criada",
+        description: "A assinatura foi criada com sucesso.",
+      });
+      
+      // Resetar o formulário
+      subscriptionForm.reset();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao criar assinatura",
+        description: error.message || "Não foi possível criar a assinatura. Tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
 
   // Buscar estatísticas financeiras
   const { 
@@ -352,7 +454,7 @@ export default function FinancePage() {
             <CardHeader>
               <div className="flex justify-between items-center">
                 <CardTitle>Assinaturas</CardTitle>
-                <Button size="sm">
+                <Button size="sm" onClick={() => setShowSubscriptionDialog(true)}>
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Nova Assinatura
                 </Button>
@@ -468,6 +570,218 @@ export default function FinancePage() {
           </Card>
         </TabsContent>
       </Tabs>
+      
+      {/* Diálogo para cadastro de assinatura */}
+      <Dialog open={showSubscriptionDialog} onOpenChange={setShowSubscriptionDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Nova Assinatura</DialogTitle>
+            <DialogDescription>
+              Cadastre uma nova assinatura manualmente no sistema.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...subscriptionForm}>
+            <form 
+              className="space-y-4 py-2" 
+              onSubmit={subscriptionForm.handleSubmit((data) => createSubscriptionMutation.mutate(data))}
+            >
+              <FormField
+                control={subscriptionForm.control}
+                name="clientName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome do Cliente</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Digite o nome do cliente" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={subscriptionForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="email" placeholder="email@exemplo.com.br" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={subscriptionForm.control}
+                name="plan"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Plano</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o plano" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="monthly">Mensal</SelectItem>
+                        <SelectItem value="annual">Anual</SelectItem>
+                        <SelectItem value="trial">Período de teste</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={subscriptionForm.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Valor</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="99,90" />
+                    </FormControl>
+                    <FormDescription>
+                      Digite o valor mensal da assinatura (ex: 99,90).
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={subscriptionForm.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="active">Ativa</SelectItem>
+                        <SelectItem value="trialing">Período de teste</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={subscriptionForm.control}
+                  name="startDate"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Data de Início</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={`w-full pl-3 text-left font-normal ${
+                                !field.value ? "text-muted-foreground" : ""
+                              }`}
+                            >
+                              {field.value ? (
+                                format(field.value, "dd/MM/yyyy", { locale: ptBR })
+                              ) : (
+                                <span>Selecione uma data</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={(date) => date && field.onChange(date)}
+                            initialFocus
+                            locale={ptBR}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={subscriptionForm.control}
+                  name="endDate"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Data de Término</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={`w-full pl-3 text-left font-normal ${
+                                !field.value ? "text-muted-foreground" : ""
+                              }`}
+                            >
+                              {field.value ? (
+                                format(field.value, "dd/MM/yyyy", { locale: ptBR })
+                              ) : (
+                                <span>Selecione uma data</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={(date) => date && field.onChange(date)}
+                            initialFocus
+                            locale={ptBR}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <DialogFooter className="pt-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setShowSubscriptionDialog(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={createSubscriptionMutation.isPending}
+                >
+                  {createSubscriptionMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Cadastrando...
+                    </>
+                  ) : (
+                    'Cadastrar Assinatura'
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

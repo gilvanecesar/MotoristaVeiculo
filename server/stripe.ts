@@ -4,7 +4,7 @@ import { storage } from './storage';
 
 // Inicializa o Stripe com a chave secreta
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2023-08-16',
+  apiVersion: '2023-10-16',
 });
 
 // Preço do plano: R$ 99,90/mês com cobrança anual (12x R$ 99,90 = R$ 1.198,80)
