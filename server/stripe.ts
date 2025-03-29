@@ -7,7 +7,8 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 
 // Preço do plano: R$ 99,90/mês com cobrança anual (12x R$ 99,90 = R$ 1.198,80)
-const ANNUAL_PLAN_PRICE_ID = process.env.STRIPE_PRICE_ID || 'price_12345678'; // Deve ser configurado nas variáveis de ambiente
+const ANNUAL_PLAN_PRICE_ID = process.env.STRIPE_PRICE_ID;
+console.log("Usando ID de preço do Stripe:", ANNUAL_PLAN_PRICE_ID);
 
 export async function createCheckoutSession(req: Request, res: Response) {
   try {

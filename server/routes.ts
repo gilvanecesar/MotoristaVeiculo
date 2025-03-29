@@ -606,11 +606,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Rotas de pagamento com Stripe
-  app.post("/api/create-checkout-session", isAuthenticated, createCheckoutSession);
-  app.post("/api/create-portal-session", isAuthenticated, createPortalSession);
-  app.post("/api/stripe-webhook", express.raw({ type: 'application/json' }), handleWebhook);
-  
   // Rotas da área financeira administrativa
   app.get("/api/admin/subscriptions", isAdmin, async (req: Request, res: Response) => {
     try {
