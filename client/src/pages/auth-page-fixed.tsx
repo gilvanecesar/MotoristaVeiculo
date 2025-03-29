@@ -90,11 +90,35 @@ export default function AuthPage() {
 
   const onLoginSubmit = (data: LoginFormValues) => {
     loginMutation.mutate(data, {
-      onSuccess: () => {
+      onSuccess: (user) => {
         toast({
           title: "Login realizado com sucesso",
           description: "Bem-vindo à plataforma Quero Fretes",
         });
+        
+        // Se for motorista, redireciona direto para fretes (sem precisar de pagamento)
+        if (user.profileType === USER_TYPES.DRIVER) {
+          // Ativa o acesso de motorista automaticamente, se ainda não estiver ativo
+          if (!user.subscriptionActive || user.subscriptionType !== "driver_free") {
+            apiRequest("POST", "/api/activate-driver-access", {})
+              .then(() => {
+                navigate("/freights");
+              })
+              .catch((error) => {
+                console.error("Erro ao ativar acesso de motorista:", error);
+                navigate("/auth?subscription=required");
+              });
+          } else {
+            navigate("/freights");
+          }
+        } else if (user.subscriptionActive) {
+          // Se já tem assinatura ativa, vai para o dashboard
+          navigate("/dashboard");
+        } else {
+          // Se não tem assinatura ativa e não é motorista, mostra página de planos
+          setShowPlans(true);
+          setSubscriptionRequired(true);
+        }
       },
     });
   };

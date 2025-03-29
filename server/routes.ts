@@ -65,9 +65,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Ativa o acesso limitado para motoristas (sem data de expiração)
+      // Define como "driver_free" para não passar pelo sistema de cobrança
       const updatedUser = await storage.updateUser(userId, {
         subscriptionActive: true,
         subscriptionType: "driver_free",
+        paymentRequired: false, // Indica que não precisa de pagamento
         // Sem data de expiração para motoristas (acesso permanente limitado)
       });
       
@@ -75,7 +77,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Usuário não encontrado" });
       }
       
-      res.status(200).json({ message: "Acesso de motorista ativado com sucesso" });
+      console.log(`Acesso gratuito de motorista ativado para usuário ${userId}`);
+      
+      res.status(200).json({ 
+        message: "Acesso de motorista ativado com sucesso",
+        user: {
+          ...updatedUser,
+          password: undefined // Remove a senha antes de retornar para o cliente
+        }
+      });
     } catch (error) {
       console.error("Error activating driver access:", error);
       res.status(500).json({ message: "Erro ao ativar acesso de motorista" });

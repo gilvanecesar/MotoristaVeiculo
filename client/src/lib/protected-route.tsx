@@ -8,8 +8,11 @@ const LIMITED_ROUTES = {
     '/drivers', 
     '/drivers/new', 
     '/drivers/', 
-    '/vehicles', 
+    '/vehicles',
+    '/vehicles/new',
+    '/vehicles/',
     '/freights', 
+    '/freights/',
     '/dashboard'
   ]
 };
@@ -47,6 +50,30 @@ export function ProtectedRoute({
     return <Route path={path} component={Component} />;
   }
 
+  // Verifica se o usuário é motorista (acesso gratuito)
+  if (user.profileType === "driver") {
+    // Motoristas não precisam de assinatura ativa para acessar páginas limitadas
+    
+    // Verifica se o caminho atual é permitido para motoristas
+    const isPathAllowed = LIMITED_ROUTES.driver_free.some(route => {
+      // Verifica se o path atual começa com alguma das rotas permitidas
+      return path === route || (route.endsWith('/') && path.startsWith(route));
+    });
+
+    if (!isPathAllowed) {
+      return (
+        <Route path={path}>
+          <Redirect to="/freights" />
+        </Route>
+      );
+    }
+    
+    // Permite acesso à rota para motoristas
+    return <Route path={path} component={Component} />;
+  }
+
+  // Para outros tipos de usuários, verifica a assinatura
+  
   // Verifica se o usuário tem uma assinatura ativa
   if (!user.subscriptionActive) {
     return (
@@ -67,15 +94,15 @@ export function ProtectedRoute({
     if (!isPathAllowed) {
       return (
         <Route path={path}>
-          <Redirect to="/dashboard" />
+          <Redirect to="/freights" />
         </Route>
       );
     }
   }
 
   // Verifica se o período de teste gratuito expirou
-  if (user.subscriptionType === "trial" && user.subscriptionEndDate) {
-    const endDate = new Date(user.subscriptionEndDate);
+  if (user.subscriptionType === "trial" && user.subscriptionExpiresAt) {
+    const endDate = new Date(user.subscriptionExpiresAt);
     const now = new Date();
     
     if (now > endDate) {
