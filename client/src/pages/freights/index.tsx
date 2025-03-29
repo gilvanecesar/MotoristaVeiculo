@@ -310,6 +310,43 @@ export default function FreightsPage() {
     setSelectedFreight(freight);
     setDeleteDialogOpen(!!freight);
   };
+  
+  // Função para formatar a mensagem do WhatsApp
+  const formatWhatsAppMessage = (freight: FreightWithDestinations) => {
+    const client = freight.clientId ? getClientInfo(freight.clientId) : null;
+    const clientName = client?.name || "QUERO FRETES";
+    
+    let vehicleTypes = getVehicleTypeDisplay(freight.vehicleType);
+    let bodyTypes = getBodyTypeDisplay(freight.bodyType);
+    
+    // Formata a mensagem seguindo o modelo solicitado
+    return encodeURIComponent(`
+🚨🚨🚨🚨🚨🚨🚨
+CARGAS ${clientName}
+🚨🚨🚨🚨🚨🚨🚨
+⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️
+
+📦 Todos os fretes do grupo ${clientName}
+
+📍 De: ${freight.origin}/${freight.originState}
+📍 Para: ${freight.destination}/${freight.destinationState}
+🚚 Veículo: ${vehicleTypes}
+🚛 Carroceria: ${bodyTypes}
+📦 Produto: ${freight.productType}
+
+💰 Preço: ${formatCurrency(Number(freight.freightValue))}/Total
+
+Mais informações: ${window.location.origin}/freights/${freight.id}
+    `);
+  };
+  
+  // Função para compartilhar via WhatsApp
+  const shareViaWhatsApp = (e: React.MouseEvent, freight: FreightWithDestinations) => {
+    e.stopPropagation();
+    
+    const message = formatWhatsAppMessage(freight);
+    window.open(`https://wa.me/?text=${message}`, '_blank');
+  };
 
   return (
     <div>
@@ -594,9 +631,21 @@ export default function FreightsPage() {
                               e.stopPropagation();
                               navigate(`/freights/${freight.id}`);
                             }}
+                            title="Ver detalhes"
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
+                          
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => shareViaWhatsApp(e, freight)}
+                            title="Compartilhar via WhatsApp"
+                            className="text-green-600 hover:text-green-800 hover:bg-green-100"
+                          >
+                            <FaWhatsapp className="h-4 w-4" />
+                          </Button>
+                          
                           {(user?.profileType === "admin" || user?.clientId === freight.clientId) && (
                             <Button
                               variant="ghost"
