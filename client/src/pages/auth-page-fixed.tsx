@@ -288,27 +288,39 @@ export default function AuthPage() {
               {/* Acesso gratuito para motoristas */}
               <div className="mt-8 pt-6 border-t">
                 <div className="text-center mb-4">
-                  <h3 className="text-lg font-semibold">Cadastro de Motorista</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Acesso gratuito com funcionalidades limitadas
-                  </p>
+                  <h3 className="text-lg font-semibold">Motorista?</h3>
+                  <div className="inline-flex items-center">
+                    <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">Acesso 100% gratuito</span>
+                  </div>
                 </div>
                 
-                <Card className="border-dashed">
+                <Card className="border-dashed border-green-500">
                   <CardContent className="pt-6">
                     <div className="flex items-center mb-4">
-                      <Icons.truck className="h-8 w-8 mr-4 text-primary" />
+                      <div className="h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center mr-4">
+                        <Icons.truck className="h-8 w-8 text-green-500" />
+                      </div>
                       <div>
-                        <h4 className="font-medium">Cadastro Gratuito para Motoristas</h4>
+                        <h4 className="font-medium">Motoristas têm acesso gratuito</h4>
                         <p className="text-sm text-muted-foreground">
-                          Acesso aos menus de fretes, motoristas e veículos.
+                          Acesse fretes disponíveis, cadastre seus veículos e gerencie seus dados.
                         </p>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-green-50 rounded-md p-3 mb-4">
+                      <div className="flex items-start">
+                        <Icons.check className="h-5 w-5 text-green-500 mt-0.5 mr-2" />
+                        <div>
+                          <p className="text-sm font-medium text-green-800">Acesso às páginas:</p>
+                          <p className="text-sm text-green-700">Fretes, veículos e motoristas</p>
+                        </div>
                       </div>
                     </div>
                     
                     <Button 
                       variant="outline" 
-                      className="w-full"
+                      className="w-full border-green-500 text-green-700 hover:bg-green-50"
                       onClick={() => {
                         // Define o usuário como motorista
                         setSelectedRole(USER_TYPES.DRIVER);
@@ -318,7 +330,7 @@ export default function AuthPage() {
                         setShowPlans(false);
                       }}
                     >
-                      Cadastrar como motorista
+                      Cadastrar-me como motorista
                     </Button>
                   </CardContent>
                 </Card>
@@ -417,35 +429,59 @@ export default function AuthPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="mb-6">
-                      <h3 className="text-sm font-medium mb-3">Selecione seu perfil:</h3>
-                      <div className="grid grid-cols-3 gap-3">
+                      <h3 className="text-xl font-medium mb-3 text-center">Selecione seu perfil:</h3>
+                      <div className="grid grid-cols-1 gap-4">
                         <Card 
-                          className={`cursor-pointer transition-all hover:bg-muted ${selectedRole === USER_TYPES.SHIPPER ? 'border-primary ring-2 ring-primary' : ''}`}
+                          className={`cursor-pointer transition-all hover:shadow-lg ${selectedRole === USER_TYPES.SHIPPER ? 'border-primary ring-2 ring-primary' : ''}`}
                           onClick={() => setSelectedRole(USER_TYPES.SHIPPER)}
                         >
-                          <CardContent className="p-3 text-center">
-                            <Icons.building className="h-6 w-6 mx-auto mb-2" />
-                            <p className="text-xs font-medium">Embarcador</p>
+                          <CardContent className="p-4">
+                            <div className="flex items-center">
+                              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mr-4">
+                                <Icons.building className="h-6 w-6 text-primary" />
+                              </div>
+                              <div>
+                                <h4 className="font-medium text-base">Embarcador</h4>
+                                <p className="text-sm text-muted-foreground">Anuncie suas cargas e encontre transportadores</p>
+                              </div>
+                            </div>
                           </CardContent>
                         </Card>
                         
                         <Card 
-                          className={`cursor-pointer transition-all hover:bg-muted ${selectedRole === USER_TYPES.DRIVER ? 'border-primary ring-2 ring-primary' : ''}`}
-                          onClick={() => setSelectedRole(USER_TYPES.DRIVER)}
-                        >
-                          <CardContent className="p-3 text-center">
-                            <Icons.truck className="h-6 w-6 mx-auto mb-2" />
-                            <p className="text-xs font-medium">Transportador</p>
-                          </CardContent>
-                        </Card>
-                        
-                        <Card 
-                          className={`cursor-pointer transition-all hover:bg-muted ${selectedRole === USER_TYPES.AGENT ? 'border-primary ring-2 ring-primary' : ''}`}
+                          className={`cursor-pointer transition-all hover:shadow-lg ${selectedRole === USER_TYPES.AGENT ? 'border-primary ring-2 ring-primary' : ''}`}
                           onClick={() => setSelectedRole(USER_TYPES.AGENT)}
                         >
-                          <CardContent className="p-3 text-center">
-                            <Icons.package className="h-6 w-6 mx-auto mb-2" />
-                            <p className="text-xs font-medium">Agente</p>
+                          <CardContent className="p-4">
+                            <div className="flex items-center">
+                              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mr-4">
+                                <Icons.package className="h-6 w-6 text-primary" />
+                              </div>
+                              <div>
+                                <h4 className="font-medium text-base">Agente</h4>
+                                <p className="text-sm text-muted-foreground">Gerencie fretes e conecte embarcadores e transportadores</p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                        
+                        <Card 
+                          className={`cursor-pointer transition-all hover:shadow-lg border-green-500 ${selectedRole === USER_TYPES.DRIVER ? 'ring-2 ring-green-500' : ''}`}
+                          onClick={() => setSelectedRole(USER_TYPES.DRIVER)}
+                        >
+                          <CardContent className="p-4">
+                            <div className="flex items-center">
+                              <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center mr-4">
+                                <Icons.truck className="h-6 w-6 text-green-500" />
+                              </div>
+                              <div>
+                                <div className="flex items-center">
+                                  <h4 className="font-medium text-base">Motorista</h4>
+                                  <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">Acesso gratuito</span>
+                                </div>
+                                <p className="text-sm text-muted-foreground">Acesse fretes, cadastre seus veículos e encontre cargas</p>
+                              </div>
+                            </div>
                           </CardContent>
                         </Card>
                       </div>
