@@ -23,6 +23,8 @@ import FreightForm from "@/pages/freights/freight-form";
 import ClientsPage from "@/pages/clients/index";
 import ClientForm from "@/pages/clients/client-form";
 import AdminPage from "@/pages/admin/index";
+import FinanceDashboard from "@/pages/admin/finance/index";
+import FinanceSettings from "@/pages/admin/finance/settings";
 import PaymentSuccessPage from "@/pages/payment-success";
 import PaymentCancelPage from "@/pages/payment-cancel";
 
@@ -43,6 +45,8 @@ function Router() {
       <ProtectedRoute path="/clients/:id" component={ClientForm} />
       <ProtectedRoute path="/reports" component={ReportsPage} />
       <ProtectedRoute path="/admin" component={AdminPage} />
+      <ProtectedRoute path="/admin/finance" component={FinanceDashboard} />
+      <ProtectedRoute path="/admin/finance/settings" component={FinanceSettings} />
       <ProtectedRoute path="/payment-success" component={PaymentSuccessPage} />
       <ProtectedRoute path="/payment-cancel" component={PaymentCancelPage} />
       <Route path="/auth" component={AuthPage} />

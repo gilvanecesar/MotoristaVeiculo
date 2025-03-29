@@ -31,6 +31,10 @@ export default function AdminPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight">Painel do Administrador</h2>
+        <Button onClick={() => navigate("/admin/finance")} className="flex items-center gap-2">
+          <Icons.dollarSign className="h-4 w-4" />
+          Gestão Financeira
+        </Button>
       </div>
 
       <Tabs value={tab} onValueChange={setTab} className="space-y-4">

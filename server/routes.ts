@@ -610,6 +610,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/create-checkout-session", isAuthenticated, createCheckoutSession);
   app.post("/api/create-portal-session", isAuthenticated, createPortalSession);
   app.post("/api/stripe-webhook", express.raw({ type: 'application/json' }), handleWebhook);
+  
+  // Rotas da área financeira administrativa
+  app.get("/api/admin/subscriptions", isAdmin, async (req: Request, res: Response) => {
+    try {
+      // Em produção, isso buscaria assinaturas reais do Stripe
+      // Dados simulados para desenvolvimento
+      const subscriptions = [
+        { id: 1, clientName: "Transportadora Silva Ltda", email: "contato@silvatrans.com.br", status: "active", plan: "Premium", startDate: "2025-02-15", nextBillingDate: "2026-02-15", amount: 1198.80 },
+        { id: 2, clientName: "Expresso Rápido", email: "financeiro@expressorapido.com.br", status: "active", plan: "Premium", startDate: "2025-03-01", nextBillingDate: "2026-03-01", amount: 1198.80 },
+        { id: 3, clientName: "Logística Brasil", email: "admin@logisticabrasil.com", status: "canceled", plan: "Premium", startDate: "2025-01-10", nextBillingDate: "2025-03-10", amount: 1198.80 },
+        { id: 4, clientName: "Fretes São Paulo", email: "contato@fretessp.com.br", status: "active", plan: "Premium", startDate: "2025-03-12", nextBillingDate: "2026-03-12", amount: 1198.80 },
+        { id: 5, clientName: "Caminhoneiros Unidos", email: "financeiro@caminhoneirosunidos.com.br", status: "trial", plan: "Premium", startDate: "2025-03-25", nextBillingDate: "2025-04-25", amount: 0 },
+      ];
+      
+      res.json(subscriptions);
+    } catch (error) {
+      console.error("Error fetching subscriptions:", error);
+      res.status(500).json({ message: "Failed to fetch subscriptions" });
+    }
+  });
+  
+  app.get("/api/admin/invoices", isAdmin, async (req: Request, res: Response) => {
+    try {
+      // Em produção, isso buscaria faturas reais do Stripe
+      // Dados simulados para desenvolvimento
+      const invoices = [
+        { id: 101, clientName: "Transportadora Silva Ltda", status: "paid", invoiceDate: "2025-02-15", dueDate: "2025-02-15", amount: 1198.80 },
+        { id: 102, clientName: "Expresso Rápido", status: "paid", invoiceDate: "2025-03-01", dueDate: "2025-03-01", amount: 1198.80 },
+        { id: 103, clientName: "Logística Brasil", status: "refunded", invoiceDate: "2025-01-10", dueDate: "2025-01-10", amount: 1198.80 },
+        { id: 104, clientName: "Fretes São Paulo", status: "paid", invoiceDate: "2025-03-12", dueDate: "2025-03-12", amount: 1198.80 },
+        { id: 105, clientName: "Caminhoneiros Unidos", status: "upcoming", invoiceDate: "", dueDate: "2025-04-25", amount: 1198.80 },
+      ];
+      
+      res.json(invoices);
+    } catch (error) {
+      console.error("Error fetching invoices:", error);
+      res.status(500).json({ message: "Failed to fetch invoices" });
+    }
+  });
+  
+  app.get("/api/admin/finance/stats", isAdmin, async (req: Request, res: Response) => {
+    try {
+      // Em produção, isso calcularia estatísticas reais
+      // Dados simulados para desenvolvimento
+      const stats = {
+        totalRevenue: 10784.40,
+        activeSubscriptions: 4,
+        trialSubscriptions: 1,
+        canceledSubscriptions: 1,
+        monthlyData: [
+          { name: "Jan", value: 3596.40 },
+          { name: "Fev", value: 4795.20 },
+          { name: "Mar", value: 7192.80 },
+          { name: "Abr", value: 0 },
+          { name: "Mai", value: 0 },
+          { name: "Jun", value: 0 },
+          { name: "Jul", value: 0 },
+          { name: "Ago", value: 0 },
+          { name: "Set", value: 0 },
+          { name: "Out", value: 0 },
+          { name: "Nov", value: 0 },
+          { name: "Dez", value: 0 },
+        ]
+      };
+      
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching finance stats:", error);
+      res.status(500).json({ message: "Failed to fetch finance statistics" });
+    }
+  });
+  
+  app.post("/api/admin/finance/settings", isAdmin, async (req: Request, res: Response) => {
+    try {
+      // Em produção, isso salvaria as configurações no banco de dados
+      console.log("Received finance settings:", req.body);
+      res.json({ message: "Finance settings updated successfully" });
+    } catch (error) {
+      console.error("Error updating finance settings:", error);
+      res.status(500).json({ message: "Failed to update finance settings" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
