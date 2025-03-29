@@ -1,86 +1,86 @@
-import { useEffect, useState } from "react";
-import { useLocation } from "wouter";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Link } from "wouter";
+import { XCircle, ArrowRight, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { XCircle, ArrowLeft, CreditCard } from "lucide-react";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default function PaymentCancelPage() {
-  const [countdown, setCountdown] = useState(8);
-  const [, setLocation] = useLocation();
-  
-  // Automaticamente redirecionar para a home após 8 segundos
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setLocation("/");
-    }, 8000);
-    
-    const countdownInterval = setInterval(() => {
-      setCountdown((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-    
-    return () => {
-      clearTimeout(timer);
-      clearInterval(countdownInterval);
-    };
-  }, [setLocation]);
-  
+export default function PaymentCancel() {
   return (
-    <div className="flex items-center justify-center min-h-[70vh] px-4">
-      <Card className="w-full max-w-lg border-slate-200">
-        <CardHeader className="bg-slate-50 border-b space-y-6 text-center py-6 dark:bg-slate-800/50 dark:border-slate-700">
-          <div className="mx-auto bg-slate-100 text-slate-500 p-4 rounded-full w-20 h-20 flex items-center justify-center dark:bg-slate-700 dark:text-slate-400">
-            <XCircle className="h-14 w-14" />
+    <div className="container mx-auto px-4 py-20 flex flex-col items-center justify-center min-h-[calc(100vh-200px)]">
+      <Card className="w-full max-w-lg shadow-lg border-red-100">
+        <CardHeader className="bg-gradient-to-r from-red-500 to-rose-600 text-white">
+          <div className="flex items-center gap-4">
+            <XCircle className="h-12 w-12" />
+            <div>
+              <CardTitle className="text-2xl font-bold">Pagamento Cancelado</CardTitle>
+              <CardDescription className="text-red-100">
+                Sua assinatura não foi concluída
+              </CardDescription>
+            </div>
           </div>
-          <CardTitle className="text-3xl font-bold text-center">
-            Pagamento Cancelado
-          </CardTitle>
         </CardHeader>
-        
-        <CardContent className="pt-6 pb-8 space-y-6">
-          <div className="text-center space-y-2">
-            <p className="text-lg">
-              O processo de pagamento foi cancelado.
+        <CardContent className="pt-6">
+          <div className="space-y-6">
+            <p className="text-center text-slate-600">
+              O processo de pagamento foi interrompido ou cancelado.
+              Nenhum valor foi cobrado do seu cartão.
             </p>
-            <p className="text-slate-600 dark:text-slate-400">
-              Nenhuma cobrança foi realizada em seu cartão.
-            </p>
-          </div>
-          
-          <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-2 dark:bg-slate-800/50 dark:border-slate-700">
-            <h3 className="font-semibold">Motivos comuns para cancelamento:</h3>
-            <ul className="space-y-1 text-sm text-slate-600 dark:text-slate-400">
-              <li>• Cancelamento voluntário durante o checkout</li>
-              <li>• Problemas com o cartão de crédito</li>
-              <li>• Erro temporário no processamento</li>
-            </ul>
-            <p className="text-sm pt-2 text-slate-600 dark:text-slate-400">
-              Deseja tentar novamente? Clique no botão abaixo.
-            </p>
-          </div>
-          
-          <div className="text-center text-sm text-slate-500">
-            Você será redirecionado para a página inicial em {countdown} segundos...
-          </div>
-          
-          <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-            <Button
-              onClick={() => setLocation("/")}
-              variant="outline"
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Voltar para o Início
-            </Button>
             
-            <Button
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className="gap-2 bg-gradient-to-r from-primary to-primary/80"
-            >
-              <CreditCard className="h-4 w-4" />
-              Tentar Novamente
-            </Button>
+            <div className="bg-slate-50 p-4 rounded-lg">
+              <h4 className="font-medium mb-2">Motivos comuns para cancelamento:</h4>
+              <ul className="space-y-2 text-sm text-slate-600">
+                <li className="flex items-start gap-2">
+                  <div className="h-5 w-5 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 flex-shrink-0 mt-0.5">1</div>
+                  <span>Dados do cartão informados incorretamente</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <div className="h-5 w-5 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 flex-shrink-0 mt-0.5">2</div>
+                  <span>Cancelamento voluntário do processo</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <div className="h-5 w-5 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 flex-shrink-0 mt-0.5">3</div>
+                  <span>Saldo insuficiente ou limite indisponível</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <div className="h-5 w-5 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 flex-shrink-0 mt-0.5">4</div>
+                  <span>Problemas técnicos durante o processo</span>
+                </li>
+              </ul>
+            </div>
+            
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <h4 className="font-medium mb-2 text-blue-800">O que você pode fazer:</h4>
+              <ul className="space-y-1 text-sm text-blue-700">
+                <li className="flex items-start gap-2">
+                  <ArrowRight className="h-4 w-4 text-blue-600 mt-0.5" />
+                  <span>Tente novamente utilizando outro cartão</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <ArrowRight className="h-4 w-4 text-blue-600 mt-0.5" />
+                  <span>Verifique se os dados do cartão estão corretos</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <ArrowRight className="h-4 w-4 text-blue-600 mt-0.5" />
+                  <span>Entre em contato com o suporte para assistência</span>
+                </li>
+              </ul>
+            </div>
           </div>
         </CardContent>
+        <CardFooter className="flex justify-between pb-6">
+          <Link href="/">
+            <Button variant="outline" className="gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              <span>Voltar para o sistema</span>
+            </Button>
+          </Link>
+          
+          <Link href="/">
+            <Button className="gap-2">
+              <span>Tentar novamente</span>
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
+        </CardFooter>
       </Card>
     </div>
   );

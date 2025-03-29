@@ -7,7 +7,7 @@ import { AuthProvider as UserAuthProvider } from "@/hooks/use-auth";
 import { AuthProvider as ClientAuthProvider } from "@/lib/auth-context";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { ClientRegistrationCheck } from "@/components/client-registration-check";
-import { PaymentBanner } from "@/components/payment-banner";
+
 import NotFound from "@/pages/not-found";
 import Navigation from "@/components/layout/navigation";
 import Footer from "@/components/layout/footer";
@@ -64,7 +64,6 @@ function App() {
             <ClientRegistrationCheck />
             <div className="flex flex-col min-h-screen bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-200">
               <Navigation />
-              <PaymentBanner />
               <div className="flex flex-col flex-grow">
                 <main className="px-6 py-6 flex-grow max-w-full overflow-x-hidden">
                   <div className="container mx-auto">

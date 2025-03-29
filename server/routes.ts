@@ -650,28 +650,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Rotas de pagamento com Stripe
+  app.post("/api/create-checkout-session", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      await createCheckoutSession(req, res);
+    } catch (error) {
+      console.error("Error creating checkout session:", error);
+      res.status(500).json({ message: "Failed to create checkout session" });
+    }
+  });
+
+  app.post("/api/create-portal-session", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      await createPortalSession(req, res);
+    } catch (error) {
+      console.error("Error creating portal session:", error);
+      res.status(500).json({ message: "Failed to create portal session" });
+    }
+  });
+
+  // Webhook do Stripe (não requer autenticação, pois é chamado pelo Stripe)
+  app.post("/api/stripe-webhook", express.raw({ type: "application/json" }), async (req: Request, res: Response) => {
+    try {
+      await handleWebhook(req, res);
+    } catch (error) {
+      console.error("Error processing webhook:", error);
+      res.status(500).json({ message: "Failed to process webhook" });
+    }
+  });
+
+  // Rotas de administração financeira
   app.get("/api/admin/finance/stats", isAdmin, async (req: Request, res: Response) => {
     try {
       // Em produção, isso calcularia estatísticas reais
       // Dados simulados para desenvolvimento
       const stats = {
         totalRevenue: 10784.40,
+        monthlyRevenue: 3591.60,
         activeSubscriptions: 4,
-        trialSubscriptions: 1,
-        canceledSubscriptions: 1,
+        churnRate: 2.5,
         monthlyData: [
-          { name: "Jan", value: 3596.40 },
-          { name: "Fev", value: 4795.20 },
-          { name: "Mar", value: 7192.80 },
-          { name: "Abr", value: 0 },
-          { name: "Mai", value: 0 },
-          { name: "Jun", value: 0 },
-          { name: "Jul", value: 0 },
-          { name: "Ago", value: 0 },
-          { name: "Set", value: 0 },
-          { name: "Out", value: 0 },
-          { name: "Nov", value: 0 },
-          { name: "Dez", value: 0 },
+          { month: "Jan", revenue: 3596.40 },
+          { month: "Fev", revenue: 4795.20 },
+          { month: "Mar", revenue: 7192.80 },
+          { month: "Abr", revenue: 0 },
+          { month: "Mai", revenue: 0 },
+          { month: "Jun", revenue: 0 },
+          { month: "Jul", revenue: 0 },
+          { month: "Ago", revenue: 0 },
+          { month: "Set", revenue: 0 },
+          { month: "Out", revenue: 0 },
+          { month: "Nov", revenue: 0 },
+          { month: "Dez", revenue: 0 },
+        ],
+        subscriptionsByStatus: [
+          { status: "Ativas", count: 4 },
+          { status: "Teste", count: 1 },
+          { status: "Canceladas", count: 1 },
+          { status: "Atrasadas", count: 0 }
         ]
       };
       
@@ -679,6 +715,122 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching finance stats:", error);
       res.status(500).json({ message: "Failed to fetch finance statistics" });
+    }
+  });
+  
+  app.get("/api/admin/subscriptions", isAdmin, async (req: Request, res: Response) => {
+    try {
+      // Dados simulados para desenvolvimento
+      const subscriptions = [
+        {
+          id: "sub_123456",
+          clientName: "Transportes Veloz Ltda",
+          email: "contato@transportesveloz.com.br",
+          plan: "Premium Anual",
+          status: "active",
+          amount: 99.90,
+          startDate: "2025-01-15",
+          endDate: "2026-01-15"
+        },
+        {
+          id: "sub_234567",
+          clientName: "LogTrans Serviços",
+          email: "financeiro@logtrans.com.br",
+          plan: "Premium Anual",
+          status: "active",
+          amount: 99.90,
+          startDate: "2025-02-03",
+          endDate: "2026-02-03"
+        },
+        {
+          id: "sub_345678",
+          clientName: "ExpressCargo Brasil",
+          email: "admin@expresscargo.com.br",
+          plan: "Premium Anual",
+          status: "canceled",
+          amount: 99.90,
+          startDate: "2025-01-10",
+          endDate: "2025-03-15"
+        },
+        {
+          id: "sub_456789",
+          clientName: "Transportadora RápidoSul",
+          email: "contato@rapidosul.com.br",
+          plan: "Premium Anual",
+          status: "trialing",
+          amount: 99.90,
+          startDate: "2025-03-20",
+          endDate: "2025-03-27"
+        },
+        {
+          id: "sub_567890",
+          clientName: "TransNorte Logística",
+          email: "financeiro@transnorte.com.br",
+          plan: "Premium Anual",
+          status: "past_due",
+          amount: 99.90,
+          startDate: "2025-02-15",
+          endDate: "2026-02-15"
+        }
+      ];
+      
+      res.json(subscriptions);
+    } catch (error) {
+      console.error("Error fetching subscriptions:", error);
+      res.status(500).json({ message: "Failed to fetch subscription data" });
+    }
+  });
+  
+  app.get("/api/admin/invoices", isAdmin, async (req: Request, res: Response) => {
+    try {
+      // Dados simulados para desenvolvimento
+      const invoices = [
+        {
+          id: "in_123456",
+          clientName: "Transportes Veloz Ltda",
+          email: "contato@transportesveloz.com.br",
+          amount: 1198.80,
+          status: "paid",
+          date: "2025-01-15"
+        },
+        {
+          id: "in_234567",
+          clientName: "LogTrans Serviços",
+          email: "financeiro@logtrans.com.br",
+          amount: 1198.80,
+          status: "paid",
+          date: "2025-02-03"
+        },
+        {
+          id: "in_345678",
+          clientName: "ExpressCargo Brasil",
+          email: "admin@expresscargo.com.br",
+          amount: 199.80,
+          status: "void",
+          date: "2025-01-10"
+        },
+        {
+          id: "in_456789",
+          clientName: "TransNorte Logística",
+          email: "financeiro@transnorte.com.br",
+          amount: 1198.80,
+          status: "open",
+          date: "2025-03-15"
+        },
+        {
+          id: "in_567890",
+          clientName: "DeltaFretes Transportes",
+          email: "contato@deltafretes.com.br",
+          amount: 1198.80,
+          status: "uncollectible",
+          date: "2025-02-10"
+        }
+      ];
+      
+      res.json(invoices);
+    } catch (error) {
+      console.error("Error fetching invoices:", error);
+      res.status(500).json({ message: "Failed to fetch invoice data" });
     }
   });
   

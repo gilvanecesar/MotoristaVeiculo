@@ -1,406 +1,573 @@
-import { useState } from "react";
-import { useLocation } from "wouter";
-import { CreditCard, ArrowLeft, Save } from "lucide-react";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/hooks/use-toast";
-import { 
-  Form, 
-  FormControl, 
-  FormDescription, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormMessage 
-} from "@/components/ui/form";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useToast } from "@/hooks/use-toast";
+import { Link } from "wouter";
+import { ArrowLeft, Loader2, Save } from "lucide-react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { apiRequest, getQueryFn, queryClient } from "@/lib/queryClient";
 
-// Esquema de validação do formulário
-const financeSettingsSchema = z.object({
-  companyName: z.string().min(2, "Nome da empresa é obrigatório"),
-  cnpj: z.string().min(14, "CNPJ deve ter pelo menos 14 dígitos"),
-  address: z.string().min(5, "Endereço completo é obrigatório"),
-  cityState: z.string().min(2, "Cidade/Estado é obrigatório"),
-  zipCode: z.string().min(5, "CEP é obrigatório"),
-  phone: z.string().min(10, "Telefone é obrigatório"),
-  email: z.string().email("E-mail inválido"),
-  bankName: z.string().min(2, "Nome do banco é obrigatório"),
-  bankAccount: z.string().min(5, "Conta bancária é obrigatória"),
-  bankBranch: z.string().min(1, "Agência bancária é obrigatória"),
-  pixKey: z.string().min(5, "Chave PIX é obrigatória"),
+// Schema de validação para configurações de faturamento
+const billingSettingsSchema = z.object({
+  automaticBilling: z.boolean().default(true),
+  gracePeriod: z.number().int().min(0).max(30).default(3),
+  reminderDays: z.number().int().min(1).max(14).default(3),
+  stripeWebhookSecret: z.string().optional(),
+  enableInvoices: z.boolean().default(true),
+  customInvoicePrefix: z.string().optional(),
   invoiceNotes: z.string().optional(),
-  autoRenewal: z.boolean().default(true),
-  sendReminders: z.boolean().default(true),
-  notifyCustomers: z.boolean().default(true),
 });
 
-type FinanceSettingsForm = z.infer<typeof financeSettingsSchema>;
+type BillingSettingsFormValues = z.infer<typeof billingSettingsSchema>;
 
-// Dados iniciais simulados
-const defaultValues: FinanceSettingsForm = {
-  companyName: "QUERO FRETES LTDA",
-  cnpj: "12.345.678/0001-99",
-  address: "Av. Paulista, 1000, Sala 101",
-  cityState: "São Paulo/SP",
-  zipCode: "01310-100",
-  phone: "(11) 99999-9999",
-  email: "financeiro@querofretes.com.br",
-  bankName: "Banco do Brasil",
-  bankAccount: "12345-6",
-  bankBranch: "1234-5",
-  pixKey: "12.345.678/0001-99",
-  invoiceNotes: "Pagamento referente à assinatura anual do sistema QUERO FRETES",
-  autoRenewal: true,
-  sendReminders: true,
-  notifyCustomers: true,
-};
+// Schema de validação para configurações do plano
+const planSettingsSchema = z.object({
+  monthlyPrice: z.number().min(0).step(0.01),
+  yearlyPrice: z.number().min(0).step(0.01),
+  trialDays: z.number().int().min(0).max(30),
+  planName: z.string().min(3),
+  planDescription: z.string(),
+  enableTrialPeriod: z.boolean(),
+  stripePriceId: z.string().optional(),
+});
 
-export default function FinanceSettings() {
-  const [, setLocation] = useLocation();
+type PlanSettingsFormValues = z.infer<typeof planSettingsSchema>;
+
+// Componente principal de configurações financeiras
+export default function FinanceSettingsPage() {
+  const [activeTab, setActiveTab] = useState("billing");
   const { toast } = useToast();
 
-  const form = useForm<FinanceSettingsForm>({
-    resolver: zodResolver(financeSettingsSchema),
-    defaultValues,
+  // Buscar configurações existentes
+  const { data: settings, isLoading } = useQuery({
+    queryKey: ["/api/admin/finance/settings"],
+    queryFn: getQueryFn(),
   });
 
-  const onSubmit = (values: FinanceSettingsForm) => {
-    // Em produção, enviaria os dados para o backend
-    console.log(values);
-    toast({
-      title: "Configurações salvas",
-      description: "As configurações financeiras foram atualizadas com sucesso.",
+  // Configurar formulário de faturamento
+  const billingForm = useForm<BillingSettingsFormValues>({
+    resolver: zodResolver(billingSettingsSchema),
+    defaultValues: {
+      automaticBilling: settings?.automaticBilling ?? true,
+      gracePeriod: settings?.gracePeriod ?? 3,
+      reminderDays: settings?.reminderDays ?? 3,
+      stripeWebhookSecret: settings?.stripeWebhookSecret ?? "",
+      enableInvoices: settings?.enableInvoices ?? true,
+      customInvoicePrefix: settings?.customInvoicePrefix ?? "",
+      invoiceNotes: settings?.invoiceNotes ?? "",
+    },
+  });
+
+  // Configurar formulário de planos
+  const planForm = useForm<PlanSettingsFormValues>({
+    resolver: zodResolver(planSettingsSchema),
+    defaultValues: {
+      monthlyPrice: settings?.monthlyPrice ?? 99.90,
+      yearlyPrice: settings?.yearlyPrice ?? 1198.80,
+      trialDays: settings?.trialDays ?? 7,
+      planName: settings?.planName ?? "Premium",
+      planDescription: settings?.planDescription ?? "Acesso completo a todas as funcionalidades",
+      enableTrialPeriod: settings?.enableTrialPeriod ?? true,
+      stripePriceId: settings?.stripePriceId ?? "",
+    },
+  });
+
+  // Atualizar valores do formulário quando os dados são carregados
+  useEffect(() => {
+    if (settings) {
+      billingForm.reset({
+        automaticBilling: settings.automaticBilling ?? true,
+        gracePeriod: settings.gracePeriod ?? 3,
+        reminderDays: settings.reminderDays ?? 3,
+        stripeWebhookSecret: settings.stripeWebhookSecret ?? "",
+        enableInvoices: settings.enableInvoices ?? true,
+        customInvoicePrefix: settings.customInvoicePrefix ?? "",
+        invoiceNotes: settings.invoiceNotes ?? "",
+      });
+
+      planForm.reset({
+        monthlyPrice: settings.monthlyPrice ?? 99.90,
+        yearlyPrice: settings.yearlyPrice ?? 1198.80,
+        trialDays: settings.trialDays ?? 7,
+        planName: settings.planName ?? "Premium",
+        planDescription: settings.planDescription ?? "Acesso completo a todas as funcionalidades",
+        enableTrialPeriod: settings.enableTrialPeriod ?? true,
+        stripePriceId: settings.stripePriceId ?? "",
+      });
+    }
+  }, [settings, billingForm, planForm]);
+
+  // Mutation para salvar as configurações
+  const saveMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return await apiRequest("POST", "/api/admin/finance/settings", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/finance/settings"] });
+      toast({
+        title: "Configurações salvas",
+        description: "As configurações financeiras foram atualizadas com sucesso.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Erro ao salvar",
+        description: error.message || "Ocorreu um erro ao salvar as configurações.",
+      });
+    },
+  });
+
+  // Handler para salvar configurações de faturamento
+  const handleSaveBillingSettings = (values: BillingSettingsFormValues) => {
+    saveMutation.mutate({
+      ...values,
+      type: "billing",
     });
   };
 
+  // Handler para salvar configurações de plano
+  const handleSavePlanSettings = (values: PlanSettingsFormValues) => {
+    saveMutation.mutate({
+      ...values,
+      type: "plan",
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-12rem)]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <Button 
-            variant="outline" 
-            size="icon" 
-            onClick={() => setLocation("/admin/finance")}
-          >
+    <div className="container mx-auto py-6">
+      <div className="flex items-center gap-2 mb-6">
+        <Link href="/admin/finance">
+          <Button variant="outline" size="icon">
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <h1 className="text-3xl font-bold tracking-tight">Configurações Financeiras</h1>
-        </div>
-        <Button 
-          onClick={form.handleSubmit(onSubmit)}
-          className="gap-2"
-        >
-          <Save className="h-4 w-4" /> Salvar Alterações
-        </Button>
+        </Link>
+        <h1 className="text-3xl font-bold tracking-tight">Configurações Financeiras</h1>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Informações da Empresa</CardTitle>
-            <CardDescription>
-              Detalhes da empresa que aparecem nas faturas e documentos financeiros.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="companyName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nome da Empresa</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="cnpj"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>CNPJ</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="address"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Endereço</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="cityState"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Cidade/Estado</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="billing">Faturamento</TabsTrigger>
+          <TabsTrigger value="plans">Planos</TabsTrigger>
+        </TabsList>
+        
+        {/* Tab: Configurações de Faturamento */}
+        <TabsContent value="billing">
+          <Card>
+            <CardHeader>
+              <CardTitle>Configurações de Faturamento</CardTitle>
+              <CardDescription>
+                Configure as preferências de faturamento, cobranças e notificações.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <Form {...billingForm}>
+                <form onSubmit={billingForm.handleSubmit(handleSaveBillingSettings)} className="space-y-8">
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Cobranças Automáticas</h3>
+                    
+                    <FormField
+                      control={billingForm.control}
+                      name="automaticBilling"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">Cobrança Automática</FormLabel>
+                            <FormDescription>
+                              Ativar cobrança automática para assinaturas
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={billingForm.control}
+                        name="gracePeriod"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Período de Carência (dias)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                {...field}
+                                min={0}
+                                max={30}
+                                onChange={(e) => field.onChange(Number(e.target.value))}
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              Dias de carência antes de desativar assinaturas não pagas
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={billingForm.control}
+                        name="reminderDays"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Lembrete de Pagamento (dias)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                {...field}
+                                min={1}
+                                max={14}
+                                onChange={(e) => field.onChange(Number(e.target.value))}
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              Dias antes do vencimento para enviar lembretes
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                  
+                  <Separator />
+                  
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Configurações de Notas Fiscais</h3>
+                    
+                    <FormField
+                      control={billingForm.control}
+                      name="enableInvoices"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">Gerar Notas Fiscais</FormLabel>
+                            <FormDescription>
+                              Emitir notas fiscais automaticamente após pagamento
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={billingForm.control}
+                      name="customInvoicePrefix"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Prefixo Personalizado</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="NF-"
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Prefixo customizado para notas fiscais (opcional)
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={billingForm.control}
+                      name="invoiceNotes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Observações Padrão</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Observações que aparecerão em todas as notas fiscais"
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Texto padrão a ser incluído em todas as notas fiscais
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <Separator />
+                  
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Configurações do Stripe</h3>
+                    
+                    <FormField
+                      control={billingForm.control}
+                      name="stripeWebhookSecret"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Webhook Secret do Stripe</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="password"
+                              placeholder="whsec_..."
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Chave secreta para validar webhooks do Stripe
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <Button 
+                    type="submit"
+                    className="w-full md:w-auto" 
+                    disabled={saveMutation.isPending}
+                  >
+                    {saveMutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Salvando...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="mr-2 h-4 w-4" />
+                        Salvar Configurações
+                      </>
                     )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="zipCode"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>CEP</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        {/* Tab: Configurações de Planos */}
+        <TabsContent value="plans">
+          <Card>
+            <CardHeader>
+              <CardTitle>Configurações de Planos</CardTitle>
+              <CardDescription>
+                Configure os planos de assinatura disponíveis e seus preços.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <Form {...planForm}>
+                <form onSubmit={planForm.handleSubmit(handleSavePlanSettings)} className="space-y-8">
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Plano Premium</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={planForm.control}
+                        name="planName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nome do Plano</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Premium"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={planForm.control}
+                        name="stripePriceId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>ID do Preço no Stripe</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="price_..."
+                                {...field}
+                                value={field.value || ""}
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              ID do preço criado no painel do Stripe
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <FormField
+                      control={planForm.control}
+                      name="planDescription"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Descrição do Plano</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Acesso completo a todas as funcionalidades"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={planForm.control}
+                        name="monthlyPrice"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Preço Mensal (R$)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                {...field}
+                                onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              Valor mensal do plano
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={planForm.control}
+                        name="yearlyPrice"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Preço Anual (R$)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                {...field}
+                                onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              Valor total para assinatura anual
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                  
+                  <Separator />
+                  
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Período de Teste</h3>
+                    
+                    <FormField
+                      control={planForm.control}
+                      name="enableTrialPeriod"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">Ativar Período de Teste</FormLabel>
+                            <FormDescription>
+                              Permitir que novos usuários experimentem o sistema gratuitamente
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={planForm.control}
+                      name="trialDays"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Duração do Período de Teste (dias)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min={0}
+                              max={30}
+                              {...field}
+                              onChange={(e) => field.onChange(Number(e.target.value))}
+                              disabled={!planForm.watch("enableTrialPeriod")}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Número de dias para testar o sistema antes da primeira cobrança
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <Button 
+                    type="submit"
+                    className="w-full md:w-auto" 
+                    disabled={saveMutation.isPending}
+                  >
+                    {saveMutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Salvando...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="mr-2 h-4 w-4" />
+                        Salvar Configurações
+                      </>
                     )}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Telefone</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>E-mail Financeiro</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Informações Bancárias</CardTitle>
-            <CardDescription>
-              Dados bancários para recebimento de pagamentos.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="bankName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nome do Banco</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="bankAccount"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Conta</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="bankBranch"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Agência</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="pixKey"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Chave PIX</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="invoiceNotes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Observações da Fatura</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          {...field} 
-                          placeholder="Informações adicionais que aparecerão nas faturas"
-                          rows={3}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Configurações de Cobrança</CardTitle>
-          <CardDescription>
-            Defina como as cobranças e notificações serão gerenciadas.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form className="space-y-6">
-              <div className="grid gap-6 md:grid-cols-2">
-                <FormField
-                  control={form.control}
-                  name="autoRenewal"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between p-4 border rounded-lg">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">Renovação Automática</FormLabel>
-                        <FormDescription>
-                          Renovar automaticamente as assinaturas ao vencerem
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="sendReminders"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between p-4 border rounded-lg">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">Lembretes de Pagamento</FormLabel>
-                        <FormDescription>
-                          Enviar lembretes sobre pagamentos pendentes
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="notifyCustomers"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between p-4 border rounded-lg">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">Notificações de Fatura</FormLabel>
-                        <FormDescription>
-                          Enviar notificações aos clientes ao emitir novas faturas
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-        <CardFooter className="flex justify-end">
-          <Button 
-            onClick={form.handleSubmit(onSubmit)}
-            className="gap-2"
-          >
-            <Save className="h-4 w-4" /> Salvar Alterações
-          </Button>
-        </CardFooter>
-      </Card>
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

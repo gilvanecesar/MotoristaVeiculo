@@ -1,12 +1,14 @@
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
-import { LayoutDashboard, Users, Car, BarChart3, Menu, X, Moon, Sun, Truck, Building2, Home } from "lucide-react";
+import { LayoutDashboard, Users, Car, BarChart3, Menu, X, Moon, Sun, Truck, Building2, Home, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useTheme } from "@/lib/theme-provider";
 import { useAuth } from "@/lib/auth-context";
+import { useAuth as useUserAuth } from "@/hooks/use-auth";
 import { ClientSelector } from "@/components/client-selector";
+import { PaymentBanner } from "@/components/payment-banner";
 import logoImage from "../../assets/logo.png";
 import { 
   DropdownMenu,
@@ -60,6 +62,23 @@ export default function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
   const { theme, toggleTheme } = useTheme();
+  const { user } = useUserAuth();
+  
+  // Verificar se o usuário é administrador
+  const isAdmin = user?.profileType === "admin";
+  
+  // Menu Financeiro (apenas para administradores)
+  const financeMenuItem = {
+    label: "Financeiro",
+    path: "/admin/finance",
+    icon: DollarSign
+  };
+  
+  // Items do menu com base nas permissões
+  const menuItems = [...navItems];
+  if (isAdmin) {
+    menuItems.push(financeMenuItem);
+  }
   
   // Map location to page title
   const getPageTitle = () => {
@@ -76,6 +95,10 @@ export default function Navigation() {
         return "Clientes";
       case "/reports":
         return "Relatórios";
+      case "/admin/finance":
+        return "Gestão Financeira";
+      case "/admin/finance/settings":
+        return "Configurações Financeiras";
       default:
         if (location.startsWith("/drivers/new")) {
           return "Cadastrar Motorista";
@@ -122,7 +145,7 @@ export default function Navigation() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-1">
-            {navItems.map((item) => {
+            {menuItems.map((item) => {
               const isActive = location === item.path;
               const Icon = item.icon;
               
@@ -191,7 +214,7 @@ export default function Navigation() {
         {isMobile && mobileMenuOpen && (
           <nav className="md:hidden pb-3 px-4 border-t border-slate-100 dark:border-slate-600">
             <ul className="pt-2 space-y-1">
-              {navItems.map((item) => {
+              {menuItems.map((item) => {
                 const isActive = location === item.path;
                 const Icon = item.icon;
                 
@@ -257,6 +280,14 @@ export default function Navigation() {
         <div className="bg-slate-50 dark:bg-slate-700 px-4 py-2 border-t border-b border-slate-200 dark:border-slate-600">
           <h2 className="text-md font-semibold text-slate-700 dark:text-slate-200">{getPageTitle()}</h2>
         </div>
+
+        {/* Payment Banner - Mostrado abaixo do título da página */}
+        {/* Só exibimos o banner em páginas não relacionadas a pagamento e não administrativas */}
+        {user && !isAdmin && 
+          !location.includes("/payment") && 
+          !location.includes("/admin") && 
+          <PaymentBanner />
+        }
       </div>
     </header>
   );
