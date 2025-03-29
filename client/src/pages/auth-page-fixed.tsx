@@ -145,6 +145,7 @@ export default function AuthPage() {
         
         // Redireciona diretamente para a página de fretes
         navigate("/freights");
+        return; // Importante adicionar o return para não continuar o código
       } else {
         // Processamento normal via Stripe para planos pagos
         const response = await apiRequest("POST", "/api/create-checkout-session", {

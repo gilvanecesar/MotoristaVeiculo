@@ -281,13 +281,7 @@ export default function Navigation() {
           <h2 className="text-md font-semibold text-slate-700 dark:text-slate-200">{getPageTitle()}</h2>
         </div>
 
-        {/* Payment Banner - Mostrado abaixo do título da página */}
-        {/* Só exibimos o banner em páginas não relacionadas a pagamento e não administrativas */}
-        {user && !isAdmin && 
-          !location.includes("/payment") && 
-          !location.includes("/admin") && 
-          <PaymentBanner />
-        }
+        {/* Banner de pagamento removido conforme solicitado */}
       </div>
     </header>
   );
