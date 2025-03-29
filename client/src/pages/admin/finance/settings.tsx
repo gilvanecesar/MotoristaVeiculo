@@ -50,7 +50,7 @@ export default function FinanceSettingsPage() {
   // Buscar configurações existentes
   const { data: settings, isLoading } = useQuery({
     queryKey: ["/api/admin/finance/settings"],
-    queryFn: getQueryFn(),
+    queryFn: getQueryFn({ on401: "throw" }),
   });
 
   // Configurar formulário de faturamento
