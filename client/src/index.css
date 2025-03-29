@@ -43,3 +43,88 @@ table {
 th {
   @apply bg-slate-100 dark:bg-slate-700;
 }
+
+/* Responsividade - tabelas */
+.responsive-table-container {
+  @apply w-full overflow-x-auto;
+}
+
+/* Estilos gerais de responsividade */
+.responsive-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4;
+}
+
+.responsive-flex {
+  @apply flex flex-col sm:flex-row items-start sm:items-center gap-2;
+}
+
+/* Mobile padding adjustments */
+.mobile-container {
+  @apply px-4 sm:px-6;
+}
+
+/* Hide elements on mobile view, but show on tablet and above */
+.hide-on-mobile {
+  @apply hidden sm:block;
+}
+
+/* Show elements only on mobile view */
+.show-on-mobile {
+  @apply block sm:hidden;
+}
+
+/* Card adjustments for mobile */
+.responsive-card {
+  @apply p-3 sm:p-4 md:p-6;
+}
+
+/* Table cell adjustments for mobile */
+@media (max-width: 640px) {
+  .priority-low {
+    @apply hidden;
+  }
+}
+
+@media (max-width: 768px) {
+  .priority-medium {
+    @apply hidden;
+  }
+}
+
+@media (max-width: 1024px) {
+  .priority-high {
+    @apply hidden;
+  }
+}
+
+/* Imagem responsiva */
+.responsive-img {
+  @apply max-w-full h-auto;
+}
+
+/* Texto responsivo */
+.responsive-text-sm {
+  @apply text-xs sm:text-sm;
+}
+
+.responsive-text-base {
+  @apply text-sm sm:text-base;
+}
+
+.responsive-text-lg {
+  @apply text-base sm:text-lg;
+}
+
+.responsive-text-xl {
+  @apply text-lg sm:text-xl md:text-2xl;
+}
+
+/* Container para formulários responsivos */
+.responsive-form {
+  @apply w-full max-w-full sm:max-w-md md:max-w-lg mx-auto;
+}
+
+/* Botão responsivo */
+.responsive-button {
+  @apply w-full sm:w-auto;
+}

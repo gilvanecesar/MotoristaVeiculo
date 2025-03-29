@@ -121,12 +121,12 @@ export default function Navigation() {
     <header className="bg-white dark:bg-slate-800 shadow-sm sticky top-0 z-50 transition-colors duration-200">
       <div className="container mx-auto">
         {/* Menu Bar with Logo and Navigation Items */}
-        <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3">
           {/* Logo */}
-          <div className="flex items-center gap-2">
-            <img src={logoImage} alt="QUERO FRETES" className="h-10 w-10" />
+          <div className="flex items-center gap-1 sm:gap-2">
+            <img src={logoImage} alt="QUERO FRETES" className="h-8 w-8 sm:h-10 sm:w-10" />
             <div>
-              <h1 className="text-lg font-bold text-slate-800 dark:text-white bg-gradient-to-r from-cyan-500 to-blue-500 text-transparent bg-clip-text">QUERO FRETES</h1>
+              <h1 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white bg-gradient-to-r from-cyan-500 to-blue-500 text-transparent bg-clip-text">QUERO FRETES</h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 hidden md:block">Sistema de gerenciamento de cargas</p>
             </div>
           </div>

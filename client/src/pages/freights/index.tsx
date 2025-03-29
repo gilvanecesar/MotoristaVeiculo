@@ -99,44 +99,55 @@ export default function FreightsPage() {
     
     return data.filter(freight => {
       // Filtro por status
-      if (filterStatus !== "todos" && freight.status !== filterStatus) {
+      if (filterStatus !== "todos") {
+        const today = new Date();
+        
+        if (filterStatus === "ativo" && new Date(freight.expirationDate) < today) {
+          return false;
+        }
+        
+        if (filterStatus === "expirado" && new Date(freight.expirationDate) >= today) {
+          return false;
+        }
+      }
+      
+      // Filtro de busca por texto
+      if (searchQuery && !Object.values(freight).some(value => 
+        typeof value === 'string' && value.toLowerCase().includes(searchQuery.toLowerCase())
+      )) {
         return false;
       }
       
-      // Filtros adicionais
-      if (filters.origin && !freight.origin.toLowerCase().includes(filters.origin.toLowerCase()) && 
-          !freight.originState.toLowerCase().includes(filters.origin.toLowerCase())) {
+      // Filtros avançados
+      if (filters.origin && !freight.origin.toLowerCase().includes(filters.origin.toLowerCase())) {
         return false;
       }
       
-      if (filters.destination && !freight.destination.toLowerCase().includes(filters.destination.toLowerCase()) && 
-          !freight.destinationState.toLowerCase().includes(filters.destination.toLowerCase())) {
+      if (filters.destination && !freight.destination.toLowerCase().includes(filters.destination.toLowerCase())) {
         return false;
       }
       
-      if (filters.vehicleType && filters.vehicleType !== 'todos' && freight.vehicleType !== filters.vehicleType) {
+      if (filters.vehicleType !== "todos" && freight.vehicleType !== filters.vehicleType) {
         return false;
       }
       
-      if (filters.bodyType && filters.bodyType !== 'todos' && freight.bodyType !== filters.bodyType) {
+      if (filters.bodyType !== "todos" && freight.bodyType !== filters.bodyType) {
         return false;
       }
       
-      if (filters.cargoType && filters.cargoType !== 'todos' && freight.cargoType !== filters.cargoType) {
+      if (filters.cargoType !== "todos" && freight.cargoType !== filters.cargoType) {
         return false;
       }
       
-      if (filters.paymentMethod && filters.paymentMethod !== 'todos' && freight.paymentMethod !== filters.paymentMethod) {
+      if (filters.paymentMethod !== "todos" && freight.paymentMethod !== filters.paymentMethod) {
         return false;
       }
       
-      // Filtro por peso
-      const weight = parseFloat(freight.cargoWeight);
-      if (filters.minWeight && weight < parseFloat(filters.minWeight)) {
+      if (filters.minWeight && parseFloat(freight.cargoWeight) < parseFloat(filters.minWeight)) {
         return false;
       }
       
-      if (filters.maxWeight && weight > parseFloat(filters.maxWeight)) {
+      if (filters.maxWeight && parseFloat(freight.cargoWeight) > parseFloat(filters.maxWeight)) {
         return false;
       }
       
@@ -144,420 +155,202 @@ export default function FreightsPage() {
     });
   };
 
-  // Fetch data
+  // Buscar fretes
   const { data: freights, isLoading } = useQuery({
-    queryKey: ['/api/freights'],
-    select: filterFreights
-  });
-  
-  const { data: clients } = useQuery({
-    queryKey: ['/api/clients'],
+    queryKey: ["/api/freights"],
+    refetchOnWindowFocus: false,
   });
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    // TODO: Implement search functionality
-    console.log("Searching for:", searchQuery);
+  // Buscar clientes para mapear os nomes dos clientes aos fretes
+  const { data: clients = [] } = useQuery({
+    queryKey: ["/api/clients"],
+    refetchOnWindowFocus: false,
+  });
+
+  // Botões de ação para cada frete
+  const renderActionButtons = (freight: FreightWithDestinations) => {
+    const canEditDelete = isClientAuthorized(freight.clientId);
+
+    return (
+      <div className="flex space-x-1">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate(`/freights/${freight.id}`)}
+          title="Visualizar"
+        >
+          <Eye className="h-4 w-4" />
+        </Button>
+        
+        {canEditDelete && (
+          <>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(`/freights/edit/${freight.id}`)}
+              title="Editar"
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                setSelectedFreight(freight);
+                setDeleteDialogOpen(true);
+              }}
+              title="Excluir"
+            >
+              <Trash2 className="h-4 w-4 text-red-500" />
+            </Button>
+          </>
+        )}
+        
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={(e) => shareViaWhatsApp(e, freight)}
+          title="Compartilhar via WhatsApp"
+        >
+          <FaWhatsapp className="h-4 w-4 text-green-500" />
+        </Button>
+        
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            if (freight.contactPhone) {
+              window.open(`https://wa.me/55${freight.contactPhone.replace(/\D/g, '')}`, '_blank');
+            }
+          }}
+          title="Contatar via WhatsApp"
+          disabled={!freight.contactPhone}
+        >
+          <PhoneCall className="h-4 w-4 text-green-500" />
+        </Button>
+      </div>
+    );
   };
 
-  const handleDelete = async () => {
-    if (!selectedFreight) return;
+  // Mapeia o tipo de veículo para um nome amigável
+  const getVehicleTypeName = (type: string) => {
+    const [category, model] = type.split('_');
     
-    try {
-      console.log("Tentando excluir frete ID:", selectedFreight.id);
-      
-      const response = await fetch(`/api/freights/${selectedFreight.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include' // Importante para enviar cookies de autenticação
-      });
-      
-      // Log da resposta para debugging
-      console.log("Status da resposta:", response.status);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Erro ao excluir frete - Status:", response.status);
-        console.error("Resposta do servidor:", errorText);
-        
-        let errorData;
-        try {
-          errorData = JSON.parse(errorText);
-        } catch {
-          errorData = { message: errorText || 'Erro desconhecido' };
-        }
-        
-        alert(`Erro ao excluir frete: ${errorData.message || 'Falha na operação'}`);
-        return;
+    if (model === 'todos') {
+      switch (category) {
+        case 'leve': return 'Leve (Todos)';
+        case 'medio': return 'Médio (Todos)';
+        case 'pesado': return 'Pesado (Todos)';
+        default: return type;
       }
-      
-      queryClient.invalidateQueries({ queryKey: ['/api/freights'] });
-      setDeleteDialogOpen(false);
-      alert('Frete excluído com sucesso!');
-    } catch (error) {
-      console.error("Erro ao excluir frete:", error);
-      alert('Erro ao excluir frete. Verifique o console para mais detalhes.');
-    }
-  };
-
-  const getCargoTypeDisplay = (type: string) => {
-    switch (type) {
-      case CARGO_TYPES.COMPLETA:
-        return "Carga Completa";
-      case CARGO_TYPES.COMPLEMENTO:
-        return "Complemento";
-      default:
-        return type;
-    }
-  };
-
-  const getTarpDisplay = (option: string) => {
-    switch (option) {
-      case TARP_OPTIONS.SIM:
-        return "Sim";
-      case TARP_OPTIONS.NAO:
-        return "Não";
-      default:
-        return option;
-    }
-  };
-
-  const getTollDisplay = (option: string) => {
-    switch (option) {
-      case TOLL_OPTIONS.INCLUSO:
-        return "Incluso";
-      case TOLL_OPTIONS.A_PARTE:
-        return "À Parte";
-      default:
-        return option;
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "aberto":
-        return <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200">Aberto</Badge>;
-      case "em_andamento":
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-600 border-yellow-200">Em Andamento</Badge>;
-      case "concluido":
-        return <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">Concluído</Badge>;
-      case "cancelado":
-        return <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200">Cancelado</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
-  
-  const getVehicleTypeDisplay = (type: string) => {
-    const vehicleTypesMap: Record<string, string> = {
-      leve_fiorino: "Fiorino",
-      leve_toco: "Toco (Leve)",
-      leve_vlc: "VLC",
-      leve_todos: "Veículo Leve (Qualquer)",
-      medio_truck: "Truck",
-      medio_bitruck: "Bitruck",
-      medio_todos: "Veículo Médio (Qualquer)",
-      pesado_carreta: "Carreta",
-      pesado_carreta_ls: "Carreta LS",
-      pesado_bitrem: "Bitrem",
-      pesado_rodotrem: "Rodotrem",
-      pesado_vanderleia: "Vanderleia",
-      pesado_todos: "Veículo Pesado (Qualquer)"
-    };
-    
-    return vehicleTypesMap[type] || type;
-  };
-  
-  const getBodyTypeDisplay = (type: string) => {
-    const bodyTypesMap: Record<string, string> = {
-      bau: "Baú",
-      bau_frigorifico: "Baú Frigorífico",
-      sider: "Sider",
-      graneleiro: "Graneleiro",
-      tanque: "Tanque",
-      cacamba: "Caçamba",
-      basculante: "Basculante",
-      plataforma: "Plataforma",
-      prancha: "Prancha",
-      porta_container: "Porta Container",
-      madeireiro: "Madeireiro",
-      cegonha: "Cegonha",
-      gaiola: "Gaiola"
-    };
-    
-    return bodyTypesMap[type] || type;
-  };
-  
-  // Função para obter informações do cliente
-  const getClientInfo = (clientId: number) => {
-    if (!clients) return { name: "Carregando clientes..." };
-    if (!Array.isArray(clients)) {
-      console.log("Erro: 'clients' não é um array:", clients);
-      return { name: "Erro ao carregar clientes" };
     }
     
-    const clientFound = clients.find((client: Client) => client.id === clientId);
-    if (!clientFound) {
-      console.log(`Cliente com ID ${clientId} não encontrado`);
-      return { name: `Cliente ID ${clientId}` };
-    }
-    return clientFound;
+    return Object.entries(VEHICLE_TYPES).find(([key]) => key === type)?.[1] || type;
   };
 
-  const toggleDeleteDialog = (freight: FreightWithDestinations | null) => {
-    setSelectedFreight(freight);
-    setDeleteDialogOpen(!!freight);
+  // Verifica se um frete está expirado
+  const isExpired = (expirationDate: Date) => {
+    return new Date(expirationDate) < new Date();
   };
-  
-  // Função para formatar a mensagem do WhatsApp
-  const formatWhatsAppMessage = (freight: FreightWithDestinations) => {
-    const client = freight.clientId ? getClientInfo(freight.clientId) : null;
-    const clientName = client?.name || "QUERO FRETES";
-    
-    let vehicleTypes = getVehicleTypeDisplay(freight.vehicleType);
-    let bodyTypes = getBodyTypeDisplay(freight.bodyType);
-    
-    // Formata a mensagem seguindo exatamente o modelo solicitado
-    return encodeURIComponent(`🚨🚨🚨🚨🚨🚨🚨
-CARGAS ${clientName} 
-🚨🚨🚨🚨🚨🚨🚨
-⬇⬇⬇⬇⬇⬇⬇⬇⬇
-  
-📦 Todos os fretes do grupo ${clientName}
-🖥 ${window.location.origin}/freights/${freight.id} 
 
-📍 De: ${freight.origin}/${freight.originState}
-📍 Para: ${freight.destination}/${freight.destinationState}
-🚚 Veículo: ${vehicleTypes}
-🚛 Carroceria: ${bodyTypes}
-📦 Produto: ${freight.productType}
-
-💰 Preço: ${formatCurrency(Number(freight.freightValue))}/Total
-
-${window.location.origin}/freights/${freight.id}
-    `);
-  };
-  
   // Função para compartilhar via WhatsApp
+  const formatWhatsAppMessage = (freight: FreightWithDestinations) => {
+    const clientFound = clients.find((client: Client) => client.id === freight.clientId);
+    const clientName = clientFound ? clientFound.name : "Cliente não encontrado";
+    
+    return encodeURIComponent(`
+🚛 *FRETE DISPONÍVEL* 🚛
+
+🏢 *${clientName}*
+📍 *Origem:* ${freight.origin}, ${freight.originState}
+🏁 *Destino:* ${freight.destination}, ${freight.destinationState}
+🚚 *Veículo:* ${getVehicleTypeName(freight.vehicleType)}
+📦 *Tipo de Carga:* ${CARGO_TYPES[freight.cargoType] || freight.cargoType}
+⚖️ *Peso:* ${freight.cargoWeight} Kg
+💰 *Pagamento:* ${freight.paymentMethod}
+💵 *Valor:* ${formatCurrency(freight.value)}
+
+ℹ️ *Contato:* ${freight.contactName}
+📱 *Telefone:* ${freight.contactPhone}
+
+🔗 Sistema QUERO FRETES
+`);
+  };
+
   const shareViaWhatsApp = (e: React.MouseEvent, freight: FreightWithDestinations) => {
     e.stopPropagation();
-    
     const message = formatWhatsAppMessage(freight);
     window.open(`https://wa.me/?text=${message}`, '_blank');
   };
 
+  // Função para renderizar o badge de status
+  const renderStatusBadge = (freight: FreightWithDestinations) => {
+    const expired = isExpired(freight.expirationDate);
+    
+    return (
+      <Badge variant={expired ? "destructive" : "default"}>
+        {expired ? "Expirado" : "Ativo"}
+      </Badge>
+    );
+  };
+
+  // Função para deletar um frete
+  const handleDeleteFreight = async () => {
+    if (!selectedFreight) return;
+    
+    try {
+      await fetch(`/api/freights/${selectedFreight.id}`, {
+        method: 'DELETE',
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ["/api/freights"] });
+      setDeleteDialogOpen(false);
+      setSelectedFreight(null);
+    } catch (error) {
+      console.error("Erro ao excluir frete:", error);
+    }
+  };
+
+  // Função para alternar a exibição dos detalhes de um frete no mobile
+  const toggleFreightExpansion = (id: number) => {
+    setExpandedFreight(expandedFreight === id ? null : id);
+  };
+
+  // Função para resetar os filtros
+  const resetFilters = () => {
+    setFilters({
+      origin: "",
+      destination: "",
+      vehicleType: "todos",
+      bodyType: "todos",
+      cargoType: "todos",
+      paymentMethod: "todos",
+      minWeight: "",
+      maxWeight: ""
+    });
+    setShowFilters(false);
+  };
+
+  // Filtrar os fretes
+  const filteredFreights = filterFreights(freights || []);
+
   return (
-    <div>
-      <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <Truck className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold">Fretes</h1>
-        </div>
-
-        <div className="flex flex-col md:flex-row gap-2 md:items-center">
-          <form onSubmit={handleSearch} className="flex gap-2">
-            <Input
-              placeholder="Buscar fretes..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full md:w-auto min-w-[200px]"
-            />
-            <Button type="submit" variant="secondary" size="icon">
-              <Search className="h-4 w-4" />
-            </Button>
-          </form>
-
-          <div className="flex gap-2 mt-2 md:mt-0">
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-slate-500" />
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-[120px]">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos</SelectItem>
-                  <SelectItem value="aberto">Aberto</SelectItem>
-                  <SelectItem value="em_andamento">Em Andamento</SelectItem>
-                  <SelectItem value="concluido">Concluído</SelectItem>
-                  <SelectItem value="cancelado">Cancelado</SelectItem>
-                </SelectContent>
-              </Select>
+    <div className="container mx-auto py-6">
+      <Card>
+        <CardHeader className="bg-slate-50 dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700">
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle className="text-xl flex items-center gap-2">
+                <Truck className="h-5 w-5" /> Fretes
+              </CardTitle>
+              <CardDescription>
+                Gerenciamento de fretes disponíveis no sistema
+              </CardDescription>
             </div>
-            
-            <Button 
-              variant="outline" 
-              onClick={() => setShowFilters(!showFilters)}
-              className="gap-2"
-            >
-              <Filter className="h-4 w-4" />
-              {showFilters ? "Ocultar Filtros" : "Mostrar Filtros"}
-            </Button>
-
             <Button onClick={() => navigate("/freights/new")}>
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Frete
+              <Plus className="h-4 w-4 mr-2" /> Novo Frete
             </Button>
           </div>
-        </div>
-      </div>
-
-      {showFilters && (
-        <Card className="mb-4">
-          <CardHeader className="pb-3">
-            <CardTitle>Filtros Avançados</CardTitle>
-            <CardDescription>
-              Use os filtros abaixo para refinar os resultados
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Origem</label>
-                <Input 
-                  placeholder="Filtrar por origem" 
-                  value={filters.origin}
-                  onChange={(e) => setFilters({...filters, origin: e.target.value})}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Destino</label>
-                <Input 
-                  placeholder="Filtrar por destino" 
-                  value={filters.destination}
-                  onChange={(e) => setFilters({...filters, destination: e.target.value})}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Tipo de Veículo</label>
-                <Select 
-                  value={filters.vehicleType} 
-                  onValueChange={(value) => setFilters({...filters, vehicleType: value})}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todos</SelectItem>
-                    {Object.entries(VEHICLE_TYPES).map(([key, value]) => (
-                      <SelectItem key={key} value={value}>
-                        {getVehicleTypeDisplay(value)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Tipo de Carroceria</label>
-                <Select 
-                  value={filters.bodyType} 
-                  onValueChange={(value) => setFilters({...filters, bodyType: value})}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todos</SelectItem>
-                    {Object.entries(BODY_TYPES).map(([key, value]) => (
-                      <SelectItem key={key} value={value}>
-                        {getBodyTypeDisplay(value)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Tipo de Carga</label>
-                <Select 
-                  value={filters.cargoType} 
-                  onValueChange={(value) => setFilters({...filters, cargoType: value})}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todos</SelectItem>
-                    {Object.entries(CARGO_TYPES).map(([key, value]) => (
-                      <SelectItem key={key} value={value}>
-                        {getCargoTypeDisplay(value)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Forma de Pagamento</label>
-                <Select 
-                  value={filters.paymentMethod} 
-                  onValueChange={(value) => setFilters({...filters, paymentMethod: value})}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todos</SelectItem>
-                    <SelectItem value="a_vista">À Vista</SelectItem>
-                    <SelectItem value="30_dias">30 Dias</SelectItem>
-                    <SelectItem value="45_dias">45 Dias</SelectItem>
-                    <SelectItem value="60_dias">60 Dias</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Peso Mínimo (kg)</label>
-                <Input 
-                  placeholder="Peso mínimo" 
-                  value={filters.minWeight}
-                  onChange={(e) => setFilters({...filters, minWeight: e.target.value})}
-                  type="number"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Peso Máximo (kg)</label>
-                <Input 
-                  placeholder="Peso máximo" 
-                  value={filters.maxWeight}
-                  onChange={(e) => setFilters({...filters, maxWeight: e.target.value})}
-                  type="number"
-                />
-              </div>
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button 
-              variant="outline" 
-              className="mr-2"
-              onClick={() => setFilters({
-                origin: "",
-                destination: "",
-                vehicleType: "todos",
-                bodyType: "todos",
-                cargoType: "todos",
-                paymentMethod: "todos",
-                minWeight: "",
-                maxWeight: ""
-              })}
-            >
-              Limpar Filtros
-            </Button>
-          </CardFooter>
-        </Card>
-      )}
-
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle>Lista de Fretes</CardTitle>
-          <CardDescription>
-            Visualize e gerencie todos os fretes cadastrados no sistema
-          </CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -568,268 +361,363 @@ ${window.location.origin}/freights/${freight.id}
               <Skeleton className="h-8 w-full" />
             </div>
           ) : freights && freights.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Origem</TableHead>
-                  <TableHead>Destino</TableHead>
-                  <TableHead>Múltiplos destinos</TableHead>
-                  <TableHead>Tipo de Carga</TableHead>
-                  <TableHead>Produto</TableHead>
-                  <TableHead>Peso (kg)</TableHead>
-                  <TableHead>Pagamento</TableHead>
-                  <TableHead>Valor</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {freights.map((freight) => (
-                  <React.Fragment key={freight.id}>
-                    <TableRow className="cursor-pointer" onClick={() => setExpandedFreight(expandedFreight === freight.id ? null : freight.id)}>
-                      <TableCell>{getStatusBadge(freight.status)}</TableCell>
-                      <TableCell>
-                        {freight.clientId ? (
-                          <div className="font-medium text-primary">
-                            {getClientInfo(freight.clientId)?.name || 'Cliente não encontrado'}
-                          </div>
-                        ) : (
-                          <span className="text-slate-400 text-sm">Sem cliente</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium">
-                          {freight.origin}, {freight.originState}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium">
-                          {freight.destination}, {freight.destinationState}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {freight.hasMultipleDestinations && freight.destinations && freight.destinations.length > 0 ? (
-                          <Badge variant="outline" className="text-xs">
-                            {freight.destinations.length} destinos adicionais
-                          </Badge>
-                        ) : (
-                          <span className="text-slate-400 text-sm">Não</span>
-                        )}
-                      </TableCell>
-                      <TableCell>{getCargoTypeDisplay(freight.cargoType)}</TableCell>
-                      <TableCell>{freight.productType}</TableCell>
-                      <TableCell>{freight.cargoWeight} kg</TableCell>
-                      <TableCell>{freight.paymentMethod || "À vista"}</TableCell>
-                      <TableCell>{formatCurrency(Number(freight.freightValue))}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/freights/${freight.id}`);
-                            }}
-                            title="Ver detalhes"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={(e) => shareViaWhatsApp(e, freight)}
-                            title="Compartilhar via WhatsApp"
-                            className="text-green-600 hover:text-green-800 hover:bg-green-100"
-                          >
-                            <FaWhatsapp className="h-4 w-4" />
-                          </Button>
-                          
-                          {(user?.profileType === "admin" || user?.clientId === freight.clientId) && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/freights/edit/${freight.id}`);
-                              }}
-                              title="Editar frete"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          )}
-                          {(user?.profileType === "admin" || user?.clientId === freight.clientId) && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleDeleteDialog(freight);
-                              }}
-                              title="Excluir frete"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
+            <>
+              <div className="mb-4 mt-4 space-y-4">
+                {/* Barra de pesquisa e filtros */}
+                <div className="flex flex-col md:flex-row gap-2">
+                  <div className="relative flex-grow">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
+                    <Input 
+                      placeholder="Buscar fretes..." 
+                      className="pl-8 w-full" 
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Select value={filterStatus} onValueChange={setFilterStatus}>
+                      <SelectTrigger className="w-[160px]">
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="todos">Todos</SelectItem>
+                        <SelectItem value="ativo">Ativos</SelectItem>
+                        <SelectItem value="expirado">Expirados</SelectItem>
+                      </SelectContent>
+                    </Select>
                     
-                    {expandedFreight === freight.id && (
-                      <TableRow className="bg-slate-50 dark:bg-slate-800/50">
-                        <TableCell colSpan={11}>
-                          <div className="p-4 space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              {/* Informações do Veículo */}
-                              <div className="bg-white dark:bg-slate-900 rounded-lg p-4 shadow-sm border border-slate-200 dark:border-slate-700">
-                                <h3 className="text-md font-semibold flex items-center mb-2">
-                                  <Truck className="h-4 w-4 mr-2 text-primary" />
-                                  Informações do Veículo
-                                </h3>
-                                <div className="space-y-2 text-sm">
-                                  <div>
-                                    <span className="font-medium">Tipo:</span> {getVehicleTypeDisplay(freight.vehicleType)}
-                                  </div>
-                                  <div>
-                                    <span className="font-medium">Carroceria:</span> {getBodyTypeDisplay(freight.bodyType)}
-                                  </div>
-                                  <div>
-                                    <span className="font-medium">Peso da Carga:</span> {freight.cargoWeight} kg
-                                  </div>
-                                  <div>
-                                    <span className="font-medium">Lona:</span> {getTarpDisplay(freight.needsTarp)}
-                                  </div>
-                                  <div>
-                                    <span className="font-medium">Pedágio:</span> {getTollDisplay("a_parte")}
-                                  </div>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setShowFilters(!showFilters)}
+                      title="Filtros avançados"
+                    >
+                      <Filter className="h-4 w-4 mr-2" /> 
+                      <span className="hidden sm:inline">Filtros</span>
+                    </Button>
+                  </div>
+                </div>
+                
+                {/* Filtros avançados */}
+                {showFilters && (
+                  <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-md border border-slate-200 dark:border-slate-700 space-y-4">
+                    <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-2">Filtros avançados</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Origem</label>
+                        <Input 
+                          placeholder="Origem" 
+                          value={filters.origin} 
+                          onChange={(e) => setFilters({...filters, origin: e.target.value})}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Destino</label>
+                        <Input 
+                          placeholder="Destino" 
+                          value={filters.destination} 
+                          onChange={(e) => setFilters({...filters, destination: e.target.value})}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Tipo de Veículo</label>
+                        <Select value={filters.vehicleType} onValueChange={(value) => setFilters({...filters, vehicleType: value})}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Tipo de Veículo" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="todos">Todos</SelectItem>
+                            {Object.entries(VEHICLE_TYPES).map(([key, value]) => (
+                              <SelectItem key={key} value={key}>{value}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Tipo de Carroceria</label>
+                        <Select value={filters.bodyType} onValueChange={(value) => setFilters({...filters, bodyType: value})}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Tipo de Carroceria" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="todos">Todos</SelectItem>
+                            {Object.entries(BODY_TYPES).map(([key, value]) => (
+                              <SelectItem key={key} value={key}>{value}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Tipo de Carga</label>
+                        <Select value={filters.cargoType} onValueChange={(value) => setFilters({...filters, cargoType: value})}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Tipo de Carga" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="todos">Todos</SelectItem>
+                            {Object.entries(CARGO_TYPES).map(([key, value]) => (
+                              <SelectItem key={key} value={key}>{value}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Forma de Pagamento</label>
+                        <Select value={filters.paymentMethod} onValueChange={(value) => setFilters({...filters, paymentMethod: value})}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Forma de Pagamento" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="todos">Todos</SelectItem>
+                            <SelectItem value="a_vista">À vista</SelectItem>
+                            <SelectItem value="30_dias">30 dias</SelectItem>
+                            <SelectItem value="45_dias">45 dias</SelectItem>
+                            <SelectItem value="60_dias">60 dias</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Peso Mínimo (kg)</label>
+                        <Input 
+                          type="number"
+                          placeholder="Peso Mínimo" 
+                          value={filters.minWeight} 
+                          onChange={(e) => setFilters({...filters, minWeight: e.target.value})}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Peso Máximo (kg)</label>
+                        <Input 
+                          type="number"
+                          placeholder="Peso Máximo" 
+                          value={filters.maxWeight} 
+                          onChange={(e) => setFilters({...filters, maxWeight: e.target.value})}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-end gap-2 mt-4">
+                      <Button variant="outline" onClick={resetFilters}>Limpar</Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              {/* Tabela de fretes para desktop */}
+              <div className="responsive-table-container">
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Cliente</TableHead>
+                        <TableHead>Origem</TableHead>
+                        <TableHead>Destino</TableHead>
+                        <TableHead>Veículo</TableHead>
+                        <TableHead>Carga</TableHead>
+                        <TableHead>Valor</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredFreights.map((freight) => {
+                        const clientFound = clients.find((client: Client) => client.id === freight.clientId);
+                        
+                        return (
+                          <TableRow key={freight.id} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                            <TableCell>{renderStatusBadge(freight)}</TableCell>
+                            <TableCell>{clientFound?.name || "Cliente não encontrado"}</TableCell>
+                            <TableCell>{freight.origin}, {freight.originState}</TableCell>
+                            <TableCell>{freight.destination}, {freight.destinationState}</TableCell>
+                            <TableCell>{getVehicleTypeName(freight.vehicleType)}</TableCell>
+                            <TableCell>{CARGO_TYPES[freight.cargoType] || freight.cargoType}</TableCell>
+                            <TableCell>{formatCurrency(freight.value)}</TableCell>
+                            <TableCell className="text-right">{renderActionButtons(freight)}</TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+                
+                {/* Cards de frete para mobile */}
+                <div className="md:hidden space-y-4">
+                  {filteredFreights.map((freight) => {
+                    const clientFound = clients.find((client: Client) => client.id === freight.clientId);
+                    const isExpanded = expandedFreight === freight.id;
+                    
+                    return (
+                      <div 
+                        key={freight.id} 
+                        className="border border-slate-200 dark:border-slate-700 rounded-md overflow-hidden"
+                        onClick={() => toggleFreightExpansion(freight.id)}
+                      >
+                        <div className="p-3 bg-slate-50 dark:bg-slate-800 flex justify-between items-center">
+                          <div className="flex items-center gap-2">
+                            <Truck className="h-4 w-4 text-slate-500" />
+                            <span className="font-medium text-sm">{clientFound?.name || "Cliente não encontrado"}</span>
+                          </div>
+                          {renderStatusBadge(freight)}
+                        </div>
+                        
+                        <div className="p-3 space-y-2">
+                          <div className="flex items-start gap-2">
+                            <MapPin className="h-4 w-4 text-slate-500 mt-0.5" />
+                            <div className="flex-1">
+                              <p className="text-xs text-slate-500">Origem:</p>
+                              <p className="text-sm">{freight.origin}, {freight.originState}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-start gap-2">
+                            <MapPin className="h-4 w-4 text-slate-500 mt-0.5" />
+                            <div className="flex-1">
+                              <p className="text-xs text-slate-500">Destino:</p>
+                              <p className="text-sm">{freight.destination}, {freight.destinationState}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-start gap-2">
+                            <Package className="h-4 w-4 text-slate-500 mt-0.5" />
+                            <div className="flex-1">
+                              <p className="text-xs text-slate-500">Carga:</p>
+                              <p className="text-sm">{CARGO_TYPES[freight.cargoType] || freight.cargoType}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-start gap-2">
+                            <DollarSign className="h-4 w-4 text-slate-500 mt-0.5" />
+                            <div className="flex-1">
+                              <p className="text-xs text-slate-500">Valor:</p>
+                              <p className="text-sm font-medium">{formatCurrency(freight.value)}</p>
+                            </div>
+                          </div>
+                          
+                          {isExpanded && (
+                            <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700">
+                              <div className="flex items-start gap-2">
+                                <Truck className="h-4 w-4 text-slate-500 mt-0.5" />
+                                <div className="flex-1">
+                                  <p className="text-xs text-slate-500">Veículo:</p>
+                                  <p className="text-sm">{getVehicleTypeName(freight.vehicleType)}</p>
                                 </div>
                               </div>
                               
-                              {/* Detalhes do Frete */}
-                              <div className="bg-white dark:bg-slate-900 rounded-lg p-4 shadow-sm border border-slate-200 dark:border-slate-700">
-                                <h3 className="text-md font-semibold flex items-center mb-2">
-                                  <Package className="h-4 w-4 mr-2 text-primary" />
-                                  Detalhes da Carga
-                                </h3>
-                                <div className="space-y-2 text-sm">
-                                  <div>
-                                    <span className="font-medium">Tipo de Carga:</span> {getCargoTypeDisplay(freight.cargoType)}
-                                  </div>
-                                  <div>
-                                    <span className="font-medium">Produto:</span> {freight.productType}
-                                  </div>
-                                  <div>
-                                    <span className="font-medium">Valor do Frete:</span> {formatCurrency(Number(freight.freightValue))}
-                                  </div>
-                                  <div>
-                                    <span className="font-medium">Data de Criação:</span> {freight.createdAt ? new Date(freight.createdAt).toLocaleDateString('pt-BR') : "N/A"}
-                                  </div>
-                                  {freight.clientId && (
-                                    <div>
-                                      <span className="font-medium">Cliente:</span> {getClientInfo(freight.clientId)?.name || 'Não especificado'}
-                                    </div>
-                                  )}
+                              <div className="flex items-start gap-2 mt-2">
+                                <Package className="h-4 w-4 text-slate-500 mt-0.5" />
+                                <div className="flex-1">
+                                  <p className="text-xs text-slate-500">Peso:</p>
+                                  <p className="text-sm">{freight.cargoWeight} Kg</p>
                                 </div>
                               </div>
                               
-                              {/* Informações de Contato */}
-                              <div className="bg-white dark:bg-slate-900 rounded-lg p-4 shadow-sm border border-slate-200 dark:border-slate-700">
-                                <h3 className="text-md font-semibold flex items-center mb-2">
-                                  <PhoneCall className="h-4 w-4 mr-2 text-primary" />
-                                  Informações de Contato
-                                </h3>
-                                <div className="space-y-3 text-sm">
-                                  <div className="flex items-center">
-                                    <span className="font-medium mr-2">Contato:</span> {freight.contactName || 'Não especificado'}
-                                  </div>
-                                  
-                                  {freight.contactPhone && (
-                                    <div className="flex items-center">
-                                      <span className="font-medium mr-2">Telefone:</span> {freight.contactPhone}
-                                      <a 
-                                        href={`tel:${freight.contactPhone}`}
-                                        className="ml-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                                        onClick={(e) => e.stopPropagation()}
-                                      >
-                                        <PhoneCall className="h-4 w-4" />
-                                      </a>
-                                    </div>
-                                  )}
-                                  
-                                  {freight.contactPhone && (
-                                    <div className="mt-2">
-                                      <a 
-                                        href={`https://wa.me/55${freight.contactPhone.replace(/\D/g, '')}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-2 text-white bg-green-500 hover:bg-green-600 transition-colors px-3 py-1.5 rounded-md text-sm"
-                                        onClick={(e) => e.stopPropagation()}
-                                      >
-                                        <FaWhatsapp className="h-4 w-4" />
-                                        Contato via WhatsApp
-                                      </a>
-                                    </div>
-                                  )}
-                                  
-                                  {freight.observations && (
-                                    <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
-                                      <span className="font-medium block mb-1">Observações:</span>
-                                      <p className="text-slate-600 dark:text-slate-300 text-sm">
-                                        {freight.observations}
-                                      </p>
-                                    </div>
-                                  )}
+                              <div className="flex items-start gap-2 mt-2">
+                                <MessageSquare className="h-4 w-4 text-slate-500 mt-0.5" />
+                                <div className="flex-1">
+                                  <p className="text-xs text-slate-500">Contato:</p>
+                                  <p className="text-sm">{freight.contactName}</p>
+                                  <p className="text-sm">{freight.contactPhone}</p>
                                 </div>
                               </div>
                             </div>
+                          )}
+                        </div>
+                        
+                        <div className="p-2 border-t border-slate-100 dark:border-slate-700 flex justify-between">
+                          <div className="flex space-x-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/freights/${freight.id}`);
+                              }}
+                              title="Visualizar"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
                             
-                            {/* Múltiplos Destinos */}
-                            {freight.hasMultipleDestinations && freight.destinations && freight.destinations.length > 0 && (
-                              <div className="bg-white dark:bg-slate-900 rounded-lg p-4 shadow-sm border border-slate-200 dark:border-slate-700 mt-4">
-                                <h3 className="text-md font-semibold flex items-center mb-3">
-                                  <MapPin className="h-4 w-4 mr-2 text-primary" />
-                                  Múltiplos Destinos
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                  {freight.destinations.map((dest, index) => (
-                                    <div key={dest.id || index} className="p-3 border border-slate-200 dark:border-slate-700 rounded-md">
-                                      <div className="text-sm">
-                                        <div className="font-medium text-slate-800 dark:text-slate-200">
-                                          {index + 1}. {dest.destination}, {dest.destinationState}
-                                        </div>
-                                        <div className="text-slate-500 dark:text-slate-400 text-xs mt-1">
-                                          Sequência de entrega: {index + 1}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
+                            {isClientAuthorized(freight.clientId) && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(`/freights/edit/${freight.id}`);
+                                  }}
+                                  title="Editar"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedFreight(freight);
+                                    setDeleteDialogOpen(true);
+                                  }}
+                                  title="Excluir"
+                                >
+                                  <Trash2 className="h-4 w-4 text-red-500" />
+                                </Button>
+                              </>
                             )}
                           </div>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </React.Fragment>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="text-center py-10 text-slate-500">
-              <div className="flex justify-center mb-3">
-                <Truck className="h-10 w-10 text-slate-300" />
+                          
+                          <div className="flex space-x-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => shareViaWhatsApp(e, freight)}
+                              title="Compartilhar via WhatsApp"
+                            >
+                              <FaWhatsapp className="h-4 w-4 text-green-500" />
+                            </Button>
+                            
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (freight.contactPhone) {
+                                  window.open(`https://wa.me/55${freight.contactPhone.replace(/\D/g, '')}`, '_blank');
+                                }
+                              }}
+                              title="Contatar via WhatsApp"
+                              disabled={!freight.contactPhone}
+                            >
+                              <PhoneCall className="h-4 w-4 text-green-500" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-              <p>Nenhum frete encontrado.</p>
-              <p className="text-sm">
-                Comece criando um novo frete através do botão acima.
-              </p>
+            </>
+          ) : (
+            <div className="text-center py-10">
+              <p className="text-slate-500 mb-4">Nenhum frete encontrado.</p>
+              <Button onClick={() => navigate("/freights/new")}>
+                <Plus className="h-4 w-4 mr-2" /> Novo Frete
+              </Button>
             </div>
           )}
         </CardContent>
         <CardFooter className="border-t border-slate-100 dark:border-slate-700">
           <div className="text-xs text-slate-500">
-            Total de registros: {freights?.length || 0}
+            Total de registros: {filteredFreights.length}
           </div>
         </CardFooter>
       </Card>
@@ -837,34 +725,16 @@ ${window.location.origin}/freights/${freight.id}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Excluir Frete</DialogTitle>
+            <DialogTitle>Confirmar exclusão</DialogTitle>
             <DialogDescription>
-              Tem certeza que deseja excluir este frete? Esta ação não poderá ser desfeita.
+              Tem certeza que deseja excluir este frete? Esta ação não pode ser desfeita.
             </DialogDescription>
           </DialogHeader>
-          <div>
-            {selectedFreight && (
-              <>
-                <div className="mb-4">
-                  <span className="font-medium">Origem:</span> {selectedFreight.origin}, {selectedFreight.originState}
-                </div>
-                <div className="mb-4">
-                  <span className="font-medium">Destino:</span> {selectedFreight.destination}, {selectedFreight.destinationState}
-                </div>
-                <div className="mb-4">
-                  <span className="font-medium">Produto:</span> {selectedFreight.productType}
-                </div>
-                <div>
-                  <span className="font-medium">Valor:</span> {formatCurrency(Number(selectedFreight.freightValue))}
-                </div>
-              </>
-            )}
-          </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
               Cancelar
             </Button>
-            <Button variant="destructive" onClick={handleDelete}>
+            <Button variant="destructive" onClick={handleDeleteFreight}>
               Excluir
             </Button>
           </DialogFooter>
