@@ -682,15 +682,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Rotas da área financeira administrativa
   app.get("/api/admin/subscriptions", isAdmin, async (req: Request, res: Response) => {
     try {
-      // Em produção, isso buscaria assinaturas reais do Stripe
-      // Dados simulados para desenvolvimento
-      const subscriptions = [
-        { id: "sub_123456", clientName: "Transportadora Silva Ltda", email: "contato@silvatrans.com.br", status: "active", plan: "annual", startDate: "2025-02-15", endDate: "2026-02-15", amount: 99.90 },
-        { id: "sub_234567", clientName: "Expresso Rápido", email: "financeiro@expressorapido.com.br", status: "active", plan: "annual", startDate: "2025-03-01", endDate: "2026-03-01", amount: 99.90 },
-        { id: "sub_345678", clientName: "Logística Brasil", email: "admin@logisticabrasil.com", status: "canceled", plan: "annual", startDate: "2025-01-10", endDate: "2025-03-10", amount: 99.90 },
-        { id: "sub_456789", clientName: "Fretes São Paulo", email: "contato@fretessp.com.br", status: "active", plan: "monthly", startDate: "2025-03-12", endDate: "2025-04-12", amount: 99.90 },
-        { id: "sub_567890", clientName: "Caminhoneiros Unidos", email: "financeiro@caminhoneirosunidos.com.br", status: "trialing", plan: "trial", startDate: "2025-03-25", endDate: "2025-04-01", amount: 0 },
-      ];
+      // Buscar todos os clientes do sistema
+      const clients = await storage.getClients();
+      
+      if (!clients || !Array.isArray(clients) || clients.length === 0) {
+        // Dados simulados apenas se não houver clientes reais
+        const subscriptions = [
+          { id: "sub_123456", clientName: "Transportadora Silva Ltda", email: "contato@silvatrans.com.br", status: "active", plan: "annual", startDate: "2025-02-15", endDate: "2026-02-15", amount: 99.90 },
+          { id: "sub_234567", clientName: "Expresso Rápido", email: "financeiro@expressorapido.com.br", status: "active", plan: "annual", startDate: "2025-03-01", endDate: "2026-03-01", amount: 99.90 },
+          { id: "sub_345678", clientName: "Logística Brasil", email: "admin@logisticabrasil.com", status: "canceled", plan: "annual", startDate: "2025-01-10", endDate: "2025-03-10", amount: 99.90 },
+          { id: "sub_456789", clientName: "Fretes São Paulo", email: "contato@fretessp.com.br", status: "active", plan: "monthly", startDate: "2025-03-12", endDate: "2025-04-12", amount: 99.90 },
+          { id: "sub_567890", clientName: "Caminhoneiros Unidos", email: "financeiro@caminhoneirosunidos.com.br", status: "trialing", plan: "trial", startDate: "2025-03-25", endDate: "2025-04-01", amount: 0 },
+        ];
+        return res.json(subscriptions);
+      }
+      
+      // Converter clientes reais em dados de assinatura
+      const subscriptions = clients.map(client => {
+        // Datas futuras para simulação de planos ativos
+        const startDate = new Date();
+        const endDate = new Date();
+        endDate.setFullYear(endDate.getFullYear() + 1);
+        
+        // Definir status aleatório para demonstração
+        const statuses = ["active", "active", "active", "trialing", "canceled"]; // Mais chance de ser ativo
+        const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+        
+        // Definir plano aleatório para demonstração
+        const plans = ["monthly", "annual", "annual"]; // Mais chance de ser anual
+        const randomPlan = plans[Math.floor(Math.random() * plans.length)];
+        
+        // Retornar objeto de assinatura baseado no cliente real
+        return {
+          id: `sub_${client.id}`,
+          clientName: client.name,
+          email: client.email,
+          status: randomStatus,
+          plan: randomPlan,
+          startDate: startDate.toISOString().split('T')[0],
+          endDate: endDate.toISOString().split('T')[0],
+          amount: randomPlan === "annual" ? 1198.80 : 99.90, // Valor anual ou mensal
+        };
+      });
       
       res.json(subscriptions);
     } catch (error) {
@@ -701,19 +734,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/admin/subscriptions", isAdmin, async (req: Request, res: Response) => {
     try {
-      const { clientName, email, plan, amount, status, startDate, endDate } = req.body;
+      const { clientId, clientName, email, plan, amount, status, startDate, endDate } = req.body;
       
       // Validar os dados recebidos
       if (!clientName || !email || !plan || !amount || !status || !startDate || !endDate) {
         return res.status(400).json({ message: "Todos os campos são obrigatórios" });
       }
       
-      // Em um ambiente real, aqui criaríamos uma assinatura no Stripe e 
-      // salvaríamos os dados no banco de dados.
-      // Para o propósito de simulação, criamos um objeto com um ID único
+      // Verificar se o cliente existe (se fornecido um ID)
+      let client = null;
+      if (clientId) {
+        client = await storage.getClient(parseInt(clientId));
+        if (!client) {
+          return res.status(404).json({ message: "Cliente não encontrado" });
+        }
+      }
       
+      // Em um ambiente real, aqui criaríamos uma assinatura no Stripe e 
+      // salvaríamos os dados no banco de dados
       const newSubscription = {
         id: `sub_${Date.now().toString().substring(0, 6)}`,
+        clientId: client ? client.id : null,
         clientName,
         email,
         plan,
@@ -723,12 +764,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         endDate
       };
       
-      // Em um cenário real, também precisaríamos atualizar os dados do usuário
-      // ou criar uma nova conta de usuário associada a esta assinatura
-      
       console.log("Nova assinatura criada:", newSubscription);
       
-      // Retornar os dados da nova assinatura
+      // Simulação de criação de assinatura com sucesso
       res.status(201).json(newSubscription);
     } catch (error) {
       console.error("Erro ao criar assinatura:", error);
@@ -738,15 +776,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/admin/invoices", isAdmin, async (req: Request, res: Response) => {
     try {
-      // Em produção, isso buscaria faturas reais do Stripe
-      // Dados simulados para desenvolvimento
-      const invoices = [
-        { id: 101, clientName: "Transportadora Silva Ltda", status: "paid", invoiceDate: "2025-02-15", dueDate: "2025-02-15", amount: 1198.80 },
-        { id: 102, clientName: "Expresso Rápido", status: "paid", invoiceDate: "2025-03-01", dueDate: "2025-03-01", amount: 1198.80 },
-        { id: 103, clientName: "Logística Brasil", status: "refunded", invoiceDate: "2025-01-10", dueDate: "2025-01-10", amount: 1198.80 },
-        { id: 104, clientName: "Fretes São Paulo", status: "paid", invoiceDate: "2025-03-12", dueDate: "2025-03-12", amount: 1198.80 },
-        { id: 105, clientName: "Caminhoneiros Unidos", status: "upcoming", invoiceDate: "", dueDate: "2025-04-25", amount: 1198.80 },
-      ];
+      // Buscar todos os clientes do sistema
+      const clients = await storage.getClients();
+      
+      if (!clients || !Array.isArray(clients) || clients.length === 0) {
+        // Dados simulados apenas se não houver clientes reais
+        const invoices = [
+          { id: 101, clientName: "Transportadora Silva Ltda", status: "paid", invoiceDate: "2025-02-15", dueDate: "2025-02-15", amount: 1198.80 },
+          { id: 102, clientName: "Expresso Rápido", status: "paid", invoiceDate: "2025-03-01", dueDate: "2025-03-01", amount: 1198.80 },
+          { id: 103, clientName: "Logística Brasil", status: "refunded", invoiceDate: "2025-01-10", dueDate: "2025-01-10", amount: 1198.80 },
+          { id: 104, clientName: "Fretes São Paulo", status: "paid", invoiceDate: "2025-03-12", dueDate: "2025-03-12", amount: 1198.80 },
+          { id: 105, clientName: "Caminhoneiros Unidos", status: "upcoming", invoiceDate: "", dueDate: "2025-04-25", amount: 1198.80 },
+        ];
+        return res.json(invoices);
+      }
+      
+      // Converter clientes reais em dados de fatura
+      const invoices = clients.map((client, index) => {
+        // Datas para as faturas
+        const today = new Date();
+        const invoiceDate = new Date();
+        invoiceDate.setDate(today.getDate() - Math.floor(Math.random() * 60)); // Entre hoje e 60 dias atrás
+        
+        // Definir status aleatório para demonstração
+        const statuses = ["paid", "paid", "paid", "upcoming", "refunded"]; // Mais chance de estar pago
+        const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+        
+        // Se for próxima (upcoming), a data da fatura fica vazia
+        const formattedInvoiceDate = randomStatus === "upcoming" ? "" : invoiceDate.toISOString().split('T')[0];
+        
+        // Data de vencimento
+        const dueDate = new Date(invoiceDate);
+        if (randomStatus === "upcoming") {
+          dueDate.setDate(today.getDate() + 15); // Vencimento em 15 dias para faturas futuras
+        }
+        
+        // Retornar objeto de fatura baseado no cliente real
+        return {
+          id: 100 + index,
+          clientName: client.name,
+          status: randomStatus,
+          invoiceDate: formattedInvoiceDate,
+          dueDate: dueDate.toISOString().split('T')[0],
+          amount: 1198.80, // Valor anual padrão
+        };
+      });
       
       res.json(invoices);
     } catch (error) {
@@ -899,31 +973,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Rotas de administração financeira
   app.get("/api/admin/finance/stats", isAdmin, async (req: Request, res: Response) => {
     try {
-      // Em produção, isso calcularia estatísticas reais
-      // Dados simulados para desenvolvimento
+      // Buscar todos os clientes do sistema
+      const clients = await storage.getClients();
+      
+      if (!clients || !Array.isArray(clients) || clients.length === 0) {
+        // Dados simulados apenas se não houver clientes reais
+        const stats = {
+          totalRevenue: 10784.40,
+          monthlyRevenue: 3591.60,
+          activeSubscriptions: 4,
+          churnRate: 2.5,
+          monthlyData: [
+            { month: "Jan", revenue: 3596.40 },
+            { month: "Fev", revenue: 4795.20 },
+            { month: "Mar", revenue: 7192.80 },
+            { month: "Abr", revenue: 0 },
+            { month: "Mai", revenue: 0 },
+            { month: "Jun", revenue: 0 },
+            { month: "Jul", revenue: 0 },
+            { month: "Ago", revenue: 0 },
+            { month: "Set", revenue: 0 },
+            { month: "Out", revenue: 0 },
+            { month: "Nov", revenue: 0 },
+            { month: "Dez", revenue: 0 },
+          ],
+          subscriptionsByStatus: [
+            { status: "Ativas", count: 4 },
+            { status: "Teste", count: 1 },
+            { status: "Canceladas", count: 1 },
+            { status: "Atrasadas", count: 0 }
+          ]
+        };
+        return res.json(stats);
+      }
+      
+      // Gerar estatísticas baseadas nos clientes reais
+      // Para cada cliente, simulamos uma assinatura
+      const subscriptions = clients.map(client => {
+        const statuses = ["active", "active", "active", "trialing", "canceled"]; 
+        const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+        const plans = ["monthly", "annual", "annual"];
+        const randomPlan = plans[Math.floor(Math.random() * plans.length)];
+        
+        return {
+          client,
+          status: randomStatus,
+          plan: randomPlan,
+          amount: randomPlan === "annual" ? 1198.80 : 99.90,
+        };
+      });
+      
+      // Calcular estatísticas
+      const activeSubscriptions = subscriptions.filter(s => s.status === "active").length;
+      const trialSubscriptions = subscriptions.filter(s => s.status === "trialing").length;
+      const canceledSubscriptions = subscriptions.filter(s => s.status === "canceled").length;
+      
+      // Receita total (assinaturas ativas)
+      const totalRevenue = subscriptions
+        .filter(s => s.status === "active")
+        .reduce((sum, s) => sum + s.amount, 0);
+      
+      // Receita mensal (considerando apenas assinaturas ativas)
+      const monthlyRevenue = subscriptions
+        .filter(s => s.status === "active")
+        .reduce((sum, s) => sum + (s.plan === "monthly" ? s.amount : s.amount / 12), 0);
+      
+      // Taxa de cancelamento (churn)
+      const churnRate = clients.length > 0 
+        ? (canceledSubscriptions / clients.length) * 100 
+        : 0;
+      
+      // Dados mensais (distribuídos nos últimos 3 meses)
+      const currentMonth = new Date().getMonth();
+      const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+      
+      // Inicializa todos os meses com zero
+      const monthlyData = monthNames.map(month => ({ month, revenue: 0 }));
+      
+      // Distribuir a receita nos últimos 3 meses
+      const totalRevenuePerMonth = totalRevenue / 3;
+      for (let i = 0; i < 3; i++) {
+        const monthIndex = (currentMonth - 2 + i + 12) % 12; // Garante que índice seja positivo
+        monthlyData[monthIndex].revenue = parseFloat((totalRevenuePerMonth * (0.8 + Math.random() * 0.4)).toFixed(2));
+      }
+      
       const stats = {
-        totalRevenue: 10784.40,
-        monthlyRevenue: 3591.60,
-        activeSubscriptions: 4,
-        churnRate: 2.5,
-        monthlyData: [
-          { month: "Jan", revenue: 3596.40 },
-          { month: "Fev", revenue: 4795.20 },
-          { month: "Mar", revenue: 7192.80 },
-          { month: "Abr", revenue: 0 },
-          { month: "Mai", revenue: 0 },
-          { month: "Jun", revenue: 0 },
-          { month: "Jul", revenue: 0 },
-          { month: "Ago", revenue: 0 },
-          { month: "Set", revenue: 0 },
-          { month: "Out", revenue: 0 },
-          { month: "Nov", revenue: 0 },
-          { month: "Dez", revenue: 0 },
-        ],
+        totalRevenue: parseFloat(totalRevenue.toFixed(2)),
+        monthlyRevenue: parseFloat(monthlyRevenue.toFixed(2)),
+        activeSubscriptions,
+        churnRate: parseFloat(churnRate.toFixed(1)),
+        monthlyData,
         subscriptionsByStatus: [
-          { status: "Ativas", count: 4 },
-          { status: "Teste", count: 1 },
-          { status: "Canceladas", count: 1 },
+          { status: "Ativas", count: activeSubscriptions },
+          { status: "Teste", count: trialSubscriptions },
+          { status: "Canceladas", count: canceledSubscriptions },
           { status: "Atrasadas", count: 0 }
         ]
       };

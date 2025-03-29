@@ -828,26 +828,7 @@ export default function FinancePage() {
                           <Calendar
                             mode="single"
                             selected={field.value}
-                            onSelect={(date) => {
-                              if (date) {
-                                // Primeiro atualiza o valor no formulário
-                                field.onChange(date);
-                                
-                                // Pega o plano atual selecionado
-                                const planValue = subscriptionForm.getValues("plan");
-                                let endDate = new Date(date);
-                                
-                                if (planValue === "monthly") {
-                                  endDate.setMonth(date.getMonth() + 1);
-                                } else if (planValue === "annual") {
-                                  endDate.setFullYear(date.getFullYear() + 1);
-                                } else if (planValue === "trial") {
-                                  endDate.setDate(date.getDate() + 7);
-                                }
-                                
-                                subscriptionForm.setValue("endDate", endDate);
-                              }
-                            }}
+                            onSelect={(date) => date && field.onChange(date)}
                             initialFocus
                             locale={ptBR}
                           />
