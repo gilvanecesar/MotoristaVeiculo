@@ -319,14 +319,14 @@ export default function FreightsPage() {
     let vehicleTypes = getVehicleTypeDisplay(freight.vehicleType);
     let bodyTypes = getBodyTypeDisplay(freight.bodyType);
     
-    // Formata a mensagem seguindo o modelo solicitado
-    return encodeURIComponent(`
+    // Formata a mensagem seguindo exatamente o modelo solicitado
+    return encodeURIComponent(`🚨🚨🚨🚨🚨🚨🚨
+CARGAS ${clientName} 
 🚨🚨🚨🚨🚨🚨🚨
-CARGAS ${clientName}
-🚨🚨🚨🚨🚨🚨🚨
-⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️
-
+⬇⬇⬇⬇⬇⬇⬇⬇⬇
+  
 📦 Todos os fretes do grupo ${clientName}
+🖥 ${window.location.origin}/freights/${freight.id} 
 
 📍 De: ${freight.origin}/${freight.originState}
 📍 Para: ${freight.destination}/${freight.destinationState}
@@ -336,7 +336,7 @@ CARGAS ${clientName}
 
 💰 Preço: ${formatCurrency(Number(freight.freightValue))}/Total
 
-Mais informações: ${window.location.origin}/freights/${freight.id}
+${window.location.origin}/freights/${freight.id}
     `);
   };
   
