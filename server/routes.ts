@@ -19,6 +19,68 @@ import { createCheckoutSession, createPortalSession, handleWebhook } from "./str
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configurar autenticação
   setupAuth(app);
+  
+  // Ativação de teste gratuito (7 dias)
+  app.post("/api/activate-trial", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Usuário não autenticado" });
+      }
+      
+      // Calcula a data de expiração do teste (7 dias a partir de hoje)
+      const trialExpirationDate = new Date();
+      trialExpirationDate.setDate(trialExpirationDate.getDate() + 7);
+      
+      // Atualiza o usuário com status de assinatura ativa e data de expiração
+      const updatedUser = await storage.updateUser(userId, {
+        subscriptionActive: true,
+        subscriptionType: "trial",
+        subscriptionEndDate: trialExpirationDate,
+      });
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "Usuário não encontrado" });
+      }
+      
+      res.status(200).json({ message: "Teste gratuito ativado com sucesso", expirationDate: trialExpirationDate });
+    } catch (error) {
+      console.error("Error activating trial:", error);
+      res.status(500).json({ message: "Erro ao ativar período de teste" });
+    }
+  });
+  
+  // Ativação de acesso gratuito para motoristas
+  app.post("/api/activate-driver-access", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Usuário não autenticado" });
+      }
+      
+      // Verifica se o usuário é do tipo motorista
+      const user = await storage.getUserById(userId);
+      if (!user || user.profileType !== "driver") {
+        return res.status(403).json({ message: "Apenas motoristas podem ativar o acesso gratuito" });
+      }
+      
+      // Ativa o acesso limitado para motoristas (sem data de expiração)
+      const updatedUser = await storage.updateUser(userId, {
+        subscriptionActive: true,
+        subscriptionType: "driver_free",
+        // Sem data de expiração para motoristas (acesso permanente limitado)
+      });
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "Usuário não encontrado" });
+      }
+      
+      res.status(200).json({ message: "Acesso de motorista ativado com sucesso" });
+    } catch (error) {
+      console.error("Error activating driver access:", error);
+      res.status(500).json({ message: "Erro ao ativar acesso de motorista" });
+    }
+  });
   // API routes for drivers
   app.get("/api/drivers", async (req: Request, res: Response) => {
     try {

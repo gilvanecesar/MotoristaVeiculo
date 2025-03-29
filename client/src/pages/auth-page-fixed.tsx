@@ -99,27 +99,48 @@ export default function AuthPage() {
     });
   };
 
-  // Função para iniciar o processo de pagamento
+  // Função para iniciar o processo de pagamento ou teste gratuito
   const initiateCheckout = async (type: string = "monthly") => {
     setIsLoadingCheckout(true);
     try {
-      const response = await apiRequest("POST", "/api/create-checkout-session", {
-        subscriptionType: type
-      });
-      
-      if (!response.ok) {
-        throw new Error("Erro ao iniciar o processo de pagamento");
+      // Se for teste gratuito, não passa pelo Stripe
+      if (type === "trial") {
+        // Ativa o período de teste diretamente, sem pagamento
+        const response = await apiRequest("POST", "/api/activate-trial", {
+          subscriptionType: type
+        });
+        
+        if (!response.ok) {
+          throw new Error("Erro ao iniciar o período de teste");
+        }
+        
+        toast({
+          title: "Teste gratuito ativado",
+          description: "Seu acesso gratuito de 7 dias foi ativado com sucesso!",
+        });
+        
+        // Redireciona para o dashboard
+        navigate("/dashboard");
+      } else {
+        // Processamento normal via Stripe para planos pagos
+        const response = await apiRequest("POST", "/api/create-checkout-session", {
+          subscriptionType: type
+        });
+        
+        if (!response.ok) {
+          throw new Error("Erro ao iniciar o processo de pagamento");
+        }
+        
+        const data = await response.json();
+        
+        // Redireciona para a página de checkout do Stripe
+        window.location.href = data.url;
       }
-      
-      const data = await response.json();
-      
-      // Redireciona para a página de checkout do Stripe
-      window.location.href = data.url;
     } catch (error) {
       console.error("Erro ao iniciar checkout:", error);
       toast({
-        title: "Erro ao processar pagamento",
-        description: "Ocorreu um erro ao iniciar o processo de pagamento. Tente novamente.",
+        title: "Erro ao processar solicitação",
+        description: "Ocorreu um erro ao processar sua solicitação. Tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -136,12 +157,39 @@ export default function AuthPage() {
 
     registerMutation.mutate(registerData, {
       onSuccess: () => {
-        toast({
-          title: "Conta criada com sucesso",
-          description: "Para continuar, é necessário assinar um plano",
-        });
-        // Após o cadastro, exibe a página de planos
-        setShowPlans(true);
+        // Se for motorista, ativa o acesso gratuito automaticamente
+        if (selectedRole === USER_TYPES.DRIVER) {
+          // Ativa o acesso gratuito para motoristas
+          apiRequest("POST", "/api/activate-driver-access", {})
+            .then((response) => {
+              if (response.ok) {
+                toast({
+                  title: "Cadastro de motorista realizado",
+                  description: "Seu acesso gratuito foi ativado! Você pode acessar fretes, veículos e motoristas.",
+                });
+                navigate("/dashboard");
+              } else {
+                throw new Error("Erro ao ativar acesso de motorista");
+              }
+            })
+            .catch((error) => {
+              console.error("Erro ao ativar acesso:", error);
+              toast({
+                title: "Erro ao ativar acesso",
+                description: "Não foi possível ativar seu acesso gratuito. Tente novamente.",
+                variant: "destructive",
+              });
+              setShowPlans(true);
+            });
+        } else {
+          // Para outros tipos de perfil, mostra a página de planos
+          toast({
+            title: "Conta criada com sucesso",
+            description: "Para continuar, é necessário assinar um plano",
+          });
+          // Após o cadastro, exibe a página de planos
+          setShowPlans(true);
+        }
       },
     });
   };
@@ -174,7 +222,20 @@ export default function AuthPage() {
                 Para acessar a plataforma QUERO FRETES, escolha um dos planos abaixo:
               </p>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Teste Gratuito */}
+                <Card className={`cursor-pointer transition-all hover:shadow-md ${subscriptionType === "trial" ? 'border-primary ring-2 ring-primary' : ''}`}
+                      onClick={() => setSubscriptionType("trial")}>
+                  <CardHeader className="pb-3">
+                    <CardTitle>Teste Gratuito</CardTitle>
+                    <CardDescription>Acesso por 7 dias</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold mb-2">Grátis</div>
+                    <p className="text-sm text-muted-foreground">Experimente sem compromisso</p>
+                  </CardContent>
+                </Card>
+                
                 {/* Plano Mensal */}
                 <Card className={`cursor-pointer transition-all hover:shadow-md ${subscriptionType === "monthly" ? 'border-primary ring-2 ring-primary' : ''}`}
                       onClick={() => setSubscriptionType("monthly")}>
@@ -213,13 +274,54 @@ export default function AuthPage() {
                     Processando...
                   </>
                 ) : (
-                  "Continuar para pagamento"
+                  subscriptionType === "trial" ? "Iniciar período de teste gratuito" : "Continuar para pagamento"
                 )}
               </Button>
               
               <p className="text-xs text-center text-muted-foreground mt-4">
-                Você será redirecionado para a plataforma segura do Stripe para finalizar seu pagamento.
+                {subscriptionType === "trial" 
+                  ? "O acesso de teste gratuito será ativado imediatamente por 7 dias." 
+                  : "Você será redirecionado para a plataforma segura do Stripe para finalizar seu pagamento."}
               </p>
+              
+              {/* Acesso gratuito para motoristas */}
+              <div className="mt-8 pt-6 border-t">
+                <div className="text-center mb-4">
+                  <h3 className="text-lg font-semibold">Cadastro de Motorista</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Acesso gratuito com funcionalidades limitadas
+                  </p>
+                </div>
+                
+                <Card className="border-dashed">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center mb-4">
+                      <Icons.truck className="h-8 w-8 mr-4 text-primary" />
+                      <div>
+                        <h4 className="font-medium">Cadastro Gratuito para Motoristas</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Acesso aos menus de fretes, motoristas e veículos.
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => {
+                        // Define o usuário como motorista
+                        setSelectedRole(USER_TYPES.DRIVER);
+                        // Ativa a aba de cadastro
+                        setActiveTab("register");
+                        // Esconde os planos
+                        setShowPlans(false);
+                      }}
+                    >
+                      Cadastrar como motorista
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           ) : (
             <Tabs defaultValue="login" value={activeTab} onValueChange={setActiveTab} className="w-full">
