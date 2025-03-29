@@ -7,6 +7,7 @@ import { AuthProvider as UserAuthProvider } from "@/hooks/use-auth";
 import { AuthProvider as ClientAuthProvider } from "@/lib/auth-context";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { ClientRegistrationCheck } from "@/components/client-registration-check";
+import { PaymentBanner } from "@/components/payment-banner";
 import NotFound from "@/pages/not-found";
 import Navigation from "@/components/layout/navigation";
 import Footer from "@/components/layout/footer";
@@ -22,6 +23,8 @@ import FreightForm from "@/pages/freights/freight-form";
 import ClientsPage from "@/pages/clients/index";
 import ClientForm from "@/pages/clients/client-form";
 import AdminPage from "@/pages/admin/index";
+import PaymentSuccessPage from "@/pages/payment-success";
+import PaymentCancelPage from "@/pages/payment-cancel";
 
 function Router() {
   return (
@@ -40,6 +43,8 @@ function Router() {
       <ProtectedRoute path="/clients/:id" component={ClientForm} />
       <ProtectedRoute path="/reports" component={ReportsPage} />
       <ProtectedRoute path="/admin" component={AdminPage} />
+      <ProtectedRoute path="/payment-success" component={PaymentSuccessPage} />
+      <ProtectedRoute path="/payment-cancel" component={PaymentCancelPage} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>
@@ -55,6 +60,7 @@ function App() {
             <ClientRegistrationCheck />
             <div className="flex flex-col min-h-screen bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-200">
               <Navigation />
+              <PaymentBanner />
               <div className="flex flex-col flex-grow">
                 <main className="px-6 py-6 flex-grow max-w-full overflow-x-hidden">
                   <div className="container mx-auto">

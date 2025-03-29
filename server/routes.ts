@@ -1,4 +1,4 @@
-import type { Express, Request, Response, NextFunction } from "express";
+import express, { type Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { driverValidator, vehicleValidator, clientValidator, freightValidator, freightDestinationValidator } from "@shared/schema";
@@ -14,6 +14,7 @@ import {
   hasFreightAccess,
   hasVehicleAccess
 } from "./middlewares";
+import { createCheckoutSession, createPortalSession, handleWebhook } from "./stripe";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configurar autenticação
@@ -604,6 +605,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to associate client to user" });
     }
   });
+
+  // Rotas de pagamento com Stripe
+  app.post("/api/create-checkout-session", isAuthenticated, createCheckoutSession);
+  app.post("/api/create-portal-session", isAuthenticated, createPortalSession);
+  app.post("/api/stripe-webhook", express.raw({ type: 'application/json' }), handleWebhook);
 
   const httpServer = createServer(app);
   return httpServer;
