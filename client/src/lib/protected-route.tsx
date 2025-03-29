@@ -21,10 +21,25 @@ export function ProtectedRoute({
     );
   }
 
+  // Se não houver usuário, redireciona para a autenticação
   if (!user) {
     return (
       <Route path={path}>
         <Redirect to="/auth" />
+      </Route>
+    );
+  }
+
+  // Se o usuário for admin, permite acesso independente da assinatura
+  if (user.profileType === "admin") {
+    return <Route path={path} component={Component} />;
+  }
+
+  // Verifica se o usuário tem uma assinatura ativa
+  if (!user.subscriptionActive) {
+    return (
+      <Route path={path}>
+        <Redirect to="/auth?subscription=required" />
       </Route>
     );
   }

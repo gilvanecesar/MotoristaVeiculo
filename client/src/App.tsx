@@ -47,8 +47,8 @@ function Router() {
       <ProtectedRoute path="/admin" component={AdminPage} />
       <ProtectedRoute path="/admin/finance" component={FinanceDashboard} />
       <ProtectedRoute path="/admin/finance/settings" component={FinanceSettings} />
-      <ProtectedRoute path="/payment-success" component={PaymentSuccessPage} />
-      <ProtectedRoute path="/payment-cancel" component={PaymentCancelPage} />
+      <Route path="/payment-success" component={PaymentSuccessPage} />
+      <Route path="/payment-cancel" component={PaymentCancelPage} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>

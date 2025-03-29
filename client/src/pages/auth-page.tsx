@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation, useRoute } from "wouter";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -13,6 +13,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { USER_TYPES } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // Google Icon Component
 const GoogleIcon = () => (
@@ -49,14 +51,33 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<string>("login");
   const [selectedRole, setSelectedRole] = useState<string>(USER_TYPES.SHIPPER);
+  const [subscriptionType, setSubscriptionType] = useState<string>("monthly"); // "monthly" ou "annual"
+  const [showPlans, setShowPlans] = useState<boolean>(false);
+  const [isLoadingCheckout, setIsLoadingCheckout] = useState<boolean>(false);
+  const [subscriptionRequired, setSubscriptionRequired] = useState<boolean>(false);
+  
   const { toast } = useToast();
   const { user, loginMutation, registerMutation } = useAuth();
   const [_, navigate] = useLocation();
+  const [__, params] = useRoute("/auth?subscription=:status");
+  
+  // Verifica se precisa mostrar o alerta de assinatura
+  useEffect(() => {
+    if (params && params.status === "required") {
+      setSubscriptionRequired(true);
+    }
+  }, [params]);
 
   // Redirecionamento se o usuário já estiver logado
   if (user) {
-    navigate("/dashboard");
-    return null;
+    // Se o usuário tem assinatura ativa, redireciona para o dashboard
+    if (user.subscriptionActive) {
+      navigate("/dashboard");
+      return null;
+    }
+    
+    // Se o usuário está logado mas não tem assinatura, mostra a página de planos
+    setShowPlans(true);
   }
 
   // Formulário de login
@@ -91,6 +112,34 @@ export default function AuthPage() {
     });
   };
 
+  // Função para iniciar o processo de pagamento
+  const initiateCheckout = async (type: string = "monthly") => {
+    setIsLoadingCheckout(true);
+    try {
+      const response = await apiRequest("POST", "/api/create-checkout-session", {
+        subscriptionType: type
+      });
+      
+      if (!response.ok) {
+        throw new Error("Erro ao iniciar o processo de pagamento");
+      }
+      
+      const data = await response.json();
+      
+      // Redireciona para a página de checkout do Stripe
+      window.location.href = data.url;
+    } catch (error) {
+      console.error("Erro ao iniciar checkout:", error);
+      toast({
+        title: "Erro ao processar pagamento",
+        description: "Ocorreu um erro ao iniciar o processo de pagamento. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingCheckout(false);
+    }
+  };
+
   const onRegisterSubmit = (data: RegisterFormValues) => {
     // Adiciona o profileType selecionado
     const registerData = {
@@ -102,9 +151,10 @@ export default function AuthPage() {
       onSuccess: () => {
         toast({
           title: "Conta criada com sucesso",
-          description: "Bem-vindo à plataforma Quero Fretes",
+          description: "Para continuar, é necessário assinar um plano",
         });
-        navigate("/dashboard");
+        // Após o cadastro, exibe a página de planos
+        setShowPlans(true);
       },
     });
   };
@@ -117,12 +167,79 @@ export default function AuthPage() {
           <div className="flex justify-center mb-8">
             <img src={logoQueroFretes} alt="QUERO FRETES" className="h-16" />
           </div>
-
-          <Tabs defaultValue="login" value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-8">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="register">Cadastro</TabsTrigger>
-            </TabsList>
+          
+          {/* Alerta para assinatura necessária */}
+          {subscriptionRequired && (
+            <Alert className="mb-6 border-yellow-500">
+              <Icons.warning className="h-4 w-4 text-yellow-500" />
+              <AlertTitle>Assinatura necessária</AlertTitle>
+              <AlertDescription>
+                Para continuar usando a plataforma, é necessário assinar um plano.
+              </AlertDescription>
+            </Alert>
+          )}
+          
+          {/* Página de planos de assinatura */}
+          {showPlans ? (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold text-center">Escolha seu plano</h2>
+              <p className="text-center text-muted-foreground">
+                Para acessar a plataforma QUERO FRETES, escolha um dos planos abaixo:
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Plano Mensal */}
+                <Card className={`cursor-pointer transition-all hover:shadow-md ${subscriptionType === "monthly" ? 'border-primary ring-2 ring-primary' : ''}`}
+                      onClick={() => setSubscriptionType("monthly")}>
+                  <CardHeader className="pb-3">
+                    <CardTitle>Mensal</CardTitle>
+                    <CardDescription>Acesso por 30 dias</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold mb-2">R$ 99,90</div>
+                    <p className="text-sm text-muted-foreground">Cobrado a cada mês</p>
+                  </CardContent>
+                </Card>
+                
+                {/* Plano Anual */}
+                <Card className={`cursor-pointer transition-all hover:shadow-md ${subscriptionType === "annual" ? 'border-primary ring-2 ring-primary' : ''}`}
+                      onClick={() => setSubscriptionType("annual")}>
+                  <CardHeader className="pb-3">
+                    <CardTitle>Anual</CardTitle>
+                    <CardDescription>Acesso por 1 ano completo</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold mb-2">R$ 1.198,80</div>
+                    <p className="text-sm text-muted-foreground">Apenas R$ 99,90/mês</p>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              <Button 
+                className="w-full mt-6" 
+                onClick={() => initiateCheckout(subscriptionType)}
+                disabled={isLoadingCheckout}
+              >
+                {isLoadingCheckout ? (
+                  <>
+                    <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+                    Processando...
+                  </>
+                ) : (
+                  "Continuar para pagamento"
+                )}
+              </Button>
+              
+              <p className="text-xs text-center text-muted-foreground mt-4">
+                Você será redirecionado para a plataforma segura do Stripe para finalizar seu pagamento.
+              </p>
+            </div>
+          ) : (
+            <Tabs defaultValue="login" value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-8">
+                <TabsTrigger value="login">Login</TabsTrigger>
+                <TabsTrigger value="register">Cadastro</TabsTrigger>
+              </TabsList>
 
             <TabsContent value="login">
               <Card>

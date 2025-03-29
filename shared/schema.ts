@@ -359,6 +359,12 @@ export const users = pgTable("users", {
   isVerified: boolean("is_verified").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   lastLogin: timestamp("last_login"),
+  // Informações de assinatura
+  subscriptionActive: boolean("subscription_active").notNull().default(false),
+  subscriptionType: text("subscription_type"),  // "monthly" ou "annual"
+  subscriptionExpiresAt: timestamp("subscription_expires_at"),
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
   // Referências opcionais para ligar o usuário aos perfis específicos
   driverId: integer("driver_id").references(() => drivers.id),
   clientId: integer("client_id").references(() => clients.id)
