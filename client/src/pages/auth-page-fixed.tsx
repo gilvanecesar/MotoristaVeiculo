@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { USER_TYPES } from "@shared/schema";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // Importando a logo da empresa
@@ -138,13 +138,25 @@ export default function AuthPage() {
           throw new Error("Erro ao iniciar o período de teste");
         }
         
+        // Obtém a resposta do servidor
+        const data = await response.json();
+        
         toast({
           title: "Teste gratuito ativado",
           description: "Seu acesso gratuito de 7 dias foi ativado com sucesso!",
         });
         
-        // Redireciona diretamente para a página de fretes
-        navigate("/freights");
+        // Atualiza o cache de usuário para incluir as informações de assinatura
+        // Isso evita que o usuário tenha que fazer login novamente
+        queryClient.invalidateQueries({queryKey: ["/api/user"]});
+        
+        // Força uma nova consulta para obter os dados atualizados do usuário antes de navegar
+        queryClient.fetchQuery({queryKey: ["/api/user"]})
+          .then(() => {
+            // Redireciona diretamente para a página de fretes após atualizar o cache
+            navigate("/freights");
+          });
+        
         return; // Importante adicionar o return para não continuar o código
       } else {
         // Processamento normal via Stripe para planos pagos
