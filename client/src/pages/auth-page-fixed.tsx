@@ -119,8 +119,8 @@ export default function AuthPage() {
           description: "Seu acesso gratuito de 7 dias foi ativado com sucesso!",
         });
         
-        // Redireciona para o dashboard
-        navigate("/dashboard");
+        // Redireciona diretamente para a página de fretes
+        navigate("/freights");
       } else {
         // Processamento normal via Stripe para planos pagos
         const response = await apiRequest("POST", "/api/create-checkout-session", {
@@ -167,7 +167,8 @@ export default function AuthPage() {
                   title: "Cadastro de motorista realizado",
                   description: "Seu acesso gratuito foi ativado! Você pode acessar fretes, veículos e motoristas.",
                 });
-                navigate("/dashboard");
+                // Redireciona diretamente para a página de fretes
+                navigate("/freights");
               } else {
                 throw new Error("Erro ao ativar acesso de motorista");
               }
