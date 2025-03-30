@@ -57,6 +57,7 @@ export interface IStorage {
   updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
   verifyUser(id: number): Promise<User | undefined>;
   updateLastLogin(id: number): Promise<User | undefined>;
+  toggleUserAccess(id: number, isActive: boolean): Promise<User | undefined>;
   deleteUser(id: number): Promise<boolean>;
 
   // Driver operations
@@ -244,6 +245,10 @@ export class DatabaseStorage implements IStorage {
 
   async updateLastLogin(id: number): Promise<User | undefined> {
     return this.updateUser(id, { lastLogin: new Date() });
+  }
+
+  async toggleUserAccess(id: number, isActive: boolean): Promise<User | undefined> {
+    return this.updateUser(id, { isActive });
   }
 
   async deleteUser(id: number): Promise<boolean> {

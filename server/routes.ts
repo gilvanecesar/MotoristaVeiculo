@@ -16,7 +16,7 @@ import {
 } from "./middlewares";
 import { createCheckoutSession, createPortalSession, handleWebhook } from "./stripe";
 import Stripe from "stripe";
-import { sendSubscriptionEmail } from "./email-service";
+import { sendSubscriptionEmail, sendPaymentReminderEmail } from "./email-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configurar autenticação
@@ -1189,6 +1189,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating finance settings:", error);
       res.status(500).json({ message: "Failed to update finance settings" });
+    }
+  });
+
+  // API para gerenciamento de usuários pelo administrador
+  app.get("/api/admin/users", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const users = await storage.getUsers();
+      res.status(200).json(users);
+    } catch (error) {
+      console.error("Error getting users:", error);
+      res.status(500).json({ message: "Erro ao obter usuários" });
+    }
+  });
+
+  // Bloquear/desbloquear acesso de um usuário
+  app.put("/api/admin/users/:id/toggle-access", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { blocked } = req.body;
+      
+      // Buscar usuário atual
+      const user = await storage.getUserById(userId);
+      if (!user) {
+        return res.status(404).json({ message: "Usuário não encontrado" });
+      }
+      
+      // Atualizar status de bloqueio usando o método específico
+      const updatedUser = await storage.toggleUserAccess(userId, !blocked);
+      
+      res.status(200).json({ 
+        message: blocked ? "Usuário bloqueado com sucesso" : "Acesso do usuário liberado com sucesso",
+        user: updatedUser
+      });
+    } catch (error) {
+      console.error("Error toggling user access:", error);
+      res.status(500).json({ message: "Erro ao alterar acesso do usuário" });
+    }
+  });
+
+  // Enviar e-mail de cobrança para um usuário
+  app.post("/api/admin/users/:id/send-payment-reminder", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { message } = req.body;
+      
+      // Buscar usuário
+      const user = await storage.getUserById(userId);
+      if (!user) {
+        return res.status(404).json({ message: "Usuário não encontrado" });
+      }
+      
+      // Enviar e-mail de cobrança
+      const emailSent = await sendPaymentReminderEmail(user, message);
+      
+      if (!emailSent) {
+        return res.status(500).json({ message: "Não foi possível enviar o e-mail. Verifique a configuração do serviço de e-mail." });
+      }
+      
+      res.status(200).json({ message: "E-mail de cobrança enviado com sucesso" });
+    } catch (error) {
+      console.error("Error sending payment reminder:", error);
+      res.status(500).json({ message: "Erro ao enviar e-mail de cobrança" });
     }
   });
 

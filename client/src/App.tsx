@@ -25,6 +25,7 @@ import ClientForm from "@/pages/clients/client-form";
 import AdminPage from "@/pages/admin/index";
 import FinanceDashboard from "@/pages/admin/finance/index";
 import FinanceSettings from "@/pages/admin/finance/settings";
+import AdminUsersPage from "@/pages/admin/users/index";
 import PaymentSuccessPage from "@/pages/payment-success";
 import PaymentCancelPage from "@/pages/payment-cancel";
 import CheckoutPage from "@/pages/checkout";
@@ -49,6 +50,7 @@ function Router() {
       <ProtectedRoute path="/admin" component={AdminPage} />
       <ProtectedRoute path="/admin/finance" component={FinanceDashboard} />
       <ProtectedRoute path="/admin/finance/settings" component={FinanceSettings} />
+      <ProtectedRoute path="/admin/users" component={AdminUsersPage} />
       <Route path="/payment-success" component={PaymentSuccessPage} />
       <Route path="/payment-cancel" component={PaymentCancelPage} />
       <Route path="/checkout" component={CheckoutPage} />

@@ -217,5 +217,63 @@ export async function sendSubscriptionExpirationEmail(
     console.log(`Email de expiração enviado para ${email}`);
   } catch (error) {
     console.error('Erro ao enviar email de expiração:', error);
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Envia um email de cobrança para um usuário
+ * @param user Objeto do usuário
+ * @param customMessage Mensagem personalizada opcional
+ */
+export async function sendPaymentReminderEmail(
+  user: User, 
+  customMessage?: string
+): Promise<boolean> {
+  if (!transporter) {
+    console.warn('Serviço de email não configurado. Email de cobrança não enviado.');
+    return false;
+  }
+
+  try {
+    const mailOptions = {
+      from: `"QUERO FRETES" <${process.env.EMAIL_USER}>`,
+      to: user.email,
+      subject: 'Lembrete de Pagamento - QUERO FRETES',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <img src="https://seusite.com.br/logo.png" alt="QUERO FRETES" style="max-width: 200px;">
+          </div>
+          <h2 style="color: #4a6cf7;">Olá, ${user.name}!</h2>
+          <p>Estamos entrando em contato para lembrar sobre o pagamento pendente da sua assinatura do QUERO FRETES.</p>
+          
+          ${customMessage ? `<p style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #4a6cf7;">${customMessage}</p>` : ''}
+          
+          <p>Para continuar aproveitando todos os recursos da nossa plataforma sem interrupções, por favor, regularize seu pagamento o mais breve possível.</p>
+          
+          <div style="text-align: center; margin-top: 30px; margin-bottom: 30px;">
+            <a href="${process.env.APP_URL || 'https://querofretes.com.br'}/pagamento" style="background-color: #4a6cf7; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+              REGULARIZAR PAGAMENTO
+            </a>
+          </div>
+          
+          <p>Se você já efetuou o pagamento recentemente, por favor desconsidere este email.</p>
+          <p>Se precisar de ajuda ou tiver alguma dúvida sobre sua fatura, entre em contato conosco.</p>
+          <p style="margin-top: 30px; font-size: 12px; color: #666; text-align: center;">
+            Este é um email automático, por favor não responda.<br>
+            QUERO FRETES © ${new Date().getFullYear()}
+          </p>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`Email de cobrança enviado para ${user.email}`);
+    return true;
+  } catch (error) {
+    console.error('Erro ao enviar email de cobrança:', error);
+    return false;
   }
 }

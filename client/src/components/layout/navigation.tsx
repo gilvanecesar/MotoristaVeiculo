@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
-import { LayoutDashboard, Users, Car, BarChart3, Menu, X, Moon, Sun, Truck, Building2, Home, DollarSign } from "lucide-react";
+import { LayoutDashboard, Users, Car, BarChart3, Menu, X, Moon, Sun, Truck, Building2, Home, DollarSign, UserCog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -72,17 +72,23 @@ export default function Navigation() {
   // Verificar se o usuário é administrador
   const isAdmin = user?.profileType === "admin";
   
-  // Menu Financeiro (apenas para administradores)
+  // Menus administrativos (apenas para administradores)
   const financeMenuItem = {
     label: "Financeiro",
     path: "/admin/finance",
     icon: DollarSign
   };
   
+  const usersMenuItem = {
+    label: "Usuários",
+    path: "/admin/users",
+    icon: UserCog
+  };
+  
   // Items do menu com base nas permissões
   const menuItems = [...navItems];
   if (isAdmin) {
-    menuItems.push(financeMenuItem);
+    menuItems.push(financeMenuItem, usersMenuItem);
   }
   
   // Map location to page title
@@ -104,6 +110,8 @@ export default function Navigation() {
         return "Gestão Financeira";
       case "/admin/finance/settings":
         return "Configurações Financeiras";
+      case "/admin/users":
+        return "Gerenciamento de Usuários";
       default:
         if (location.startsWith("/drivers/new")) {
           return "Cadastrar Motorista";

@@ -360,6 +360,7 @@ export const users = pgTable("users", {
   providerId: text("provider_id"),
   avatarUrl: text("avatar_url"),
   isVerified: boolean("is_verified").notNull().default(false),
+  isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   lastLogin: timestamp("last_login"),
   // Informações de assinatura
