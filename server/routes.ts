@@ -1004,6 +1004,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         stripeSubscriptionId: subscription.id,
       });
       
+      // Cria o registro da assinatura na nossa tabela
+      const now = new Date();
+      const endDate = new Date();
+      endDate.setMonth(endDate.getMonth() + 1); // Para assinatura mensal por padrão
+      
+      // Cria a assinatura no banco de dados
+      await storage.createSubscription({
+        userId: user.id,
+        clientId: user.clientId || undefined,
+        stripeSubscriptionId: subscription.id,
+        stripePriceId: process.env.STRIPE_PRICE_ID,
+        stripeCustomerId: customerId,
+        status: "incomplete", // Status inicial da assinatura
+        planType: "annual", // Tipo de plano por padrão
+        currentPeriodStart: now,
+        currentPeriodEnd: endDate,
+        cancelAtPeriodEnd: false,
+        metadata: {},
+      });
+      
       // Retorna os dados relevantes, incluindo o clientSecret para completar o pagamento
       const invoice = subscription.latest_invoice as Stripe.Invoice;
       const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
