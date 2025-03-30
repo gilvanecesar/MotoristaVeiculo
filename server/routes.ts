@@ -837,118 +837,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const dbInvoices = await storage.getInvoices();
       
       if (!dbInvoices || !Array.isArray(dbInvoices) || dbInvoices.length === 0) {
-        // Se não houver faturas no banco, criar algumas faturas iniciais
-        // para fins de demonstração e salvá-las no banco
-        const users = await storage.getUsers();
-        if (!users || users.length === 0) {
-          return res.json([]);
-        }
-        
-        // Usar o primeiro usuário (admin) para criar faturas de demonstração
-        const adminUser = users.find(user => user.profileType === 'admin');
-        const userId = adminUser ? adminUser.id : users[0].id;
-        
-        // Criar assinatura de demonstração
-        const today = new Date();
-        const oneYearLater = new Date();
-        oneYearLater.setFullYear(today.getFullYear() + 1);
-        
-        const demoSubscription = await storage.createSubscription({
-          userId: userId,
-          status: 'active',
-          planType: 'annual',
-          currentPeriodStart: today,
-          currentPeriodEnd: oneYearLater,
-          stripePriceId: process.env.STRIPE_PRICE_ID || 'price_demo',
-          stripeCustomerId: 'cus_demo',
-          stripeSubscriptionId: 'sub_demo'
-        });
-        
-        // Criar algumas faturas de demonstração
-        const demoInvoices = [];
-        for (let i = 1; i <= 5; i++) {
-          const invoiceDate = new Date();
-          invoiceDate.setMonth(today.getMonth() - i);
-          
-          const dueDate = new Date(invoiceDate);
-          dueDate.setDate(invoiceDate.getDate() + 15);
-          
-          // Status para as faturas de demonstração
-          let status = 'paid';
-          if (i === 3) status = 'void'; // Uma fatura cancelada
-          if (i === 5) status = 'upcoming'; // Uma fatura futura
-          
-          const demoInvoice = await storage.createInvoice({
-            userId: userId,
-            subscriptionId: demoSubscription.id,
-            status: status,
-            invoiceNumber: `INV-2025-${1000 + i}`,
-            description: `Assinatura anual - Parcela ${i} de 12`,
-            amount: 99.90,
-            amountPaid: status === 'paid' ? 99.90 : 0,
-            amountDue: status === 'paid' ? 0 : 99.90,
-            currency: 'brl',
-            invoiceDate: status === 'upcoming' ? undefined : invoiceDate,
-            dueDate: dueDate,
-            paidAt: status === 'paid' ? new Date(invoiceDate.getTime() + 86400000) : undefined, // Pago 1 dia depois
-            stripeInvoiceId: `in_demo_${i}`
-          });
-          
-          // Adicionar pagamento para faturas pagas
-          if (status === 'paid') {
-            await storage.createPayment({
-              userId: userId,
-              invoiceId: demoInvoice.id,
-              amount: 99.90,
-              currency: 'brl',
-              status: 'succeeded',
-              paymentType: 'credit_card',
-              paymentMethod: 'visa',
-              last4: '4242',
-              expiryMonth: 12,
-              expiryYear: 2025,
-              cardBrand: 'visa',
-              stripePaymentIntentId: `pi_demo_${i}`,
-              stripePaymentMethodId: `pm_demo_${i}`
-            });
-          }
-          
-          demoInvoices.push(demoInvoice);
-        }
-        
-        // Recuperar todas as faturas após criar as demonstrações
-        const allInvoices = await storage.getInvoices();
-        
-        // Formatar os dados para a API
-        const formattedInvoices = await Promise.all(allInvoices.map(async (invoice) => {
-          // Buscar o cliente, se existir
-          let clientName = 'Cliente não associado';
-          if (invoice.clientId) {
-            const client = await storage.getClient(invoice.clientId);
-            if (client) clientName = client.name;
-          } else {
-            // Se não houver cliente, buscar o usuário
-            const user = await storage.getUserById(invoice.userId);
-            if (user) clientName = user.name;
-          }
-          
-          return {
-            id: invoice.id,
-            clientName,
-            status: invoice.status,
-            invoiceDate: invoice.invoiceDate ? new Date(invoice.invoiceDate).toISOString().split('T')[0] : '',
-            dueDate: invoice.dueDate ? new Date(invoice.dueDate).toISOString().split('T')[0] : '',
-            amount: Number(invoice.amount),
-            invoiceNumber: invoice.invoiceNumber,
-            stripeInvoiceId: invoice.stripeInvoiceId,
-            description: invoice.description,
-            amountPaid: Number(invoice.amountPaid || 0),
-            amountDue: Number(invoice.amountDue || 0),
-            receiptUrl: invoice.receiptUrl
-          };
-        }));
-        
-        return res.json(formattedInvoices);
+        // Se não houver faturas, retornar um array vazio em vez de criar dados de demonstração
+        return res.json([]);
       }
       
       // Se já existirem faturas no banco, formatar e retornar
@@ -1136,8 +1026,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const invoicesDb = await storage.getInvoices();
       
       if (!subscriptionsDb || subscriptionsDb.length === 0) {
-        // Se não houver assinaturas no banco, criar algumas assinaturas iniciais de demo
-        // Esta parte só será executada na primeira vez que a API for chamada
+        // Se não houver assinaturas no banco, retornar zeros em vez de dados simulados
         return res.json({
           totalRevenue: 0,
           monthlyRevenue: 0,
