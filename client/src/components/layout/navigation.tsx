@@ -62,7 +62,12 @@ export default function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
   const { theme, toggleTheme } = useTheme();
-  const { user } = useUserAuth();
+  const { user, logoutMutation } = useUserAuth();
+  
+  // Função para fazer logout
+  const handleLogout = () => {
+    logoutMutation.mutate();
+  };
   
   // Verificar se o usuário é administrador
   const isAdmin = user?.profileType === "admin";
@@ -194,7 +199,7 @@ export default function Navigation() {
                 <button className="text-slate-600 dark:text-slate-300 hover:text-primary outline-none">
                   <Avatar className="h-8 w-8 cursor-pointer">
                     <AvatarFallback className="bg-primary/10 text-primary">
-                      AD
+                      {user?.name?.[0]?.toUpperCase() || 'U'}
                     </AvatarFallback>
                   </Avatar>
                 </button>
@@ -204,7 +209,9 @@ export default function Navigation() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>Perfil</DropdownMenuItem>
                 <DropdownMenuItem>Configurações</DropdownMenuItem>
-                <DropdownMenuItem>Sair</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout} className="text-red-600 dark:text-red-400 focus:text-red-700 focus:bg-red-50 dark:focus:bg-red-900/20">
+                  Sair
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -239,14 +246,27 @@ export default function Navigation() {
                 <div className="flex items-center gap-3 px-3 py-2">
                   <Avatar className="h-8 w-8">
                     <AvatarFallback className="bg-primary/10 text-primary">
-                      AD
+                      {user?.name?.[0]?.toUpperCase() || 'U'}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="text-sm font-medium text-slate-800 dark:text-slate-200">Admin</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">admin@exemplo.com</p>
+                    <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{user?.name || 'Usuário'}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{user?.email || 'email@exemplo.com'}</p>
                   </div>
                 </div>
+              </li>
+              
+              {/* Logout Button for Mobile */}
+              <li>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center justify-start gap-3 w-full px-3 py-2 rounded-md transition-all text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  <span className="font-medium">Sair</span>
+                </button>
               </li>
             </ul>
           </nav>
