@@ -1,14 +1,22 @@
 import {
   drivers, vehicles, clients, freights, freightDestinations, users,
+  subscriptions, invoices, payments,
   CLIENT_TYPES, USER_TYPES, AUTH_PROVIDERS,
+  SUBSCRIPTION_STATUS, INVOICE_STATUS, PLAN_TYPES,
   type Driver, type InsertDriver,
   type Vehicle, type InsertVehicle, 
   type Client, type InsertClient,
   type Freight, type InsertFreight,
   type FreightDestination, type InsertFreightDestination,
   type User, type InsertUser,
+  type Subscription, type InsertSubscription,
+  type Invoice, type InsertInvoice,
+  type Payment, type InsertPayment,
   type DriverWithVehicles,
-  type FreightWithDestinations
+  type FreightWithDestinations,
+  type SubscriptionWithInvoices,
+  type InvoiceWithPayments,
+  type ClientWithSubscriptions
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { and, eq, ilike, or, sql } from "drizzle-orm";
@@ -68,6 +76,38 @@ export interface IStorage {
   getFreightDestinations(freightId: number): Promise<FreightDestination[]>;
   createFreightDestination(destination: InsertFreightDestination): Promise<FreightDestination>;
   deleteFreightDestination(id: number): Promise<boolean>;
+  
+  // Subscription operations
+  getSubscriptions(): Promise<Subscription[]>;
+  getSubscriptionsByUser(userId: number): Promise<Subscription[]>;
+  getSubscriptionsByClient(clientId: number): Promise<Subscription[]>;
+  getSubscription(id: number): Promise<SubscriptionWithInvoices | undefined>;
+  getSubscriptionByStripeId(stripeId: string): Promise<Subscription | undefined>;
+  createSubscription(subscription: InsertSubscription): Promise<Subscription>;
+  updateSubscription(id: number, subscription: Partial<InsertSubscription>): Promise<Subscription | undefined>;
+  deleteSubscription(id: number): Promise<boolean>;
+  
+  // Invoice operations
+  getInvoices(): Promise<Invoice[]>;
+  getInvoicesByUser(userId: number): Promise<Invoice[]>;
+  getInvoicesByClient(clientId: number): Promise<Invoice[]>;
+  getInvoicesBySubscription(subscriptionId: number): Promise<Invoice[]>;
+  getInvoice(id: number): Promise<InvoiceWithPayments | undefined>;
+  getInvoiceByStripeId(stripeId: string): Promise<Invoice | undefined>;
+  createInvoice(invoice: InsertInvoice): Promise<Invoice>;
+  updateInvoice(id: number, invoice: Partial<InsertInvoice>): Promise<Invoice | undefined>;
+  deleteInvoice(id: number): Promise<boolean>;
+  
+  // Payment operations
+  getPayments(): Promise<Payment[]>;
+  getPaymentsByUser(userId: number): Promise<Payment[]>;
+  getPaymentsByClient(clientId: number): Promise<Payment[]>;
+  getPaymentsByInvoice(invoiceId: number): Promise<Payment[]>;
+  getPayment(id: number): Promise<Payment | undefined>;
+  getPaymentByStripeId(stripeId: string): Promise<Payment | undefined>;
+  createPayment(payment: InsertPayment): Promise<Payment>;
+  updatePayment(id: number, payment: Partial<InsertPayment>): Promise<Payment | undefined>;
+  deletePayment(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -382,6 +422,180 @@ export class DatabaseStorage implements IStorage {
 
   async deleteFreightDestination(id: number): Promise<boolean> {
     await db.delete(freightDestinations).where(eq(freightDestinations.id, id));
+    return true;
+  }
+
+  // Assinaturas
+  async getSubscriptions(): Promise<Subscription[]> {
+    return await db.select().from(subscriptions);
+  }
+
+  async getSubscriptionsByUser(userId: number): Promise<Subscription[]> {
+    return await db.select().from(subscriptions).where(eq(subscriptions.userId, userId));
+  }
+
+  async getSubscriptionsByClient(clientId: number): Promise<Subscription[]> {
+    return await db.select().from(subscriptions).where(eq(subscriptions.clientId, clientId));
+  }
+
+  async getSubscription(id: number): Promise<SubscriptionWithInvoices | undefined> {
+    const results = await db.select().from(subscriptions).where(eq(subscriptions.id, id));
+    if (!results.length) return undefined;
+    
+    const subscriptionInvoices = await this.getInvoicesBySubscription(id);
+    return {
+      ...results[0],
+      invoices: subscriptionInvoices
+    };
+  }
+
+  async getSubscriptionByStripeId(stripeId: string): Promise<Subscription | undefined> {
+    const results = await db.select().from(subscriptions).where(eq(subscriptions.stripeSubscriptionId, stripeId));
+    return results[0];
+  }
+
+  async createSubscription(subscription: InsertSubscription): Promise<Subscription> {
+    const results = await db.insert(subscriptions).values(subscription).returning();
+    return results[0];
+  }
+
+  async updateSubscription(id: number, subscriptionUpdate: Partial<InsertSubscription>): Promise<Subscription | undefined> {
+    // Atualizar o timestamp de atualização
+    const updatedData = {
+      ...subscriptionUpdate,
+      updatedAt: new Date()
+    };
+    
+    const results = await db.update(subscriptions).set(updatedData).where(eq(subscriptions.id, id)).returning();
+    return results[0];
+  }
+
+  async deleteSubscription(id: number): Promise<boolean> {
+    // Verificar se existem faturas associadas
+    const associatedInvoices = await this.getInvoicesBySubscription(id);
+    
+    // Se existirem faturas, deletá-las primeiro
+    if (associatedInvoices.length > 0) {
+      for (const invoice of associatedInvoices) {
+        await this.deleteInvoice(invoice.id);
+      }
+    }
+    
+    // Deletar a assinatura
+    await db.delete(subscriptions).where(eq(subscriptions.id, id));
+    return true;
+  }
+
+  // Faturas
+  async getInvoices(): Promise<Invoice[]> {
+    return await db.select().from(invoices);
+  }
+
+  async getInvoicesByUser(userId: number): Promise<Invoice[]> {
+    return await db.select().from(invoices).where(eq(invoices.userId, userId));
+  }
+
+  async getInvoicesByClient(clientId: number): Promise<Invoice[]> {
+    return await db.select().from(invoices).where(eq(invoices.clientId, clientId));
+  }
+
+  async getInvoicesBySubscription(subscriptionId: number): Promise<Invoice[]> {
+    return await db.select().from(invoices).where(eq(invoices.subscriptionId, subscriptionId));
+  }
+
+  async getInvoice(id: number): Promise<InvoiceWithPayments | undefined> {
+    const results = await db.select().from(invoices).where(eq(invoices.id, id));
+    if (!results.length) return undefined;
+    
+    const invoicePayments = await this.getPaymentsByInvoice(id);
+    return {
+      ...results[0],
+      payments: invoicePayments
+    };
+  }
+
+  async getInvoiceByStripeId(stripeId: string): Promise<Invoice | undefined> {
+    const results = await db.select().from(invoices).where(eq(invoices.stripeInvoiceId, stripeId));
+    return results[0];
+  }
+
+  async createInvoice(invoice: InsertInvoice): Promise<Invoice> {
+    const results = await db.insert(invoices).values(invoice).returning();
+    return results[0];
+  }
+
+  async updateInvoice(id: number, invoiceUpdate: Partial<InsertInvoice>): Promise<Invoice | undefined> {
+    // Atualizar o timestamp de atualização
+    const updatedData = {
+      ...invoiceUpdate,
+      updatedAt: new Date()
+    };
+    
+    const results = await db.update(invoices).set(updatedData).where(eq(invoices.id, id)).returning();
+    return results[0];
+  }
+
+  async deleteInvoice(id: number): Promise<boolean> {
+    // Verificar se existem pagamentos associados
+    const associatedPayments = await this.getPaymentsByInvoice(id);
+    
+    // Se existirem pagamentos, deletá-los primeiro
+    if (associatedPayments.length > 0) {
+      for (const payment of associatedPayments) {
+        await this.deletePayment(payment.id);
+      }
+    }
+    
+    // Deletar a fatura
+    await db.delete(invoices).where(eq(invoices.id, id));
+    return true;
+  }
+
+  // Pagamentos
+  async getPayments(): Promise<Payment[]> {
+    return await db.select().from(payments);
+  }
+
+  async getPaymentsByUser(userId: number): Promise<Payment[]> {
+    return await db.select().from(payments).where(eq(payments.userId, userId));
+  }
+
+  async getPaymentsByClient(clientId: number): Promise<Payment[]> {
+    return await db.select().from(payments).where(eq(payments.clientId, clientId));
+  }
+
+  async getPaymentsByInvoice(invoiceId: number): Promise<Payment[]> {
+    return await db.select().from(payments).where(eq(payments.invoiceId, invoiceId));
+  }
+
+  async getPayment(id: number): Promise<Payment | undefined> {
+    const results = await db.select().from(payments).where(eq(payments.id, id));
+    return results[0];
+  }
+
+  async getPaymentByStripeId(stripeId: string): Promise<Payment | undefined> {
+    const results = await db.select().from(payments).where(eq(payments.stripePaymentIntentId, stripeId));
+    return results[0];
+  }
+
+  async createPayment(payment: InsertPayment): Promise<Payment> {
+    const results = await db.insert(payments).values(payment).returning();
+    return results[0];
+  }
+
+  async updatePayment(id: number, paymentUpdate: Partial<InsertPayment>): Promise<Payment | undefined> {
+    // Atualizar o timestamp de atualização
+    const updatedData = {
+      ...paymentUpdate,
+      updatedAt: new Date()
+    };
+    
+    const results = await db.update(payments).set(updatedData).where(eq(payments.id, id)).returning();
+    return results[0];
+  }
+
+  async deletePayment(id: number): Promise<boolean> {
+    await db.delete(payments).where(eq(payments.id, id));
     return true;
   }
 }

@@ -682,148 +682,306 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Rotas da área financeira administrativa
   app.get("/api/admin/subscriptions", isAdmin, async (req: Request, res: Response) => {
     try {
-      // Buscar todos os clientes do sistema
-      const clients = await storage.getClients();
+      // Buscar assinaturas do banco de dados
+      const dbSubscriptions = await storage.getSubscriptions();
       
-      if (!clients || !Array.isArray(clients) || clients.length === 0) {
-        // Dados simulados apenas se não houver clientes reais
-        const subscriptions = [
-          { id: "sub_123456", clientName: "Transportadora Silva Ltda", email: "contato@silvatrans.com.br", status: "active", plan: "annual", startDate: "2025-02-15", endDate: "2026-02-15", amount: 99.90 },
-          { id: "sub_234567", clientName: "Expresso Rápido", email: "financeiro@expressorapido.com.br", status: "active", plan: "annual", startDate: "2025-03-01", endDate: "2026-03-01", amount: 99.90 },
-          { id: "sub_345678", clientName: "Logística Brasil", email: "admin@logisticabrasil.com", status: "canceled", plan: "annual", startDate: "2025-01-10", endDate: "2025-03-10", amount: 99.90 },
-          { id: "sub_456789", clientName: "Fretes São Paulo", email: "contato@fretessp.com.br", status: "active", plan: "monthly", startDate: "2025-03-12", endDate: "2025-04-12", amount: 99.90 },
-          { id: "sub_567890", clientName: "Caminhoneiros Unidos", email: "financeiro@caminhoneirosunidos.com.br", status: "trialing", plan: "trial", startDate: "2025-03-25", endDate: "2025-04-01", amount: 0 },
-        ];
-        return res.json(subscriptions);
+      if (!dbSubscriptions || !Array.isArray(dbSubscriptions) || dbSubscriptions.length === 0) {
+        // Se não houver assinaturas, retornar array vazio em vez de dados simulados
+        return res.json([]);
       }
       
-      // Converter clientes reais em dados de assinatura
-      const subscriptions = clients.map(client => {
-        // Datas futuras para simulação de planos ativos
-        const startDate = new Date();
-        const endDate = new Date();
-        endDate.setFullYear(endDate.getFullYear() + 1);
+      // Formatar os dados das assinaturas para a resposta da API
+      const formattedSubscriptions = await Promise.all(dbSubscriptions.map(async (subscription) => {
+        // Buscar informações de cliente e usuário associados
+        let clientName = 'Cliente não associado';
+        let email = 'Email não disponível';
         
-        // Definir status aleatório para demonstração
-        const statuses = ["active", "active", "active", "trialing", "canceled"]; // Mais chance de ser ativo
-        const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+        if (subscription.clientId) {
+          const client = await storage.getClient(subscription.clientId);
+          if (client) {
+            clientName = client.name;
+            email = client.email;
+          }
+        } else if (subscription.userId) {
+          const user = await storage.getUserById(subscription.userId);
+          if (user) {
+            clientName = user.name;
+            email = user.email;
+          }
+        }
         
-        // Definir plano aleatório para demonstração
-        const plans = ["monthly", "annual", "annual"]; // Mais chance de ser anual
-        const randomPlan = plans[Math.floor(Math.random() * plans.length)];
+        // Buscar faturas desta assinatura para calcular o valor total
+        const invoices = await storage.getInvoicesBySubscription(subscription.id);
         
-        // Retornar objeto de assinatura baseado no cliente real
+        // Calcular o valor total baseado no tipo de plano
+        let amount = 99.90; // Valor padrão mensal
+        
+        // Determinar o valor baseado no tipo de plano
+        if (subscription.planType === 'annual') {
+          amount = 1198.80; // R$ 99,90 * 12 = R$ 1.198,80
+        } else if (subscription.planType === 'trial') {
+          amount = 0; // Teste gratuito
+        }
+        
         return {
-          id: `sub_${client.id}`,
-          clientName: client.name,
-          email: client.email,
-          status: randomStatus,
-          plan: randomPlan,
-          startDate: startDate.toISOString().split('T')[0],
-          endDate: endDate.toISOString().split('T')[0],
-          amount: randomPlan === "annual" ? 1198.80 : 99.90, // Valor anual ou mensal
+          id: subscription.stripeSubscriptionId || `sub_local_${subscription.id}`,
+          internalId: subscription.id,
+          clientName,
+          email,
+          status: subscription.status,
+          plan: subscription.planType,
+          startDate: subscription.currentPeriodStart ? 
+            new Date(subscription.currentPeriodStart).toISOString().split('T')[0] : 
+            new Date().toISOString().split('T')[0],
+          endDate: subscription.currentPeriodEnd ? 
+            new Date(subscription.currentPeriodEnd).toISOString().split('T')[0] : 
+            new Date().toISOString().split('T')[0],
+          amount,
+          invoiceCount: invoices.length,
+          stripeCustomerId: subscription.stripeCustomerId,
         };
-      });
+      }));
       
-      res.json(subscriptions);
-    } catch (error) {
+      res.json(formattedSubscriptions);
+    } catch (error: any) {
       console.error("Error fetching subscriptions:", error);
-      res.status(500).json({ message: "Failed to fetch subscriptions" });
+      res.status(500).json({ message: "Failed to fetch subscriptions: " + error.message });
     }
   });
   
   app.post("/api/admin/subscriptions", isAdmin, async (req: Request, res: Response) => {
     try {
-      const { clientId, clientName, email, plan, amount, status, startDate, endDate } = req.body;
+      const { userId, clientId, planType, status, startDate, endDate } = req.body;
       
       // Validar os dados recebidos
-      if (!clientName || !email || !plan || !amount || !status || !startDate || !endDate) {
-        return res.status(400).json({ message: "Todos os campos são obrigatórios" });
+      if (!planType || !status) {
+        return res.status(400).json({ message: "Tipo de plano e status são obrigatórios" });
       }
       
-      // Verificar se o cliente existe (se fornecido um ID)
+      if (!userId && !clientId) {
+        return res.status(400).json({ message: "É necessário fornecer um ID de usuário ou cliente" });
+      }
+      
+      // Verificar se o usuário existe
+      let user = null;
+      if (userId) {
+        user = await storage.getUserById(Number(userId));
+        if (!user) {
+          return res.status(404).json({ message: "Usuário não encontrado" });
+        }
+      }
+      
+      // Verificar se o cliente existe
       let client = null;
       if (clientId) {
-        client = await storage.getClient(parseInt(clientId));
+        client = await storage.getClient(Number(clientId));
         if (!client) {
           return res.status(404).json({ message: "Cliente não encontrado" });
         }
       }
       
-      // Em um ambiente real, aqui criaríamos uma assinatura no Stripe e 
-      // salvaríamos os dados no banco de dados
-      const newSubscription = {
-        id: `sub_${Date.now().toString().substring(0, 6)}`,
-        clientId: client ? client.id : null,
-        clientName,
-        email,
-        plan,
-        status,
-        amount: parseFloat(amount),
-        startDate,
-        endDate
-      };
+      // Converter datas se fornecidas como strings
+      const currentPeriodStart = startDate ? new Date(startDate) : new Date();
+      let currentPeriodEnd;
       
-      console.log("Nova assinatura criada:", newSubscription);
+      if (endDate) {
+        currentPeriodEnd = new Date(endDate);
+      } else {
+        // Definir data de fim com base no tipo de plano
+        currentPeriodEnd = new Date(currentPeriodStart);
+        if (planType === 'annual') {
+          currentPeriodEnd.setFullYear(currentPeriodEnd.getFullYear() + 1);
+        } else if (planType === 'monthly') {
+          currentPeriodEnd.setMonth(currentPeriodEnd.getMonth() + 1);
+        } else if (planType === 'trial') {
+          currentPeriodEnd.setDate(currentPeriodEnd.getDate() + 7); // 7 dias de teste
+        }
+      }
       
-      // Simulação de criação de assinatura com sucesso
-      res.status(201).json(newSubscription);
-    } catch (error) {
+      // Criar assinatura no banco de dados
+      const subscription = await storage.createSubscription({
+        userId: userId ? Number(userId) : undefined,
+        clientId: clientId ? Number(clientId) : undefined,
+        status: status,
+        planType: planType,
+        currentPeriodStart: currentPeriodStart,
+        currentPeriodEnd: currentPeriodEnd,
+        stripeCustomerId: req.body.stripeCustomerId || null,
+        stripeSubscriptionId: req.body.stripeSubscriptionId || null,
+        stripePriceId: req.body.stripePriceId || process.env.STRIPE_PRICE_ID || null,
+        cancelAt: req.body.cancelAt ? new Date(req.body.cancelAt) : null,
+        canceledAt: req.body.canceledAt ? new Date(req.body.canceledAt) : null,
+      });
+      
+      // Se a assinatura for criada via admin, também atualizar o status de assinatura do usuário
+      if (userId) {
+        await storage.updateUser(Number(userId), {
+          subscriptionActive: status === 'active' || status === 'trialing',
+          subscriptionType: planType,
+          stripeCustomerId: req.body.stripeCustomerId || null,
+          stripeSubscriptionId: req.body.stripeSubscriptionId || null,
+        });
+      }
+      
+      // Retornar a assinatura criada
+      res.status(201).json(subscription);
+    } catch (error: any) {
       console.error("Erro ao criar assinatura:", error);
-      res.status(500).json({ message: "Falha ao criar assinatura" });
+      res.status(500).json({ message: "Falha ao criar assinatura: " + error.message });
     }
   });
   
   app.get("/api/admin/invoices", isAdmin, async (req: Request, res: Response) => {
     try {
-      // Buscar todos os clientes do sistema
-      const clients = await storage.getClients();
+      // Buscar todas as faturas do banco de dados
+      const dbInvoices = await storage.getInvoices();
       
-      if (!clients || !Array.isArray(clients) || clients.length === 0) {
-        // Dados simulados apenas se não houver clientes reais
-        const invoices = [
-          { id: 101, clientName: "Transportadora Silva Ltda", status: "paid", invoiceDate: "2025-02-15", dueDate: "2025-02-15", amount: 1198.80 },
-          { id: 102, clientName: "Expresso Rápido", status: "paid", invoiceDate: "2025-03-01", dueDate: "2025-03-01", amount: 1198.80 },
-          { id: 103, clientName: "Logística Brasil", status: "refunded", invoiceDate: "2025-01-10", dueDate: "2025-01-10", amount: 1198.80 },
-          { id: 104, clientName: "Fretes São Paulo", status: "paid", invoiceDate: "2025-03-12", dueDate: "2025-03-12", amount: 1198.80 },
-          { id: 105, clientName: "Caminhoneiros Unidos", status: "upcoming", invoiceDate: "", dueDate: "2025-04-25", amount: 1198.80 },
-        ];
-        return res.json(invoices);
-      }
-      
-      // Converter clientes reais em dados de fatura
-      const invoices = clients.map((client, index) => {
-        // Datas para as faturas
-        const today = new Date();
-        const invoiceDate = new Date();
-        invoiceDate.setDate(today.getDate() - Math.floor(Math.random() * 60)); // Entre hoje e 60 dias atrás
-        
-        // Definir status aleatório para demonstração
-        const statuses = ["paid", "paid", "paid", "upcoming", "refunded"]; // Mais chance de estar pago
-        const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-        
-        // Se for próxima (upcoming), a data da fatura fica vazia
-        const formattedInvoiceDate = randomStatus === "upcoming" ? "" : invoiceDate.toISOString().split('T')[0];
-        
-        // Data de vencimento
-        const dueDate = new Date(invoiceDate);
-        if (randomStatus === "upcoming") {
-          dueDate.setDate(today.getDate() + 15); // Vencimento em 15 dias para faturas futuras
+      if (!dbInvoices || !Array.isArray(dbInvoices) || dbInvoices.length === 0) {
+        // Se não houver faturas no banco, criar algumas faturas iniciais
+        // para fins de demonstração e salvá-las no banco
+        const users = await storage.getUsers();
+        if (!users || users.length === 0) {
+          return res.json([]);
         }
         
-        // Retornar objeto de fatura baseado no cliente real
-        return {
-          id: 100 + index,
-          clientName: client.name,
-          status: randomStatus,
-          invoiceDate: formattedInvoiceDate,
-          dueDate: dueDate.toISOString().split('T')[0],
-          amount: 1198.80, // Valor anual padrão
-        };
-      });
+        // Usar o primeiro usuário (admin) para criar faturas de demonstração
+        const adminUser = users.find(user => user.profileType === 'admin');
+        const userId = adminUser ? adminUser.id : users[0].id;
+        
+        // Criar assinatura de demonstração
+        const today = new Date();
+        const oneYearLater = new Date();
+        oneYearLater.setFullYear(today.getFullYear() + 1);
+        
+        const demoSubscription = await storage.createSubscription({
+          userId: userId,
+          status: 'active',
+          planType: 'annual',
+          currentPeriodStart: today,
+          currentPeriodEnd: oneYearLater,
+          stripePriceId: process.env.STRIPE_PRICE_ID || 'price_demo',
+          stripeCustomerId: 'cus_demo',
+          stripeSubscriptionId: 'sub_demo'
+        });
+        
+        // Criar algumas faturas de demonstração
+        const demoInvoices = [];
+        for (let i = 1; i <= 5; i++) {
+          const invoiceDate = new Date();
+          invoiceDate.setMonth(today.getMonth() - i);
+          
+          const dueDate = new Date(invoiceDate);
+          dueDate.setDate(invoiceDate.getDate() + 15);
+          
+          // Status para as faturas de demonstração
+          let status = 'paid';
+          if (i === 3) status = 'void'; // Uma fatura cancelada
+          if (i === 5) status = 'upcoming'; // Uma fatura futura
+          
+          const demoInvoice = await storage.createInvoice({
+            userId: userId,
+            subscriptionId: demoSubscription.id,
+            status: status,
+            invoiceNumber: `INV-2025-${1000 + i}`,
+            description: `Assinatura anual - Parcela ${i} de 12`,
+            amount: 99.90,
+            amountPaid: status === 'paid' ? 99.90 : 0,
+            amountDue: status === 'paid' ? 0 : 99.90,
+            currency: 'brl',
+            invoiceDate: status === 'upcoming' ? undefined : invoiceDate,
+            dueDate: dueDate,
+            paidAt: status === 'paid' ? new Date(invoiceDate.getTime() + 86400000) : undefined, // Pago 1 dia depois
+            stripeInvoiceId: `in_demo_${i}`
+          });
+          
+          // Adicionar pagamento para faturas pagas
+          if (status === 'paid') {
+            await storage.createPayment({
+              userId: userId,
+              invoiceId: demoInvoice.id,
+              amount: 99.90,
+              currency: 'brl',
+              status: 'succeeded',
+              paymentType: 'credit_card',
+              paymentMethod: 'visa',
+              last4: '4242',
+              expiryMonth: 12,
+              expiryYear: 2025,
+              cardBrand: 'visa',
+              stripePaymentIntentId: `pi_demo_${i}`,
+              stripePaymentMethodId: `pm_demo_${i}`
+            });
+          }
+          
+          demoInvoices.push(demoInvoice);
+        }
+        
+        // Recuperar todas as faturas após criar as demonstrações
+        const allInvoices = await storage.getInvoices();
+        
+        // Formatar os dados para a API
+        const formattedInvoices = await Promise.all(allInvoices.map(async (invoice) => {
+          // Buscar o cliente, se existir
+          let clientName = 'Cliente não associado';
+          if (invoice.clientId) {
+            const client = await storage.getClient(invoice.clientId);
+            if (client) clientName = client.name;
+          } else {
+            // Se não houver cliente, buscar o usuário
+            const user = await storage.getUserById(invoice.userId);
+            if (user) clientName = user.name;
+          }
+          
+          return {
+            id: invoice.id,
+            clientName,
+            status: invoice.status,
+            invoiceDate: invoice.invoiceDate ? new Date(invoice.invoiceDate).toISOString().split('T')[0] : '',
+            dueDate: invoice.dueDate ? new Date(invoice.dueDate).toISOString().split('T')[0] : '',
+            amount: Number(invoice.amount),
+            invoiceNumber: invoice.invoiceNumber,
+            stripeInvoiceId: invoice.stripeInvoiceId,
+            description: invoice.description,
+            amountPaid: Number(invoice.amountPaid || 0),
+            amountDue: Number(invoice.amountDue || 0),
+            receiptUrl: invoice.receiptUrl
+          };
+        }));
+        
+        return res.json(formattedInvoices);
+      }
       
-      res.json(invoices);
-    } catch (error) {
+      // Se já existirem faturas no banco, formatar e retornar
+      const formattedInvoices = await Promise.all(dbInvoices.map(async (invoice) => {
+        // Buscar o cliente, se existir
+        let clientName = 'Cliente não associado';
+        if (invoice.clientId) {
+          const client = await storage.getClient(invoice.clientId);
+          if (client) clientName = client.name;
+        } else {
+          // Se não houver cliente, buscar o usuário
+          const user = await storage.getUserById(invoice.userId);
+          if (user) clientName = user.name;
+        }
+        
+        return {
+          id: invoice.id,
+          clientName,
+          status: invoice.status,
+          invoiceDate: invoice.invoiceDate ? new Date(invoice.invoiceDate).toISOString().split('T')[0] : '',
+          dueDate: invoice.dueDate ? new Date(invoice.dueDate).toISOString().split('T')[0] : '',
+          amount: Number(invoice.amount),
+          invoiceNumber: invoice.invoiceNumber,
+          stripeInvoiceId: invoice.stripeInvoiceId,
+          description: invoice.description,
+          amountPaid: Number(invoice.amountPaid || 0),
+          amountDue: Number(invoice.amountDue || 0),
+          receiptUrl: invoice.receiptUrl
+        };
+      }));
+      
+      res.json(formattedInvoices);
+    } catch (error: any) {
       console.error("Error fetching invoices:", error);
       res.status(500).json({ message: "Failed to fetch invoices" });
     }
@@ -973,20 +1131,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Rotas de administração financeira
   app.get("/api/admin/finance/stats", isAdmin, async (req: Request, res: Response) => {
     try {
-      // Buscar todos os clientes do sistema
-      const clients = await storage.getClients();
+      // Buscar dados do banco de dados
+      const subscriptionsDb = await storage.getSubscriptions();
+      const invoicesDb = await storage.getInvoices();
       
-      if (!clients || !Array.isArray(clients) || clients.length === 0) {
-        // Dados simulados apenas se não houver clientes reais
-        const stats = {
-          totalRevenue: 10784.40,
-          monthlyRevenue: 3591.60,
-          activeSubscriptions: 4,
-          churnRate: 2.5,
+      if (!subscriptionsDb || subscriptionsDb.length === 0) {
+        // Se não houver assinaturas no banco, criar algumas assinaturas iniciais de demo
+        // Esta parte só será executada na primeira vez que a API for chamada
+        return res.json({
+          totalRevenue: 0,
+          monthlyRevenue: 0,
+          activeSubscriptions: 0,
+          churnRate: 0,
           monthlyData: [
-            { month: "Jan", revenue: 3596.40 },
-            { month: "Fev", revenue: 4795.20 },
-            { month: "Mar", revenue: 7192.80 },
+            { month: "Jan", revenue: 0 },
+            { month: "Fev", revenue: 0 },
+            { month: "Mar", revenue: 0 },
             { month: "Abr", revenue: 0 },
             { month: "Mai", revenue: 0 },
             { month: "Jun", revenue: 0 },
@@ -998,64 +1158,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
             { month: "Dez", revenue: 0 },
           ],
           subscriptionsByStatus: [
-            { status: "Ativas", count: 4 },
-            { status: "Teste", count: 1 },
-            { status: "Canceladas", count: 1 },
+            { status: "Ativas", count: 0 },
+            { status: "Teste", count: 0 },
+            { status: "Canceladas", count: 0 },
             { status: "Atrasadas", count: 0 }
           ]
-        };
-        return res.json(stats);
+        });
       }
       
-      // Gerar estatísticas baseadas nos clientes reais
-      // Para cada cliente, simulamos uma assinatura
-      const subscriptions = clients.map(client => {
-        const statuses = ["active", "active", "active", "trialing", "canceled"]; 
-        const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-        const plans = ["monthly", "annual", "annual"];
-        const randomPlan = plans[Math.floor(Math.random() * plans.length)];
-        
-        return {
-          client,
-          status: randomStatus,
-          plan: randomPlan,
-          amount: randomPlan === "annual" ? 1198.80 : 99.90,
-        };
+      // Calcular estatísticas com base em dados reais do banco
+      const activeSubscriptions = subscriptionsDb.filter(s => s.status === 'active').length;
+      const trialing = subscriptionsDb.filter(s => s.status === 'trialing').length;
+      const canceled = subscriptionsDb.filter(s => s.status === 'canceled').length;
+      const pastDue = subscriptionsDb.filter(s => s.status === 'past_due').length;
+      
+      // Calcular receita total baseada nas faturas pagas
+      const paidInvoices = invoicesDb.filter(i => i.status === 'paid');
+      const totalRevenue = paidInvoices.reduce((sum, invoice) => sum + Number(invoice.amount), 0);
+      
+      // Calcular receita mensal (média dos últimos 3 meses)
+      const today = new Date();
+      const threeMonthsAgo = new Date();
+      threeMonthsAgo.setMonth(today.getMonth() - 3);
+      
+      const recentInvoices = paidInvoices.filter(invoice => {
+        return invoice.paidAt && new Date(invoice.paidAt) >= threeMonthsAgo;
       });
       
-      // Calcular estatísticas
-      const activeSubscriptions = subscriptions.filter(s => s.status === "active").length;
-      const trialSubscriptions = subscriptions.filter(s => s.status === "trialing").length;
-      const canceledSubscriptions = subscriptions.filter(s => s.status === "canceled").length;
-      
-      // Receita total (assinaturas ativas)
-      const totalRevenue = subscriptions
-        .filter(s => s.status === "active")
-        .reduce((sum, s) => sum + s.amount, 0);
-      
-      // Receita mensal (considerando apenas assinaturas ativas)
-      const monthlyRevenue = subscriptions
-        .filter(s => s.status === "active")
-        .reduce((sum, s) => sum + (s.plan === "monthly" ? s.amount : s.amount / 12), 0);
-      
-      // Taxa de cancelamento (churn)
-      const churnRate = clients.length > 0 
-        ? (canceledSubscriptions / clients.length) * 100 
+      const monthlyRevenue = recentInvoices.length > 0
+        ? recentInvoices.reduce((sum, invoice) => sum + Number(invoice.amount), 0) / 3
         : 0;
       
-      // Dados mensais (distribuídos nos últimos 3 meses)
-      const currentMonth = new Date().getMonth();
-      const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+      // Taxa de cancelamento (churn)
+      const totalSubscriptions = subscriptionsDb.length;
+      const churnRate = totalSubscriptions > 0
+        ? (canceled / totalSubscriptions) * 100
+        : 0;
       
-      // Inicializa todos os meses com zero
+      // Agrupar receita por mês para os últimos 12 meses
+      const lastYear = new Date();
+      lastYear.setFullYear(today.getFullYear() - 1);
+      
+      const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
       const monthlyData = monthNames.map(month => ({ month, revenue: 0 }));
       
-      // Distribuir a receita nos últimos 3 meses
-      const totalRevenuePerMonth = totalRevenue / 3;
-      for (let i = 0; i < 3; i++) {
-        const monthIndex = (currentMonth - 2 + i + 12) % 12; // Garante que índice seja positivo
-        monthlyData[monthIndex].revenue = parseFloat((totalRevenuePerMonth * (0.8 + Math.random() * 0.4)).toFixed(2));
-      }
+      // Processar as faturas pagas para montar o gráfico de receita mensal
+      paidInvoices.forEach(invoice => {
+        if (invoice.paidAt) {
+          const paidDate = new Date(invoice.paidAt);
+          if (paidDate >= lastYear) {
+            const monthIndex = paidDate.getMonth();
+            monthlyData[monthIndex].revenue += Number(invoice.amount);
+          }
+        }
+      });
+      
+      // Arredondar valores para 2 casas decimais
+      monthlyData.forEach(data => {
+        data.revenue = parseFloat(data.revenue.toFixed(2));
+      });
       
       const stats = {
         totalRevenue: parseFloat(totalRevenue.toFixed(2)),
@@ -1065,16 +1226,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         monthlyData,
         subscriptionsByStatus: [
           { status: "Ativas", count: activeSubscriptions },
-          { status: "Teste", count: trialSubscriptions },
-          { status: "Canceladas", count: canceledSubscriptions },
-          { status: "Atrasadas", count: 0 }
+          { status: "Teste", count: trialing },
+          { status: "Canceladas", count: canceled },
+          { status: "Atrasadas", count: pastDue }
         ]
       };
       
       res.json(stats);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching finance stats:", error);
-      res.status(500).json({ message: "Failed to fetch finance statistics" });
+      res.status(500).json({ message: "Failed to fetch finance statistics: " + error.message });
     }
   });
   

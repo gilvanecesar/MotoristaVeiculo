@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, date, decimal } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, date, decimal, json } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -401,5 +401,166 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 export type UserType = typeof USER_TYPES[keyof typeof USER_TYPES];
 export type AuthProvider = typeof AUTH_PROVIDERS[keyof typeof AUTH_PROVIDERS];
 
+// Status das assinaturas
+export const SUBSCRIPTION_STATUS = {
+  ACTIVE: "active",
+  TRIALING: "trialing",
+  PAST_DUE: "past_due",
+  CANCELED: "canceled",
+  UNPAID: "unpaid",
+  INCOMPLETE: "incomplete",
+  INCOMPLETE_EXPIRED: "incomplete_expired"
+} as const;
+
+// Status de faturas
+export const INVOICE_STATUS = {
+  PAID: "paid",
+  OPEN: "open",
+  VOID: "void",
+  UNCOLLECTIBLE: "uncollectible",
+  UPCOMING: "upcoming"
+} as const;
+
+// Tipos de planos
+export const PLAN_TYPES = {
+  MONTHLY: "monthly",
+  ANNUAL: "annual",
+  TRIAL: "trial"
+} as const;
+
+// Tabela de assinaturas
+export const subscriptions = pgTable("subscriptions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  clientId: integer("client_id").references(() => clients.id),
+  stripeSubscriptionId: text("stripe_subscription_id").unique(),
+  stripePriceId: text("stripe_price_id"),
+  stripeCustomerId: text("stripe_customer_id"),
+  status: text("status").notNull(),  // SUBSCRIPTION_STATUS
+  planType: text("plan_type").notNull(), // PLAN_TYPES
+  currentPeriodStart: timestamp("current_period_start").notNull(),
+  currentPeriodEnd: timestamp("current_period_end").notNull(),
+  cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false),
+  canceledAt: timestamp("canceled_at"),
+  endedAt: timestamp("ended_at"),
+  metadata: json("metadata"),  // Para armazenar informações adicionais
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Tabela de faturas
+export const invoices = pgTable("invoices", {
+  id: serial("id").primaryKey(),
+  subscriptionId: integer("subscription_id").references(() => subscriptions.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  clientId: integer("client_id").references(() => clients.id),
+  stripeInvoiceId: text("stripe_invoice_id").unique(),
+  status: text("status").notNull(), // INVOICE_STATUS
+  invoiceNumber: text("invoice_number"),
+  description: text("description"),
+  amount: decimal("amount").notNull(),
+  amountPaid: decimal("amount_paid"),
+  amountDue: decimal("amount_due"),
+  currency: text("currency").default("brl"),
+  invoiceDate: timestamp("invoice_date"),
+  dueDate: timestamp("due_date"),
+  paidAt: timestamp("paid_at"),
+  receiptUrl: text("receipt_url"),
+  metadata: json("metadata"),  // Para armazenar informações adicionais
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Tabela de pagamentos
+export const payments = pgTable("payments", {
+  id: serial("id").primaryKey(),
+  invoiceId: integer("invoice_id").references(() => invoices.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  clientId: integer("client_id").references(() => clients.id),
+  stripePaymentIntentId: text("stripe_payment_intent_id").unique(),
+  stripePaymentMethodId: text("stripe_payment_method_id"),
+  amount: decimal("amount").notNull(),
+  currency: text("currency").default("brl"),
+  status: text("status").notNull(), // succeeded, processing, canceled, etc.
+  paymentType: text("payment_type"), // credit card, bank transfer, etc.
+  paymentMethod: text("payment_method"), // visa, mastercard, etc.
+  last4: text("last4"), // últimos 4 dígitos do cartão
+  expiryMonth: integer("expiry_month"),
+  expiryYear: integer("expiry_year"),
+  cardBrand: text("card_brand"),
+  metadata: json("metadata"),  // Para armazenar informações adicionais
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Insert schemas usando drizzle-zod
+export const insertSubscriptionSchema = createInsertSchema(subscriptions)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+
+export const insertInvoiceSchema = createInsertSchema(invoices)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+
+export const insertPaymentSchema = createInsertSchema(payments)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+
+// Validators com validação adicional
+export const subscriptionValidator = insertSubscriptionSchema.extend({
+  status: z.enum([
+    SUBSCRIPTION_STATUS.ACTIVE,
+    SUBSCRIPTION_STATUS.TRIALING,
+    SUBSCRIPTION_STATUS.PAST_DUE,
+    SUBSCRIPTION_STATUS.CANCELED,
+    SUBSCRIPTION_STATUS.UNPAID,
+    SUBSCRIPTION_STATUS.INCOMPLETE,
+    SUBSCRIPTION_STATUS.INCOMPLETE_EXPIRED
+  ]),
+  planType: z.enum([
+    PLAN_TYPES.MONTHLY,
+    PLAN_TYPES.ANNUAL,
+    PLAN_TYPES.TRIAL
+  ]),
+  currentPeriodStart: z.coerce.date(),
+  currentPeriodEnd: z.coerce.date(),
+});
+
+export const invoiceValidator = insertInvoiceSchema.extend({
+  status: z.enum([
+    INVOICE_STATUS.PAID,
+    INVOICE_STATUS.OPEN,
+    INVOICE_STATUS.VOID,
+    INVOICE_STATUS.UNCOLLECTIBLE,
+    INVOICE_STATUS.UPCOMING
+  ]),
+  amount: z.coerce.number().nonnegative(),
+  amountPaid: z.coerce.number().nonnegative().optional(),
+  amountDue: z.coerce.number().nonnegative().optional(),
+  invoiceDate: z.coerce.date().optional(),
+  dueDate: z.coerce.date().optional(),
+  paidAt: z.coerce.date().optional(),
+});
+
+export const paymentValidator = insertPaymentSchema.extend({
+  amount: z.coerce.number().positive(),
+  status: z.string().min(1),
+});
+
+// Tipos
+export type Subscription = typeof subscriptions.$inferSelect;
+export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
+
+export type Invoice = typeof invoices.$inferSelect;
+export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
+
+export type Payment = typeof payments.$inferSelect;
+export type InsertPayment = z.infer<typeof insertPaymentSchema>;
+
+export type SubscriptionStatus = typeof SUBSCRIPTION_STATUS[keyof typeof SUBSCRIPTION_STATUS];
+export type InvoiceStatus = typeof INVOICE_STATUS[keyof typeof INVOICE_STATUS];
+export type PlanType = typeof PLAN_TYPES[keyof typeof PLAN_TYPES];
+
+// Tipos para relacionamentos
 export type DriverWithVehicles = Driver & { vehicles: Vehicle[] };
 export type FreightWithDestinations = Freight & { destinations?: FreightDestination[] };
+export type ClientWithSubscriptions = Client & { subscriptions?: Subscription[] };
+export type SubscriptionWithInvoices = Subscription & { invoices?: Invoice[] };
+export type InvoiceWithPayments = Invoice & { payments?: Payment[] };
