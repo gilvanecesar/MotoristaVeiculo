@@ -266,7 +266,8 @@ export default function FreightsPage() {
 🏢 *${clientName}*
 📍 *Origem:* ${freight.origin}, ${freight.originState}
 🏁 *Destino:* ${freight.destination}, ${freight.destinationState}
-🚚 *Veículo:* ${getVehicleTypeName(freight.vehicleType)}
+🚚 *Veículo:* ${getVehicleTypeName(freight.vehicleType).replace(/^(Leve|Médio|Pesado)\s-\s/, '').replace(/^(Leve|Médio|Pesado)\s/, '')}
+🚐 *Carroceria:* ${BODY_TYPES[freight.bodyType] || freight.bodyType}
 📦 *Tipo de Carga:* ${CARGO_TYPES[freight.cargoType] || freight.cargoType}
 ⚖️ *Peso:* ${freight.cargoWeight} Kg
 💰 *Pagamento:* ${freight.paymentMethod}
@@ -523,7 +524,8 @@ export default function FreightsPage() {
                         <TableHead>Cliente</TableHead>
                         <TableHead>Origem</TableHead>
                         <TableHead>Destino</TableHead>
-                        <TableHead>Veículo</TableHead>
+                        <TableHead>Tipo Veículo</TableHead>
+                        <TableHead>Carroceria</TableHead>
                         <TableHead>Carga</TableHead>
                         <TableHead>Valor</TableHead>
                         <TableHead className="text-right">Ações</TableHead>
@@ -546,7 +548,8 @@ export default function FreightsPage() {
                             <TableCell>{clientFound?.name || "Cliente não encontrado"}</TableCell>
                             <TableCell>{freight.origin}, {freight.originState}</TableCell>
                             <TableCell>{freight.destination}, {freight.destinationState}</TableCell>
-                            <TableCell>{getVehicleTypeName(freight.vehicleType)}</TableCell>
+                            <TableCell>{getVehicleTypeName(freight.vehicleType).replace(/^(Leve|Médio|Pesado)\s-\s/, '').replace(/^(Leve|Médio|Pesado)\s/, '')}</TableCell>
+                            <TableCell>{BODY_TYPES[freight.bodyType] || freight.bodyType}</TableCell>
                             <TableCell>{CARGO_TYPES[freight.cargoType] || freight.cargoType}</TableCell>
                             <TableCell>{formatCurrency(freight.value)}</TableCell>
                             <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
@@ -621,7 +624,15 @@ export default function FreightsPage() {
                                 <Truck className="h-4 w-4 text-slate-500 mt-0.5" />
                                 <div className="flex-1">
                                   <p className="text-xs text-slate-500">Veículo:</p>
-                                  <p className="text-sm">{getVehicleTypeName(freight.vehicleType)}</p>
+                                  <p className="text-sm">{getVehicleTypeName(freight.vehicleType).replace(/^(Leve|Médio|Pesado)\s-\s/, '').replace(/^(Leve|Médio|Pesado)\s/, '')}</p>
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-start gap-2 mt-2">
+                                <Truck className="h-4 w-4 text-slate-500 mt-0.5" />
+                                <div className="flex-1">
+                                  <p className="text-xs text-slate-500">Carroceria:</p>
+                                  <p className="text-sm">{BODY_TYPES[freight.bodyType] || freight.bodyType}</p>
                                 </div>
                               </div>
                               
@@ -802,7 +813,7 @@ export default function FreightsPage() {
                   
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium text-slate-500">Tipo de Veículo</h4>
-                    <p>{getVehicleTypeName(selectedFreight.vehicleType)}</p>
+                    <p>{getVehicleTypeName(selectedFreight.vehicleType).replace(/^(Leve|Médio|Pesado)\s-\s/, '').replace(/^(Leve|Médio|Pesado)\s/, '')}</p>
                   </div>
                   
                   <div className="space-y-2">
