@@ -94,6 +94,51 @@ export function getVehicleTypeDisplay(type?: string): string {
   }
 }
 
+// Nome apenas do tipo do veículo, sem a categoria
+export function getVehicleTypeNameOnly(type?: string): string {
+  if (!type) return '';
+  switch (type) {
+    // Leves
+    case VEHICLE_TYPES.LEVE_TODOS:
+      return "Todos";
+    case VEHICLE_TYPES.LEVE_FIORINO:
+      return "Fiorino";
+    case VEHICLE_TYPES.LEVE_TOCO:
+      return "Toco";
+    case VEHICLE_TYPES.LEVE_VLC:
+      return "VLC";
+      
+    // Médios
+    case VEHICLE_TYPES.MEDIO_TODOS:
+      return "Todos";
+    case VEHICLE_TYPES.MEDIO_BITRUCK:
+      return "Bitruck";
+    case VEHICLE_TYPES.MEDIO_TRUCK:
+      return "Truck";
+      
+    // Pesados
+    case VEHICLE_TYPES.PESADO_TODOS:
+      return "Todos";
+    case VEHICLE_TYPES.PESADO_BITREM:
+      return "Bitrem";
+    case VEHICLE_TYPES.PESADO_CARRETA:
+      return "Carreta";
+    case VEHICLE_TYPES.PESADO_CARRETA_LS:
+      return "Carreta LS";
+    case VEHICLE_TYPES.PESADO_RODOTREM:
+      return "Rodotrem";
+    case VEHICLE_TYPES.PESADO_VANDERLEIA:
+      return "Vanderleia";
+    default:
+      // Se não for um tipo conhecido, tenta extrair o nome do tipo baseado na convenção {categoria}_{tipo}
+      const parts = type.split('_');
+      if (parts.length > 1) {
+        return parts.slice(1).map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(' ');
+      }
+      return type;
+  }
+}
+
 // Display names for body types
 export function getBodyTypeDisplay(type?: string): string {
   if (!type) return '';

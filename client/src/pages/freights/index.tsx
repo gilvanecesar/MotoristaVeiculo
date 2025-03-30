@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useAuth } from "@/lib/auth-context";
 import { useAuth as useUserAuth } from "@/hooks/use-auth";
-import { getVehicleCategory } from "@/lib/utils/vehicle-types";
+import { getVehicleCategory, getVehicleTypeNameOnly, getVehicleTypeDisplay } from "@/lib/utils/vehicle-types";
 import { 
   Plus, 
   Search, 
@@ -268,7 +268,7 @@ export default function FreightsPage() {
 📍 *Origem:* ${freight.origin}, ${freight.originState}
 🏁 *Destino:* ${freight.destination}, ${freight.destinationState}
 🚚 *Categoria:* ${getVehicleCategory(freight.vehicleType)}
-🚚 *Veículo:* ${getVehicleTypeName(freight.vehicleType).split(' - ')[1] || getVehicleTypeName(freight.vehicleType).split(' ')[1] || getVehicleTypeName(freight.vehicleType)}
+🚚 *Veículo:* ${getVehicleTypeNameOnly(freight.vehicleType)}
 🚐 *Carroceria:* ${BODY_TYPES[freight.bodyType] || freight.bodyType}
 📦 *Tipo de Carga:* ${CARGO_TYPES[freight.cargoType] || freight.cargoType}
 ⚖️ *Peso:* ${freight.cargoWeight} Kg
@@ -552,7 +552,7 @@ export default function FreightsPage() {
                             <TableCell>{freight.origin}, {freight.originState}</TableCell>
                             <TableCell>{freight.destination}, {freight.destinationState}</TableCell>
                             <TableCell>{getVehicleCategory(freight.vehicleType)}</TableCell>
-                            <TableCell>{getVehicleTypeName(freight.vehicleType).split(' - ')[1] || getVehicleTypeName(freight.vehicleType).split(' ')[1] || getVehicleTypeName(freight.vehicleType)}</TableCell>
+                            <TableCell>{getVehicleTypeNameOnly(freight.vehicleType)}</TableCell>
                             <TableCell>{BODY_TYPES[freight.bodyType] || freight.bodyType}</TableCell>
                             <TableCell>{CARGO_TYPES[freight.cargoType] || freight.cargoType}</TableCell>
                             <TableCell>{formatCurrency(freight.value)}</TableCell>
@@ -636,7 +636,7 @@ export default function FreightsPage() {
                                 <Truck className="h-4 w-4 text-slate-500 mt-0.5" />
                                 <div className="flex-1">
                                   <p className="text-xs text-slate-500">Veículo:</p>
-                                  <p className="text-sm">{getVehicleTypeName(freight.vehicleType).split(' - ')[1] || getVehicleTypeName(freight.vehicleType).split(' ')[1] || getVehicleTypeName(freight.vehicleType)}</p>
+                                  <p className="text-sm">{getVehicleTypeNameOnly(freight.vehicleType)}</p>
                                 </div>
                               </div>
                               
@@ -830,7 +830,7 @@ export default function FreightsPage() {
                   
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium text-slate-500">Tipo de Veículo</h4>
-                    <p>{getVehicleTypeName(selectedFreight.vehicleType).split(' - ')[1] || getVehicleTypeName(selectedFreight.vehicleType).split(' ')[1] || getVehicleTypeName(selectedFreight.vehicleType)}</p>
+                    <p>{getVehicleTypeNameOnly(selectedFreight.vehicleType)}</p>
                   </div>
                   
                   <div className="space-y-2">
