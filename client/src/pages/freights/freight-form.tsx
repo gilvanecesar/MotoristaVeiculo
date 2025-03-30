@@ -47,7 +47,14 @@ import {
 import { freightFormSchema } from "@/lib/validation";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Separator } from "@/components/ui/separator";
-import { getVehicleTypeDisplay, getBodyTypeDisplay } from "@/lib/utils/vehicle-types";
+import { 
+  getVehicleTypeDisplay, 
+  getBodyTypeDisplay,
+  getVehicleCategory,
+  getVehicleCategoryDisplay,
+  VEHICLE_CATEGORIES,
+  VEHICLE_TYPES_BY_CATEGORY
+} from "@/lib/utils/vehicle-types";
 import { StateSelect } from "@/components/state-select";
 import { CitySelect } from "@/components/city-select";
 
@@ -99,6 +106,7 @@ export default function FreightForm() {
   const isEditing = !!params.id;
   const freightId = parseInt(params.id || "0");
   const [destinations, setDestinations] = useState<DestinationFormValues[]>([]);
+  const [selectedVehicleTypes, setSelectedVehicleTypes] = useState<string[]>([]);
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { currentClient } = useClientAuth();
@@ -139,6 +147,7 @@ export default function FreightForm() {
       productType: "",
       cargoWeight: 0,
       vehicleType: VEHICLE_TYPES.LEVE_TODOS,
+      vehicleCategory: VEHICLE_CATEGORIES.LEVE,
       bodyType: BODY_TYPES.BAU,
       freightValue: 0,
       tollOption: TOLL_OPTIONS.INCLUSO,
@@ -175,8 +184,14 @@ export default function FreightForm() {
         ...freight,
         cargoWeight: Number(freight.cargoWeight),
         freightValue: Number(freight.freightValue),
+        // Determinar a categoria com base no tipo de veículo
+        vehicleCategory: getVehicleCategory(freight.vehicleType),
       };
       form.reset(formattedFreight);
+      
+      // Inicializar os tipos de veículos selecionados
+      // Aqui estamos usando o vehicleType individual, mas poderia ser adaptado para múltiplos tipos
+      setSelectedVehicleTypes([freight.vehicleType]);
     }
   }, [freight, isLoading, form]);
 
@@ -222,6 +237,20 @@ export default function FreightForm() {
         return;
       }
       
+      // Verificar se pelo menos um tipo de veículo foi selecionado
+      if (selectedVehicleTypes.length === 0) {
+        toast({
+          title: "Erro no formulário",
+          description: "É necessário selecionar pelo menos um tipo de veículo",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Usar o primeiro tipo de veículo selecionado como o principal para o campo vehicleType
+      // mantendo compatibilidade com sistemas existentes que esperam um único tipo
+      // Os outros tipos selecionados estão disponíveis no array selectedVehicleTypes se necessário
+      
       // Add destinations to the form data if has multiple destinations
       const submitData = {
         ...data,
@@ -229,7 +258,11 @@ export default function FreightForm() {
         cargoWeight: String(data.cargoWeight),
         freightValue: String(data.freightValue),
         // Garantir que status seja enviado
-        status: data.status || "aberto"
+        status: data.status || "aberto",
+        // Usar o primeiro tipo de veículo selecionado como principal
+        vehicleType: selectedVehicleTypes[0] || data.vehicleType,
+        // Adicionar meta-informação com todos os veículos selecionados (como string separada por vírgula)
+        vehicleTypesSelected: selectedVehicleTypes.join(',')
       };
 
       // For create or update
@@ -714,70 +747,325 @@ export default function FreightForm() {
               
               <h3 className="text-lg font-medium mb-4">Veículo e Valores</h3>
               <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
-                {/* Vehicle Type */}
+                {/* Vehicle Category */}
                 <FormField
                   control={form.control}
-                  name="vehicleType"
+                  name="vehicleCategory"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Tipo de Veículo</FormLabel>
+                      <FormLabel>Categoria de Veículo</FormLabel>
                       <Select
                         value={field.value}
-                        onValueChange={field.onChange}
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          // Ao mudar categoria, limpar a seleção atual e selecionar "todos" dessa categoria
+                          if (value === VEHICLE_CATEGORIES.LEVE) {
+                            setSelectedVehicleTypes([VEHICLE_TYPES.LEVE_TODOS]);
+                            form.setValue("vehicleType", VEHICLE_TYPES.LEVE_TODOS);
+                          } else if (value === VEHICLE_CATEGORIES.MEDIO) {
+                            setSelectedVehicleTypes([VEHICLE_TYPES.MEDIO_TODOS]);
+                            form.setValue("vehicleType", VEHICLE_TYPES.MEDIO_TODOS);
+                          } else if (value === VEHICLE_CATEGORIES.PESADO) {
+                            setSelectedVehicleTypes([VEHICLE_TYPES.PESADO_TODOS]);
+                            form.setValue("vehicleType", VEHICLE_TYPES.PESADO_TODOS);
+                          }
+                        }}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecione o tipo" />
+                            <SelectValue placeholder="Selecione a categoria" />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent className="max-h-[300px]">
-                          <SelectItem value={VEHICLE_TYPES.LEVE_TODOS}>
-                            {getVehicleTypeDisplay(VEHICLE_TYPES.LEVE_TODOS)}
+                        <SelectContent>
+                          <SelectItem value={VEHICLE_CATEGORIES.LEVE}>
+                            {getVehicleCategoryDisplay(VEHICLE_CATEGORIES.LEVE)}
                           </SelectItem>
-                          <SelectItem value={VEHICLE_TYPES.LEVE_FIORINO}>
-                            {getVehicleTypeDisplay(VEHICLE_TYPES.LEVE_FIORINO)}
+                          <SelectItem value={VEHICLE_CATEGORIES.MEDIO}>
+                            {getVehicleCategoryDisplay(VEHICLE_CATEGORIES.MEDIO)}
                           </SelectItem>
-                          <SelectItem value={VEHICLE_TYPES.LEVE_TOCO}>
-                            {getVehicleTypeDisplay(VEHICLE_TYPES.LEVE_TOCO)}
-                          </SelectItem>
-                          <SelectItem value={VEHICLE_TYPES.LEVE_VLC}>
-                            {getVehicleTypeDisplay(VEHICLE_TYPES.LEVE_VLC)}
-                          </SelectItem>
-                          
-                          <SelectItem value={VEHICLE_TYPES.MEDIO_TODOS}>
-                            {getVehicleTypeDisplay(VEHICLE_TYPES.MEDIO_TODOS)}
-                          </SelectItem>
-                          <SelectItem value={VEHICLE_TYPES.MEDIO_BITRUCK}>
-                            {getVehicleTypeDisplay(VEHICLE_TYPES.MEDIO_BITRUCK)}
-                          </SelectItem>
-                          <SelectItem value={VEHICLE_TYPES.MEDIO_TRUCK}>
-                            {getVehicleTypeDisplay(VEHICLE_TYPES.MEDIO_TRUCK)}
-                          </SelectItem>
-                          
-                          <SelectItem value={VEHICLE_TYPES.PESADO_TODOS}>
-                            {getVehicleTypeDisplay(VEHICLE_TYPES.PESADO_TODOS)}
-                          </SelectItem>
-                          <SelectItem value={VEHICLE_TYPES.PESADO_BITREM}>
-                            {getVehicleTypeDisplay(VEHICLE_TYPES.PESADO_BITREM)}
-                          </SelectItem>
-                          <SelectItem value={VEHICLE_TYPES.PESADO_CARRETA}>
-                            {getVehicleTypeDisplay(VEHICLE_TYPES.PESADO_CARRETA)}
-                          </SelectItem>
-                          <SelectItem value={VEHICLE_TYPES.PESADO_CARRETA_LS}>
-                            {getVehicleTypeDisplay(VEHICLE_TYPES.PESADO_CARRETA_LS)}
-                          </SelectItem>
-                          <SelectItem value={VEHICLE_TYPES.PESADO_RODOTREM}>
-                            {getVehicleTypeDisplay(VEHICLE_TYPES.PESADO_RODOTREM)}
-                          </SelectItem>
-                          <SelectItem value={VEHICLE_TYPES.PESADO_VANDERLEIA}>
-                            {getVehicleTypeDisplay(VEHICLE_TYPES.PESADO_VANDERLEIA)}
+                          <SelectItem value={VEHICLE_CATEGORIES.PESADO}>
+                            {getVehicleCategoryDisplay(VEHICLE_CATEGORIES.PESADO)}
                           </SelectItem>
                         </SelectContent>
                       </Select>
+                      <FormDescription>
+                        Selecione primeiro a categoria do veículo
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+                
+                {/* Vehicle Types - Multiple Selection */}
+                <div className="md:col-span-2">
+                  <FormItem>
+                    <FormLabel>Tipos de Veículo</FormLabel>
+                    <div className="w-full border rounded-md p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {form.watch("vehicleCategory") === VEHICLE_CATEGORIES.LEVE && (
+                        <>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox 
+                              id="vehicle-leve-todos"
+                              checked={selectedVehicleTypes.includes(VEHICLE_TYPES.LEVE_TODOS)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  // Adicionar ao array
+                                  setSelectedVehicleTypes(prev => [...prev, VEHICLE_TYPES.LEVE_TODOS]);
+                                  // Para compatibilidade, também definir no form
+                                  form.setValue("vehicleType", VEHICLE_TYPES.LEVE_TODOS);
+                                } else {
+                                  // Remover do array
+                                  setSelectedVehicleTypes(prev => prev.filter(t => t !== VEHICLE_TYPES.LEVE_TODOS));
+                                }
+                              }}
+                            />
+                            <label htmlFor="vehicle-leve-todos" className="text-sm font-medium leading-none cursor-pointer">
+                              {getVehicleTypeDisplay(VEHICLE_TYPES.LEVE_TODOS)}
+                            </label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox 
+                              id="vehicle-leve-fiorino"
+                              checked={selectedVehicleTypes.includes(VEHICLE_TYPES.LEVE_FIORINO)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedVehicleTypes(prev => [...prev, VEHICLE_TYPES.LEVE_FIORINO]);
+                                  form.setValue("vehicleType", VEHICLE_TYPES.LEVE_FIORINO);
+                                } else {
+                                  setSelectedVehicleTypes(prev => prev.filter(t => t !== VEHICLE_TYPES.LEVE_FIORINO));
+                                }
+                              }}
+                            />
+                            <label htmlFor="vehicle-leve-fiorino" className="text-sm font-medium leading-none cursor-pointer">
+                              {getVehicleTypeDisplay(VEHICLE_TYPES.LEVE_FIORINO)}
+                            </label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox 
+                              id="vehicle-leve-toco"
+                              checked={selectedVehicleTypes.includes(VEHICLE_TYPES.LEVE_TOCO)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedVehicleTypes(prev => [...prev, VEHICLE_TYPES.LEVE_TOCO]);
+                                  form.setValue("vehicleType", VEHICLE_TYPES.LEVE_TOCO);
+                                } else {
+                                  setSelectedVehicleTypes(prev => prev.filter(t => t !== VEHICLE_TYPES.LEVE_TOCO));
+                                }
+                              }}
+                            />
+                            <label htmlFor="vehicle-leve-toco" className="text-sm font-medium leading-none cursor-pointer">
+                              {getVehicleTypeDisplay(VEHICLE_TYPES.LEVE_TOCO)}
+                            </label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox 
+                              id="vehicle-leve-vlc"
+                              checked={selectedVehicleTypes.includes(VEHICLE_TYPES.LEVE_VLC)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedVehicleTypes(prev => [...prev, VEHICLE_TYPES.LEVE_VLC]);
+                                  form.setValue("vehicleType", VEHICLE_TYPES.LEVE_VLC);
+                                } else {
+                                  setSelectedVehicleTypes(prev => prev.filter(t => t !== VEHICLE_TYPES.LEVE_VLC));
+                                }
+                              }}
+                            />
+                            <label htmlFor="vehicle-leve-vlc" className="text-sm font-medium leading-none cursor-pointer">
+                              {getVehicleTypeDisplay(VEHICLE_TYPES.LEVE_VLC)}
+                            </label>
+                          </div>
+                        </>
+                      )}
+                      
+                      {form.watch("vehicleCategory") === VEHICLE_CATEGORIES.MEDIO && (
+                        <>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox 
+                              id="vehicle-medio-todos"
+                              checked={selectedVehicleTypes.includes(VEHICLE_TYPES.MEDIO_TODOS)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedVehicleTypes(prev => [...prev, VEHICLE_TYPES.MEDIO_TODOS]);
+                                  form.setValue("vehicleType", VEHICLE_TYPES.MEDIO_TODOS);
+                                } else {
+                                  setSelectedVehicleTypes(prev => prev.filter(t => t !== VEHICLE_TYPES.MEDIO_TODOS));
+                                }
+                              }}
+                            />
+                            <label htmlFor="vehicle-medio-todos" className="text-sm font-medium leading-none cursor-pointer">
+                              {getVehicleTypeDisplay(VEHICLE_TYPES.MEDIO_TODOS)}
+                            </label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox 
+                              id="vehicle-medio-bitruck"
+                              checked={selectedVehicleTypes.includes(VEHICLE_TYPES.MEDIO_BITRUCK)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedVehicleTypes(prev => [...prev, VEHICLE_TYPES.MEDIO_BITRUCK]);
+                                  form.setValue("vehicleType", VEHICLE_TYPES.MEDIO_BITRUCK);
+                                } else {
+                                  setSelectedVehicleTypes(prev => prev.filter(t => t !== VEHICLE_TYPES.MEDIO_BITRUCK));
+                                }
+                              }}
+                            />
+                            <label htmlFor="vehicle-medio-bitruck" className="text-sm font-medium leading-none cursor-pointer">
+                              {getVehicleTypeDisplay(VEHICLE_TYPES.MEDIO_BITRUCK)}
+                            </label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox 
+                              id="vehicle-medio-truck"
+                              checked={selectedVehicleTypes.includes(VEHICLE_TYPES.MEDIO_TRUCK)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedVehicleTypes(prev => [...prev, VEHICLE_TYPES.MEDIO_TRUCK]);
+                                  form.setValue("vehicleType", VEHICLE_TYPES.MEDIO_TRUCK);
+                                } else {
+                                  setSelectedVehicleTypes(prev => prev.filter(t => t !== VEHICLE_TYPES.MEDIO_TRUCK));
+                                }
+                              }}
+                            />
+                            <label htmlFor="vehicle-medio-truck" className="text-sm font-medium leading-none cursor-pointer">
+                              {getVehicleTypeDisplay(VEHICLE_TYPES.MEDIO_TRUCK)}
+                            </label>
+                          </div>
+                        </>
+                      )}
+                      
+                      {form.watch("vehicleCategory") === VEHICLE_CATEGORIES.PESADO && (
+                        <>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox 
+                              id="vehicle-pesado-todos"
+                              checked={selectedVehicleTypes.includes(VEHICLE_TYPES.PESADO_TODOS)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedVehicleTypes(prev => [...prev, VEHICLE_TYPES.PESADO_TODOS]);
+                                  form.setValue("vehicleType", VEHICLE_TYPES.PESADO_TODOS);
+                                } else {
+                                  setSelectedVehicleTypes(prev => prev.filter(t => t !== VEHICLE_TYPES.PESADO_TODOS));
+                                }
+                              }}
+                            />
+                            <label htmlFor="vehicle-pesado-todos" className="text-sm font-medium leading-none cursor-pointer">
+                              {getVehicleTypeDisplay(VEHICLE_TYPES.PESADO_TODOS)}
+                            </label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox 
+                              id="vehicle-pesado-bitrem"
+                              checked={selectedVehicleTypes.includes(VEHICLE_TYPES.PESADO_BITREM)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedVehicleTypes(prev => [...prev, VEHICLE_TYPES.PESADO_BITREM]);
+                                  form.setValue("vehicleType", VEHICLE_TYPES.PESADO_BITREM);
+                                } else {
+                                  setSelectedVehicleTypes(prev => prev.filter(t => t !== VEHICLE_TYPES.PESADO_BITREM));
+                                }
+                              }}
+                            />
+                            <label htmlFor="vehicle-pesado-bitrem" className="text-sm font-medium leading-none cursor-pointer">
+                              {getVehicleTypeDisplay(VEHICLE_TYPES.PESADO_BITREM)}
+                            </label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox 
+                              id="vehicle-pesado-carreta"
+                              checked={selectedVehicleTypes.includes(VEHICLE_TYPES.PESADO_CARRETA)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedVehicleTypes(prev => [...prev, VEHICLE_TYPES.PESADO_CARRETA]);
+                                  form.setValue("vehicleType", VEHICLE_TYPES.PESADO_CARRETA);
+                                } else {
+                                  setSelectedVehicleTypes(prev => prev.filter(t => t !== VEHICLE_TYPES.PESADO_CARRETA));
+                                }
+                              }}
+                            />
+                            <label htmlFor="vehicle-pesado-carreta" className="text-sm font-medium leading-none cursor-pointer">
+                              {getVehicleTypeDisplay(VEHICLE_TYPES.PESADO_CARRETA)}
+                            </label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox 
+                              id="vehicle-pesado-carreta-ls"
+                              checked={selectedVehicleTypes.includes(VEHICLE_TYPES.PESADO_CARRETA_LS)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedVehicleTypes(prev => [...prev, VEHICLE_TYPES.PESADO_CARRETA_LS]);
+                                  form.setValue("vehicleType", VEHICLE_TYPES.PESADO_CARRETA_LS);
+                                } else {
+                                  setSelectedVehicleTypes(prev => prev.filter(t => t !== VEHICLE_TYPES.PESADO_CARRETA_LS));
+                                }
+                              }}
+                            />
+                            <label htmlFor="vehicle-pesado-carreta-ls" className="text-sm font-medium leading-none cursor-pointer">
+                              {getVehicleTypeDisplay(VEHICLE_TYPES.PESADO_CARRETA_LS)}
+                            </label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox 
+                              id="vehicle-pesado-rodotrem"
+                              checked={selectedVehicleTypes.includes(VEHICLE_TYPES.PESADO_RODOTREM)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedVehicleTypes(prev => [...prev, VEHICLE_TYPES.PESADO_RODOTREM]);
+                                  form.setValue("vehicleType", VEHICLE_TYPES.PESADO_RODOTREM);
+                                } else {
+                                  setSelectedVehicleTypes(prev => prev.filter(t => t !== VEHICLE_TYPES.PESADO_RODOTREM));
+                                }
+                              }}
+                            />
+                            <label htmlFor="vehicle-pesado-rodotrem" className="text-sm font-medium leading-none cursor-pointer">
+                              {getVehicleTypeDisplay(VEHICLE_TYPES.PESADO_RODOTREM)}
+                            </label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox 
+                              id="vehicle-pesado-vanderleia"
+                              checked={selectedVehicleTypes.includes(VEHICLE_TYPES.PESADO_VANDERLEIA)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedVehicleTypes(prev => [...prev, VEHICLE_TYPES.PESADO_VANDERLEIA]);
+                                  form.setValue("vehicleType", VEHICLE_TYPES.PESADO_VANDERLEIA);
+                                } else {
+                                  setSelectedVehicleTypes(prev => prev.filter(t => t !== VEHICLE_TYPES.PESADO_VANDERLEIA));
+                                }
+                              }}
+                            />
+                            <label htmlFor="vehicle-pesado-vanderleia" className="text-sm font-medium leading-none cursor-pointer">
+                              {getVehicleTypeDisplay(VEHICLE_TYPES.PESADO_VANDERLEIA)}
+                            </label>
+                          </div>
+                        </>
+                      )}
+                      
+                      {!form.watch("vehicleCategory") && (
+                        <div className="col-span-full text-center py-3 text-sm text-muted-foreground">
+                          Selecione uma categoria de veículo primeiro
+                        </div>
+                      )}
+                    </div>
+                    {form.formState.errors.vehicleType && (
+                      <p className="text-sm font-medium text-destructive mt-2">
+                        {form.formState.errors.vehicleType.message}
+                      </p>
+                    )}
+                    
+                    {selectedVehicleTypes.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-sm text-gray-500 mb-1">Tipos de veículo selecionados:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {selectedVehicleTypes.map((type) => (
+                            <div key={type} className="bg-primary/10 text-primary rounded-full px-2 py-1 text-xs flex items-center">
+                              {getVehicleTypeDisplay(type)}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </FormItem>
+                </div>
 
                 {/* Body Type */}
                 <FormField

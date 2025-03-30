@@ -36,6 +36,8 @@ export const freightFormSchema = freightValidator.extend({
   productType: z.string().min(2, "Tipo de produto inválido"),
   contactName: z.string().min(3, "Nome do contato deve ter pelo menos 3 caracteres"),
   contactPhone: z.string().min(10, "Telefone de contato inválido").max(15, "Telefone de contato muito longo"),
+  // Adicionamos um campo para categoria de veículo
+  vehicleCategory: z.string().optional(),
 });
 
 // Helper functions
