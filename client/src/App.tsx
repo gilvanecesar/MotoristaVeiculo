@@ -69,12 +69,12 @@ function App() {
             <div className="flex flex-col min-h-screen bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-200">
               <Navigation />
               <div className="flex flex-col flex-grow">
-                <main className="px-3 sm:px-6 py-4 sm:py-6 flex-grow max-w-full overflow-x-hidden">
+                <main className="px-3 sm:px-6 py-4 sm:py-6 pb-20 md:pb-6 flex-grow max-w-full overflow-x-hidden">
                   <div className="container mx-auto">
                     <Router />
                   </div>
                 </main>
-                <Footer />
+                <Footer className="hidden md:block" />
               </div>
             </div>
             <Toaster />

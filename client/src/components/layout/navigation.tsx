@@ -210,34 +210,10 @@ export default function Navigation() {
           </div>
         </div>
 
-        {/* Mobile Navigation Menu */}
+        {/* Mobile Navigation Menu - Dropdown */}
         {isMobile && mobileMenuOpen && (
           <nav className="md:hidden pb-3 px-4 border-t border-slate-100 dark:border-slate-600">
             <ul className="pt-2 space-y-1">
-              {menuItems.map((item) => {
-                const isActive = location === item.path;
-                const Icon = item.icon;
-                
-                return (
-                  <li key={item.path}>
-                    <Link href={item.path}>
-                      <div
-                        className={`
-                          flex items-center justify-start gap-3 px-3 py-2 rounded-md transition-all duration-200 cursor-pointer
-                          ${isActive
-                            ? "bg-primary/10 text-primary"
-                            : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"}
-                        `}
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        <Icon className="h-5 w-5" />
-                        <span className="font-medium">{item.label}</span>
-                      </div>
-                    </Link>
-                  </li>
-                );
-              })}
-
               {/* Theme Toggle for Mobile */}
               <li>
                 <button
@@ -274,6 +250,35 @@ export default function Navigation() {
               </li>
             </ul>
           </nav>
+        )}
+        
+        {/* Mobile Bottom Navigation Bar */}
+        {isMobile && (
+          <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 z-50 shadow-lg">
+            <div className="grid grid-cols-5 h-16">
+              {menuItems.slice(0, 5).map((item) => {
+                const isActive = location === item.path;
+                const Icon = item.icon;
+                
+                return (
+                  <Link key={item.path} href={item.path}>
+                    <div
+                      className={`
+                        flex flex-col items-center justify-center h-full transition-all duration-200 cursor-pointer
+                        ${isActive
+                          ? "text-primary"
+                          : "text-slate-600 dark:text-slate-300"}
+                      `}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Icon className="h-5 w-5 mb-1" />
+                      <span className="text-xs font-medium">{item.label}</span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
         )}
 
         {/* Page Title Bar - Shows the current page title */}
