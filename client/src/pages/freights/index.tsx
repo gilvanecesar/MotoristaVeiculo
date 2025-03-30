@@ -190,7 +190,7 @@ export default function FreightsPage() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate(`/freights/edit/${freight.id}`)}
+              onClick={() => navigate(`/freights/${freight.id}?edit=true`)}
               title="Editar"
             >
               <Edit className="h-4 w-4" />
