@@ -600,5 +600,5 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Exportar instância do storage com PostgreSQL
-export const storage = new DatabaseStorage();
+// Choose storage implementation based on database availability
+export const storage = process.env.DATABASE_URL ? new DatabaseStorage() : new MemStorage();
