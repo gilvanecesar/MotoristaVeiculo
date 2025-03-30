@@ -270,12 +270,16 @@ export default function FinancePage() {
       // Converte o valor para um número
       const numericAmount = parseFloat(data.amount.replace(",", "."));
       
+      // Mapeia plan para planType que é o que o backend espera
       const payload = {
         ...data,
+        planType: data.plan, // Adiciona planType mapeado de plan
         amount: numericAmount,
         startDate: data.startDate.toISOString(),
         endDate: data.endDate.toISOString()
       };
+      
+      console.log("Enviando payload:", payload); // Log para debug
       
       const response = await apiRequest("POST", "/api/admin/subscriptions", payload);
       return await response.json();
