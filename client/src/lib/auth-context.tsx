@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Client } from '@shared/schema';
+import { useAuth } from '@/hooks/use-auth';
 
 type AuthContextType = {
   currentClient: Client | null;
@@ -14,6 +15,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentClient, setCurrentClient] = useState<Client | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const { user } = useAuth();
 
   // Verifica se já existe um cliente logado no localStorage ao iniciar
   useEffect(() => {
@@ -76,18 +78,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Verifica se o cliente atual está autorizado a editar/excluir um frete
   const isClientAuthorized = (clientId: number | null): boolean => {
-    // Busca o usuário do contexto global para verificar se é admin
-    const userJson = localStorage.getItem('user');
-    try {
-      if (userJson) {
-        const user = JSON.parse(userJson);
-        // Admin tem permissão para tudo
-        if (user && user.profileType && user.profileType.toLowerCase() === 'admin') {
-          return true;
-        }
-      }
-    } catch (e) {
-      console.error('Erro ao verificar perfil do usuário:', e);
+    // Verifica se o usuário é admin usando o contexto de autenticação
+    if (user && user.profileType && user.profileType.toLowerCase() === 'admin') {
+      return true;
     }
     
     // Para usuários comuns, verifica se é o dono do frete
