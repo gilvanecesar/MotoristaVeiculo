@@ -55,6 +55,7 @@ import {
 import { 
   FreightWithDestinations, 
   Client,
+  FreightDestination,
   CARGO_TYPES, 
   TARP_OPTIONS, 
   TOLL_OPTIONS, 
@@ -80,6 +81,7 @@ export default function FreightsPage() {
   const [filterStatus, setFilterStatus] = useState<string>("todos");
   const [expandedFreight, setExpandedFreight] = useState<number | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const { currentClient, isClientAuthorized } = useAuth();
   const { user } = useUserAuth();
   const [filters, setFilters] = useState({
@@ -532,7 +534,14 @@ export default function FreightsPage() {
                         const clientFound = clients.find((client: Client) => client.id === freight.clientId);
                         
                         return (
-                          <TableRow key={freight.id} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                          <TableRow 
+                            key={freight.id} 
+                            className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                            onClick={() => {
+                              setSelectedFreight(freight);
+                              setDetailsDialogOpen(true);
+                            }}
+                          >
                             <TableCell>{renderStatusBadge(freight)}</TableCell>
                             <TableCell>{clientFound?.name || "Cliente não encontrado"}</TableCell>
                             <TableCell>{freight.origin}, {freight.originState}</TableCell>
@@ -540,7 +549,9 @@ export default function FreightsPage() {
                             <TableCell>{getVehicleTypeName(freight.vehicleType)}</TableCell>
                             <TableCell>{CARGO_TYPES[freight.cargoType] || freight.cargoType}</TableCell>
                             <TableCell>{formatCurrency(freight.value)}</TableCell>
-                            <TableCell className="text-right">{renderActionButtons(freight)}</TableCell>
+                            <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                              {renderActionButtons(freight)}
+                            </TableCell>
                           </TableRow>
                         );
                       })}
@@ -558,7 +569,10 @@ export default function FreightsPage() {
                       <div 
                         key={freight.id} 
                         className="border border-slate-200 dark:border-slate-700 rounded-md overflow-hidden"
-                        onClick={() => toggleFreightExpansion(freight.id)}
+                        onClick={() => {
+                          // Ao clicar e manter aberto, abre e fecha o accordion apenas 
+                          toggleFreightExpansion(freight.id);
+                        }}
                       >
                         <div className="p-3 bg-slate-50 dark:bg-slate-800 flex justify-between items-center">
                           <div className="flex items-center gap-2">
@@ -678,6 +692,19 @@ export default function FreightsPage() {
                             <Button
                               variant="ghost"
                               size="icon"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedFreight(freight);
+                                setDetailsDialogOpen(true);
+                              }}
+                              title="Ver detalhes completos"
+                            >
+                              <ExternalLink className="h-4 w-4 text-blue-500" />
+                            </Button>
+                            
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               onClick={(e) => shareViaWhatsApp(e, freight)}
                               title="Compartilhar via WhatsApp"
                             >
@@ -737,6 +764,174 @@ export default function FreightsPage() {
             <Button variant="destructive" onClick={handleDeleteFreight}>
               Excluir
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Truck className="h-5 w-5" /> Detalhes do Frete
+            </DialogTitle>
+            <DialogDescription>
+              Informações completas sobre o frete selecionado
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedFreight && (
+            <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+              <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    {clients.find((client: Client) => client.id === selectedFreight.clientId)?.name || "Cliente não encontrado"}
+                  </h3>
+                  {renderStatusBadge(selectedFreight)}
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-slate-500">Origem</h4>
+                    <p>{selectedFreight.origin}, {selectedFreight.originState}</p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-slate-500">Destino</h4>
+                    <p>{selectedFreight.destination}, {selectedFreight.destinationState}</p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-slate-500">Tipo de Veículo</h4>
+                    <p>{getVehicleTypeName(selectedFreight.vehicleType)}</p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-slate-500">Tipo de Carroceria</h4>
+                    <p>{BODY_TYPES[selectedFreight.bodyType] || selectedFreight.bodyType}</p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-slate-500">Tipo de Carga</h4>
+                    <p>{CARGO_TYPES[selectedFreight.cargoType] || selectedFreight.cargoType}</p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-slate-500">Peso da Carga</h4>
+                    <p>{selectedFreight.cargoWeight} Kg</p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-slate-500">Forma de Pagamento</h4>
+                    <p>
+                      {(() => {
+                        switch (selectedFreight.paymentMethod) {
+                          case 'a_vista': return 'À vista';
+                          case '30_dias': return '30 dias';
+                          case '45_dias': return '45 dias';
+                          case '60_dias': return '60 dias';
+                          default: return selectedFreight.paymentMethod;
+                        }
+                      })()}
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-slate-500">Valor</h4>
+                    <p className="text-lg font-semibold">{formatCurrency(selectedFreight.value)}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg">
+                <h3 className="text-md font-semibold text-slate-900 dark:text-slate-100 mb-2">Informações do Contato</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-slate-500">Nome do Contato</h4>
+                    <p>{selectedFreight.contactName}</p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-slate-500">Telefone</h4>
+                    <p className="flex items-center gap-2">
+                      {selectedFreight.contactPhone}
+                      {selectedFreight.contactPhone && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="h-7 px-2 text-xs"
+                          onClick={() => window.open(`https://wa.me/55${selectedFreight.contactPhone?.replace(/\D/g, '')}`, '_blank')}
+                        >
+                          <FaWhatsapp className="h-3 w-3 text-green-500 mr-1" /> Contatar
+                        </Button>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              {selectedFreight.notes && (
+                <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg">
+                  <h3 className="text-md font-semibold text-slate-900 dark:text-slate-100 mb-2">Observações</h3>
+                  <p className="text-sm">{selectedFreight.notes}</p>
+                </div>
+              )}
+              
+              {selectedFreight.destinations && selectedFreight.destinations.length > 0 && (
+                <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg">
+                  <h3 className="text-md font-semibold text-slate-900 dark:text-slate-100 mb-2">Destinos Intermediários</h3>
+                  <div className="space-y-3">
+                    {selectedFreight.destinations.map((destination) => (
+                      <div key={destination.id} className="border-b border-slate-200 dark:border-slate-700 pb-2 last:border-0">
+                        <p className="flex items-start gap-2">
+                          <MapPin className="h-4 w-4 text-slate-500 mt-0.5" />
+                          <span>{destination.destination}, {destination.destinationState}</span>
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          
+          <DialogFooter className="flex gap-2 flex-wrap">
+            <Button
+              variant="outline"
+              onClick={() => setDetailsDialogOpen(false)}
+            >
+              Fechar
+            </Button>
+            
+            {selectedFreight && (
+              <>
+                <Button 
+                  variant="outline"
+                  onClick={() => navigate(`/freights/${selectedFreight.id}`)}
+                >
+                  <Eye className="h-4 w-4 mr-2" /> Ver Página
+                </Button>
+                
+                {isClientAuthorized(selectedFreight.clientId) && (
+                  <Button 
+                    variant="outline"
+                    onClick={() => navigate(`/freights/edit/${selectedFreight.id}`)}
+                  >
+                    <Edit className="h-4 w-4 mr-2" /> Editar
+                  </Button>
+                )}
+                
+                <Button
+                  variant="default"
+                  onClick={(e) => {
+                    if (selectedFreight) {
+                      shareViaWhatsApp(e, selectedFreight);
+                    }
+                  }}
+                >
+                  <FaWhatsapp className="h-4 w-4 mr-2 text-white" /> Compartilhar
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
