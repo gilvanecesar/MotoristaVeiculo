@@ -465,7 +465,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/freights", async (req: Request, res: Response) => {
     try {
       const freightData = freightValidator.parse(req.body);
-      const freight = await storage.createFreight(freightData);
+      
+      // Definir data de expiração para 30 dias após a criação
+      const today = new Date();
+      const expirationDate = new Date(today);
+      expirationDate.setDate(today.getDate() + 30);
+      
+      // Adicionar a data de expiração ao frete
+      const freightWithExpiration = {
+        ...freightData,
+        expirationDate: expirationDate,
+        // Garantir status "aberto" para novos fretes
+        status: "aberto"
+      };
+      
+      const freight = await storage.createFreight(freightWithExpiration);
       res.status(201).json(freight);
     } catch (error) {
       if (error instanceof ZodError) {
