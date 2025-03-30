@@ -6,6 +6,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User } from "@shared/schema";
+import { sendWelcomeEmail } from "./email-service";
 
 declare global {
   namespace Express {
@@ -122,6 +123,13 @@ export function setupAuth(app: Express) {
         providerId: null
       });
 
+      // Envia email de boas-vindas
+      try {
+        sendWelcomeEmail(newUser);
+      } catch (emailError) {
+        console.error("Erro ao enviar email de boas-vindas:", emailError);
+      }
+      
       // Efetua login automaticamente
       req.login(newUser, (err: any) => {
         if (err) return next(err);

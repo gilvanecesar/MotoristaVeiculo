@@ -16,6 +16,7 @@ import {
 } from "./middlewares";
 import { createCheckoutSession, createPortalSession, handleWebhook } from "./stripe";
 import Stripe from "stripe";
+import { sendSubscriptionEmail } from "./email-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configurar autenticação
@@ -821,6 +822,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
           stripeCustomerId: req.body.stripeCustomerId || null,
           stripeSubscriptionId: req.body.stripeSubscriptionId || null,
         });
+      }
+      
+      // Tentar enviar email de confirmação de assinatura
+      try {
+        if (client) {
+          const amount = parseFloat(req.body.amount) || 0;
+          sendSubscriptionEmail(
+            client.email,
+            client.name,
+            planType,
+            currentPeriodStart,
+            currentPeriodEnd,
+            amount
+          );
+        }
+      } catch (emailError) {
+        console.error("Erro ao enviar email de confirmação de assinatura:", emailError);
+        // Não interrompe o fluxo em caso de falha no envio de email
       }
       
       // Retornar a assinatura criada

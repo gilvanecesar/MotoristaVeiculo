@@ -41,6 +41,13 @@ app.use((req, res, next) => {
 
 (async () => {
   try {
+    // Inicializar serviço de email
+    import('./email-service').then(({ initEmailService }) => {
+      initEmailService();
+    }).catch(error => {
+      console.error("Erro ao inicializar serviço de email:", error);
+    });
+    
     // Aplicar migrações do banco de dados
     log("Aplicando migrações do banco de dados...");
     await migrate(db, { migrationsFolder: "./migrations" });
