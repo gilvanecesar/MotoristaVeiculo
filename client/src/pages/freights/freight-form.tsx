@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation, useParams } from "wouter";
+import { useLocation, useParams, useSearch } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -103,7 +103,11 @@ type DestinationFormValues = z.infer<typeof destinationSchema>;
 
 export default function FreightForm() {
   const params = useParams<{ id: string }>();
+  const search = useSearch();
+  const searchParams = new URLSearchParams(search);
+  const isEditMode = searchParams.get('edit') === 'true';
   const isEditing = !!params.id;
+  const isViewingInReadOnlyMode = isEditing && !isEditMode;
   const freightId = parseInt(params.id || "0");
   const [destinations, setDestinations] = useState<DestinationFormValues[]>([]);
   const [selectedVehicleTypes, setSelectedVehicleTypes] = useState<string[]>([]);
@@ -226,6 +230,10 @@ export default function FreightForm() {
   };
 
   const onSubmit = async (data: FreightFormValues) => {
+    // Se estiver no modo somente leitura, não submeter o formulário
+    if (isViewingInReadOnlyMode) {
+      return;
+    }
     try {
       // Verificar se um cliente foi selecionado
       if (!data.clientId) {
@@ -362,7 +370,15 @@ export default function FreightForm() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
+              {isViewingInReadOnlyMode && (
+                <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 p-4 rounded-md mb-4">
+                  <p className="text-amber-700 dark:text-amber-300 text-sm">
+                    Você está visualizando este frete no modo somente leitura. Clique em "Editar Frete" para fazer alterações.
+                  </p>
+                </div>
+              )}
+              <fieldset disabled={isViewingInReadOnlyMode}>
+                <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
                 {/* Client Selection */}
                 <FormField
                   control={form.control}
@@ -1260,10 +1276,24 @@ export default function FreightForm() {
                 >
                   Cancelar
                 </Button>
-                <Button type="submit">
-                  {isEditing ? "Salvar Alterações" : "Criar Frete"}
-                </Button>
+                
+                {isViewingInReadOnlyMode ? (
+                  <Button 
+                    type="button"
+                    onClick={() => navigate(`/freights/${freightId}?edit=true`)}
+                  >
+                    Editar Frete
+                  </Button>
+                ) : (
+                  <Button 
+                    type="submit"
+                    disabled={isViewingInReadOnlyMode}
+                  >
+                    {isEditing ? "Salvar Alterações" : "Criar Frete"}
+                  </Button>
+                )}
               </div>
+              </fieldset>
             </form>
           </Form>
         </CardContent>
