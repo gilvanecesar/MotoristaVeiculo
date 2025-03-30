@@ -58,9 +58,9 @@ export default function AuthPage() {
   // Redirecionamento se o usuário já estiver logado
   useEffect(() => {
     if (user) {
-      // Se o usuário tem assinatura ativa, redireciona para o dashboard
+      // Se o usuário tem assinatura ativa, redireciona para a página inicial
       if (user.subscriptionActive) {
-        navigate("/dashboard");
+        navigate("/");
       } else {
         // Se o usuário está logado mas não tem assinatura, mostra a página de planos
         setShowPlans(true);
@@ -112,8 +112,8 @@ export default function AuthPage() {
             navigate("/freights");
           }
         } else if (user.subscriptionActive) {
-          // Se já tem assinatura ativa, vai para o dashboard
-          navigate("/dashboard");
+          // Se já tem assinatura ativa, vai para a página inicial
+          navigate("/");
         } else {
           // Se não tem assinatura ativa e não é motorista, mostra página de planos
           setShowPlans(true);
