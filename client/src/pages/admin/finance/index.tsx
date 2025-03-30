@@ -270,9 +270,18 @@ export default function FinancePage() {
       // Converte o valor para um número
       const numericAmount = parseFloat(data.amount.replace(",", "."));
       
+      // Encontra o cliente correspondente ao nome para obter o ID
+      const selectedClient = clients?.find((c) => c.name === data.clientName);
+      const clientId = selectedClient?.id;
+      
+      if (!clientId) {
+        throw new Error("Cliente não encontrado. Selecione um cliente válido da lista.");
+      }
+      
       // Mapeia plan para planType que é o que o backend espera
       const payload = {
         ...data,
+        clientId,  // Adiciona o ID do cliente
         planType: data.plan, // Adiciona planType mapeado de plan
         amount: numericAmount,
         startDate: data.startDate.toISOString(),
