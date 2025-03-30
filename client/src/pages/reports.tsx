@@ -141,9 +141,17 @@ export default function ReportsPage() {
     active: activeFreights.length,
     expired: expiredFreights.length,
     expiringSoon: expiringSoonFreights.length,
-    totalValue: freights.reduce((sum, freight) => sum + Number(freight.freightValue), 0),
+    totalValue: freights.reduce((sum, freight) => {
+      // Converte para número e verifica se é um valor válido
+      const freightValue = parseFloat(String(freight.freightValue).replace(',', '.'));
+      return sum + (isNaN(freightValue) ? 0 : freightValue);
+    }, 0),
     averageValue: freights.length > 0 
-      ? freights.reduce((sum, freight) => sum + Number(freight.freightValue), 0) / freights.length 
+      ? freights.reduce((sum, freight) => {
+          // Converte para número e verifica se é um valor válido
+          const freightValue = parseFloat(String(freight.freightValue).replace(',', '.'));
+          return sum + (isNaN(freightValue) ? 0 : freightValue);
+        }, 0) / freights.length 
       : 0
   };
 
@@ -387,7 +395,7 @@ export default function ReportsPage() {
                             </TableCell>
                             <TableCell>{getVehicleTypeName(freight.vehicleType)}</TableCell>
                             <TableCell>{getCargoType(freight.cargoType)}</TableCell>
-                            <TableCell className="text-right font-medium">{formatCurrency(Number(freight.freightValue))}</TableCell>
+                            <TableCell className="text-right font-medium">{formatCurrency(freight.freightValue)}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -434,7 +442,7 @@ export default function ReportsPage() {
                               </TableCell>
                               <TableCell>{getVehicleTypeName(freight.vehicleType)}</TableCell>
                               <TableCell>{getCargoType(freight.cargoType)}</TableCell>
-                              <TableCell className="text-right font-medium">{formatCurrency(Number(freight.freightValue))}</TableCell>
+                              <TableCell className="text-right font-medium">{formatCurrency(freight.freightValue)}</TableCell>
                             </TableRow>
                           ))
                         )}
@@ -484,7 +492,7 @@ export default function ReportsPage() {
                               </TableCell>
                               <TableCell>{getVehicleTypeName(freight.vehicleType)}</TableCell>
                               <TableCell>{getCargoType(freight.cargoType)}</TableCell>
-                              <TableCell className="text-right font-medium">{formatCurrency(Number(freight.freightValue))}</TableCell>
+                              <TableCell className="text-right font-medium">{formatCurrency(freight.freightValue)}</TableCell>
                             </TableRow>
                           ))
                         )}
@@ -534,7 +542,7 @@ export default function ReportsPage() {
                               </TableCell>
                               <TableCell>{getVehicleTypeName(freight.vehicleType)}</TableCell>
                               <TableCell>{getCargoType(freight.cargoType)}</TableCell>
-                              <TableCell className="text-right font-medium">{formatCurrency(Number(freight.freightValue))}</TableCell>
+                              <TableCell className="text-right font-medium">{formatCurrency(freight.freightValue)}</TableCell>
                             </TableRow>
                           ))
                         )}

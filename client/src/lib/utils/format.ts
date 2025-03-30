@@ -1,11 +1,32 @@
 /**
  * Format a number as currency (BRL)
+ * Safely handles conversions and NaN values
  */
-export function formatCurrency(value: number): string {
+export function formatCurrency(value: number | string | null | undefined): string {
+  // Converte o valor para um número válido
+  let numValue: number;
+  
+  if (value === null || value === undefined) {
+    numValue = 0;
+  } else if (typeof value === 'string') {
+    // Remove caracteres não numéricos (exceto ponto e vírgula)
+    const cleanedValue = value.replace(/[^\d,.]/g, '');
+    // Substitui vírgula por ponto para conversão correta
+    const normalizedValue = cleanedValue.replace(',', '.');
+    numValue = parseFloat(normalizedValue);
+  } else {
+    numValue = value;
+  }
+  
+  // Se ainda for NaN após conversão, retorna 'R$ 0,00'
+  if (isNaN(numValue)) {
+    numValue = 0;
+  }
+  
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL'
-  }).format(value);
+  }).format(numValue);
 }
 
 /**
