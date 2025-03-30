@@ -176,6 +176,9 @@ export const freights = pgTable("freights", {
   // Para fretes com múltiplos destinos
   hasMultipleDestinations: boolean("has_multiple_destinations").default(false),
   
+  // Data de expiração do frete
+  expirationDate: timestamp("expiration_date").notNull().defaultNow(),
+  
   // Metadata
   createdAt: timestamp("created_at").defaultNow(),
 });
