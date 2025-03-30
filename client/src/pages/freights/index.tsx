@@ -273,7 +273,7 @@ export default function FreightsPage() {
 📦 *Tipo de Carga:* ${CARGO_TYPES[freight.cargoType] || freight.cargoType}
 ⚖️ *Peso:* ${freight.cargoWeight} Kg
 💰 *Pagamento:* ${freight.paymentMethod}
-💵 *Valor:* ${formatCurrency(freight.value)}
+💵 *Valor:* ${formatCurrency(freight.freightValue)}
 
 ℹ️ *Contato:* ${freight.contactName}
 📱 *Telefone:* ${freight.contactPhone}
@@ -555,7 +555,7 @@ export default function FreightsPage() {
                             <TableCell>{getVehicleTypeNameOnly(freight.vehicleType)}</TableCell>
                             <TableCell>{BODY_TYPES[freight.bodyType] || freight.bodyType}</TableCell>
                             <TableCell>{CARGO_TYPES[freight.cargoType] || freight.cargoType}</TableCell>
-                            <TableCell>{formatCurrency(freight.value)}</TableCell>
+                            <TableCell>{formatCurrency(freight.freightValue)}</TableCell>
                             <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                               {renderActionButtons(freight)}
                             </TableCell>
@@ -618,7 +618,7 @@ export default function FreightsPage() {
                             <DollarSign className="h-4 w-4 text-slate-500 mt-0.5" />
                             <div className="flex-1">
                               <p className="text-xs text-slate-500">Valor:</p>
-                              <p className="text-sm font-medium">{formatCurrency(freight.value)}</p>
+                              <p className="text-sm font-medium">{formatCurrency(freight.freightValue)}</p>
                             </div>
                           </div>
                           
@@ -865,7 +865,7 @@ export default function FreightsPage() {
                   
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium text-slate-500">Valor</h4>
-                    <p className="text-lg font-semibold">{formatCurrency(selectedFreight.value)}</p>
+                    <p className="text-lg font-semibold">{formatCurrency(selectedFreight.freightValue)}</p>
                   </div>
                 </div>
               </div>
