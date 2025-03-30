@@ -186,8 +186,8 @@ export default function FreightForm() {
       // Format values for the form
       const formattedFreight = {
         ...freight,
-        cargoWeight: Number(freight.cargoWeight),
-        freightValue: Number(freight.freightValue),
+        cargoWeight: freight.cargoWeight ? Number(freight.cargoWeight) : 0,
+        freightValue: freight.freightValue ? Number(freight.freightValue) : 0,
         // Determinar a categoria com base no tipo de veículo
         vehicleCategory: getVehicleCategory(freight.vehicleType),
       };
@@ -712,7 +712,8 @@ export default function FreightForm() {
                           type="number" 
                           placeholder="Peso em kg" 
                           {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
+                          value={field.value || ""}
+                          onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)}
                         />
                       </FormControl>
                       <FormMessage />
@@ -1153,7 +1154,8 @@ export default function FreightForm() {
                           step="0.01"
                           placeholder="0,00" 
                           {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
+                          value={field.value || ""}
+                          onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)}
                         />
                       </FormControl>
                       <FormMessage />
