@@ -1,7 +1,10 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
+import { db } from "./db";
 
+// Servidor Express
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -37,6 +40,17 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  try {
+    // Aplicar migrações do banco de dados
+    log("Aplicando migrações do banco de dados...");
+    await migrate(db, { migrationsFolder: "./migrations" });
+    log("Migrações aplicadas com sucesso!");
+  } catch (error) {
+    console.error("Erro ao aplicar migrações:", error);
+    process.exit(1);
+  }
+  
+  // Configurar rotas da API
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
