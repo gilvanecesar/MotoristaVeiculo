@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { useAuth } from "@/lib/auth-context";
-import { useAuth as useUserAuth } from "@/hooks/use-auth";
+import { useClientAuth } from "@/lib/auth-context";
+import { useAuth } from "@/hooks/use-auth";
 import { getVehicleCategory, getVehicleTypeNameOnly, getVehicleTypeDisplay } from "@/lib/utils/vehicle-types";
 import { 
   Plus, 
@@ -83,8 +83,8 @@ export default function FreightsPage() {
   const [expandedFreight, setExpandedFreight] = useState<number | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
-  const { currentClient, isClientAuthorized } = useAuth();
-  const { user } = useUserAuth();
+  const { currentClient, isClientAuthorized } = useClientAuth();
+  const { user } = useAuth();
   const [filters, setFilters] = useState({
     origin: "",
     destination: "",

@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useTheme } from "@/lib/theme-provider";
-import { useAuth } from "@/lib/auth-context";
-import { useAuth as useUserAuth } from "@/hooks/use-auth";
+import { useClientAuth } from "@/lib/auth-context";
+import { useAuth } from "@/hooks/use-auth";
 import { ClientSelector } from "@/components/client-selector";
 import { PaymentBanner } from "@/components/payment-banner";
 import logoImage from "../../assets/logo.png";
@@ -62,7 +62,7 @@ export default function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
   const { theme, toggleTheme } = useTheme();
-  const { user, logoutMutation } = useUserAuth();
+  const { user, logoutMutation } = useAuth();
   
   // Função para fazer logout
   const handleLogout = () => {

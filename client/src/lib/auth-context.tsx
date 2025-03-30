@@ -76,6 +76,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Verifica se o cliente atual está autorizado a editar/excluir um frete
   const isClientAuthorized = (clientId: number | null): boolean => {
+    // Busca o usuário do contexto global para verificar se é admin
+    const userJson = localStorage.getItem('user');
+    try {
+      if (userJson) {
+        const user = JSON.parse(userJson);
+        // Admin tem permissão para tudo
+        if (user && user.profileType && user.profileType.toLowerCase() === 'admin') {
+          return true;
+        }
+      }
+    } catch (e) {
+      console.error('Erro ao verificar perfil do usuário:', e);
+    }
+    
+    // Para usuários comuns, verifica se é o dono do frete
     if (!currentClient) return false;
     if (clientId === null) return true; // Fretes sem cliente associado podem ser editados por qualquer cliente logado
     return currentClient.id === clientId;
@@ -97,10 +112,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 };
 
 // Hook para usar o contexto de autenticação
-export const useAuth = (): AuthContextType => {
+export const useClientAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth deve ser usado dentro de um AuthProvider');
+    throw new Error('useClientAuth deve ser usado dentro de um AuthProvider');
   }
   return context;
 };

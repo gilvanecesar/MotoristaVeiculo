@@ -5,8 +5,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowLeft, Plus, Trash2, Truck } from "lucide-react";
-import { useAuth as useClientAuth } from "@/lib/auth-context";
-import { useAuth as useUserAuth } from "@/hooks/use-auth";
+import { useClientAuth } from "@/lib/auth-context";
+import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -110,7 +110,7 @@ export default function FreightForm() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { currentClient } = useClientAuth();
-  const { user } = useUserAuth();
+  const { user } = useAuth();
 
   // Fetch clients for dropdown
   const { data: clients = [] } = useQuery({
