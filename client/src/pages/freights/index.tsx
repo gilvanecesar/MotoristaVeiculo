@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useAuth } from "@/lib/auth-context";
 import { useAuth as useUserAuth } from "@/hooks/use-auth";
+import { getVehicleCategory } from "@/lib/utils/vehicle-types";
 import { 
   Plus, 
   Search, 
@@ -266,6 +267,7 @@ export default function FreightsPage() {
 🏢 *${clientName}*
 📍 *Origem:* ${freight.origin}, ${freight.originState}
 🏁 *Destino:* ${freight.destination}, ${freight.destinationState}
+🚚 *Categoria:* ${getVehicleCategory(freight.vehicleType)}
 🚚 *Veículo:* ${getVehicleTypeName(freight.vehicleType).replace(/^(Leve|Médio|Pesado)\s-\s/, '').replace(/^(Leve|Médio|Pesado)\s/, '')}
 🚐 *Carroceria:* ${BODY_TYPES[freight.bodyType] || freight.bodyType}
 📦 *Tipo de Carga:* ${CARGO_TYPES[freight.cargoType] || freight.cargoType}
@@ -524,7 +526,8 @@ export default function FreightsPage() {
                         <TableHead>Cliente</TableHead>
                         <TableHead>Origem</TableHead>
                         <TableHead>Destino</TableHead>
-                        <TableHead>Tipo Veículo</TableHead>
+                        <TableHead>Categoria</TableHead>
+                        <TableHead>Veículo</TableHead>
                         <TableHead>Carroceria</TableHead>
                         <TableHead>Carga</TableHead>
                         <TableHead>Valor</TableHead>
@@ -548,6 +551,7 @@ export default function FreightsPage() {
                             <TableCell>{clientFound?.name || "Cliente não encontrado"}</TableCell>
                             <TableCell>{freight.origin}, {freight.originState}</TableCell>
                             <TableCell>{freight.destination}, {freight.destinationState}</TableCell>
+                            <TableCell>{getVehicleCategory(freight.vehicleType)}</TableCell>
                             <TableCell>{getVehicleTypeName(freight.vehicleType).replace(/^(Leve|Médio|Pesado)\s-\s/, '').replace(/^(Leve|Médio|Pesado)\s/, '')}</TableCell>
                             <TableCell>{BODY_TYPES[freight.bodyType] || freight.bodyType}</TableCell>
                             <TableCell>{CARGO_TYPES[freight.cargoType] || freight.cargoType}</TableCell>
@@ -621,6 +625,14 @@ export default function FreightsPage() {
                           {isExpanded && (
                             <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700">
                               <div className="flex items-start gap-2">
+                                <Truck className="h-4 w-4 text-slate-500 mt-0.5" />
+                                <div className="flex-1">
+                                  <p className="text-xs text-slate-500">Categoria:</p>
+                                  <p className="text-sm">{getVehicleCategory(freight.vehicleType)}</p>
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-start gap-2 mt-2">
                                 <Truck className="h-4 w-4 text-slate-500 mt-0.5" />
                                 <div className="flex-1">
                                   <p className="text-xs text-slate-500">Veículo:</p>
@@ -809,6 +821,11 @@ export default function FreightsPage() {
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium text-slate-500">Destino</h4>
                     <p>{selectedFreight.destination}, {selectedFreight.destinationState}</p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-slate-500">Categoria</h4>
+                    <p>{getVehicleCategory(selectedFreight.vehicleType)}</p>
                   </div>
                   
                   <div className="space-y-2">
