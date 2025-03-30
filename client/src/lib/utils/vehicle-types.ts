@@ -31,7 +31,8 @@ export const VEHICLE_TYPES_BY_CATEGORY = {
 };
 
 // Função para obter a categoria do tipo de veículo
-export function getVehicleCategory(type: string): string {
+export function getVehicleCategory(type?: string): string {
+  if (!type) return '';
   if (type.startsWith('leve_')) return VEHICLE_CATEGORIES.LEVE;
   if (type.startsWith('medio_')) return VEHICLE_CATEGORIES.MEDIO;
   if (type.startsWith('pesado_')) return VEHICLE_CATEGORIES.PESADO;
@@ -39,7 +40,8 @@ export function getVehicleCategory(type: string): string {
 }
 
 // Display names for vehicle categories
-export function getVehicleCategoryDisplay(category: string): string {
+export function getVehicleCategoryDisplay(category?: string): string {
+  if (!category) return '';
   switch (category) {
     case VEHICLE_CATEGORIES.LEVE:
       return "Leve";
@@ -53,7 +55,8 @@ export function getVehicleCategoryDisplay(category: string): string {
 }
 
 // Display names for vehicle types
-export function getVehicleTypeDisplay(type: string): string {
+export function getVehicleTypeDisplay(type?: string): string {
+  if (!type) return '';
   switch (type) {
     // Leves
     case VEHICLE_TYPES.LEVE_TODOS:
@@ -92,7 +95,8 @@ export function getVehicleTypeDisplay(type: string): string {
 }
 
 // Display names for body types
-export function getBodyTypeDisplay(type: string): string {
+export function getBodyTypeDisplay(type?: string): string {
+  if (!type) return '';
   switch (type) {
     case BODY_TYPES.BAU:
       return "Baú";
