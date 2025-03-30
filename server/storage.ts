@@ -768,4 +768,9 @@ export class DatabaseStorage implements IStorage {
 }
 
 // Choose storage implementation based on database availability
-export const storage = process.env.DATABASE_URL ? new DatabaseStorage() : null;
+// Se DATABASE_URL não estiver definido, lança um erro para evitar problemas
+if (!process.env.DATABASE_URL) {
+  throw new Error("DATABASE_URL environment variable is required for this application to work correctly. Please set it up in your .env file or Replit environment variables.");
+}
+
+export const storage = new DatabaseStorage();

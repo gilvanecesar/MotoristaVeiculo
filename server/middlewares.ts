@@ -11,7 +11,9 @@ export function isAuthenticated(req: Request, res: Response, next: NextFunction)
 
 // Middleware para verificar se o usuário é admin
 export function isAdmin(req: Request, res: Response, next: NextFunction) {
-  if (req.isAuthenticated() && req.user?.profileType === "admin") {
+  // Verifica se o profileType é "admin" ou "ADMIN" (case insensitive)
+  if (req.isAuthenticated() && 
+      (req.user?.profileType?.toLowerCase() === "admin")) {
     return next();
   }
   res.status(403).json({ message: "Acesso não autorizado" });
@@ -25,7 +27,7 @@ export function isAdminOrSelf(req: Request, res: Response, next: NextFunction) {
 
   const userId = parseInt(req.params.id, 10);
   
-  if (req.user?.profileType === "admin" || req.user?.id === userId) {
+  if (req.user?.profileType?.toLowerCase() === "admin" || req.user?.id === userId) {
     return next();
   }
   
@@ -40,7 +42,7 @@ export function hasClientAccess(req: Request, res: Response, next: NextFunction)
 
   const clientId = parseInt(req.params.id, 10);
   
-  if (req.user?.profileType === "admin" || req.user?.clientId === clientId) {
+  if (req.user?.profileType?.toLowerCase() === "admin" || req.user?.clientId === clientId) {
     return next();
   }
   
@@ -55,7 +57,7 @@ export function hasDriverAccess(req: Request, res: Response, next: NextFunction)
 
   const driverId = parseInt(req.params.id, 10);
   
-  if (req.user?.profileType === "admin" || req.user?.driverId === driverId) {
+  if (req.user?.profileType?.toLowerCase() === "admin" || req.user?.driverId === driverId) {
     return next();
   }
   
@@ -69,7 +71,7 @@ export async function hasFreightAccess(req: Request, res: Response, next: NextFu
   }
 
   // Admin sempre tem acesso
-  if (req.user?.profileType === "admin") {
+  if (req.user?.profileType?.toLowerCase() === "admin") {
     return next();
   }
 
@@ -101,7 +103,7 @@ export async function hasVehicleAccess(req: Request, res: Response, next: NextFu
   }
 
   // Admin sempre tem acesso
-  if (req.user?.profileType === "admin") {
+  if (req.user?.profileType?.toLowerCase() === "admin") {
     return next();
   }
 
@@ -114,7 +116,7 @@ export async function hasVehicleAccess(req: Request, res: Response, next: NextFu
   }
   
   // Se o usuário for motorista, verifica se o veículo pertence a ele
-  if (req.user?.profileType === "driver" && req.user?.driverId === vehicle.driverId) {
+  if (req.user?.profileType?.toLowerCase() === "driver" && req.user?.driverId === vehicle.driverId) {
     return next();
   }
   
