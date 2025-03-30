@@ -183,6 +183,7 @@ export default function FreightForm() {
 
   useEffect(() => {
     if (freight && !isLoading) {
+      console.log("Carregando frete para edição:", freight);
       // Format values for the form
       const formattedFreight = {
         ...freight,
@@ -194,8 +195,15 @@ export default function FreightForm() {
       form.reset(formattedFreight);
       
       // Inicializar os tipos de veículos selecionados
-      // Aqui estamos usando o vehicleType individual, mas poderia ser adaptado para múltiplos tipos
-      setSelectedVehicleTypes([freight.vehicleType]);
+      // Se o vehicleType é uma string, transformá-la em array para compatibilidade
+      if (freight.vehicleType) {
+        const vehicleTypes = Array.isArray(freight.vehicleType) 
+          ? freight.vehicleType 
+          : [freight.vehicleType];
+        
+        setSelectedVehicleTypes(vehicleTypes);
+        console.log("Tipos de veículos selecionados:", vehicleTypes);
+      }
     }
   }, [freight, isLoading, form]);
 
