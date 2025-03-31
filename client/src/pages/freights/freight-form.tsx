@@ -51,6 +51,8 @@ import { ArrowLeft, Plus, Trash, X } from "lucide-react";
 import { Truck } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useClientAuth } from "@/lib/auth-context";
+import LocationInput from "@/components/location/location-input";
+import NumberInput from "@/components/ui/number-input";
 import StateSelect from "@/components/location/state-select";
 import CitySelect from "@/components/location/city-select";
 
@@ -522,46 +524,44 @@ export default function FreightForm() {
               
               <h3 className="text-lg font-medium mb-4">Origem e Destino</h3>
               <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
-                {/* Origin State */}
-                <FormField
-                  control={form.control}
-                  name="originState"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Estado de Origem</FormLabel>
-                      <FormControl>
-                        <StateSelect
-                          value={field.value}
-                          onChange={field.onChange}
-                          placeholder="Selecione o estado de origem"
-                          errorMessage={form.formState.errors.originState?.message}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Origin City */}
+                {/* Origin Location */}
                 <FormField
                   control={form.control}
                   name="origin"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Cidade de Origem</FormLabel>
-                      <FormControl>
-                        <CitySelect
-                          state={form.watch("originState")}
-                          value={field.value}
-                          onChange={field.onChange}
-                          placeholder="Selecione a cidade de origem"
-                          disabled={!form.watch("originState")}
-                          errorMessage={form.formState.errors.origin?.message}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  render={({ field }) => {
+                    // Criar um string combinado para exibição se o formulário já tem data
+                    let combinedValue = field.value || "";
+                    const originState = form.watch("originState");
+                    
+                    if (field.value && originState && !combinedValue.includes(" - ")) {
+                      combinedValue = `${field.value} - ${originState}`;
+                    }
+                    
+                    return (
+                      <FormItem>
+                        <FormLabel>Origem</FormLabel>
+                        <FormControl>
+                          <LocationInput
+                            value={combinedValue}
+                            onChange={(value) => {
+                              // Se o valor contiver a formatação Cidade - UF
+                              if (value.includes(" - ")) {
+                                const [city, state] = value.split(" - ");
+                                field.onChange(city);
+                                form.setValue("originState", state);
+                              } else {
+                                // Caso tenha apenas a cidade
+                                field.onChange(value);
+                              }
+                            }}
+                            placeholder="Digite a cidade e estado (ex: Contagem - MG)"
+                            errorMessage={form.formState.errors.origin?.message}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
 
                 {/* Multiple Destinations Checkbox */}
@@ -588,47 +588,44 @@ export default function FreightForm() {
 
                 {/* Primary Destination */}
                 {!hasMultipleDestinations ? (
-                  <>
-                    <FormField
-                      control={form.control}
-                      name="destinationState"
-                      render={({ field }) => (
+                  <FormField
+                    control={form.control}
+                    name="destination"
+                    render={({ field }) => {
+                      // Criar um string combinado para exibição se o formulário já tem data
+                      let combinedValue = field.value || "";
+                      const destinationState = form.watch("destinationState");
+                      
+                      if (field.value && destinationState && !combinedValue.includes(" - ")) {
+                        combinedValue = `${field.value} - ${destinationState}`;
+                      }
+                      
+                      return (
                         <FormItem>
-                          <FormLabel>Estado de Destino</FormLabel>
+                          <FormLabel>Destino</FormLabel>
                           <FormControl>
-                            <StateSelect
-                              value={field.value}
-                              onChange={field.onChange}
-                              placeholder="Selecione o estado de destino"
-                              errorMessage={form.formState.errors.destinationState?.message}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="destination"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Cidade de Destino</FormLabel>
-                          <FormControl>
-                            <CitySelect
-                              state={form.watch("destinationState")}
-                              value={field.value}
-                              onChange={field.onChange}
-                              placeholder="Selecione a cidade de destino"
-                              disabled={!form.watch("destinationState")}
+                            <LocationInput
+                              value={combinedValue}
+                              onChange={(value) => {
+                                // Se o valor contiver a formatação Cidade - UF
+                                if (value.includes(" - ")) {
+                                  const [city, state] = value.split(" - ");
+                                  field.onChange(city);
+                                  form.setValue("destinationState", state);
+                                } else {
+                                  // Caso tenha apenas a cidade
+                                  field.onChange(value);
+                                }
+                              }}
+                              placeholder="Digite a cidade e estado (ex: Belo Horizonte - MG)"
                               errorMessage={form.formState.errors.destination?.message}
                             />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
-                      )}
-                    />
-                  </>
+                      );
+                    }}
+                  />
                 ) : (
                   <div className="col-span-full">
                     <div className="flex justify-between items-center mb-4">
@@ -652,22 +649,22 @@ export default function FreightForm() {
                             key={index} 
                             className="grid grid-cols-1 md:grid-cols-5 gap-4 p-4 border rounded-md bg-slate-50 dark:bg-slate-800"
                           >
-                            <div className="md:col-span-2">
-                              <FormLabel>Estado</FormLabel>
-                              <StateSelect
-                                value={dest.destinationState}
-                                onChange={(value) => updateDestination(index, 'destinationState', value)}
-                                placeholder="Selecione o estado"
-                              />
-                            </div>
-                            <div className="md:col-span-2">
-                              <FormLabel>Cidade</FormLabel>
-                              <CitySelect
-                                state={dest.destinationState}
-                                value={dest.destination}
-                                onChange={(value) => updateDestination(index, 'destination', value)}
-                                placeholder="Selecione a cidade de destino"
-                                disabled={!dest.destinationState}
+                            <div className="md:col-span-4">
+                              <FormLabel>Destino</FormLabel>
+                              <LocationInput
+                                value={dest.destination && dest.destinationState ? `${dest.destination} - ${dest.destinationState}` : ""}
+                                onChange={(value) => {
+                                  // Se o valor contiver a formatação Cidade - UF
+                                  if (value.includes(" - ")) {
+                                    const [city, state] = value.split(" - ");
+                                    updateDestination(index, 'destination', city);
+                                    updateDestination(index, 'destinationState', state);
+                                  } else {
+                                    // Caso tenha apenas a cidade
+                                    updateDestination(index, 'destination', value);
+                                  }
+                                }}
+                                placeholder="Digite a cidade e estado (ex: São Paulo - SP)"
                               />
                             </div>
                             <div className="flex items-end justify-end h-full md:col-span-1">
