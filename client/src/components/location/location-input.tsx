@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { FormControl } from "@/components/ui/form";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface LocationInputProps {
@@ -47,6 +47,28 @@ const BRAZILIAN_STATES = [
   { value: "TO", label: "Tocantins" }
 ];
 
+// Interface para os dados da cidade retornados da API
+interface IbgeCity {
+  id: number;
+  nome: string;
+  microrregiao: {
+    mesorregiao: {
+      UF: {
+        sigla: string;
+      }
+    }
+  }
+}
+
+// Interface para sugestões no formato que queremos exibir
+interface CitySuggestion {
+  id: number;
+  name: string;
+  fullName: string;
+  state: string;
+  displayText: string;
+}
+
 const LocationInput: React.FC<LocationInputProps> = ({
   value,
   onChange,
@@ -56,7 +78,8 @@ const LocationInput: React.FC<LocationInputProps> = ({
   onStateChange,
   onCityChange
 }) => {
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [citySuggestions, setCitySuggestions] = useState<CitySuggestion[]>([]);
+  const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -74,71 +97,65 @@ const LocationInput: React.FC<LocationInputProps> = ({
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     onChange(newValue);
+    setSearchTerm(newValue);
     
-    // Se o usuário está digitando um estado, mostrar sugestões
-    if (newValue.includes(" - ") || newValue.length >= 3) {
-      generateSuggestions(newValue);
+    if (newValue.length >= 3) {
+      searchCities(newValue);
     } else {
-      setSuggestions([]);
+      setCitySuggestions([]);
     }
   };
 
-  // Gerar sugestões com base na entrada
-  const generateSuggestions = (input: string) => {
-    if (input.length < 3) return;
-
-    // Se já tem o formato "Cidade - UF", sugerir estados
-    if (input.includes(" - ")) {
-      const [city, statePrefix] = input.split(" - ");
+  // Buscar cidades da API do IBGE
+  const searchCities = async (query: string) => {
+    if (query.length < 3) return;
+    setLoading(true);
+    
+    try {
+      // Remover " - UF" para buscar apenas pelo nome da cidade
+      const searchQuery = query.includes(" - ") ? query.split(" - ")[0] : query;
       
-      if (statePrefix && statePrefix.length > 0) {
-        const matchingStates = BRAZILIAN_STATES.filter(state => 
-          state.value.startsWith(statePrefix.toUpperCase()) || 
-          state.label.toLowerCase().startsWith(statePrefix.toLowerCase())
-        );
+      const response = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/municipios?nome=${searchQuery}`);
+      
+      if (response.ok) {
+        const cities: IbgeCity[] = await response.json();
         
-        const formattedSuggestions = matchingStates.map(state => `${city} - ${state.value}`);
-        setSuggestions(formattedSuggestions);
+        // Formatar os resultados para exibição
+        const suggestions: CitySuggestion[] = cities.map(city => {
+          const state = city.microrregiao.mesorregiao.UF.sigla;
+          return {
+            id: city.id,
+            name: city.nome,
+            fullName: `${city.nome} - ${state}`,
+            state,
+            displayText: `${city.nome} - ${state}`
+          };
+        });
+        
+        setCitySuggestions(suggestions);
       }
+    } catch (error) {
+      console.error("Erro ao buscar cidades:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   // Selecionar uma sugestão
-  const selectSuggestion = (suggestion: string) => {
-    onChange(suggestion);
-    setSuggestions([]);
+  const selectSuggestion = (suggestion: CitySuggestion) => {
+    onChange(suggestion.fullName);
     setOpen(false);
     
-    // Extrair cidade e estado para callbacks
-    if (suggestion.includes(" - ")) {
-      const [city, state] = suggestion.split(" - ");
-      if (onCityChange) onCityChange(city);
-      if (onStateChange) onStateChange(state);
-    }
+    if (onCityChange) onCityChange(suggestion.name);
+    if (onStateChange) onStateChange(suggestion.state);
   };
 
-  // Atualizar sugestões quando o usuário digita no campo de pesquisa do popover
+  // Buscar cidades quando o usuário digita no campo de pesquisa do popover
   useEffect(() => {
-    if (searchTerm.length >= 2) {
-      const matchingStates = BRAZILIAN_STATES.filter(state => 
-        state.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        state.value.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      
-      let newSuggestions: string[] = [];
-      
-      // Se o valor atual tem uma cidade, manter a cidade e sugerir diferentes estados
-      if (value && value.includes(" - ")) {
-        const [city] = value.split(" - ");
-        newSuggestions = matchingStates.map(state => `${city} - ${state.value}`);
-      } else {
-        // Se não tem cidade ainda, criar sugestões com a entrada atual como cidade
-        newSuggestions = matchingStates.map(state => `${searchTerm} - ${state.value}`);
-      }
-      
-      setSuggestions(newSuggestions);
+    if (searchTerm.length >= 3) {
+      searchCities(searchTerm);
     }
-  }, [searchTerm, value]);
+  }, [searchTerm]);
 
   return (
     <div className="w-full">
@@ -159,53 +176,63 @@ const LocationInput: React.FC<LocationInputProps> = ({
             </div>
           </FormControl>
         </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-0" align="start">
+        <PopoverContent className="w-[350px] p-0" align="start">
           <Command>
             <CommandInput
-              placeholder="Pesquisar cidade ou estado..."
+              placeholder="Digite pelo menos 3 letras para buscar..."
+              value={searchTerm}
               onValueChange={setSearchTerm}
             />
             <CommandList>
-              <CommandEmpty>Nenhuma sugestão encontrada</CommandEmpty>
-              <CommandGroup heading="Sugestões">
-                {suggestions.length > 0 ? (
-                  suggestions.map((suggestion) => (
+              {loading && <div className="p-2 text-center">Buscando...</div>}
+              
+              <CommandEmpty>Nenhuma cidade encontrada</CommandEmpty>
+              
+              {citySuggestions.length > 0 && (
+                <CommandGroup heading="Cidades">
+                  {citySuggestions.map((suggestion) => (
                     <CommandItem
-                      key={suggestion}
-                      value={suggestion}
+                      key={suggestion.id}
+                      value={suggestion.fullName}
                       onSelect={() => selectSuggestion(suggestion)}
+                    >
+                      <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <span>{suggestion.name}</span>
+                      <span className="ml-1 text-muted-foreground">{suggestion.state && ` - ${suggestion.state}`}</span>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              )}
+              
+              {citySuggestions.length === 0 && searchTerm.length < 3 && (
+                <CommandGroup heading="Estados">
+                  {BRAZILIAN_STATES.map((state) => (
+                    <CommandItem
+                      key={state.value}
+                      value={state.value}
+                      onSelect={() => {
+                        const cityName = searchTerm || "Cidade";
+                        const suggestion: CitySuggestion = {
+                          id: 0,
+                          name: cityName,
+                          fullName: `${cityName} - ${state.value}`,
+                          state: state.value,
+                          displayText: `${cityName} - ${state.value}`
+                        };
+                        selectSuggestion(suggestion);
+                      }}
                     >
                       <Check
                         className={cn(
                           "mr-2 h-4 w-4",
-                          value === suggestion ? "opacity-100" : "opacity-0"
+                          value.endsWith(` - ${state.value}`) ? "opacity-100" : "opacity-0"
                         )}
                       />
-                      {suggestion}
+                      {state.label} - {state.value}
                     </CommandItem>
-                  ))
-                ) : (
-                  BRAZILIAN_STATES.map((state) => {
-                    const cityPrefix = value.split(" - ")[0] || "";
-                    const suggestion = `${cityPrefix} - ${state.value}`;
-                    return (
-                      <CommandItem
-                        key={state.value}
-                        value={suggestion}
-                        onSelect={() => selectSuggestion(suggestion)}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            value === suggestion ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                        {suggestion}
-                      </CommandItem>
-                    );
-                  })
-                )}
-              </CommandGroup>
+                  ))}
+                </CommandGroup>
+              )}
             </CommandList>
           </Command>
         </PopoverContent>
