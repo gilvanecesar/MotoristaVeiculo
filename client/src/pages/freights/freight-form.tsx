@@ -62,7 +62,6 @@ const freightSchema = insertFreightSchema
     expirationDate: true,
   })
   .extend({
-    hasMultipleDestinations: z.boolean().optional().default(false),
     destinationState: z.string().min(2, "Selecione o estado de destino").optional(),
     destination: z.string().min(2, "Selecione a cidade de destino").optional(),
     cargoWeight: z.string().refine(
@@ -76,14 +75,12 @@ const freightSchema = insertFreightSchema
   })
   .refine(
     (data) => {
-      // Se não tiver múltiplos destinos, verificar se o destino único foi informado
-      if (!data.hasMultipleDestinations) {
-        return data.destinationState && data.destination;
-      }
-      return true;
+      // Verificar se existe pelo menos um destino informado
+      // Este código será modificado para verificar o array de destinations mais tarde
+      return data.destinationState && data.destination;
     },
     {
-      message: "Informe o destino ou selecione a opção de múltiplos destinos",
+      message: "Informe o destino principal ou adicione destinos adicionais",
       path: ["destination"],
     }
   );
@@ -142,7 +139,6 @@ export default function FreightForm() {
     status: "aberto",
     contactName: "",
     contactPhone: "",
-    hasMultipleDestinations: false,
   };
 
   const form = useForm<FreightFormValues>({
@@ -150,7 +146,8 @@ export default function FreightForm() {
     defaultValues,
   });
 
-  const hasMultipleDestinations = form.watch("hasMultipleDestinations");
+  // Agora sempre tratamos como se pudesse ter múltiplos destinos
+  const hasMultipleDestinations = true;
 
   // Criar uma função para adicionar destinos
   const addDestination = () => {
@@ -230,7 +227,6 @@ export default function FreightForm() {
               cargoWeight: freight.cargoWeight,
               freightValue: freight.freightValue,
               vehicleCategory: getVehicleCategory(freight.vehicleType),
-              hasMultipleDestinations: freight.destinations && freight.destinations.length > 0,
             });
 
             // Configurar tipos de veículos
@@ -327,18 +323,8 @@ export default function FreightForm() {
         return;
       }
 
-      // Verificar se os destinos estão preenchidos corretamente quando for múltiplos destinos
-      if (data.hasMultipleDestinations && destinations.length === 0) {
-        toast({
-          title: "Erro no formulário",
-          description: "Você marcou múltiplos destinos, mas não adicionou nenhum. Adicione pelo menos um destino.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // Verificar se todos os destinos têm cidade e estado preenchidos
-      if (data.hasMultipleDestinations) {
+      // Verificar se todos os destinos adicionais têm cidade e estado preenchidos
+      if (destinations.length > 0) {
         const incompleteDestination = destinations.find(dest => !dest.destination || !dest.destinationState);
         if (incompleteDestination) {
           toast({
@@ -378,24 +364,22 @@ export default function FreightForm() {
         );
 
         // Handle destinations separately for editing
-        if (data.hasMultipleDestinations) {
-          // Remove existing destinations first (will re-add them)
-          if (freightDestinations && freightDestinations.length > 0) {
-            for (const dest of freightDestinations) {
-              await fetch(`/api/freight-destinations/${dest.id}`, {
-                method: 'DELETE',
-              });
-            }
+        // Remove existing destinations first (will re-add them)
+        if (freightDestinations && freightDestinations.length > 0) {
+          for (const dest of freightDestinations) {
+            await fetch(`/api/freight-destinations/${dest.id}`, {
+              method: 'DELETE',
+            });
           }
+        }
 
-          // Add new destinations
-          for (const dest of destinations) {
-            await apiRequest(
-              'POST',
-              `/api/freight-destinations`,
-              { ...dest, freightId }
-            );
-          }
+        // Add new destinations
+        for (const dest of destinations) {
+          await apiRequest(
+            'POST',
+            `/api/freight-destinations`,
+            { ...dest, freightId }
+          );
         }
       } else {
         response = await apiRequest(
@@ -405,7 +389,7 @@ export default function FreightForm() {
         );
 
         // Handle destinations separately for new freight
-        if (data.hasMultipleDestinations && response) {
+        if (response && destinations.length > 0) {
           for (const dest of destinations) {
             await apiRequest(
               'POST',
@@ -598,30 +582,19 @@ export default function FreightForm() {
                   }}
                 />
 
-                {/* Multiple Destinations Checkbox */}
-                <FormField
-                  control={form.control}
-                  name="hasMultipleDestinations"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 col-span-full">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>Frete com múltiplos destinos</FormLabel>
-                        <FormDescription>
-                          Marque esta opção se o frete possuir mais de um destino
-                        </FormDescription>
-                      </div>
-                    </FormItem>
-                  )}
-                />
+                {/* Multiple Destinations Checkbox foi removido para simplificar a interface */}
 
-                {/* Primary Destination */}
-                {!hasMultipleDestinations ? (
+                {/* Destination Section - Always show destinations section */}
+                <div className="col-span-full">
+                  <div className="flex justify-between items-center mb-4">
+                    <h4 className="text-md font-medium">Destinos</h4>
+                    <Button type="button" variant="outline" size="sm" onClick={addDestination}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Adicionar Destino
+                    </Button>
+                  </div>
+                  
+                  {/* Primary Destination - Always show this */}
                   <FormField
                     control={form.control}
                     name="destination"
@@ -635,8 +608,8 @@ export default function FreightForm() {
                       }
                       
                       return (
-                        <FormItem>
-                          <FormLabel>Destino</FormLabel>
+                        <FormItem className="mb-4">
+                          <FormLabel>Destino Principal</FormLabel>
                           <FormControl>
                             <LocationInput
                               value={combinedValue}
@@ -660,71 +633,57 @@ export default function FreightForm() {
                       );
                     }}
                   />
-                ) : (
-                  <div className="col-span-full">
-                    <div className="flex justify-between items-center mb-4">
-                      <h4 className="text-md font-medium">Destinos</h4>
-                      <Button type="button" variant="outline" size="sm" onClick={addDestination}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Adicionar Destino
-                      </Button>
-                    </div>
-                    
-                    {destinations.length === 0 ? (
-                      <div className="text-center py-6 border rounded-md bg-slate-50 dark:bg-slate-800">
-                        <p className="text-sm text-slate-500">
-                          Nenhum destino adicionado. Clique no botão acima para adicionar.
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {destinations.map((dest, index) => (
-                          <div 
-                            key={index} 
-                            className="grid grid-cols-1 md:grid-cols-5 gap-4 p-4 border rounded-md bg-slate-50 dark:bg-slate-800"
-                          >
-                            <div className="md:col-span-4">
-                              <FormLabel>Destino</FormLabel>
-                              <LocationInput
-                                value={dest.destination && dest.destinationState ? `${dest.destination} - ${dest.destinationState}` : ""}
-                                onChange={(value) => {
-                                  console.log(`Destino ${index} alterado para: ${value}`);
-                                  // Se o valor contiver a formatação Cidade - UF
-                                  if (value.includes(" - ")) {
-                                    const [city, state] = value.split(" - ");
-                                    updateDestination(index, 'destination', city);
-                                    updateDestination(index, 'destinationState', state);
-                                    console.log(`Destino ${index} separado: cidade=${city}, estado=${state}`);
-                                  } else {
-                                    // Caso tenha apenas a cidade
-                                    updateDestination(index, 'destination', value);
-                                    // Limpar o estado se não for fornecido
-                                    updateDestination(index, 'destinationState', '');
-                                    console.log(`Destino ${index} sem estado: cidade=${value}`);
-                                  }
-                                }}
-                                placeholder="Digite a cidade e estado (ex: São Paulo - SP)"
-                                errorMessage={!dest.destination || !dest.destinationState ? "Selecione uma cidade com estado" : ""}
-                                key={`dest-${dest.id || index}`} // Adiciona uma key estável
-                              />
-                            </div>
-                            <div className="flex items-end justify-end h-full md:col-span-1">
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => removeDestination(index)}
-                                className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                              >
-                                <Trash className="h-4 w-4" />
-                              </Button>
-                            </div>
+                  
+                  {/* Additional Destinations */}
+                  {destinations.length > 0 && (
+                    <div className="space-y-4 mt-4">
+                      <h5 className="text-sm font-medium text-gray-500">Destinos Adicionais</h5>
+                      {destinations.map((dest, index) => (
+                        <div 
+                          key={dest.id || index} 
+                          className="grid grid-cols-1 md:grid-cols-5 gap-4 p-4 border rounded-md bg-slate-50 dark:bg-slate-800"
+                        >
+                          <div className="md:col-span-4">
+                            <FormLabel>Destino {index + 1}</FormLabel>
+                            <LocationInput
+                              value={dest.destination && dest.destinationState ? `${dest.destination} - ${dest.destinationState}` : ""}
+                              onChange={(value) => {
+                                console.log(`Destino ${index} alterado para: ${value}`);
+                                // Se o valor contiver a formatação Cidade - UF
+                                if (value.includes(" - ")) {
+                                  const [city, state] = value.split(" - ");
+                                  updateDestination(index, 'destination', city);
+                                  updateDestination(index, 'destinationState', state);
+                                  console.log(`Destino ${index} separado: cidade=${city}, estado=${state}`);
+                                } else {
+                                  // Caso tenha apenas a cidade
+                                  updateDestination(index, 'destination', value);
+                                  // Limpar o estado se não for fornecido
+                                  updateDestination(index, 'destinationState', '');
+                                  console.log(`Destino ${index} sem estado: cidade=${value}`);
+                                }
+                              }}
+                              placeholder="Digite a cidade e estado (ex: São Paulo - SP)"
+                              errorMessage={!dest.destination || !dest.destinationState ? "Selecione uma cidade com estado" : ""}
+                              key={`dest-${dest.id || index}`} // Adiciona uma key estável
+                            />
                           </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
+                          <div className="flex items-end justify-end h-full md:col-span-1">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeDestination(index)}
+                              className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                            >
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <Separator className="my-4" />
