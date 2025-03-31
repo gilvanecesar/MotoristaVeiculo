@@ -84,19 +84,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return true;
     }
     
-    // Para usuários comuns, verifica se é o dono do frete
-    if (!currentClient) {
-      console.log("Não há cliente atual logado, negando acesso");
-      return false;
-    }
-    if (clientId === null) {
-      console.log("Frete sem cliente associado, permitindo acesso");
-      return true; // Fretes sem cliente associado podem ser editados por qualquer cliente logado
+    // Verifica se o usuário atual tem clientId (está associado a um cliente)
+    if (user && user.clientId) {
+      console.log(`Usuário tem clientId: ${user.clientId}`);
+      
+      // Se o frete não tem cliente associado (clientId null), qualquer usuário autenticado pode editar
+      if (clientId === null) {
+        console.log("Frete sem cliente associado, permitindo acesso");
+        return true;
+      }
+      
+      // Verifica se o clientId do usuário é o mesmo do frete
+      const isAuthorized = user.clientId === clientId;
+      console.log(`Verificando autorização: Cliente do usuário ID ${user.clientId}, ClienteID do frete ${clientId}, Autorizado: ${isAuthorized}`);
+      return isAuthorized;
     }
     
-    const isAuthorized = currentClient.id === clientId;
-    console.log(`Verificando autorização: Cliente atual ID ${currentClient.id}, ClienteID do frete ${clientId}, Autorizado: ${isAuthorized}`);
-    return isAuthorized;
+    // Para compatibilidade, também verifica o currentClient do localStorage (caso ainda esteja em uso)
+    if (currentClient) {
+      if (clientId === null) {
+        console.log("Frete sem cliente associado, permitindo acesso");
+        return true;
+      }
+      
+      const isAuthorized = currentClient.id === clientId;
+      console.log(`Verificando autorização via localStorage: Cliente atual ID ${currentClient.id}, ClienteID do frete ${clientId}, Autorizado: ${isAuthorized}`);
+      return isAuthorized;
+    }
+    
+    console.log("Não há cliente associado ao usuário, negando acesso");
+    return false;
   };
 
   return (

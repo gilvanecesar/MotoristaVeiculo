@@ -87,6 +87,7 @@ export async function hasFreightAccess(req: Request, res: Response, next: NextFu
 
   // Admin sempre tem acesso
   if (req.user?.profileType?.toLowerCase() === "admin") {
+    console.log(`[hasFreightAccess] Usuário admin (${req.user.id}) com acesso autorizado`);
     return next();
   }
 
@@ -95,20 +96,29 @@ export async function hasFreightAccess(req: Request, res: Response, next: NextFu
   
   // Se o frete não existir, retorna 404
   if (!freight) {
+    console.log(`[hasFreightAccess] Frete ${freightId} não encontrado`);
     return res.status(404).json({ message: "Frete não encontrado" });
   }
   
   // Fretes sem cliente associado podem ser editados por qualquer usuário autenticado
   if (freight.clientId === null) {
+    console.log(`[hasFreightAccess] Frete ${freightId} sem cliente associado, acesso permitido para usuário ${req.user.id}`);
     return next();
+  }
+  
+  // Verifica se o usuário tem um cliente associado
+  if (req.user?.clientId === null || req.user?.clientId === undefined) {
+    console.log(`[hasFreightAccess] Usuário ${req.user.id} não tem cliente associado, negando acesso`);
+    return res.status(403).json({ message: "Você não tem um cliente associado ao seu perfil" });
   }
   
   // Verifica se o frete pertence ao cliente do usuário
-  // Fretes sem cliente podem ser acessados por qualquer usuário
-  if (freight.clientId === null || req.user?.clientId === freight.clientId) {
+  if (req.user?.clientId === freight.clientId) {
+    console.log(`[hasFreightAccess] Frete ${freightId} pertence ao cliente ${freight.clientId} do usuário ${req.user.id}, acesso permitido`);
     return next();
   }
   
+  console.log(`[hasFreightAccess] Acesso negado para usuário ${req.user.id} ao frete ${freightId} do cliente ${freight.clientId}`);
   res.status(403).json({ message: "Acesso não autorizado" });
 }
 
