@@ -63,8 +63,14 @@ const freightSchema = insertFreightSchema
     hasMultipleDestinations: z.boolean().optional().default(false),
     destinationState: z.string().min(2, "Selecione o estado de destino").optional(),
     destination: z.string().min(2, "Selecione a cidade de destino").optional(),
-    cargoWeight: z.string().or(z.number().positive()),
-    freightValue: z.string().or(z.number().positive()),
+    cargoWeight: z.string().refine(
+      (val) => !val || !isNaN(parseFloat(val)),
+      { message: "Peso da carga deve ser um número válido" }
+    ),
+    freightValue: z.string().refine(
+      (val) => !val || !isNaN(parseFloat(val)),
+      { message: "Valor do frete deve ser um número válido" }
+    ),
   })
   .refine(
     (data) => {
@@ -884,19 +890,17 @@ export default function FreightForm() {
                       <FormLabel>Peso da Carga (toneladas)</FormLabel>
                       <FormControl>
                         <Input 
-                          type="number" 
-                          step="0.01"
+                          type="text" 
                           placeholder="0,00" 
                           {...field}
                           value={field.value || ""}
                           onChange={(e) => {
                             const value = e.target.value;
-                            if (value === '') {
-                              field.onChange('');
-                            } else {
-                              const numValue = parseFloat(value);
-                              field.onChange(isNaN(numValue) ? '' : numValue);
-                            }
+                            // Remove caracteres não numéricos, exceto ponto ou vírgula
+                            const cleanValue = value.replace(/[^\d.,]/g, '');
+                            // Substitui vírgula por ponto para cálculos em JavaScript
+                            const normalizedValue = cleanValue.replace(/,/g, '.');
+                            field.onChange(normalizedValue);
                           }}
                         />
                       </FormControl>
@@ -968,19 +972,17 @@ export default function FreightForm() {
                       <FormLabel>Valor do Frete (R$)</FormLabel>
                       <FormControl>
                         <Input 
-                          type="number" 
-                          step="0.01"
+                          type="text" 
                           placeholder="0,00" 
                           {...field}
                           value={field.value || ""}
                           onChange={(e) => {
                             const value = e.target.value;
-                            if (value === '') {
-                              field.onChange('');
-                            } else {
-                              const numValue = parseFloat(value);
-                              field.onChange(isNaN(numValue) ? '' : numValue);
-                            }
+                            // Remove caracteres não numéricos, exceto ponto ou vírgula
+                            const cleanValue = value.replace(/[^\d.,]/g, '');
+                            // Substitui vírgula por ponto para cálculos em JavaScript
+                            const normalizedValue = cleanValue.replace(/,/g, '.');
+                            field.onChange(normalizedValue);
                           }}
                         />
                       </FormControl>

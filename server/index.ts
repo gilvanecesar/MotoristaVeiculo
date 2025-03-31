@@ -40,10 +40,15 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Exibir informações de ambiente para debug
+  log(`Iniciando servidor no ambiente: ${process.env.NODE_ENV || 'development'}`);
+  log(`Diretório atual: ${process.cwd()}`);
+  
   try {
     // Inicializar serviço de email
     import('./email-service').then(({ initEmailService }) => {
       initEmailService();
+      log("Serviço de email inicializado com sucesso");
     }).catch(error => {
       console.error("Erro ao inicializar serviço de email:", error);
     });
@@ -54,6 +59,7 @@ app.use((req, res, next) => {
     log("Migrações aplicadas com sucesso!");
   } catch (error) {
     console.error("Erro ao aplicar migrações:", error);
+    console.error(error);
     process.exit(1);
   }
   
@@ -64,8 +70,22 @@ app.use((req, res, next) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
-    res.status(status).json({ message });
-    throw err;
+    console.error(`[ERROR] ${status} - ${message}`);
+    console.error(err);
+    
+    // Em produção não enviamos detalhes do erro para o cliente
+    if (process.env.NODE_ENV === 'production') {
+      res.status(status).json({ 
+        message: status === 500 ? "Erro interno do servidor" : message 
+      });
+    } else {
+      // Em desenvolvimento enviamos mais detalhes para facilitar o debug
+      res.status(status).json({ 
+        message,
+        stack: err.stack,
+        details: err
+      });
+    }
   });
 
   // importantly only setup vite in development and after

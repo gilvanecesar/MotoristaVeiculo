@@ -9,6 +9,21 @@ export function isAuthenticated(req: Request, res: Response, next: NextFunction)
   res.status(401).json({ message: "Não autenticado" });
 }
 
+// Middleware para verificar se o usuário está ativo
+export function isActive(req: Request, res: Response, next: NextFunction) {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Não autenticado" });
+  }
+  
+  if (req.user?.isActive === false) {
+    return res.status(403).json({ 
+      message: "Sua conta está desativada. Entre em contato com o administrador para mais informações."
+    });
+  }
+  
+  return next();
+}
+
 // Middleware para verificar se o usuário é admin
 export function isAdmin(req: Request, res: Response, next: NextFunction) {
   // Verifica se o profileType é "admin" ou "ADMIN" (case insensitive)

@@ -21,6 +21,7 @@ declare global {
       providerId: string | null;
       avatarUrl: string | null;
       isVerified: boolean;
+      isActive: boolean;
       createdAt: Date;
       lastLogin: Date | null;
       driverId?: number | null;
@@ -52,6 +53,9 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
+  console.log(`Configurando autenticação no ambiente: ${process.env.NODE_ENV || 'development'}`);
+  
+  const isProd = process.env.NODE_ENV === 'production';
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "querofretes-secret-key",
     resave: false,
@@ -59,6 +63,9 @@ export function setupAuth(app: Express) {
     store: storage.sessionStore,
     cookie: {
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 dias
+      secure: isProd, // Em produção, apenas usa conexões HTTPS
+      httpOnly: true, // Impede acesso via JavaScript
+      sameSite: isProd ? 'none' : 'lax' // Em produção, permite cookies em cross-site requests
     }
   };
 
@@ -78,6 +85,14 @@ export function setupAuth(app: Express) {
         if (!user || !user.password || !(await comparePasswords(password, user.password))) {
           return done(null, false, { message: "Credenciais inválidas" });
         }
+        
+        // Verifica se o usuário está ativo
+        if (user.isActive === false) {
+          return done(null, false, { 
+            message: "Sua conta está desativada. Entre em contato com o administrador para mais informações." 
+          });
+        }
+        
         // Atualiza último login
         await storage.updateLastLogin(user.id);
         return done(null, user);
@@ -94,8 +109,15 @@ export function setupAuth(app: Express) {
   passport.deserializeUser(async (id: number, done) => {
     try {
       const user = await storage.getUserById(id);
+      
+      // Se o usuário não existir mais ou estiver inativo, consideramos como não autenticado
+      if (!user || user.isActive === false) {
+        return done(null, false);
+      }
+      
       done(null, user);
     } catch (error) {
+      console.error("Erro ao deserializar usuário:", error);
       done(error, null);
     }
   });
@@ -119,6 +141,7 @@ export function setupAuth(app: Express) {
         profileType,
         authProvider: "local",
         isVerified: false,
+        isActive: true,
         avatarUrl: null,
         providerId: null
       });

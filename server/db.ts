@@ -10,16 +10,30 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-const pool = new Pool({
+// Configurações diferentes para desenvolvimento e produção
+const poolConfig = {
   connectionString: process.env.DATABASE_URL,
   max: 20,
   connectionTimeoutMillis: 5000,
   idleTimeoutMillis: 30000,
-  ssl: { 
-    rejectUnauthorized: false,
-    sslmode: 'require' 
-  },
-});
+  // Em produção, pode ser necessário configurar SSL de maneira diferente
+  ...(process.env.NODE_ENV === 'production' 
+    ? {
+        ssl: { 
+          rejectUnauthorized: false
+        },
+      }
+    : {
+        ssl: { 
+          rejectUnauthorized: false,
+          sslmode: 'require' 
+        },
+      }
+  )
+};
+
+console.log(`Conectando ao banco de dados no ambiente: ${process.env.NODE_ENV || 'development'}`);
+const pool = new Pool(poolConfig);
 
 export const db = drizzle(pool, { schema });
 export { pool };
