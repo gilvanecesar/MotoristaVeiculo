@@ -889,7 +889,15 @@ export default function FreightForm() {
                           placeholder="0,00" 
                           {...field}
                           value={field.value || ""}
-                          onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === '') {
+                              field.onChange('');
+                            } else {
+                              const numValue = parseFloat(value);
+                              field.onChange(isNaN(numValue) ? '' : numValue);
+                            }
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -965,7 +973,15 @@ export default function FreightForm() {
                           placeholder="0,00" 
                           {...field}
                           value={field.value || ""}
-                          onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === '') {
+                              field.onChange('');
+                            } else {
+                              const numValue = parseFloat(value);
+                              field.onChange(isNaN(numValue) ? '' : numValue);
+                            }
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
