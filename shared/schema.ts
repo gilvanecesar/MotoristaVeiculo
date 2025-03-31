@@ -152,7 +152,7 @@ export const clients = pgTable("clients", {
 // Tabela de fretes
 export const freights = pgTable("freights", {
   id: serial("id").primaryKey(),
-  clientId: integer("client_id").references(() => clients.id),
+  clientId: integer("client_id").references(() => clients.id).notNull(),
   origin: text("origin").notNull(),
   originState: text("origin_state").notNull(),
   destination: text("destination").notNull(),
@@ -275,7 +275,7 @@ export const clientValidator = insertClientSchema.extend({
 });
 
 export const freightValidator = insertFreightSchema.extend({
-  clientId: z.coerce.number().nonnegative().nullable().default(0),
+  clientId: z.coerce.number().nonnegative().default(0),
   cargoType: z.enum([CARGO_TYPES.COMPLETA, CARGO_TYPES.COMPLEMENTO]),
   needsTarp: z.enum([TARP_OPTIONS.SIM, TARP_OPTIONS.NAO]),
   tollOption: z.enum([TOLL_OPTIONS.INCLUSO, TOLL_OPTIONS.A_PARTE]),

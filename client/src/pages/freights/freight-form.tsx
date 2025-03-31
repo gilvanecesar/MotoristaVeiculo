@@ -499,8 +499,8 @@ export default function FreightForm() {
                     <FormItem>
                       <FormLabel>Cliente</FormLabel>
                       <Select
-                        value={field.value?.toString() || ""}
-                        onValueChange={(value) => field.onChange(value !== "null" ? parseInt(value) : null)}
+                        value={field.value?.toString() || "0"}
+                        onValueChange={(value) => field.onChange(parseInt(value) || 0)}
                         disabled={(currentClient !== null || user?.clientId !== null) && !isEditing}
                       >
                         <FormControl>
