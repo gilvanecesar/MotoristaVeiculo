@@ -80,13 +80,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isClientAuthorized = (clientId: number | null): boolean => {
     // Verifica se o usuário é admin usando o contexto de autenticação
     if (user && user.profileType && user.profileType.toLowerCase() === 'admin') {
+      console.log("Usuário é admin, autorizando acesso");
       return true;
     }
     
     // Para usuários comuns, verifica se é o dono do frete
-    if (!currentClient) return false;
-    if (clientId === null) return true; // Fretes sem cliente associado podem ser editados por qualquer cliente logado
-    return currentClient.id === clientId;
+    if (!currentClient) {
+      console.log("Não há cliente atual logado, negando acesso");
+      return false;
+    }
+    if (clientId === null) {
+      console.log("Frete sem cliente associado, permitindo acesso");
+      return true; // Fretes sem cliente associado podem ser editados por qualquer cliente logado
+    }
+    
+    const isAuthorized = currentClient.id === clientId;
+    console.log(`Verificando autorização: Cliente atual ID ${currentClient.id}, ClienteID do frete ${clientId}, Autorizado: ${isAuthorized}`);
+    return isAuthorized;
   };
 
   return (

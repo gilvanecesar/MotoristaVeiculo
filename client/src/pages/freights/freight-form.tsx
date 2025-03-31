@@ -111,6 +111,7 @@ export default function FreightForm() {
   const freightId = parseInt(params.id || "0");
   const [destinations, setDestinations] = useState<DestinationFormValues[]>([]);
   const [selectedVehicleTypes, setSelectedVehicleTypes] = useState<string[]>([]);
+  const [selectedBodyTypes, setSelectedBodyTypes] = useState<string[]>([]);
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { currentClient } = useClientAuth();
@@ -204,6 +205,16 @@ export default function FreightForm() {
         setSelectedVehicleTypes(vehicleTypes);
         console.log("Tipos de veículos selecionados:", vehicleTypes);
       }
+      
+      // Inicializar o tipo de carroceria
+      if (freight.bodyType) {
+        const bodyTypes = Array.isArray(freight.bodyType) 
+          ? freight.bodyType 
+          : [freight.bodyType];
+        
+        setSelectedBodyTypes(bodyTypes);
+        console.log("Tipos de carroceria selecionados:", bodyTypes);
+      }
     }
   }, [freight, isLoading, form]);
 
@@ -267,6 +278,16 @@ export default function FreightForm() {
       // mantendo compatibilidade com sistemas existentes que esperam um único tipo
       // Os outros tipos selecionados estão disponíveis no array selectedVehicleTypes se necessário
       
+      // Verificar se pelo menos um tipo de carroceria foi selecionado
+      if (selectedBodyTypes.length === 0) {
+        toast({
+          title: "Erro no formulário",
+          description: "É necessário selecionar pelo menos um tipo de carroceria",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Add destinations to the form data if has multiple destinations
       const submitData = {
         ...data,
@@ -278,7 +299,11 @@ export default function FreightForm() {
         // Usar o primeiro tipo de veículo selecionado como principal
         vehicleType: selectedVehicleTypes[0] || data.vehicleType,
         // Adicionar meta-informação com todos os veículos selecionados (como string separada por vírgula)
-        vehicleTypesSelected: selectedVehicleTypes.join(',')
+        vehicleTypesSelected: selectedVehicleTypes.join(','),
+        // Usar o primeiro tipo de carroceria selecionado como principal
+        bodyType: selectedBodyTypes[0] || data.bodyType,
+        // Adicionar meta-informação com todos os tipos de carroceria selecionados
+        bodyTypesSelected: selectedBodyTypes.join(',')
       };
 
       // For create or update
@@ -1092,62 +1117,59 @@ export default function FreightForm() {
                   </FormItem>
                 </div>
 
-                {/* Body Type */}
-                <FormField
-                  control={form.control}
-                  name="bodyType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tipo de Carroceria</FormLabel>
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o tipo" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value={BODY_TYPES.BAU}>
-                            {getBodyTypeDisplay(BODY_TYPES.BAU)}
-                          </SelectItem>
-                          <SelectItem value={BODY_TYPES.GRANELEIRA}>
-                            {getBodyTypeDisplay(BODY_TYPES.GRANELEIRA)}
-                          </SelectItem>
-                          <SelectItem value={BODY_TYPES.BASCULANTE}>
-                            {getBodyTypeDisplay(BODY_TYPES.BASCULANTE)}
-                          </SelectItem>
-                          <SelectItem value={BODY_TYPES.PLATAFORMA}>
-                            {getBodyTypeDisplay(BODY_TYPES.PLATAFORMA)}
-                          </SelectItem>
-                          <SelectItem value={BODY_TYPES.TANQUE}>
-                            {getBodyTypeDisplay(BODY_TYPES.TANQUE)}
-                          </SelectItem>
-                          <SelectItem value={BODY_TYPES.FRIGORIFICA}>
-                            {getBodyTypeDisplay(BODY_TYPES.FRIGORIFICA)}
-                          </SelectItem>
-                          <SelectItem value={BODY_TYPES.PORTA_CONTEINER}>
-                            {getBodyTypeDisplay(BODY_TYPES.PORTA_CONTEINER)}
-                          </SelectItem>
-                          <SelectItem value={BODY_TYPES.SIDER}>
-                            {getBodyTypeDisplay(BODY_TYPES.SIDER)}
-                          </SelectItem>
-                          <SelectItem value={BODY_TYPES.CACAMBA}>
-                            {getBodyTypeDisplay(BODY_TYPES.CACAMBA)}
-                          </SelectItem>
-                          <SelectItem value={BODY_TYPES.ABERTA}>
-                            {getBodyTypeDisplay(BODY_TYPES.ABERTA)}
-                          </SelectItem>
-                          <SelectItem value={BODY_TYPES.FECHADA}>
-                            {getBodyTypeDisplay(BODY_TYPES.FECHADA)}
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {/* Body Type - Multiple Selection */}
+                <div className="md:col-span-2">
+                  <FormItem>
+                    <FormLabel>Tipos de Carroceria</FormLabel>
+                    <div className="w-full border rounded-md p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                      {Object.entries(BODY_TYPES).map(([key, value]) => (
+                        <div key={key} className="flex items-center space-x-2">
+                          <Checkbox 
+                            id={`body-type-${key}`}
+                            checked={selectedBodyTypes.includes(value)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedBodyTypes(prev => [...prev, value]);
+                                form.setValue("bodyType", value); // Para compatibilidade
+                              } else {
+                                setSelectedBodyTypes(prev => prev.filter(t => t !== value));
+                                // Se removeu o que estava selecionado principal e ainda tem outros, seleciona o primeiro
+                                if (form.getValues("bodyType") === value && selectedBodyTypes.length > 1) {
+                                  const remaining = selectedBodyTypes.filter(t => t !== value);
+                                  form.setValue("bodyType", remaining[0]);
+                                }
+                              }
+                            }}
+                          />
+                          <label 
+                            htmlFor={`body-type-${key}`} 
+                            className="text-sm font-medium leading-none cursor-pointer"
+                          >
+                            {getBodyTypeDisplay(value)}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                    {form.formState.errors.bodyType && (
+                      <p className="text-sm font-medium text-destructive mt-2">
+                        {form.formState.errors.bodyType.message}
+                      </p>
+                    )}
+                    
+                    {selectedBodyTypes.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-sm text-gray-500 mb-1">Tipos de carroceria selecionados:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {selectedBodyTypes.map((type) => (
+                            <div key={type} className="bg-primary/10 text-primary rounded-full px-2 py-1 text-xs flex items-center">
+                              {getBodyTypeDisplay(type)}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </FormItem>
+                </div>
 
                 {/* Freight Value */}
                 <FormField
