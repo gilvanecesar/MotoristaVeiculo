@@ -72,7 +72,7 @@ const CitySelect: React.FC<CitySelectProps> = ({
           </SelectTrigger>
         </FormControl>
         <SelectContent>
-          <SelectItem value="">Carregando...</SelectItem>
+          <SelectItem value="loading">Carregando...</SelectItem>
         </SelectContent>
       </Select>
     );
@@ -97,7 +97,7 @@ const CitySelect: React.FC<CitySelectProps> = ({
             </SelectItem>
           ))
         ) : (
-          <SelectItem value="">Nenhuma cidade encontrada</SelectItem>
+          <SelectItem value="no-city-found">Nenhuma cidade encontrada</SelectItem>
         )}
       </SelectContent>
       {errorMessage && (
