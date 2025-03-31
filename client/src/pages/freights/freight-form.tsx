@@ -344,9 +344,9 @@ export default function FreightForm() {
       // Add destinations to the form data if has multiple destinations
       const submitData = {
         ...data,
-        // Garantir que os campos numéricos sejam enviados como string
-        cargoWeight: String(data.cargoWeight),
-        freightValue: String(data.freightValue),
+        // Garantir que os campos numéricos sejam enviados como string e não sejam NaN
+        cargoWeight: data.cargoWeight ? String(data.cargoWeight) : "0",
+        freightValue: data.freightValue ? String(data.freightValue) : "0",
         // Garantir que status seja enviado
         status: data.status || "aberto",
         // Usar o primeiro tipo de veículo selecionado como principal
@@ -936,6 +936,11 @@ export default function FreightForm() {
                           value={field.value || ""}
                           onChange={(e) => {
                             const value = e.target.value;
+                            // Se o valor for vazio, definir como vazio (não NaN)
+                            if (!value.trim()) {
+                              field.onChange('');
+                              return;
+                            }
                             // Remove caracteres não numéricos, exceto ponto ou vírgula
                             const cleanValue = value.replace(/[^\d.,]/g, '');
                             // Substitui vírgula por ponto para cálculos em JavaScript
@@ -1018,6 +1023,11 @@ export default function FreightForm() {
                           value={field.value || ""}
                           onChange={(e) => {
                             const value = e.target.value;
+                            // Se o valor for vazio, definir como vazio (não NaN)
+                            if (!value.trim()) {
+                              field.onChange('');
+                              return;
+                            }
                             // Remove caracteres não numéricos, exceto ponto ou vírgula
                             const cleanValue = value.replace(/[^\d.,]/g, '');
                             // Substitui vírgula por ponto para cálculos em JavaScript
