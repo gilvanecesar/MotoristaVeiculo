@@ -374,12 +374,21 @@ export default function FreightForm() {
         }
 
         // Add new destinations
-        for (const dest of destinations) {
-          await apiRequest(
-            'POST',
-            `/api/freight-destinations`,
-            { ...dest, freightId }
-          );
+        try {
+          for (const dest of destinations) {
+            await apiRequest(
+              'POST',
+              `/api/freight-destinations`,
+              { ...dest, freightId }
+            );
+          }
+        } catch (error) {
+          console.error("Erro ao adicionar destino:", error);
+          toast({
+            title: "Erro ao adicionar destinos",
+            description: error instanceof Error ? error.message : "Erro ao adicionar destinos ao frete",
+            variant: "destructive",
+          });
         }
       } else {
         response = await apiRequest(
@@ -390,12 +399,21 @@ export default function FreightForm() {
 
         // Handle destinations separately for new freight
         if (response && destinations.length > 0) {
-          for (const dest of destinations) {
-            await apiRequest(
-              'POST',
-              `/api/freight-destinations`,
-              { ...dest, freightId: response.id }
-            );
+          try {
+            for (const dest of destinations) {
+              await apiRequest(
+                'POST',
+                `/api/freight-destinations`,
+                { ...dest, freightId: response.id }
+              );
+            }
+          } catch (error) {
+            console.error("Erro ao adicionar destino para novo frete:", error);
+            toast({
+              title: "Erro ao adicionar destinos",
+              description: error instanceof Error ? error.message : "Erro ao adicionar destinos ao frete",
+              variant: "destructive",
+            });
           }
         }
       }
