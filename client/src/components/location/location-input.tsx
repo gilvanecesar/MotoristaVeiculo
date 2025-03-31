@@ -143,11 +143,24 @@ const LocationInput: React.FC<LocationInputProps> = ({
 
   // Selecionar uma sugestão
   const selectSuggestion = (suggestion: CitySuggestion) => {
+    // Certifique-se de que estamos definindo o valor do campo e do estado corretamente
+    if (!suggestion.name || !suggestion.state) {
+      console.error("Tentativa de selecionar uma sugestão incompleta", suggestion);
+      return;
+    }
+    
+    console.log("Selecionando cidade:", suggestion);
+    
     onChange(suggestion.fullName);
+    // Definir o termo de pesquisa como o nome completo para consistência
+    setSearchTerm(suggestion.fullName);
     setOpen(false);
     
     if (onCityChange) onCityChange(suggestion.name);
     if (onStateChange) onStateChange(suggestion.state);
+    
+    // Garantir que as sugestões sejam limpas após a seleção para evitar conflitos
+    setCitySuggestions([]);
   };
 
   // Buscar cidades quando o usuário digita no campo de pesquisa do popover

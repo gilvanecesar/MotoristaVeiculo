@@ -92,6 +92,7 @@ const freightSchema = insertFreightSchema
 const destinationSchema = z.object({
   destinationState: z.string().min(2, "Selecione o estado"),
   destination: z.string().min(2, "Selecione a cidade"),
+  id: z.number().optional(), // ID temporário para manipulação da interface
 });
 
 // Tipos inferidos do schema
@@ -153,10 +154,14 @@ export default function FreightForm() {
 
   // Criar uma função para adicionar destinos
   const addDestination = () => {
+    // Adicionamos um ID temporário para ajudar com a estabilidade da lista
     setDestinations([
       ...destinations,
-      { destinationState: "", destination: "" },
+      { destinationState: "", destination: "", id: Date.now() },
     ]);
+    
+    // Log para debug
+    console.log("Destino adicionado, total de destinos:", destinations.length + 1);
   };
 
   // Criar uma função para atualizar um destino
@@ -254,8 +259,10 @@ export default function FreightForm() {
               const formattedDestinations = freight.destinations.map((dest: any) => ({
                 destinationState: dest.destinationState,
                 destination: dest.destination,
+                id: dest.id || Date.now() // Usar o ID do banco se disponível, senão gerar um temporário
               }));
               
+              console.log("Destinos formatados:", formattedDestinations);
               setDestinations(formattedDestinations);
             }
           } else {
@@ -677,17 +684,23 @@ export default function FreightForm() {
                               <LocationInput
                                 value={dest.destination && dest.destinationState ? `${dest.destination} - ${dest.destinationState}` : ""}
                                 onChange={(value) => {
+                                  console.log(`Destino ${index} alterado para: ${value}`);
                                   // Se o valor contiver a formatação Cidade - UF
                                   if (value.includes(" - ")) {
                                     const [city, state] = value.split(" - ");
                                     updateDestination(index, 'destination', city);
                                     updateDestination(index, 'destinationState', state);
+                                    console.log(`Destino ${index} separado: cidade=${city}, estado=${state}`);
                                   } else {
                                     // Caso tenha apenas a cidade
                                     updateDestination(index, 'destination', value);
+                                    // Limpar o estado se não for fornecido
+                                    updateDestination(index, 'destinationState', '');
+                                    console.log(`Destino ${index} sem estado: cidade=${value}`);
                                   }
                                 }}
                                 placeholder="Digite a cidade e estado (ex: São Paulo - SP)"
+                                key={`dest-${dest.id || index}`} // Adiciona uma key estável
                               />
                             </div>
                             <div className="flex items-end justify-end h-full md:col-span-1">
