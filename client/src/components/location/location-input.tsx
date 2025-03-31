@@ -1,4 +1,4 @@
-import React, { useState, ChangeEvent, useEffect } from "react";
+import React, { useState, ChangeEvent, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { FormControl } from "@/components/ui/form";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -82,6 +82,9 @@ const LocationInput: React.FC<LocationInputProps> = ({
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  
+  // Referência para o input que podemos usar para foco
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Extrair estado da localização atual (se existir)
   useEffect(() => {
@@ -101,6 +104,7 @@ const LocationInput: React.FC<LocationInputProps> = ({
     
     if (newValue.length >= 3) {
       searchCities(newValue);
+      setOpen(true); // Abrir o popover quando começar a digitar
     } else {
       setCitySuggestions([]);
     }
@@ -154,11 +158,17 @@ const LocationInput: React.FC<LocationInputProps> = ({
     
     console.log("Selecionando cidade:", suggestion);
     
-    onChange(suggestion.fullName);
+    // Garantir que o formato da cidade está correto (Nome - UF)
+    const formattedValue = `${suggestion.name} - ${suggestion.state}`;
+    
+    // Chamar o callback com o valor formatado
+    onChange(formattedValue);
+    
     // Definir o termo de pesquisa como o nome completo para consistência
-    setSearchTerm(suggestion.fullName);
+    setSearchTerm(formattedValue);
     setOpen(false);
     
+    // Chamar callbacks específicos caso estejam definidos
     if (onCityChange) onCityChange(suggestion.name);
     if (onStateChange) onStateChange(suggestion.state);
     
@@ -180,13 +190,18 @@ const LocationInput: React.FC<LocationInputProps> = ({
           <FormControl>
             <div className="relative">
               <Input
+                ref={inputRef}
                 type="text"
                 value={value}
                 onChange={handleInputChange}
                 placeholder={placeholder}
                 disabled={disabled}
                 className={`${errorMessage ? "border-red-500" : ""} pr-10`}
-                onClick={() => setOpen(true)}
+                onClick={() => {
+                  setOpen(true);
+                  // Focar o input quando clicado
+                  inputRef.current?.focus();
+                }}
               />
               <ChevronsUpDown className="h-4 w-4 opacity-50 absolute right-3 top-3" />
             </div>

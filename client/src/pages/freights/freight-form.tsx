@@ -155,7 +155,8 @@ export default function FreightForm() {
     const newDestination = { 
       destinationState: "", 
       destination: "", 
-      id: Date.now() // Identificador único para o destino
+      // Usar timestamp como ID temporário
+      id: Date.now()
     };
     
     // Fazer uma cópia do array atual e adicionar o novo destino
@@ -378,10 +379,15 @@ export default function FreightForm() {
         // Add new destinations
         try {
           for (const dest of destinations) {
+            // Enviar apenas os campos necessários para o destino
             await apiRequest(
               'POST',
               `/api/freight-destinations`,
-              { ...dest, freightId }
+              {
+                destination: dest.destination,
+                destinationState: dest.destinationState,
+                freightId
+              }
             );
           }
         } catch (error) {
@@ -403,10 +409,15 @@ export default function FreightForm() {
         if (response && destinations.length > 0) {
           try {
             for (const dest of destinations) {
+              // Enviar apenas os campos necessários para o destino
               await apiRequest(
                 'POST',
                 `/api/freight-destinations`,
-                { ...dest, freightId: response.id }
+                {
+                  destination: dest.destination,
+                  destinationState: dest.destinationState,
+                  freightId: response.id
+                }
               );
             }
           } catch (error) {
