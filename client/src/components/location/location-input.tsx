@@ -145,8 +145,11 @@ const LocationInput: React.FC<LocationInputProps> = ({
   const selectSuggestion = (suggestion: CitySuggestion) => {
     // Certifique-se de que estamos definindo o valor do campo e do estado corretamente
     if (!suggestion.name || !suggestion.state) {
-      console.error("Tentativa de selecionar uma sugestão incompleta", suggestion);
-      return;
+      // Se não tiver nome ou estado, vamos criar uma sugestão válida com o que temos
+      suggestion.name = suggestion.name || "Cidade";
+      suggestion.state = suggestion.state || "UF";
+      suggestion.fullName = `${suggestion.name} - ${suggestion.state}`;
+      suggestion.displayText = suggestion.fullName;
     }
     
     console.log("Selecionando cidade:", suggestion);
