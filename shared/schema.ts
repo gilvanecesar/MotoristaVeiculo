@@ -160,10 +160,10 @@ export const freights = pgTable("freights", {
   cargoType: text("cargo_type").notNull(), // completa ou complemento
   needsTarp: text("needs_tarp").notNull(), // sim ou não
   productType: text("product_type").notNull(),
-  cargoWeight: decimal("cargo_weight").notNull(),
+  cargoWeight: decimal("cargo_weight", { precision: 10, scale: 2 }).default('0').notNull(),
   vehicleType: text("vehicle_type").notNull(),
   bodyType: text("body_type").notNull(),
-  freightValue: decimal("freight_value").notNull(),
+  freightValue: decimal("freight_value", { precision: 10, scale: 2 }).default('0').notNull(),
   tollOption: text("toll_option").notNull(), // incluso ou a parte
   paymentMethod: text("payment_method").notNull(),
   observations: text("observations"),
@@ -275,12 +275,13 @@ export const clientValidator = insertClientSchema.extend({
 });
 
 export const freightValidator = insertFreightSchema.extend({
+  clientId: z.coerce.number().nonnegative().nullable().default(0),
   cargoType: z.enum([CARGO_TYPES.COMPLETA, CARGO_TYPES.COMPLEMENTO]),
   needsTarp: z.enum([TARP_OPTIONS.SIM, TARP_OPTIONS.NAO]),
   tollOption: z.enum([TOLL_OPTIONS.INCLUSO, TOLL_OPTIONS.A_PARTE]),
   observations: z.string().max(500).optional().or(z.literal('')),
-  cargoWeight: z.coerce.number().positive(),
-  freightValue: z.coerce.number().positive(),
+  cargoWeight: z.coerce.number().nonnegative().default(0),
+  freightValue: z.coerce.number().nonnegative().default(0),
   contactName: z.string().min(3),
   contactPhone: z.string().min(10).max(15),
   vehicleType: z.enum([

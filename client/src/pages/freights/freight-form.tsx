@@ -120,7 +120,7 @@ export default function FreightForm() {
   const [selectedBodyTypes, setSelectedBodyTypes] = useState<string[]>([]);
 
   const defaultValues: FreightFormValues = {
-    clientId: null,
+    clientId: 0, // Alterado para 0 em vez de null
     origin: "",
     originState: "",
     destination: "",
@@ -128,11 +128,11 @@ export default function FreightForm() {
     cargoType: "completa",
     needsTarp: "nao",
     productType: "",
-    cargoWeight: "",
+    cargoWeight: "0", // Garantindo que seja uma string "0" em vez de string vazia
     vehicleCategory: VEHICLE_CATEGORIES.LEVE,
     vehicleType: VEHICLE_TYPES.LEVE_TODOS,
     bodyType: BODY_TYPES.BAU,
-    freightValue: "",
+    freightValue: "0", // Garantindo que seja uma string "0" em vez de string vazia
     tollOption: TOLL_OPTIONS.INCLUSO,
     paymentMethod: "",
     observations: "",
