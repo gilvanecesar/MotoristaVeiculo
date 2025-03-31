@@ -690,9 +690,19 @@ export default function FreightForm() {
                                     const state = parts[1];
                                     
                                     if (city && state) {
-                                      updateDestination(index, 'destination', city);
-                                      updateDestination(index, 'destinationState', state);
-                                      console.log(`Destino ${index} separado: cidade=${city}, estado=${state}`);
+                                      // Importante: Criar um novo objeto de destino para evitar atualizações consecutivas
+                                      const updatedDest = {
+                                        ...dest,
+                                        destination: city,
+                                        destinationState: state
+                                      };
+                                      
+                                      // Atualizar o array de destinos diretamente
+                                      const updatedDestinations = [...destinations];
+                                      updatedDestinations[index] = updatedDest;
+                                      setDestinations(updatedDestinations);
+                                      
+                                      console.log(`Destino ${index} atualizado para: cidade=${city}, estado=${state}`);
                                     }
                                   }
                                 }
