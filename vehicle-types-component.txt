@@ -1,0 +1,50 @@
+                {/* Vehicle Types - Multiple Selection */}
+                <div className="md:col-span-2">
+                  <FormItem>
+                    <FormLabel>Tipos de Veículo</FormLabel>
+                    <div className="w-full border rounded-md p-4">
+                      {Object.entries(VEHICLE_CATEGORIES).map((categoryEntry) => {
+                        const [categoryKey, categoryValue] = categoryEntry;
+                        const vehicleTypes = VEHICLE_TYPES_BY_CATEGORY[categoryValue];
+                        
+                        return (
+                          <div key={categoryKey} className="mb-4">
+                            <h4 className="text-sm font-semibold mb-2">
+                              {getVehicleCategoryDisplay(categoryValue)}
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                              {vehicleTypes.map((type) => (
+                                <div key={type} className="flex items-center space-x-2">
+                                  <Checkbox 
+                                    id={`vehicle-type-${type}`}
+                                    checked={selectedVehicleTypes.includes(type)}
+                                    onCheckedChange={(checked) => {
+                                      if (checked) {
+                                        setSelectedVehicleTypes(prev => [...prev, type]);
+                                        form.setValue("vehicleType", type); // Para compatibilidade
+                                        
+                                        // Atualiza a categoria do veículo com base no tipo selecionado
+                                        form.setValue("vehicleCategory", getVehicleCategory(type));
+                                      } else {
+                                        setSelectedVehicleTypes(prev => prev.filter(t => t !== type));
+                                        // Se removeu o que estava selecionado principal e ainda tem outros, seleciona o primeiro
+                                        if (form.getValues("vehicleType") === type && selectedVehicleTypes.length > 1) {
+                                          const remaining = selectedVehicleTypes.filter(t => t !== type);
+                                          form.setValue("vehicleType", remaining[0]);
+                                          form.setValue("vehicleCategory", getVehicleCategory(remaining[0]));
+                                        }
+                                      }
+                                    }}
+                                  />
+                                  <label 
+                                    htmlFor={`vehicle-type-${type}`} 
+                                    className="text-sm font-medium leading-none cursor-pointer"
+                                  >
+                                    {getVehicleTypeNameOnly(type)}
+                                  </label>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}

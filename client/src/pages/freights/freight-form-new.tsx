@@ -5,10 +5,13 @@ import { z } from "zod";
 import { useLocation, useRoute, useParams, useSearch } from "wouter";
 import { toast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { insertFreightSchema, VEHICLE_TYPES, BODY_TYPES, TOLL_OPTIONS } from "@shared/schema";
+import { insertFreightSchema } from "@shared/schema";
 import {
+  TOLL_OPTIONS,
   VEHICLE_CATEGORIES,
+  VEHICLE_TYPES,
   VEHICLE_TYPES_BY_CATEGORY,
+  BODY_TYPES,
   getVehicleCategoryDisplay,
   getVehicleTypeDisplay,
   getVehicleTypeNameOnly,

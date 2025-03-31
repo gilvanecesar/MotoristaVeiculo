@@ -1,4 +1,9 @@
-import { VEHICLE_TYPES, BODY_TYPES } from "@shared/schema";
+import { VEHICLE_TYPES as SCHEMA_VEHICLE_TYPES, BODY_TYPES as SCHEMA_BODY_TYPES, TOLL_OPTIONS as SCHEMA_TOLL_OPTIONS } from "@shared/schema";
+
+// Re-exportando constantes do schema
+export const VEHICLE_TYPES = SCHEMA_VEHICLE_TYPES;
+export const BODY_TYPES = SCHEMA_BODY_TYPES;
+export const TOLL_OPTIONS = SCHEMA_TOLL_OPTIONS;
 
 // Tipos de categorias de veículos
 export const VEHICLE_CATEGORIES = {
