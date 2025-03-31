@@ -316,6 +316,29 @@ export default function FreightForm() {
         return;
       }
 
+      // Verificar se os destinos estão preenchidos corretamente quando for múltiplos destinos
+      if (data.hasMultipleDestinations && destinations.length === 0) {
+        toast({
+          title: "Erro no formulário",
+          description: "Você marcou múltiplos destinos, mas não adicionou nenhum. Adicione pelo menos um destino.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Verificar se todos os destinos têm cidade e estado preenchidos
+      if (data.hasMultipleDestinations) {
+        const incompleteDestination = destinations.find(dest => !dest.destination || !dest.destinationState);
+        if (incompleteDestination) {
+          toast({
+            title: "Erro no formulário",
+            description: "Todos os destinos adicionados precisam ter cidade e estado preenchidos.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
       // Add destinations to the form data if has multiple destinations
       const submitData = {
         ...data,
