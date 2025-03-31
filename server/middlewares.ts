@@ -104,7 +104,8 @@ export async function hasFreightAccess(req: Request, res: Response, next: NextFu
   }
   
   // Verifica se o frete pertence ao cliente do usuário
-  if (req.user?.clientId === freight.clientId) {
+  // Fretes sem cliente podem ser acessados por qualquer usuário
+  if (freight.clientId === null || req.user?.clientId === freight.clientId) {
     return next();
   }
   

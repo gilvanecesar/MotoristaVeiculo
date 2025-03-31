@@ -462,9 +462,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/freights", async (req: Request, res: Response) => {
+  app.post("/api/freights", isAuthenticated, async (req: Request, res: Response) => {
     try {
-      const freightData = freightValidator.parse(req.body);
+      // Pré-processamento dos dados para garantir que campos numéricos sejam tratados corretamente
+      const processedData = {
+        ...req.body,
+        cargoWeight: req.body.cargoWeight ? 
+          parseFloat(req.body.cargoWeight.toString().replace(',', '.')) : 
+          null,
+        freightValue: req.body.freightValue ? 
+          parseFloat(req.body.freightValue.toString().replace(',', '.')) : 
+          null
+      };
+      
+      // Validação com valores processados
+      const freightData = freightValidator.parse(processedData);
       
       // Definir data de expiração para 30 dias após a criação
       const today = new Date();
@@ -505,8 +517,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Freight not found" });
       }
       
-      // Validar os dados do frete
-      const freightData = freightValidator.parse(req.body);
+      // Pré-processamento dos dados para garantir que campos numéricos sejam tratados corretamente
+      const processedData = {
+        ...req.body,
+        cargoWeight: req.body.cargoWeight ? 
+          parseFloat(req.body.cargoWeight.toString().replace(',', '.')) : 
+          null,
+        freightValue: req.body.freightValue ? 
+          parseFloat(req.body.freightValue.toString().replace(',', '.')) : 
+          null
+      };
+      
+      // Validação com valores processados
+      const freightData = freightValidator.parse(processedData);
       
       // Preservar o clientId original, garantindo que o dono do frete não mude
       const updatedFreightData = {
