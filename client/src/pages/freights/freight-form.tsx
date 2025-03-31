@@ -170,12 +170,14 @@ export default function FreightForm() {
 
   // Criar uma função para atualizar um destino
   const updateDestination = (index: number, field: keyof DestinationFormValues, value: string) => {
+    console.log(`Atualizando destino ${index}, campo ${field} para ${value}`);
     const updatedDestinations = [...destinations];
     updatedDestinations[index] = {
       ...updatedDestinations[index],
       [field]: value,
     };
     setDestinations(updatedDestinations);
+    console.log("Destino atualizado:", updatedDestinations[index]);
   };
 
   // Criar uma função para remover um destino
@@ -682,16 +684,17 @@ export default function FreightForm() {
                                 console.log(`Destino ${index} alterado para: ${value}`);
                                 // Se o valor contiver a formatação Cidade - UF
                                 if (value.includes(" - ")) {
-                                  const [city, state] = value.split(" - ");
-                                  updateDestination(index, 'destination', city);
-                                  updateDestination(index, 'destinationState', state);
-                                  console.log(`Destino ${index} separado: cidade=${city}, estado=${state}`);
-                                } else {
-                                  // Caso tenha apenas a cidade
-                                  updateDestination(index, 'destination', value);
-                                  // Limpar o estado se não for fornecido
-                                  updateDestination(index, 'destinationState', '');
-                                  console.log(`Destino ${index} sem estado: cidade=${value}`);
+                                  const parts = value.split(" - ");
+                                  if (parts.length === 2) {
+                                    const city = parts[0];
+                                    const state = parts[1];
+                                    
+                                    if (city && state) {
+                                      updateDestination(index, 'destination', city);
+                                      updateDestination(index, 'destinationState', state);
+                                      console.log(`Destino ${index} separado: cidade=${city}, estado=${state}`);
+                                    }
+                                  }
                                 }
                               }}
                               placeholder="Digite a cidade e estado (ex: São Paulo - SP)"
