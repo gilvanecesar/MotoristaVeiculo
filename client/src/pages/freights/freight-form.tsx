@@ -154,14 +154,18 @@ export default function FreightForm() {
 
   // Criar uma função para adicionar destinos
   const addDestination = () => {
-    // Adicionamos um ID temporário para ajudar com a estabilidade da lista
-    setDestinations([
-      ...destinations,
-      { destinationState: "", destination: "", id: Date.now() },
-    ]);
+    // Adicionamos um ID temporário único para ajudar com a estabilidade da lista e rastreamento
+    const newDestination = { 
+      destinationState: "", 
+      destination: "", 
+      id: Date.now() + Math.floor(Math.random() * 1000) // Garantir unicidade adicional
+    };
+    
+    setDestinations([...destinations, newDestination]);
     
     // Log para debug
-    console.log("Destino adicionado, total de destinos:", destinations.length + 1);
+    console.log("Destino adicionado:", newDestination);
+    console.log("Total de destinos:", destinations.length + 1);
   };
 
   // Criar uma função para atualizar um destino
@@ -700,6 +704,7 @@ export default function FreightForm() {
                                   }
                                 }}
                                 placeholder="Digite a cidade e estado (ex: São Paulo - SP)"
+                                errorMessage={!dest.destination || !dest.destinationState ? "Selecione uma cidade com estado" : ""}
                                 key={`dest-${dest.id || index}`} // Adiciona uma key estável
                               />
                             </div>
