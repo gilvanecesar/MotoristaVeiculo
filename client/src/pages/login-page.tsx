@@ -35,6 +35,7 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 export default function LoginPage() {
   const [activeTab, setActiveTab] = useState<string>("login");
   const [selectedRole, setSelectedRole] = useState<string>(USER_TYPES.SHIPPER);
+  const [selectedPlan, setSelectedPlan] = useState<string>("trial");
   
   const { toast } = useToast();
   const { loginMutation, registerMutation } = useAuth();
@@ -75,15 +76,25 @@ export default function LoginPage() {
     const registerData = {
       ...data,
       profileType: selectedRole,
+      subscriptionType: selectedPlan,
     };
 
     registerMutation.mutate(registerData, {
       onSuccess: () => {
         toast({
           title: "Conta criada com sucesso",
-          description: "Para continuar, é necessário assinar um plano",
+          description: selectedPlan === "trial" 
+            ? "Seu período de teste de 7 dias foi iniciado" 
+            : "Para continuar, finalize o pagamento do plano selecionado",
         });
-        navigate("/auth");
+        
+        if (selectedPlan === "trial") {
+          navigate("/dashboard");
+        } else if (selectedPlan === "monthly") {
+          navigate("/checkout?plan=monthly");
+        } else {
+          navigate("/checkout?plan=annual");
+        }
       },
     });
   };
@@ -105,7 +116,10 @@ export default function LoginPage() {
           <h2 className="text-2xl font-bold text-center mb-6">Nossos Planos</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Plano de Teste */}
-            <Card className="shadow-lg hover:shadow-xl transition-shadow">
+            <Card 
+              className={`shadow-lg hover:shadow-xl transition-shadow cursor-pointer ${selectedPlan === "trial" ? "border-primary ring-2 ring-primary" : ""}`}
+              onClick={() => setSelectedPlan("trial")}
+            >
               <CardHeader className="bg-primary/5 pb-3">
                 <CardTitle className="text-xl">Teste Grátis</CardTitle>
                 <CardDescription>Teste por 7 dias</CardDescription>
@@ -127,11 +141,24 @@ export default function LoginPage() {
                     Acesso a relatórios básicos
                   </li>
                 </ul>
+                <Button 
+                  className={`w-full ${selectedPlan === "trial" ? "bg-primary" : "bg-primary/10 hover:bg-primary/20 text-primary"}`}
+                  variant={selectedPlan === "trial" ? "default" : "outline"}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedPlan("trial");
+                  }}
+                >
+                  {selectedPlan === "trial" ? "Selecionado" : "Selecionar"}
+                </Button>
               </CardContent>
             </Card>
             
             {/* Plano Mensal */}
-            <Card className="shadow-lg hover:shadow-xl transition-shadow">
+            <Card 
+              className={`shadow-lg hover:shadow-xl transition-shadow cursor-pointer ${selectedPlan === "monthly" ? "border-primary ring-2 ring-primary" : ""}`}
+              onClick={() => setSelectedPlan("monthly")}
+            >
               <CardHeader className="bg-primary/5 pb-3">
                 <CardTitle className="text-xl">Mensal</CardTitle>
                 <CardDescription>Acesso por 30 dias</CardDescription>
@@ -153,11 +180,24 @@ export default function LoginPage() {
                     Relatórios avançados
                   </li>
                 </ul>
+                <Button 
+                  className={`w-full ${selectedPlan === "monthly" ? "bg-primary" : "bg-primary/10 hover:bg-primary/20 text-primary"}`}
+                  variant={selectedPlan === "monthly" ? "default" : "outline"}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedPlan("monthly");
+                  }}
+                >
+                  {selectedPlan === "monthly" ? "Selecionado" : "Selecionar"}
+                </Button>
               </CardContent>
             </Card>
             
             {/* Plano Anual */}
-            <Card className="shadow-lg hover:shadow-xl transition-shadow border-primary">
+            <Card 
+              className={`shadow-lg hover:shadow-xl transition-shadow cursor-pointer ${selectedPlan === "annual" ? "border-primary ring-2 ring-primary" : "border-primary"}`}
+              onClick={() => setSelectedPlan("annual")}
+            >
               <CardHeader className="bg-primary/10 pb-3">
                 <div className="absolute -top-3 left-0 right-0 flex justify-center">
                   <span className="px-3 py-1 bg-primary text-primary-foreground text-xs rounded-full">Mais Popular</span>
@@ -182,6 +222,16 @@ export default function LoginPage() {
                     Economize 2 meses por ano
                   </li>
                 </ul>
+                <Button 
+                  className={`w-full ${selectedPlan === "annual" ? "bg-primary" : "bg-primary/10 hover:bg-primary/20 text-primary"}`}
+                  variant={selectedPlan === "annual" ? "default" : "outline"}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedPlan("annual");
+                  }}
+                >
+                  {selectedPlan === "annual" ? "Selecionado" : "Selecionar"}
+                </Button>
               </CardContent>
             </Card>
           </div>
