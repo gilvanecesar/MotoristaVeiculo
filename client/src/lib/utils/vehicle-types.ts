@@ -174,3 +174,21 @@ export function getBodyTypeDisplay(type?: string): string {
       return type;
   }
 }
+
+// Função para formatar múltiplos tipos de veículos
+export function formatMultipleVehicleTypes(freight: any): string {
+  if (freight.vehicleTypesSelected && freight.vehicleTypesSelected !== freight.vehicleType) {
+    const types = freight.vehicleTypesSelected.split(',');
+    return types.map(type => getVehicleTypeNameOnly(type)).join(', ');
+  }
+  return getVehicleTypeNameOnly(freight.vehicleType);
+}
+
+// Função para formatar múltiplos tipos de carrocerias
+export function formatMultipleBodyTypes(freight: any): string {
+  if (freight.bodyTypesSelected) {
+    const types = freight.bodyTypesSelected.split(',');
+    return types.map(type => getBodyTypeDisplay(type)).join(', ');
+  }
+  return getBodyTypeDisplay(freight.bodyType);
+}

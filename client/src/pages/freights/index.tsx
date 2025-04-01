@@ -3,7 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useClientAuth } from "@/lib/auth-context";
 import { useAuth } from "@/hooks/use-auth";
-import { getVehicleCategory, getVehicleTypeNameOnly, getVehicleTypeDisplay } from "@/lib/utils/vehicle-types";
+import { 
+  getVehicleCategory, 
+  getVehicleTypeNameOnly, 
+  getVehicleTypeDisplay,
+  formatMultipleVehicleTypes,
+  formatMultipleBodyTypes
+} from "@/lib/utils/vehicle-types";
 import { 
   Plus, 
   Search, 
@@ -268,8 +274,8 @@ export default function FreightsPage() {
 📍 *Origem:* ${freight.origin}, ${freight.originState}
 🏁 *Destino:* ${freight.destination}, ${freight.destinationState}
 🚚 *Categoria:* ${getVehicleCategory(freight.vehicleType)}
-🚚 *Veículo:* ${getVehicleTypeNameOnly(freight.vehicleType)}
-🚐 *Carroceria:* ${BODY_TYPES[freight.bodyType] || freight.bodyType}
+🚚 *Veículo:* ${formatMultipleVehicleTypes(freight)}
+🚐 *Carroceria:* ${formatMultipleBodyTypes(freight)}
 📦 *Tipo de Carga:* ${CARGO_TYPES[freight.cargoType] || freight.cargoType}
 ⚖️ *Peso:* ${freight.cargoWeight} Kg
 💰 *Pagamento:* ${freight.paymentMethod}
@@ -552,8 +558,8 @@ export default function FreightsPage() {
                             <TableCell>{freight.origin}, {freight.originState}</TableCell>
                             <TableCell>{freight.destination}, {freight.destinationState}</TableCell>
                             <TableCell>{getVehicleCategory(freight.vehicleType)}</TableCell>
-                            <TableCell>{getVehicleTypeNameOnly(freight.vehicleType)}</TableCell>
-                            <TableCell>{BODY_TYPES[freight.bodyType] || freight.bodyType}</TableCell>
+                            <TableCell>{formatMultipleVehicleTypes(freight)}</TableCell>
+                            <TableCell>{formatMultipleBodyTypes(freight)}</TableCell>
                             <TableCell>{CARGO_TYPES[freight.cargoType] || freight.cargoType}</TableCell>
                             <TableCell>{formatCurrency(freight.freightValue)}</TableCell>
                             <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
@@ -636,7 +642,7 @@ export default function FreightsPage() {
                                 <Truck className="h-4 w-4 text-slate-500 mt-0.5" />
                                 <div className="flex-1">
                                   <p className="text-xs text-slate-500">Veículo:</p>
-                                  <p className="text-sm">{getVehicleTypeNameOnly(freight.vehicleType)}</p>
+                                  <p className="text-sm">{formatMultipleVehicleTypes(freight)}</p>
                                 </div>
                               </div>
                               
@@ -644,7 +650,7 @@ export default function FreightsPage() {
                                 <Truck className="h-4 w-4 text-slate-500 mt-0.5" />
                                 <div className="flex-1">
                                   <p className="text-xs text-slate-500">Carroceria:</p>
-                                  <p className="text-sm">{BODY_TYPES[freight.bodyType] || freight.bodyType}</p>
+                                  <p className="text-sm">{formatMultipleBodyTypes(freight)}</p>
                                 </div>
                               </div>
                               
@@ -830,12 +836,12 @@ export default function FreightsPage() {
                   
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium text-slate-500">Tipo de Veículo</h4>
-                    <p>{getVehicleTypeNameOnly(selectedFreight.vehicleType)}</p>
+                    <p>{formatMultipleVehicleTypes(selectedFreight)}</p>
                   </div>
                   
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium text-slate-500">Tipo de Carroceria</h4>
-                    <p>{BODY_TYPES[selectedFreight.bodyType] || selectedFreight.bodyType}</p>
+                    <p>{formatMultipleBodyTypes(selectedFreight)}</p>
                   </div>
                   
                   <div className="space-y-2">
