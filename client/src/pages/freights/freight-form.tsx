@@ -96,7 +96,11 @@ const destinationSchema = z.object({
 type FreightFormValues = z.infer<typeof freightSchema>;
 type DestinationFormValues = z.infer<typeof destinationSchema>;
 
-export default function FreightForm() {
+interface FreightFormProps {
+  isEditMode?: boolean;
+}
+
+export default function FreightForm({ isEditMode }: FreightFormProps) {
   const params = useParams();
   const [, navigate] = useLocation();
   const [search] = useSearch();
@@ -104,55 +108,18 @@ export default function FreightForm() {
   const isEditing = Boolean(params.id);
   const freightId = params.id;
 
-  // Inicia como somente leitura apenas se estiver editando e sem parâmetro de edição
+  // Inicia como somente leitura apenas se estiver editando e sem parâmetro de edição ou se isEditMode não for true
   // Será atualizado após carregar os dados do frete
   const [isViewingInReadOnlyMode, setIsViewingInReadOnlyMode] = useState(
-    isEditing && !searchParams.get("edit")
+    isEditing && !searchParams.get("edit") && !isEditMode
   );
   
-  // Esta função será chamada diretamente pelo botão e força a ativação do formulário
+  // Esta função cria e abre um novo formulário em modo de edição
   const enableEditMode = () => {
-    console.log("Ativando modo de edição diretamente");
-    console.log("Estado atual de somente leitura:", isViewingInReadOnlyMode);
+    console.log("Ativando modo de edição através da navegação");
     
-    // Mudar estado
-    setIsViewingInReadOnlyMode(false);
-    
-    // Força remover atributo disabled do fieldset e todos os campos dentro dele
-    setTimeout(() => {
-      try {
-        // Atualizar o fieldset
-        const fieldset = document.getElementById('freight-form-fields');
-        if (fieldset) {
-          console.log("Removendo atributo disabled do fieldset");
-          fieldset.removeAttribute('disabled');
-          
-          // Atualizar todos os inputs, selects e textareas dentro do fieldset
-          const formFields = fieldset.querySelectorAll("input, select, textarea, button");
-          formFields.forEach(field => {
-            field.removeAttribute('disabled');
-            field.removeAttribute('aria-disabled');
-            console.log("Campo habilitado:", field);
-          });
-          
-          // Se tiver uma mensagem de somente leitura, removê-la
-          const readonlyMessage = document.querySelector('.bg-amber-50');
-          if (readonlyMessage) {
-            readonlyMessage.style.display = 'none';
-          }
-          
-          // Exibir mensagem de sucesso
-          toast({
-            title: "Modo de edição ativado",
-            description: "Agora você pode editar os campos do frete.",
-          });
-        } else {
-          console.error("Fieldset não encontrado");
-        }
-      } catch (error) {
-        console.error("Erro ao habilitar campos:", error);
-      }
-    }, 100);
+    // Redirecionar para a página de edição com parâmetro forçado
+    navigate(`/freights/${freightId}/edit?v=${Date.now()}`);
   };
 
   const { user } = useAuth();
@@ -250,6 +217,13 @@ export default function FreightForm() {
 
     loadClients();
   }, []);
+
+  // Atualizar modo de edição quando isEditMode mudar
+  useEffect(() => {
+    if (isEditMode && isEditing) {
+      setIsViewingInReadOnlyMode(false);
+    }
+  }, [isEditMode, isEditing]);
 
   // Carregar frete para edição
   useEffect(() => {
@@ -1217,21 +1191,22 @@ export default function FreightForm() {
                   Cancelar
                 </Button>
                 
-                {isViewingInReadOnlyMode ? (
-                  <Button 
-                    type="button"
-                    onClick={enableEditMode}
-                  >
-                    Editar Frete
-                  </Button>
-                ) : (
-                  <Button 
-                    type="submit"
-                    disabled={isViewingInReadOnlyMode}
-                  >
-                    {isEditing ? "Salvar Alterações" : "Criar Frete"}
-                  </Button>
-                )}
+                {/* Novo modo de botões - sempre exibe ambos, controlando apenas desativação */}
+                <Button 
+                  type="button"
+                  variant={isViewingInReadOnlyMode ? "default" : "outline"}
+                  onClick={enableEditMode}
+                  className="mr-2"
+                >
+                  Editar Frete
+                </Button>
+                
+                <Button 
+                  type="submit"
+                  disabled={isViewingInReadOnlyMode}
+                >
+                  {isEditing ? "Salvar Alterações" : "Criar Frete"}
+                </Button>
               </div>
               </fieldset>
             </form>
