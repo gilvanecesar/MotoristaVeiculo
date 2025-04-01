@@ -17,19 +17,9 @@ const poolConfig = {
   connectionTimeoutMillis: 5000,
   idleTimeoutMillis: 30000,
   // Em produção, pode ser necessário configurar SSL de maneira diferente
-  ...(process.env.NODE_ENV === 'production' 
-    ? {
-        ssl: { 
-          rejectUnauthorized: false
-        },
-      }
-    : {
-        ssl: { 
-          rejectUnauthorized: false,
-          sslmode: 'require' 
-        },
-      }
-  )
+  ssl: {
+    rejectUnauthorized: false
+  }
 };
 
 console.log(`Conectando ao banco de dados no ambiente: ${process.env.NODE_ENV || 'development'}`);

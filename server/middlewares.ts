@@ -100,14 +100,21 @@ export async function hasFreightAccess(req: Request, res: Response, next: NextFu
     return res.status(404).json({ message: "Frete não encontrado" });
   }
   
-  // Fretes sem cliente associado podem ser editados por qualquer usuário autenticado
-  if (freight.clientId === null) {
-    console.log(`[hasFreightAccess] Frete ${freightId} sem cliente associado, acesso permitido para usuário ${req.user.id}`);
+  // Fretes sem cliente associado ou clientId=0 podem ser editados por qualquer usuário autenticado
+  if (freight.clientId === null || freight.clientId === 0) {
+    console.log(`[hasFreightAccess] Frete ${freightId} sem cliente associado ou clientId=0, acesso permitido para usuário ${req.user.id}`);
     return next();
   }
   
   // Verifica se o usuário tem um cliente associado
   if (req.user?.clientId === null || req.user?.clientId === undefined) {
+    // Verifica se o usuário é o criador do frete, mesmo sem cliente associado
+    // buscar o usuário que criou o frete
+    if (freight.userId && freight.userId === req.user.id) {
+      console.log(`[hasFreightAccess] Usuário ${req.user.id} é o criador do frete ${freightId}, acesso permitido`);
+      return next();
+    }
+    
     console.log(`[hasFreightAccess] Usuário ${req.user.id} não tem cliente associado, negando acesso`);
     return res.status(403).json({ message: "Você não tem um cliente associado ao seu perfil" });
   }
@@ -115,6 +122,12 @@ export async function hasFreightAccess(req: Request, res: Response, next: NextFu
   // Verifica se o frete pertence ao cliente do usuário
   if (req.user?.clientId === freight.clientId) {
     console.log(`[hasFreightAccess] Frete ${freightId} pertence ao cliente ${freight.clientId} do usuário ${req.user.id}, acesso permitido`);
+    return next();
+  }
+  
+  // Verificar se o usuário é o criador do frete, mesmo que tenha cliente diferente
+  if (freight.userId && freight.userId === req.user.id) {
+    console.log(`[hasFreightAccess] Usuário ${req.user.id} é o criador do frete ${freightId}, acesso permitido`);
     return next();
   }
   

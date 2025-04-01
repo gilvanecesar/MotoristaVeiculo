@@ -488,7 +488,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...freightData,
         expirationDate: expirationDate,
         // Garantir status "aberto" para novos fretes
-        status: "aberto"
+        status: "aberto",
+        // Registrar o ID do usuário que está criando o frete
+        userId: req.user?.id
       };
       
       const freight = await storage.createFreight(freightWithExpiration);

@@ -153,6 +153,7 @@ export const clients = pgTable("clients", {
 export const freights = pgTable("freights", {
   id: serial("id").primaryKey(),
   clientId: integer("client_id").references(() => clients.id).notNull(),
+  userId: integer("user_id").references(() => users.id), // Usuário que criou o frete
   origin: text("origin").notNull(),
   originState: text("origin_state").notNull(),
   destination: text("destination").notNull(),
