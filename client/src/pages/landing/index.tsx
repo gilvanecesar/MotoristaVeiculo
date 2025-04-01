@@ -328,11 +328,17 @@ export default function LandingPage() {
               </p>
               
               <div className="flex items-center mb-6">
-                <Button
-                  className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 flex items-center"
+                <a 
+                  href="https://wa.me/5531971559484" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
                 >
-                  <FaWhatsapp className="mr-2 h-5 w-5" /> Fale Conosco pelo WhatsApp
-                </Button>
+                  <Button
+                    className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 flex items-center"
+                  >
+                    <FaWhatsapp className="mr-2 h-5 w-5" /> Fale Conosco pelo WhatsApp
+                  </Button>
+                </a>
               </div>
               
               <div className="space-y-4">
@@ -340,7 +346,7 @@ export default function LandingPage() {
                   <span className="font-bold">Email:</span> contato@querofretes.com.br
                 </p>
                 <p className="text-lg">
-                  <span className="font-bold">Telefone:</span> (31) 9 9999-9999
+                  <span className="font-bold">Telefone:</span> (31) 9 7155-9484
                 </p>
               </div>
             </div>
