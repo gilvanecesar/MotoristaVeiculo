@@ -397,8 +397,8 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
       let response;
       if (isEditing) {
         response = await apiRequest(
-          `/api/freights/${freightId}`,
           'PUT',
+          `/api/freights/${freightId}`,
           submitData
         );
 
