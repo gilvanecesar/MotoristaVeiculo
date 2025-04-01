@@ -13,7 +13,8 @@ import Navigation from "@/components/layout/navigation";
 import Footer from "@/components/layout/footer";
 import Home from "@/pages/home";
 import Dashboard from "@/pages/dashboard";
-import AuthPage from "@/pages/auth-page-fixed";
+import AuthPage from "@/pages/auth-page";
+import LoginPage from "@/pages/login-page";
 import DriversPage from "@/pages/drivers/index";
 import DriverForm from "@/pages/drivers/driver-form";
 import VehiclesPage from "@/pages/vehicles/index";
@@ -34,7 +35,12 @@ import SubscribePage from "@/pages/subscribe";
 function Router() {
   return (
     <Switch>
-      <ProtectedRoute path="/" component={Home} />
+      <Route path="/login" component={LoginPage} />
+      <Route path="/auth" component={AuthPage} />
+      <Route path="/payment-success" component={PaymentSuccessPage} />
+      <Route path="/payment-cancel" component={PaymentCancelPage} />
+      <Route path="/checkout" component={CheckoutPage} />
+      <Route path="/subscribe" component={SubscribePage} />
       <ProtectedRoute path="/dashboard" component={Dashboard} />
       <ProtectedRoute path="/drivers" component={DriversPage} />
       <ProtectedRoute path="/drivers/new" component={DriverForm} />
@@ -51,11 +57,7 @@ function Router() {
       <ProtectedRoute path="/admin/finance" component={FinanceDashboard} />
       <ProtectedRoute path="/admin/finance/settings" component={FinanceSettings} />
       <ProtectedRoute path="/admin/users" component={AdminUsersPage} />
-      <Route path="/payment-success" component={PaymentSuccessPage} />
-      <Route path="/payment-cancel" component={PaymentCancelPage} />
-      <Route path="/checkout" component={CheckoutPage} />
-      <Route path="/subscribe" component={SubscribePage} />
-      <Route path="/auth" component={AuthPage} />
+      <ProtectedRoute path="/" component={Home} />
       <Route component={NotFound} />
     </Switch>
   );

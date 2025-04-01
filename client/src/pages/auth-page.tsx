@@ -55,6 +55,8 @@ export default function AuthPage() {
   const [showPlansOnly, setShowPlansOnly] = useState<boolean>(false);
   const [isLoadingCheckout, setIsLoadingCheckout] = useState<boolean>(false);
   const [subscriptionRequired, setSubscriptionRequired] = useState<boolean>(false);
+  // Garantir que os planos sempre sejam mostrados
+  const [showSubscriptionPlans, setShowSubscriptionPlans] = useState<boolean>(true);
   
   const { toast } = useToast();
   const { user, loginMutation, registerMutation } = useAuth();

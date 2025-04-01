@@ -36,11 +36,11 @@ export function ProtectedRoute({
     );
   }
 
-  // Se não houver usuário, redireciona para a autenticação
+  // Se não houver usuário, redireciona para a página de login
   if (!user) {
     return (
       <Route path={path}>
-        <Redirect to="/auth" />
+        <Redirect to="/login" />
       </Route>
     );
   }
@@ -78,7 +78,7 @@ export function ProtectedRoute({
   if (!user.subscriptionActive) {
     return (
       <Route path={path}>
-        <Redirect to="/auth?subscription=required" />
+        <Redirect to="/login?subscription=required" />
       </Route>
     );
   }
@@ -109,7 +109,7 @@ export function ProtectedRoute({
       // Período de teste expirado
       return (
         <Route path={path}>
-          <Redirect to="/auth?subscription=required" />
+          <Redirect to="/login?subscription=required" />
         </Route>
       );
     }
