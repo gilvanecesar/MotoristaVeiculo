@@ -182,7 +182,7 @@ export default function LoginPage() {
                 <CardDescription>Acesso por 30 dias</CardDescription>
               </CardHeader>
               <CardContent className="pt-6">
-                <div className="text-3xl font-bold text-center mb-2">R$ 99,90</div>
+                <div className="text-3xl font-bold text-center mb-2">R$ 80,00</div>
                 <div className="text-sm text-center mb-4 text-muted-foreground">Cobrado a cada mês</div>
                 <ul className="space-y-2 mb-6">
                   <li className="flex items-center text-sm">
@@ -224,8 +224,8 @@ export default function LoginPage() {
                 <CardDescription>Acesso por 1 ano completo</CardDescription>
               </CardHeader>
               <CardContent className="pt-6">
-                <div className="text-3xl font-bold text-center mb-2">R$ 1.198,80</div>
-                <div className="text-sm text-center mb-4 text-muted-foreground">Apenas R$ 99,90/mês</div>
+                <div className="text-3xl font-bold text-center mb-2">R$ 960,00</div>
+                <div className="text-sm text-center mb-4 text-muted-foreground">Apenas R$ 80,00/mês</div>
                 <ul className="space-y-2 mb-6">
                   <li className="flex items-center text-sm">
                     <Icons.check className="mr-2 h-4 w-4 text-primary" />
@@ -237,7 +237,7 @@ export default function LoginPage() {
                   </li>
                   <li className="flex items-center text-sm">
                     <Icons.check className="mr-2 h-4 w-4 text-primary" />
-                    Economize 2 meses por ano
+                    Pagamento único anual
                   </li>
                 </ul>
                 <Button 

@@ -90,7 +90,7 @@ export default function Checkout() {
   useEffect(() => {
     // Create PaymentIntent as soon as the page loads
     setIsLoading(true);
-    apiRequest("POST", "/api/create-payment-intent", { amount: 1198.80 }) // R$ 1.198,80 (assinatura anual)
+    apiRequest("POST", "/api/create-payment-intent", { amount: 960.00 }) // R$ 960,00 (assinatura anual)
       .then((res) => {
         if (!res.ok) {
           throw new Error("Falha ao conectar com o servidor de pagamento");
@@ -175,7 +175,7 @@ export default function Checkout() {
         <CardHeader>
           <CardTitle>Finalizar Assinatura</CardTitle>
           <CardDescription>
-            Assinatura anual do QUERO FRETES - R$ 99,90/mês
+            Assinatura anual do QUERO FRETES - R$ 80,00/mês
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -185,7 +185,7 @@ export default function Checkout() {
         </CardContent>
         <CardFooter className="flex-col space-y-2">
           <p className="text-xs text-muted-foreground text-center w-full">
-            Cobrança anual de R$ 1.198,80 (equivalente a R$ 99,90 por mês)
+            Cobrança anual de R$ 960,00 (equivalente a R$ 80,00 por mês)
           </p>
           <p className="text-xs text-muted-foreground text-center w-full">
             Ao finalizar, você concorda com os termos de serviço e política de privacidade.
