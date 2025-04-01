@@ -109,6 +109,16 @@ export default function FreightForm() {
   const [isViewingInReadOnlyMode, setIsViewingInReadOnlyMode] = useState(
     isEditing && !searchParams.get("edit")
   );
+  
+  // Atualiza o modo de visualização quando o parâmetro "edit" na URL muda
+  useEffect(() => {
+    // Verifica se tem o parâmetro "edit=true" na URL
+    const isEditMode = isEditing && searchParams.get("edit") === "true";
+    // Se estiver no modo de edição, desativa o modo somente leitura
+    if (isEditMode) {
+      setIsViewingInReadOnlyMode(false);
+    }
+  }, [searchParams, isEditing]);
 
   const { user } = useAuth();
   const { currentClient, isClientAuthorized } = useClientAuth();
@@ -229,8 +239,9 @@ export default function FreightForm() {
               });
               // Ativar modo somente leitura independente da URL
               setIsViewingInReadOnlyMode(true);
-            } else if (searchParams.get("edit")) {
-              // Se tem autorização e o parâmetro edit está na URL, desativar modo somente leitura
+            } else if (searchParams.get("edit") === "true") {
+              // Se tem autorização e o parâmetro edit=true está na URL, desativar modo somente leitura
+              console.log("Desativando modo somente leitura por edit=true na URL");
               setIsViewingInReadOnlyMode(false);
             }
 
