@@ -67,7 +67,7 @@ export default function LoginPage() {
           title: "Login realizado com sucesso",
           description: "Bem-vindo à plataforma Quero Fretes",
         });
-        navigate("/dashboard");
+        navigate("/");
       },
     });
   };
@@ -89,7 +89,7 @@ export default function LoginPage() {
         });
         
         if (selectedPlan === "trial") {
-          navigate("/dashboard");
+          navigate("/");
         } else if (selectedPlan === "monthly") {
           navigate("/checkout?plan=monthly");
         } else {
