@@ -110,15 +110,11 @@ export default function FreightForm() {
     isEditing && !searchParams.get("edit")
   );
   
-  // Atualiza o modo de visualização quando o parâmetro "edit" na URL muda
-  useEffect(() => {
-    // Verifica se tem o parâmetro "edit=true" na URL
-    const isEditMode = isEditing && searchParams.get("edit") === "true";
-    // Se estiver no modo de edição, desativa o modo somente leitura
-    if (isEditMode) {
-      setIsViewingInReadOnlyMode(false);
-    }
-  }, [searchParams, isEditing]);
+  // Esta função será chamada diretamente pelo botão
+  const enableEditMode = () => {
+    console.log("Ativando modo de edição diretamente");
+    setIsViewingInReadOnlyMode(false);
+  };
 
   const { user } = useAuth();
   const { currentClient, isClientAuthorized } = useClientAuth();
@@ -1185,7 +1181,7 @@ export default function FreightForm() {
                 {isViewingInReadOnlyMode ? (
                   <Button 
                     type="button"
-                    onClick={() => setIsViewingInReadOnlyMode(false)}
+                    onClick={enableEditMode}
                   >
                     Editar Frete
                   </Button>
