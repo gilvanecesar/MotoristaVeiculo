@@ -277,13 +277,13 @@ export const clientValidator = insertClientSchema.extend({
 });
 
 export const freightValidator = insertFreightSchema.extend({
-  clientId: z.coerce.number().nonnegative().default(0),
+  clientId: z.coerce.number().positive().nullable().default(null),
   cargoType: z.enum([CARGO_TYPES.COMPLETA, CARGO_TYPES.COMPLEMENTO]),
   needsTarp: z.enum([TARP_OPTIONS.SIM, TARP_OPTIONS.NAO]),
   tollOption: z.enum([TOLL_OPTIONS.INCLUSO, TOLL_OPTIONS.A_PARTE]),
   observations: z.string().max(500).optional().or(z.literal('')),
-  cargoWeight: z.coerce.number().nonnegative().default(0),
-  freightValue: z.coerce.number().nonnegative().default(0),
+  cargoWeight: z.string().default("0"),
+  freightValue: z.string().default("0"),
   contactName: z.string().min(3),
   contactPhone: z.string().min(10).max(15),
   vehicleType: z.enum([

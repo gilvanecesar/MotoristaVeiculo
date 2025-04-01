@@ -122,7 +122,7 @@ export default function FreightForm() {
   const [selectedBodyTypes, setSelectedBodyTypes] = useState<string[]>([]);
 
   const defaultValues: FreightFormValues = {
-    clientId: 0, // Alterado para 0 em vez de null
+    clientId: user?.clientId || currentClient?.id || undefined, // Usar ID do cliente do usuário ou cliente atual
     origin: "",
     originState: "",
     destination: "",

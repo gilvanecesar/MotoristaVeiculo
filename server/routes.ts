@@ -93,6 +93,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Erro ao ativar acesso de motorista" });
     }
   });
+
   // API routes for drivers
   app.get("/api/drivers", async (req: Request, res: Response) => {
     try {
@@ -468,11 +469,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const processedData = {
         ...req.body,
         cargoWeight: req.body.cargoWeight ? 
-          parseFloat(req.body.cargoWeight.toString().replace(',', '.')) : 
-          null,
+          req.body.cargoWeight.toString().replace(',', '.') : 
+          "0",
         freightValue: req.body.freightValue ? 
-          parseFloat(req.body.freightValue.toString().replace(',', '.')) : 
-          null
+          req.body.freightValue.toString().replace(',', '.') : 
+          "0"
       };
       
       // Validação com valores processados
@@ -512,22 +513,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid ID format" });
       }
-      
-      // Obter o frete existente para preservar o clientId
+
+      // Verificar se o frete existe antes de atualizar
       const existingFreight = await storage.getFreight(id);
       if (!existingFreight) {
         return res.status(404).json({ message: "Freight not found" });
       }
-      
+
       // Pré-processamento dos dados para garantir que campos numéricos sejam tratados corretamente
       const processedData = {
         ...req.body,
         cargoWeight: req.body.cargoWeight ? 
-          parseFloat(req.body.cargoWeight.toString().replace(',', '.')) : 
-          null,
+          req.body.cargoWeight.toString().replace(',', '.') : 
+          "0",
         freightValue: req.body.freightValue ? 
-          parseFloat(req.body.freightValue.toString().replace(',', '.')) : 
-          null
+          req.body.freightValue.toString().replace(',', '.') : 
+          "0"
       };
       
       // Validação com valores processados
@@ -543,7 +544,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const freight = await storage.updateFreight(id, updatedFreightData);
       
       if (!freight) {
-        return res.status(404).json({ message: "Freight not found" });
+        return res.status(404).json({ message: "Failed to update freight" });
       }
 
       res.json(freight);
@@ -586,19 +587,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Freight ID is required" });
       }
       
-      // Verificar se o usuário tem acesso ao frete
-      if (req.user?.profileType !== "admin") {
-        const freight = await storage.getFreight(freightId);
-        if (!freight) {
-          return res.status(404).json({ message: "Freight not found" });
-        }
-        
-        // Verificar se o frete pertence ao cliente do usuário
-        if (freight.clientId !== req.user?.clientId) {
-          return res.status(403).json({ message: "Acesso não autorizado a este destino de frete" });
-        }
-      }
-      
       const destinations = await storage.getFreightDestinations(freightId);
       res.json(destinations);
     } catch (error) {
@@ -609,22 +597,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/freight-destinations", isAuthenticated, async (req: Request, res: Response) => {
     try {
-      const destinationData = freightDestinationValidator.parse(req.body);
+      console.log("Creating freight destination:", req.body);
       
-      // Verificar se o usuário tem acesso ao frete associado ao destino
-      if (req.user?.profileType !== "admin") {
-        const freight = await storage.getFreight(destinationData.freightId);
-        if (!freight) {
-          return res.status(404).json({ message: "Freight not found" });
-        }
-        
-        // Verificar se o frete pertence ao cliente do usuário
-        if (freight.clientId !== req.user?.clientId) {
-          return res.status(403).json({ message: "Acesso não autorizado para adicionar destinos a este frete" });
-        }
+      const freightId = req.body.freightId ? parseInt(req.body.freightId as string) : undefined;
+      
+      if (!freightId) {
+        return res.status(400).json({ message: "Freight ID is required" });
       }
       
-      const destination = await storage.createFreightDestination(destinationData);
+      // Verificar se o frete existe
+      const freight = await storage.getFreight(freightId);
+      if (!freight) {
+        return res.status(404).json({ message: "Freight not found" });
+      }
+      
+      // Verificar se o usuário tem permissão para adicionar destinos ao frete
+      if (req.user?.profileType !== "admin" && req.user?.clientId !== freight.clientId) {
+        return res.status(403).json({ message: "Acesso não autorizado para adicionar destinos a este frete" });
+      }
+      
+      // Contar destinos existentes para definir a ordem
+      const existingDestinations = await storage.getFreightDestinations(freightId);
+      const order = existingDestinations.length + 1;
+      
+      // Preparar dados do destino
+      const destinationData = {
+        ...req.body,
+        order,
+        freightId
+      };
+      
+      // Validar e criar destino
+      const destinationWithOrder = freightDestinationValidator.parse(destinationData);
+      const destination = await storage.createFreightDestination(destinationWithOrder);
+      
+      // Atualizar flag de múltiplos destinos no frete
+      if (!freight.hasMultipleDestinations) {
+        await storage.updateFreight(freightId, { hasMultipleDestinations: true });
+      }
+      
       res.status(201).json(destination);
     } catch (error) {
       if (error instanceof ZodError) {
@@ -643,31 +654,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid ID format" });
       }
-
-      // Buscar o destino do frete para verificar a permissão
-      const destinations = await storage.getFreightDestinations(-1); // Obter todos os destinos
-      const destination = destinations.find(d => d.id === id);
       
+      // Obter o destino para verificar o freightId
+      const destination = await storage.getFreightDestination(id);
       if (!destination) {
         return res.status(404).json({ message: "Freight destination not found" });
       }
       
-      // Verificar se o usuário tem acesso ao frete associado ao destino
-      if (req.user?.profileType !== "admin") {
-        const freight = await storage.getFreight(destination.freightId);
-        if (!freight) {
-          return res.status(404).json({ message: "Freight not found" });
-        }
-        
-        // Verificar se o frete pertence ao cliente do usuário
-        if (freight.clientId !== req.user?.clientId) {
-          return res.status(403).json({ message: "Acesso não autorizado para excluir este destino de frete" });
-        }
+      // Obter o frete para verificar permissões
+      const freight = await storage.getFreight(destination.freightId);
+      if (!freight) {
+        return res.status(404).json({ message: "Freight not found" });
+      }
+      
+      // Verificar se o usuário tem permissão para remover destinos do frete
+      if (req.user?.profileType !== "admin" && req.user?.clientId !== freight.clientId) {
+        return res.status(403).json({ message: "Acesso não autorizado para remover destinos deste frete" });
       }
 
       const success = await storage.deleteFreightDestination(id);
       if (!success) {
         return res.status(404).json({ message: "Freight destination not found" });
+      }
+      
+      // Verificar se ainda existem destinos para este frete
+      const remainingDestinations = await storage.getFreightDestinations(destination.freightId);
+      
+      // Se não houver mais destinos, atualizar flag de múltiplos destinos
+      if (remainingDestinations.length === 0) {
+        await storage.updateFreight(destination.freightId, { hasMultipleDestinations: false });
       }
 
       res.status(204).end();
@@ -677,608 +692,419 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Rota para associar um cliente existente ao usuário logado
+  // Associar usuário a cliente
   app.post("/api/users/associate-client", isAuthenticated, async (req: Request, res: Response) => {
     try {
-      const { clientId } = req.body;
-      
-      if (!clientId) {
-        return res.status(400).json({ message: "Client ID is required" });
-      }
-      
-      const id = parseInt(clientId);
-      if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid client ID format" });
-      }
-      
-      // Verificar se o cliente existe
-      const client = await storage.getClient(id);
-      if (!client) {
-        return res.status(404).json({ message: "Client not found" });
-      }
-      
       if (!req.user) {
         return res.status(401).json({ message: "User not authenticated" });
       }
       
-      // Atualizar o usuário com o clientId
-      const userId = req.user.id;
-      const user = await storage.updateUser(userId, { clientId: id });
-      
-      if (!user) {
-        return res.status(404).json({ message: "Failed to update user" });
-      }
-      
-      // Atualiza o objeto req.user para refletir a mudança
-      req.user.clientId = id;
-      
-      res.status(200).json({ message: "Client associated successfully", user });
-    } catch (error) {
-      console.error("Error associating client to user:", error);
-      res.status(500).json({ message: "Failed to associate client to user" });
-    }
-  });
-
-  // Rotas da área financeira administrativa
-  app.get("/api/admin/subscriptions", isAdmin, async (req: Request, res: Response) => {
-    try {
-      // Buscar assinaturas do banco de dados
-      const dbSubscriptions = await storage.getSubscriptions();
-      
-      if (!dbSubscriptions || !Array.isArray(dbSubscriptions) || dbSubscriptions.length === 0) {
-        // Se não houver assinaturas, retornar array vazio em vez de dados simulados
-        return res.json([]);
-      }
-      
-      // Formatar os dados das assinaturas para a resposta da API
-      const formattedSubscriptions = await Promise.all(dbSubscriptions.map(async (subscription) => {
-        // Buscar informações de cliente e usuário associados
-        let clientName = 'Cliente não associado';
-        let email = 'Email não disponível';
-        
-        if (subscription.clientId) {
-          const client = await storage.getClient(subscription.clientId);
-          if (client) {
-            clientName = client.name;
-            email = client.email;
-          }
-        } else if (subscription.userId) {
-          const user = await storage.getUserById(subscription.userId);
-          if (user) {
-            clientName = user.name;
-            email = user.email;
-          }
-        }
-        
-        // Buscar faturas desta assinatura para calcular o valor total
-        const invoices = await storage.getInvoicesBySubscription(subscription.id);
-        
-        // Calcular o valor total baseado no tipo de plano
-        let amount = 99.90; // Valor padrão mensal
-        
-        // Determinar o valor baseado no tipo de plano
-        if (subscription.planType === 'annual') {
-          amount = 1198.80; // R$ 99,90 * 12 = R$ 1.198,80
-        } else if (subscription.planType === 'trial') {
-          amount = 0; // Teste gratuito
-        }
-        
-        return {
-          id: subscription.stripeSubscriptionId || `sub_local_${subscription.id}`,
-          internalId: subscription.id,
-          clientName,
-          email,
-          status: subscription.status,
-          plan: subscription.planType,
-          startDate: subscription.currentPeriodStart ? 
-            new Date(subscription.currentPeriodStart).toISOString().split('T')[0] : 
-            new Date().toISOString().split('T')[0],
-          endDate: subscription.currentPeriodEnd ? 
-            new Date(subscription.currentPeriodEnd).toISOString().split('T')[0] : 
-            new Date().toISOString().split('T')[0],
-          amount,
-          invoiceCount: invoices.length,
-          stripeCustomerId: subscription.stripeCustomerId,
-        };
-      }));
-      
-      res.json(formattedSubscriptions);
-    } catch (error: any) {
-      console.error("Error fetching subscriptions:", error);
-      res.status(500).json({ message: "Failed to fetch subscriptions: " + error.message });
-    }
-  });
-  
-  app.post("/api/admin/subscriptions", isAdmin, async (req: Request, res: Response) => {
-    try {
-      const { userId, clientId, planType, status, startDate, endDate } = req.body;
-      
-      // Validar os dados recebidos
-      if (!planType || !status) {
-        return res.status(400).json({ message: "Tipo de plano e status são obrigatórios" });
-      }
-      
-      if (!userId && !clientId) {
-        return res.status(400).json({ message: "É necessário fornecer um ID de usuário ou cliente" });
-      }
-      
-      // Verificar se o usuário existe
-      let user = null;
-      if (userId) {
-        user = await storage.getUserById(Number(userId));
-        if (!user) {
-          return res.status(404).json({ message: "Usuário não encontrado" });
-        }
+      const { clientId } = req.body;
+      if (!clientId) {
+        return res.status(400).json({ message: "Client ID is required" });
       }
       
       // Verificar se o cliente existe
-      let client = null;
-      if (clientId) {
-        client = await storage.getClient(Number(clientId));
-        if (!client) {
-          return res.status(404).json({ message: "Cliente não encontrado" });
-        }
+      const client = await storage.getClient(parseInt(clientId));
+      if (!client) {
+        return res.status(404).json({ message: "Client not found" });
       }
       
-      // Converter datas se fornecidas como strings
-      const currentPeriodStart = startDate ? new Date(startDate) : new Date();
-      let currentPeriodEnd;
-      
-      if (endDate) {
-        currentPeriodEnd = new Date(endDate);
-      } else {
-        // Definir data de fim com base no tipo de plano
-        currentPeriodEnd = new Date(currentPeriodStart);
-        if (planType === 'annual') {
-          currentPeriodEnd.setFullYear(currentPeriodEnd.getFullYear() + 1);
-        } else if (planType === 'monthly') {
-          currentPeriodEnd.setMonth(currentPeriodEnd.getMonth() + 1);
-        } else if (planType === 'trial') {
-          currentPeriodEnd.setDate(currentPeriodEnd.getDate() + 7); // 7 dias de teste
-        }
-      }
-      
-      // Criar assinatura no banco de dados
-      const subscription = await storage.createSubscription({
-        userId: userId ? Number(userId) : undefined,
-        clientId: clientId ? Number(clientId) : undefined,
-        status: status,
-        planType: planType,
-        currentPeriodStart: currentPeriodStart,
-        currentPeriodEnd: currentPeriodEnd,
-        stripeCustomerId: req.body.stripeCustomerId || null,
-        stripeSubscriptionId: req.body.stripeSubscriptionId || null,
-        stripePriceId: req.body.stripePriceId || process.env.STRIPE_PRICE_ID || null,
-        cancelAt: req.body.cancelAt ? new Date(req.body.cancelAt) : null,
-        canceledAt: req.body.canceledAt ? new Date(req.body.canceledAt) : null,
+      // Atualizar o usuário com o ID do cliente
+      const userId = req.user.id;
+      const updatedUser = await storage.updateUser(userId, { 
+        clientId: parseInt(clientId)
       });
       
-      // Se a assinatura for criada via admin, também atualizar o status de assinatura do usuário
-      if (userId) {
-        await storage.updateUser(Number(userId), {
-          subscriptionActive: status === 'active' || status === 'trialing',
-          subscriptionType: planType,
-          stripeCustomerId: req.body.stripeCustomerId || null,
-          stripeSubscriptionId: req.body.stripeSubscriptionId || null,
-        });
+      if (!updatedUser) {
+        return res.status(404).json({ message: "Failed to update user" });
       }
       
-      // Tentar enviar email de confirmação de assinatura
-      try {
-        if (client) {
-          const amount = parseFloat(req.body.amount) || 0;
-          sendSubscriptionEmail(
-            client.email,
-            client.name,
-            planType,
-            currentPeriodStart,
-            currentPeriodEnd,
-            amount
-          );
+      // Atualizar o objeto req.user para refletir a mudança
+      req.user.clientId = parseInt(clientId);
+      
+      res.status(200).json({
+        message: "User associated with client successfully",
+        user: {
+          ...updatedUser,
+          password: undefined
         }
-      } catch (emailError) {
-        console.error("Erro ao enviar email de confirmação de assinatura:", emailError);
-        // Não interrompe o fluxo em caso de falha no envio de email
-      }
-      
-      // Retornar a assinatura criada
-      res.status(201).json(subscription);
-    } catch (error: any) {
-      console.error("Erro ao criar assinatura:", error);
-      res.status(500).json({ message: "Falha ao criar assinatura: " + error.message });
+      });
+    } catch (error) {
+      console.error("Error associating user with client:", error);
+      res.status(500).json({ message: "Failed to associate user with client" });
     }
   });
+
+  // --- ADMIN ROUTES ---
   
-  app.get("/api/admin/invoices", isAdmin, async (req: Request, res: Response) => {
+  // Gerenciamento de assinaturas
+  app.get("/api/admin/subscriptions", isAdmin, async (req: Request, res: Response) => {
     try {
-      // Buscar todas as faturas do banco de dados
-      const dbInvoices = await storage.getInvoices();
+      const subscriptions = await storage.getSubscriptions();
+      res.json(subscriptions);
+    } catch (error) {
+      console.error("Error fetching subscriptions:", error);
+      res.status(500).json({ message: "Failed to fetch subscriptions" });
+    }
+  });
+
+  app.post("/api/admin/subscriptions", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const { userId, clientId, planType, status, currentPeriodStart, currentPeriodEnd } = req.body;
       
-      if (!dbInvoices || !Array.isArray(dbInvoices) || dbInvoices.length === 0) {
-        // Se não houver faturas, retornar um array vazio em vez de criar dados de demonstração
-        return res.json([]);
+      if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
       }
       
-      // Se já existirem faturas no banco, formatar e retornar
-      const formattedInvoices = await Promise.all(dbInvoices.map(async (invoice) => {
-        // Buscar o cliente, se existir
-        let clientName = 'Cliente não associado';
-        if (invoice.clientId) {
-          const client = await storage.getClient(invoice.clientId);
-          if (client) clientName = client.name;
-        } else {
-          // Se não houver cliente, buscar o usuário
-          const user = await storage.getUserById(invoice.userId);
-          if (user) clientName = user.name;
-        }
-        
-        return {
-          id: invoice.id,
-          clientName,
-          status: invoice.status,
-          invoiceDate: invoice.invoiceDate ? new Date(invoice.invoiceDate).toISOString().split('T')[0] : '',
-          dueDate: invoice.dueDate ? new Date(invoice.dueDate).toISOString().split('T')[0] : '',
-          amount: Number(invoice.amount),
-          invoiceNumber: invoice.invoiceNumber,
-          stripeInvoiceId: invoice.stripeInvoiceId,
-          description: invoice.description,
-          amountPaid: Number(invoice.amountPaid || 0),
-          amountDue: Number(invoice.amountDue || 0),
-          receiptUrl: invoice.receiptUrl
-        };
-      }));
+      if (!planType) {
+        return res.status(400).json({ message: "Plan type is required" });
+      }
       
-      res.json(formattedInvoices);
-    } catch (error: any) {
+      // Criar ou atualizar assinatura manualmente
+      const subscription = await storage.createSubscription({
+        userId: parseInt(userId),
+        clientId: clientId ? parseInt(clientId) : null,
+        planType,
+        status: status || "active",
+        currentPeriodStart: new Date(currentPeriodStart || Date.now()),
+        currentPeriodEnd: new Date(currentPeriodEnd || (() => {
+          const date = new Date();
+          date.setMonth(date.getMonth() + (planType === "annual" ? 12 : 1));
+          return date;
+        })()),
+      });
+      
+      // Atualizar o status de assinatura do usuário
+      await storage.updateUser(parseInt(userId), {
+        subscriptionActive: true,
+        subscriptionType: planType,
+        subscriptionExpiresAt: new Date(currentPeriodEnd),
+      });
+      
+      res.status(201).json(subscription);
+    } catch (error) {
+      console.error("Error creating subscription:", error);
+      res.status(500).json({ message: "Failed to create subscription" });
+    }
+  });
+
+  app.get("/api/admin/invoices", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const invoices = await storage.getInvoices();
+      res.json(invoices);
+    } catch (error) {
       console.error("Error fetching invoices:", error);
       res.status(500).json({ message: "Failed to fetch invoices" });
     }
   });
-  
-  // Rotas de pagamento com Stripe
+
+  // Stripe checkout
   app.post("/api/create-checkout-session", isAuthenticated, async (req: Request, res: Response) => {
     try {
       await createCheckoutSession(req, res);
-    } catch (error) {
-      console.error("Error creating checkout session:", error);
-      res.status(500).json({ message: "Failed to create checkout session" });
+    } catch (error: any) {
+      console.error("Checkout session error:", error.message);
+      res.status(500).json({ error: { message: error.message } });
     }
   });
 
   app.post("/api/create-portal-session", isAuthenticated, async (req: Request, res: Response) => {
     try {
       await createPortalSession(req, res);
-    } catch (error) {
-      console.error("Error creating portal session:", error);
-      res.status(500).json({ message: "Failed to create portal session" });
+    } catch (error: any) {
+      console.error("Portal session error:", error.message);
+      res.status(500).json({ error: { message: error.message } });
     }
   });
 
-  // Webhook do Stripe (não requer autenticação, pois é chamado pelo Stripe)
+  // WebHook para eventos do Stripe
   app.post("/api/stripe-webhook", express.raw({ type: "application/json" }), async (req: Request, res: Response) => {
     try {
       await handleWebhook(req, res);
-    } catch (error) {
-      console.error("Error processing webhook:", error);
-      res.status(500).json({ message: "Failed to process webhook" });
+    } catch (error: any) {
+      console.error("Webhook error:", error.message);
+      return res.status(400).send(`Webhook Error: ${error.message}`);
     }
   });
-  
-  // Endpoint para criar uma intent de pagamento único
+
+  // Endpoint para criar um PaymentIntent
   app.post("/api/create-payment-intent", isAuthenticated, async (req: Request, res: Response) => {
     try {
-      const { amount } = req.body;
-      
       if (!process.env.STRIPE_SECRET_KEY) {
-        throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
+        throw new Error("Missing Stripe API Key");
+      }
+
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+        apiVersion: "2023-10-16",
+      });
+
+      // Obter o valor do pagamento (em centavos)
+      const { amount, invoiceDescription } = req.body;
+      
+      if (!amount) {
+        return res.status(400).json({ message: "Amount is required" });
       }
       
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-        apiVersion: '2023-10-16',
-      });
+      const amountInCents = Math.round(parseFloat(amount) * 100);
       
+      // Dados do cliente
+      const customer = req.user?.clientId ? await storage.getClient(req.user.clientId) : null;
+      
+      // Criar o PaymentIntent
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(amount * 100), // Converte para centavos
+        amount: amountInCents,
         currency: "brl",
-        payment_method_types: ["card"],
+        automatic_payment_methods: {
+          enabled: true,
+        },
+        description: invoiceDescription || `Pagamento de R$ ${(amountInCents / 100).toFixed(2)}`,
         metadata: {
           userId: req.user?.id.toString(),
+          clientId: req.user?.clientId?.toString(),
+          customerName: customer?.name || req.user?.name,
         },
       });
       
-      res.json({ clientSecret: paymentIntent.client_secret });
+      // Retornar o client_secret para o frontend
+      res.json({
+        clientSecret: paymentIntent.client_secret,
+      });
     } catch (error: any) {
-      console.error("Error creating payment intent:", error);
-      res.status(500).json({ error: error.message });
+      console.error("Error creating payment intent:", error.message);
+      res.status(500).json({ error: { message: error.message } });
     }
   });
-  
-  // Endpoint para criar ou obter uma assinatura
+
+  // Endpoint para criar ou recuperar uma assinatura do Stripe
   app.post("/api/get-or-create-subscription", isAuthenticated, async (req: Request, res: Response) => {
     try {
-      const user = req.user;
-      
-      if (!user) {
-        return res.status(401).json({ error: 'Usuário não autenticado' });
-      }
-      
       if (!process.env.STRIPE_SECRET_KEY) {
-        throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
+        throw new Error("Missing Stripe API Key");
       }
       
       if (!process.env.STRIPE_PRICE_ID) {
-        throw new Error('Missing required Stripe config: STRIPE_PRICE_ID');
+        throw new Error("Missing Stripe Price ID");
       }
-      
+
       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-        apiVersion: '2023-10-16',
+        apiVersion: "2023-10-16",
       });
-      
-      // Verifica se o usuário já tem uma assinatura ativa
+
+      const user = req.user;
+      if (!user) {
+        return res.status(401).send({ error: { message: "Não autenticado" } });
+      }
+
+      // Se já tem uma assinatura ativa, retorná-la
       if (user.stripeSubscriptionId) {
         try {
           const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
           
-          // Se a assinatura estiver ativa, retorna os dados relevantes
-          if (subscription.status === 'active') {
-            return res.json({
-              subscriptionId: subscription.id,
-              status: subscription.status,
-            });
+          // Se a assinatura está ativa e tem um PaymentIntent, retornar o client_secret
+          if (
+            subscription.status !== "canceled" && 
+            subscription.latest_invoice && 
+            typeof subscription.latest_invoice !== "string"
+          ) {
+            const paymentIntent = subscription.latest_invoice.payment_intent;
+            if (paymentIntent && typeof paymentIntent !== "string") {
+              return res.send({
+                subscriptionId: subscription.id,
+                clientSecret: paymentIntent.client_secret,
+              });
+            }
           }
         } catch (error) {
-          console.log("Erro ao buscar assinatura existente, criando nova:", error);
+          console.log("Erro ao buscar assinatura existente:", error);
+          // Se houver erro ou a assinatura estiver cancelada, prosseguir para criar uma nova
         }
       }
       
-      // Cria um cliente Stripe para o usuário se ele não tiver um
-      let customerId = user.stripeCustomerId;
-      if (!customerId) {
-        const customer = await stripe.customers.create({
-          email: user.email,
-          name: user.name,
+      // Verificar se o usuário tem email
+      if (!user.email) {
+        return res.status(400).send({ error: { message: "Usuário sem email cadastrado" } });
+      }
+      
+      try {
+        // Verificar se já existe um cliente Stripe para este usuário
+        let customerId = user.stripeCustomerId;
+        
+        if (!customerId) {
+          // Criar um novo cliente no Stripe
+          const customer = await stripe.customers.create({
+            email: user.email,
+            name: user.name,
+            metadata: {
+              userId: user.id.toString(),
+            },
+          });
+          
+          customerId = customer.id;
+          
+          // Salvar o ID do cliente Stripe no usuário
+          await storage.updateUser(user.id, { 
+            stripeCustomerId: customerId 
+          });
+        }
+        
+        // Definir o tipo de plano com base no corpo da requisição
+        const planType = req.body.planType || "monthly";
+        
+        // Usar o preço mensal ou anual com base no tipo de plano
+        const priceId = process.env.STRIPE_PRICE_ID || "price_invalid";
+        
+        // Criar a assinatura
+        const subscription = await stripe.subscriptions.create({
+          customer: customerId,
+          items: [
+            {
+              price: priceId,
+            },
+          ],
+          payment_behavior: "default_incomplete",
+          payment_settings: { save_default_payment_method: "on_subscription" },
+          expand: ["latest_invoice.payment_intent"],
           metadata: {
             userId: user.id.toString(),
+            planType: planType,
           },
         });
-        customerId = customer.id;
         
-        // Atualiza o usuário com o ID do cliente Stripe
-        await storage.updateUser(user.id, { stripeCustomerId: customerId });
+        // Salvar os IDs da assinatura no usuário
+        await storage.updateUser(user.id, {
+          stripeCustomerId: customerId,
+          stripeSubscriptionId: subscription.id,
+        });
+        
+        // Enviar o client_secret para o frontend
+        if (
+          subscription.latest_invoice && 
+          typeof subscription.latest_invoice !== "string" &&
+          subscription.latest_invoice.payment_intent &&
+          typeof subscription.latest_invoice.payment_intent !== "string"
+        ) {
+          res.send({
+            subscriptionId: subscription.id,
+            clientSecret: subscription.latest_invoice.payment_intent.client_secret,
+          });
+        } else {
+          res.status(400).send({ error: { message: "Erro ao criar assinatura" } });
+        }
+      } catch (error: any) {
+        console.error("Erro ao criar assinatura:", error.message);
+        return res.status(400).send({ error: { message: error.message } });
       }
-      
-      // Cria uma nova assinatura
-      const subscription = await stripe.subscriptions.create({
-        customer: customerId,
-        items: [{
-          price: process.env.STRIPE_PRICE_ID,
-        }],
-        payment_behavior: 'default_incomplete',
-        expand: ['latest_invoice.payment_intent'],
-      });
-      
-      // Atualiza o usuário com o ID da assinatura Stripe
-      await storage.updateUser(user.id, { 
-        stripeSubscriptionId: subscription.id,
-      });
-      
-      // Cria o registro da assinatura na nossa tabela
-      const now = new Date();
-      const endDate = new Date();
-      endDate.setMonth(endDate.getMonth() + 1); // Para assinatura mensal por padrão
-      
-      // Cria a assinatura no banco de dados
-      await storage.createSubscription({
-        userId: user.id,
-        clientId: user.clientId || undefined,
-        stripeSubscriptionId: subscription.id,
-        stripePriceId: process.env.STRIPE_PRICE_ID,
-        stripeCustomerId: customerId,
-        status: "incomplete", // Status inicial da assinatura
-        planType: "annual", // Tipo de plano por padrão
-        currentPeriodStart: now,
-        currentPeriodEnd: endDate,
-        cancelAtPeriodEnd: false,
-        metadata: {},
-      });
-      
-      // Retorna os dados relevantes, incluindo o clientSecret para completar o pagamento
-      const invoice = subscription.latest_invoice as Stripe.Invoice;
-      const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
-      
-      res.json({
-        subscriptionId: subscription.id,
-        clientSecret: paymentIntent.client_secret,
-      });
     } catch (error: any) {
-      console.error("Error creating subscription:", error);
-      res.status(500).json({ error: error.message });
+      console.error("Error with subscription:", error.message);
+      res.status(500).json({ error: { message: error.message } });
     }
   });
 
-  // Rotas de administração financeira
   app.get("/api/admin/finance/stats", isAdmin, async (req: Request, res: Response) => {
     try {
-      // Buscar dados do banco de dados
-      const subscriptionsDb = await storage.getSubscriptions();
-      const invoicesDb = await storage.getInvoices();
-      
-      if (!subscriptionsDb || subscriptionsDb.length === 0) {
-        // Se não houver assinaturas no banco, retornar zeros em vez de dados simulados
-        return res.json({
-          totalRevenue: 0,
-          monthlyRevenue: 0,
-          activeSubscriptions: 0,
-          churnRate: 0,
-          monthlyData: [
-            { month: "Jan", revenue: 0 },
-            { month: "Fev", revenue: 0 },
-            { month: "Mar", revenue: 0 },
-            { month: "Abr", revenue: 0 },
-            { month: "Mai", revenue: 0 },
-            { month: "Jun", revenue: 0 },
-            { month: "Jul", revenue: 0 },
-            { month: "Ago", revenue: 0 },
-            { month: "Set", revenue: 0 },
-            { month: "Out", revenue: 0 },
-            { month: "Nov", revenue: 0 },
-            { month: "Dez", revenue: 0 },
-          ],
-          subscriptionsByStatus: [
-            { status: "Ativas", count: 0 },
-            { status: "Teste", count: 0 },
-            { status: "Canceladas", count: 0 },
-            { status: "Atrasadas", count: 0 }
-          ]
-        });
-      }
-      
-      // Calcular estatísticas com base em dados reais do banco
-      const activeSubscriptions = subscriptionsDb.filter(s => s.status === 'active').length;
-      const trialing = subscriptionsDb.filter(s => s.status === 'trialing').length;
-      const canceled = subscriptionsDb.filter(s => s.status === 'canceled').length;
-      const pastDue = subscriptionsDb.filter(s => s.status === 'past_due').length;
-      
-      // Calcular receita total baseada nas faturas pagas
-      const paidInvoices = invoicesDb.filter(i => i.status === 'paid');
-      const totalRevenue = paidInvoices.reduce((sum, invoice) => sum + Number(invoice.amount), 0);
-      
-      // Calcular receita mensal (média dos últimos 3 meses)
-      const today = new Date();
-      const threeMonthsAgo = new Date();
-      threeMonthsAgo.setMonth(today.getMonth() - 3);
-      
-      const recentInvoices = paidInvoices.filter(invoice => {
-        return invoice.paidAt && new Date(invoice.paidAt) >= threeMonthsAgo;
-      });
-      
-      const monthlyRevenue = recentInvoices.length > 0
-        ? recentInvoices.reduce((sum, invoice) => sum + Number(invoice.amount), 0) / 3
-        : 0;
-      
-      // Taxa de cancelamento (churn)
-      const totalSubscriptions = subscriptionsDb.length;
-      const churnRate = totalSubscriptions > 0
-        ? (canceled / totalSubscriptions) * 100
-        : 0;
-      
-      // Agrupar receita por mês para os últimos 12 meses
-      const lastYear = new Date();
-      lastYear.setFullYear(today.getFullYear() - 1);
-      
-      const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-      const monthlyData = monthNames.map(month => ({ month, revenue: 0 }));
-      
-      // Processar as faturas pagas para montar o gráfico de receita mensal
-      paidInvoices.forEach(invoice => {
-        if (invoice.paidAt) {
-          const paidDate = new Date(invoice.paidAt);
-          if (paidDate >= lastYear) {
-            const monthIndex = paidDate.getMonth();
-            monthlyData[monthIndex].revenue += Number(invoice.amount);
-          }
-        }
-      });
-      
-      // Arredondar valores para 2 casas decimais
-      monthlyData.forEach(data => {
-        data.revenue = parseFloat(data.revenue.toFixed(2));
-      });
-      
-      const stats = {
-        totalRevenue: parseFloat(totalRevenue.toFixed(2)),
-        monthlyRevenue: parseFloat(monthlyRevenue.toFixed(2)),
-        activeSubscriptions,
-        churnRate: parseFloat(churnRate.toFixed(1)),
-        monthlyData,
-        subscriptionsByStatus: [
-          { status: "Ativas", count: activeSubscriptions },
-          { status: "Teste", count: trialing },
-          { status: "Canceladas", count: canceled },
-          { status: "Atrasadas", count: pastDue }
-        ]
-      };
-      
+      // Executar estatísticas para o dashboard financeiro
+      const stats = await storage.getFinanceStats();
       res.json(stats);
-    } catch (error: any) {
-      console.error("Error fetching finance stats:", error);
-      res.status(500).json({ message: "Failed to fetch finance statistics: " + error.message });
-    }
-  });
-  
-  app.post("/api/admin/finance/settings", isAdmin, async (req: Request, res: Response) => {
-    try {
-      // Em produção, isso salvaria as configurações no banco de dados
-      console.log("Received finance settings:", req.body);
-      res.json({ message: "Finance settings updated successfully" });
     } catch (error) {
-      console.error("Error updating finance settings:", error);
-      res.status(500).json({ message: "Failed to update finance settings" });
+      console.error("Error fetching financial stats:", error);
+      res.status(500).json({ message: "Failed to fetch financial statistics" });
     }
   });
 
-  // API para gerenciamento de usuários pelo administrador
+  app.post("/api/admin/finance/settings", isAdmin, async (req: Request, res: Response) => {
+    try {
+      // Atualizar configurações financeiras
+      const settings = await storage.updateFinanceSettings(req.body);
+      res.json(settings);
+    } catch (error) {
+      console.error("Error updating financial settings:", error);
+      res.status(500).json({ message: "Failed to update financial settings" });
+    }
+  });
+
+  // Gerenciamento de usuários (admin)
   app.get("/api/admin/users", isAdmin, async (req: Request, res: Response) => {
     try {
       const users = await storage.getUsers();
-      res.status(200).json(users);
+      
+      // Remover senhas antes de enviar
+      const safeUsers = users.map(user => ({
+        ...user,
+        password: undefined
+      }));
+      
+      res.json(safeUsers);
     } catch (error) {
-      console.error("Error getting users:", error);
-      res.status(500).json({ message: "Erro ao obter usuários" });
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
     }
   });
 
-  // Bloquear/desbloquear acesso de um usuário
+  // Ativar/desativar acesso de usuários
   app.put("/api/admin/users/:id/toggle-access", isAdmin, async (req: Request, res: Response) => {
     try {
-      const userId = parseInt(req.params.id);
-      const { blocked } = req.body;
-      
-      // Buscar usuário atual
-      const user = await storage.getUserById(userId);
-      if (!user) {
-        return res.status(404).json({ message: "Usuário não encontrado" });
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid ID format" });
       }
       
-      // Atualizar status de bloqueio usando o método específico
-      const updatedUser = await storage.toggleUserAccess(userId, !blocked);
+      const user = await storage.getUserById(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
       
-      res.status(200).json({ 
-        message: blocked ? "Usuário bloqueado com sucesso" : "Acesso do usuário liberado com sucesso",
-        user: updatedUser
+      // Inverter o status atual
+      const newStatus = !user.isActive;
+      
+      // Atualizar o usuário
+      const updatedUser = await storage.updateUser(id, { 
+        isActive: newStatus 
+      });
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "Failed to update user" });
+      }
+      
+      res.json({
+        message: `User access ${newStatus ? 'activated' : 'deactivated'} successfully`,
+        user: {
+          ...updatedUser,
+          password: undefined
+        }
       });
     } catch (error) {
       console.error("Error toggling user access:", error);
-      res.status(500).json({ message: "Erro ao alterar acesso do usuário" });
+      res.status(500).json({ message: "Failed to toggle user access" });
     }
   });
 
-  // Enviar e-mail de cobrança para um usuário
+  // Enviar lembretes de pagamento
   app.post("/api/admin/users/:id/send-payment-reminder", isAdmin, async (req: Request, res: Response) => {
     try {
-      const userId = parseInt(req.params.id);
-      const { message } = req.body;
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid ID format" });
+      }
       
-      // Buscar usuário
-      const user = await storage.getUserById(userId);
+      const user = await storage.getUserById(id);
       if (!user) {
-        return res.status(404).json({ message: "Usuário não encontrado" });
+        return res.status(404).json({ message: "User not found" });
       }
       
-      // Enviar e-mail de cobrança
-      const emailSent = await sendPaymentReminderEmail(user, message);
+      // Enviar e-mail de lembrete de pagamento
+      await sendPaymentReminderEmail(user, req.body.customMessage);
       
-      if (!emailSent) {
-        return res.status(500).json({ message: "Não foi possível enviar o e-mail. Verifique a configuração do serviço de e-mail." });
-      }
-      
-      res.status(200).json({ message: "E-mail de cobrança enviado com sucesso" });
+      res.json({
+        message: "Payment reminder sent successfully"
+      });
     } catch (error) {
       console.error("Error sending payment reminder:", error);
-      res.status(500).json({ message: "Erro ao enviar e-mail de cobrança" });
+      res.status(500).json({ message: "Failed to send payment reminder" });
     }
   });
 
   const httpServer = createServer(app);
+
   return httpServer;
 }
