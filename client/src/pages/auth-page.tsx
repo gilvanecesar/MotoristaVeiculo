@@ -51,8 +51,8 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<string>("login");
   const [selectedRole, setSelectedRole] = useState<string>(USER_TYPES.SHIPPER);
-  const [subscriptionType, setSubscriptionType] = useState<string>("monthly"); // "monthly" ou "annual"
-  const [showPlans, setShowPlans] = useState<boolean>(false);
+  const [subscriptionType, setSubscriptionType] = useState<string>("monthly"); // "monthly", "annual" ou "trial"
+  const [showPlansOnly, setShowPlansOnly] = useState<boolean>(false);
   const [isLoadingCheckout, setIsLoadingCheckout] = useState<boolean>(false);
   const [subscriptionRequired, setSubscriptionRequired] = useState<boolean>(false);
   
@@ -76,8 +76,8 @@ export default function AuthPage() {
       return null;
     }
     
-    // Se o usuário está logado mas não tem assinatura, mostra a página de planos
-    setShowPlans(true);
+    // Se o usuário está logado mas não tem assinatura, mostra apenas a página de planos
+    setShowPlansOnly(true);
   }
 
   // Formulário de login
@@ -154,7 +154,7 @@ export default function AuthPage() {
           description: "Para continuar, é necessário assinar um plano",
         });
         // Após o cadastro, exibe a página de planos
-        setShowPlans(true);
+        setShowPlansOnly(true);
       },
     });
   };
@@ -179,15 +179,28 @@ export default function AuthPage() {
             </Alert>
           )}
           
-          {/* Página de planos de assinatura */}
-          {showPlans ? (
+          {/* Exibe apenas os planos se o usuário estiver logado e sem assinatura */}
+          {showPlansOnly ? (
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-center">Escolha seu plano</h2>
               <p className="text-center text-muted-foreground">
                 Para acessar a plataforma QUERO FRETES, escolha um dos planos abaixo:
               </p>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Plano de Teste */}
+                <Card className={`cursor-pointer transition-all hover:shadow-md ${subscriptionType === "trial" ? 'border-primary ring-2 ring-primary' : ''}`}
+                      onClick={() => setSubscriptionType("trial")}>
+                  <CardHeader className="pb-3">
+                    <CardTitle>Teste Grátis</CardTitle>
+                    <CardDescription>Teste por 7 dias</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold mb-2">Grátis</div>
+                    <p className="text-sm text-muted-foreground">Acesso completo por 7 dias</p>
+                  </CardContent>
+                </Card>
+                
                 {/* Plano Mensal */}
                 <Card className={`cursor-pointer transition-all hover:shadow-md ${subscriptionType === "monthly" ? 'border-primary ring-2 ring-primary' : ''}`}
                       onClick={() => setSubscriptionType("monthly")}>
@@ -235,213 +248,262 @@ export default function AuthPage() {
               </p>
             </div>
           ) : (
-            <Tabs defaultValue="login" value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-8">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="register">Cadastro</TabsTrigger>
-              </TabsList>
+            <>
+              {/* Planos de assinatura exibidos antes do login */}
+              <div className="mb-10">
+                <h2 className="text-2xl font-bold text-center mb-4">Planos Disponíveis</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Plano de Teste */}
+                  <Card className="cursor-pointer transition-all hover:shadow-md">
+                    <CardHeader className="pb-3">
+                      <CardTitle>Teste Grátis</CardTitle>
+                      <CardDescription>Teste por 7 dias</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold mb-2">Grátis</div>
+                      <p className="text-sm text-muted-foreground">Acesso completo por 7 dias</p>
+                    </CardContent>
+                  </Card>
+                  
+                  {/* Plano Mensal */}
+                  <Card className="cursor-pointer transition-all hover:shadow-md">
+                    <CardHeader className="pb-3">
+                      <CardTitle>Mensal</CardTitle>
+                      <CardDescription>Acesso por 30 dias</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold mb-2">R$ 99,90</div>
+                      <p className="text-sm text-muted-foreground">Cobrado a cada mês</p>
+                    </CardContent>
+                  </Card>
+                  
+                  {/* Plano Anual */}
+                  <Card className="cursor-pointer transition-all hover:shadow-md">
+                    <CardHeader className="pb-3">
+                      <CardTitle>Anual</CardTitle>
+                      <CardDescription>Acesso por 1 ano completo</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold mb-2">R$ 1.198,80</div>
+                      <p className="text-sm text-muted-foreground">Apenas R$ 99,90/mês</p>
+                    </CardContent>
+                  </Card>
+                </div>
+                
+                <p className="text-center text-muted-foreground mt-4">
+                  Faça login ou registre-se para assinar um de nossos planos
+                </p>
+              </div>
+              
+              <Tabs defaultValue="login" value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-8">
+                  <TabsTrigger value="login">Login</TabsTrigger>
+                  <TabsTrigger value="register">Cadastro</TabsTrigger>
+                </TabsList>
 
-            <TabsContent value="login">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Login</CardTitle>
-                  <CardDescription>
-                    Entre com seu e-mail e senha para acessar a plataforma.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Form {...loginForm}>
-                    <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
-                      <FormField
-                        control={loginForm.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>E-mail</FormLabel>
-                            <FormControl>
-                              <Input placeholder="seu@email.com" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                <TabsContent value="login">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Login</CardTitle>
+                      <CardDescription>
+                        Entre com seu e-mail e senha para acessar a plataforma.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Form {...loginForm}>
+                        <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
+                          <FormField
+                            control={loginForm.control}
+                            name="email"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>E-mail</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="seu@email.com" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
 
-                      <FormField
-                        control={loginForm.control}
-                        name="password"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Senha</FormLabel>
-                            <FormControl>
-                              <Input type="password" placeholder="******" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                          <FormField
+                            control={loginForm.control}
+                            name="password"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Senha</FormLabel>
+                                <FormControl>
+                                  <Input type="password" placeholder="******" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
 
-                      <Button
-                        type="submit"
-                        className="w-full"
-                        disabled={loginMutation.isPending}
-                      >
-                        {loginMutation.isPending ? (
-                          <>
-                            <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-                            Entrando...
-                          </>
-                        ) : (
-                          "Entrar"
-                        )}
+                          <Button
+                            type="submit"
+                            className="w-full"
+                            disabled={loginMutation.isPending}
+                          >
+                            {loginMutation.isPending ? (
+                              <>
+                                <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+                                Entrando...
+                              </>
+                            ) : (
+                              "Entrar"
+                            )}
+                          </Button>
+                        </form>
+                      </Form>
+                    </CardContent>
+                    <CardFooter className="flex flex-col space-y-4">
+                      <div className="relative w-full">
+                        <div className="absolute inset-0 flex items-center">
+                          <span className="w-full border-t border-gray-300" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                          <span className="bg-white dark:bg-slate-900 px-2 text-muted-foreground">
+                            ou continue com
+                          </span>
+                        </div>
+                      </div>
+
+                      <Button variant="outline" className="w-full" disabled>
+                        <GoogleIcon />
+                        Google
                       </Button>
-                    </form>
-                  </Form>
-                </CardContent>
-                <CardFooter className="flex flex-col space-y-4">
-                  <div className="relative w-full">
-                    <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t border-gray-300" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-white dark:bg-slate-900 px-2 text-muted-foreground">
-                        ou continue com
-                      </span>
-                    </div>
-                  </div>
+                    </CardFooter>
+                  </Card>
+                </TabsContent>
 
-                  <Button variant="outline" className="w-full" disabled>
-                    <Icons.google className="mr-2 h-4 w-4" />
-                    Google
-                  </Button>
-                </CardFooter>
-              </Card>
-            </TabsContent>
+                <TabsContent value="register">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Criar conta</CardTitle>
+                      <CardDescription>
+                        Preencha os campos abaixo para se cadastrar na plataforma.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="mb-6">
+                        <h3 className="text-sm font-medium mb-3">Selecione seu perfil:</h3>
+                        <div className="grid grid-cols-3 gap-3">
+                          <Card 
+                            className={`cursor-pointer transition-all hover:bg-muted ${selectedRole === USER_TYPES.SHIPPER ? 'border-primary ring-2 ring-primary' : ''}`}
+                            onClick={() => setSelectedRole(USER_TYPES.SHIPPER)}
+                          >
+                            <CardContent className="p-3 text-center">
+                              <Icons.building className="h-6 w-6 mx-auto mb-2" />
+                              <p className="text-xs font-medium">Embarcador</p>
+                            </CardContent>
+                          </Card>
+                          
+                          <Card 
+                            className={`cursor-pointer transition-all hover:bg-muted ${selectedRole === USER_TYPES.DRIVER ? 'border-primary ring-2 ring-primary' : ''}`}
+                            onClick={() => setSelectedRole(USER_TYPES.DRIVER)}
+                          >
+                            <CardContent className="p-3 text-center">
+                              <Icons.truck className="h-6 w-6 mx-auto mb-2" />
+                              <p className="text-xs font-medium">Transportador</p>
+                            </CardContent>
+                          </Card>
+                          
+                          <Card 
+                            className={`cursor-pointer transition-all hover:bg-muted ${selectedRole === USER_TYPES.AGENT ? 'border-primary ring-2 ring-primary' : ''}`}
+                            onClick={() => setSelectedRole(USER_TYPES.AGENT)}
+                          >
+                            <CardContent className="p-3 text-center">
+                              <Icons.package className="h-6 w-6 mx-auto mb-2" />
+                              <p className="text-xs font-medium">Agente</p>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      </div>
 
-            <TabsContent value="register">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Criar conta</CardTitle>
-                  <CardDescription>
-                    Preencha os campos abaixo para se cadastrar na plataforma.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="mb-6">
-                    <h3 className="text-sm font-medium mb-3">Selecione seu perfil:</h3>
-                    <div className="grid grid-cols-3 gap-3">
-                      <Card 
-                        className={`cursor-pointer transition-all hover:bg-muted ${selectedRole === USER_TYPES.SHIPPER ? 'border-primary ring-2 ring-primary' : ''}`}
-                        onClick={() => setSelectedRole(USER_TYPES.SHIPPER)}
-                      >
-                        <CardContent className="p-3 text-center">
-                          <Icons.building className="h-6 w-6 mx-auto mb-2" />
-                          <p className="text-xs font-medium">Embarcador</p>
-                        </CardContent>
-                      </Card>
-                      
-                      <Card 
-                        className={`cursor-pointer transition-all hover:bg-muted ${selectedRole === USER_TYPES.DRIVER ? 'border-primary ring-2 ring-primary' : ''}`}
-                        onClick={() => setSelectedRole(USER_TYPES.DRIVER)}
-                      >
-                        <CardContent className="p-3 text-center">
-                          <Icons.truck className="h-6 w-6 mx-auto mb-2" />
-                          <p className="text-xs font-medium">Transportador</p>
-                        </CardContent>
-                      </Card>
-                      
-                      <Card 
-                        className={`cursor-pointer transition-all hover:bg-muted ${selectedRole === USER_TYPES.AGENT ? 'border-primary ring-2 ring-primary' : ''}`}
-                        onClick={() => setSelectedRole(USER_TYPES.AGENT)}
-                      >
-                        <CardContent className="p-3 text-center">
-                          <Icons.package className="h-6 w-6 mx-auto mb-2" />
-                          <p className="text-xs font-medium">Agente</p>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </div>
+                      <Form {...registerForm}>
+                        <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
+                          <FormField
+                            control={registerForm.control}
+                            name="name"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Nome completo</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Nome e sobrenome" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
 
-                  <Form {...registerForm}>
-                    <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
-                      <FormField
-                        control={registerForm.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Nome completo</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Nome e sobrenome" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                          <FormField
+                            control={registerForm.control}
+                            name="email"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>E-mail</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="seu@email.com" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
 
-                      <FormField
-                        control={registerForm.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>E-mail</FormLabel>
-                            <FormControl>
-                              <Input placeholder="seu@email.com" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                          <FormField
+                            control={registerForm.control}
+                            name="password"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Senha</FormLabel>
+                                <FormControl>
+                                  <Input type="password" placeholder="******" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
 
-                      <FormField
-                        control={registerForm.control}
-                        name="password"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Senha</FormLabel>
-                            <FormControl>
-                              <Input type="password" placeholder="******" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                          <Button
+                            type="submit"
+                            className="w-full"
+                            disabled={registerMutation.isPending}
+                          >
+                            {registerMutation.isPending ? (
+                              <>
+                                <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+                                Processando...
+                              </>
+                            ) : (
+                              "Cadastrar"
+                            )}
+                          </Button>
+                        </form>
+                      </Form>
+                    </CardContent>
+                    <CardFooter className="flex flex-col space-y-4">
+                      <div className="relative w-full">
+                        <div className="absolute inset-0 flex items-center">
+                          <span className="w-full border-t border-gray-300" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                          <span className="bg-white dark:bg-slate-900 px-2 text-muted-foreground">
+                            ou continue com
+                          </span>
+                        </div>
+                      </div>
 
-                      <Button
-                        type="submit"
-                        className="w-full"
-                        disabled={registerMutation.isPending}
-                      >
-                        {registerMutation.isPending ? (
-                          <>
-                            <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-                            Processando...
-                          </>
-                        ) : (
-                          "Cadastrar"
-                        )}
+                      <Button variant="outline" className="w-full" disabled>
+                        <GoogleIcon />
+                        Google
                       </Button>
-                    </form>
-                  </Form>
-                </CardContent>
-                <CardFooter className="flex flex-col space-y-4">
-                  <div className="relative w-full">
-                    <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t border-gray-300" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-white dark:bg-slate-900 px-2 text-muted-foreground">
-                        ou continue com
-                      </span>
-                    </div>
-                  </div>
-
-                  <Button variant="outline" className="w-full" disabled>
-                    <Icons.google className="mr-2 h-4 w-4" />
-                    Google
-                  </Button>
-                </CardFooter>
-              </Card>
-            </TabsContent>
-          </Tabs>
+                    </CardFooter>
+                  </Card>
+                </TabsContent>
+              </Tabs>
+            </>
+          )}
         </div>
       </div>
 
@@ -462,19 +524,13 @@ export default function AuthPage() {
               <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
               </svg>
-              Cadastre motoristas e seus veículos
+              Controle completo de fretes e transportes
             </li>
             <li className="flex items-center">
               <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
               </svg>
-              Gerencie fretes e clientes
-            </li>
-            <li className="flex items-center">
-              <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-              </svg>
-              Acompanhe rotas e entregue com segurança
+              Gestão eficiente de motoristas e veículos
             </li>
             <li className="flex items-center">
               <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
