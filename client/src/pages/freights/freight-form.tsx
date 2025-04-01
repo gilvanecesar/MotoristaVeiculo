@@ -1185,7 +1185,7 @@ export default function FreightForm() {
                 {isViewingInReadOnlyMode ? (
                   <Button 
                     type="button"
-                    onClick={() => navigate(`/freights/${freightId}?edit=true`)}
+                    onClick={() => setIsViewingInReadOnlyMode(false)}
                   >
                     Editar Frete
                   </Button>
