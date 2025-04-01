@@ -35,8 +35,7 @@ import SubscribePage from "@/pages/subscribe";
 function Router() {
   return (
     <Switch>
-      <Route path="/login" component={LoginPage} />
-      <Route path="/auth" component={AuthPage} />
+      <Route path="/auth" component={LoginPage} />
       <Route path="/payment-success" component={PaymentSuccessPage} />
       <Route path="/payment-cancel" component={PaymentCancelPage} />
       <Route path="/checkout" component={CheckoutPage} />
