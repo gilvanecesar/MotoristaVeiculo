@@ -164,7 +164,9 @@ export const freights = pgTable("freights", {
   productType: text("product_type").notNull(),
   cargoWeight: decimal("cargo_weight", { precision: 10, scale: 2 }).default('0').notNull(),
   vehicleType: text("vehicle_type").notNull(),
+  vehicleTypesSelected: text("vehicle_types_selected"), // Lista de tipos de veículos selecionados (separados por vírgula)
   bodyType: text("body_type").notNull(),
+  bodyTypesSelected: text("body_types_selected"), // Lista de tipos de carrocerias selecionados (separados por vírgula)
   freightValue: decimal("freight_value", { precision: 10, scale: 2 }).default('0').notNull(),
   tollOption: text("toll_option").notNull(), // incluso ou a parte
   paymentMethod: text("payment_method").notNull(),
@@ -306,6 +308,7 @@ export const freightValidator = insertFreightSchema.extend({
     VEHICLE_TYPES.PESADO_RODOTREM,
     VEHICLE_TYPES.PESADO_VANDERLEIA
   ]),
+  vehicleTypesSelected: z.string().optional(),
   bodyType: z.enum([
     BODY_TYPES.BAU,
     BODY_TYPES.GRANELEIRA,
@@ -319,6 +322,7 @@ export const freightValidator = insertFreightSchema.extend({
     BODY_TYPES.ABERTA,
     BODY_TYPES.FECHADA
   ]),
+  bodyTypesSelected: z.string().optional(),
 });
 
 export const freightDestinationValidator = insertFreightDestinationSchema.extend({
