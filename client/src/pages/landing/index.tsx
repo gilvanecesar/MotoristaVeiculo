@@ -1,0 +1,440 @@
+import React from "react";
+import { useLocation } from "wouter";
+import { Button } from "@/components/ui/button";
+import { ChevronRight, Truck, Users, BarChart3, CheckCircle2, Globe, Shield, Clock, CreditCard } from "lucide-react";
+import { FaWhatsapp } from "react-icons/fa";
+import logoPath from "@assets/QUEROFRETES BOLINHA.png";
+import "./landing.css";
+import { TestimonialSection } from "./TestimonialSection";
+import { StatsSection } from "./StatsSection";
+
+export default function LandingPage() {
+  const [_, setLocation] = useLocation();
+
+  const goToLogin = () => {
+    setLocation("/auth");
+  };
+
+  const features = [
+    {
+      icon: <Truck className="w-10 h-10 text-primary" />,
+      title: "Gestão Completa de Fretes",
+      description: "Controle total sobre todos os fretes, desde a origem até o destino final, com informações detalhadas sobre carga, veículo e pagamento."
+    },
+    {
+      icon: <Users className="w-10 h-10 text-primary" />,
+      title: "Cadastro de Clientes e Motoristas",
+      description: "Mantenha uma base de dados completa de clientes e motoristas, com todos os documentos e informações necessárias."
+    },
+    {
+      icon: <Globe className="w-10 h-10 text-primary" />,
+      title: "Compartilhamento via WhatsApp",
+      description: "Compartilhe fretes diretamente pelo WhatsApp com um só clique, facilitando a comunicação com motoristas e parceiros."
+    },
+    {
+      icon: <BarChart3 className="w-10 h-10 text-primary" />,
+      title: "Relatórios Detalhados",
+      description: "Acompanhe o desempenho da sua operação com relatórios detalhados sobre fretes, clientes e motoristas."
+    }
+  ];
+
+  const benefits = [
+    {
+      icon: <CheckCircle2 className="w-6 h-6 text-primary" />,
+      title: "Aumento de Produtividade",
+      description: "Reduza o tempo gasto com processos manuais e aumente a produtividade da sua equipe."
+    },
+    {
+      icon: <Shield className="w-6 h-6 text-primary" />,
+      title: "Segurança de Dados",
+      description: "Seus dados estão seguros e protegidos em nossa plataforma, com backups regulares."
+    },
+    {
+      icon: <Clock className="w-6 h-6 text-primary" />,
+      title: "Disponibilidade 24/7",
+      description: "Acesse suas informações a qualquer hora e em qualquer lugar, de qualquer dispositivo."
+    },
+    {
+      icon: <CreditCard className="w-6 h-6 text-primary" />,
+      title: "Planos Acessíveis",
+      description: "Escolha entre planos mensais ou anuais, com descontos especiais para pagamentos antecipados."
+    }
+  ];
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      {/* Navbar */}
+      <nav className="bg-slate-900 text-white p-4">
+        <div className="container mx-auto flex justify-between items-center">
+          <div className="flex items-center space-x-2">
+            <img src={logoPath} alt="QUERO FRETES Logo" className="h-10 w-10" />
+            <span className="font-bold text-xl">QUERO FRETES</span>
+          </div>
+          <div className="space-x-4">
+            <Button
+              variant="outline"
+              className="border-white text-white hover:bg-white hover:text-slate-900"
+              onClick={goToLogin}
+            >
+              Entrar
+            </Button>
+            <Button className="bg-primary hover:bg-primary/90" onClick={goToLogin}>
+              Registrar
+            </Button>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <section className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white py-20">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col lg:flex-row items-center">
+            <div className="lg:w-1/2 mb-10 lg:mb-0">
+              <h1 className="text-4xl lg:text-5xl font-bold mb-4">
+                <span className="text-primary">Simplifique</span> sua gestão de fretes
+              </h1>
+              <p className="text-xl mb-8 text-slate-300">
+                A plataforma completa para transportadoras, embarcadores e agentes de carga gerenciarem suas operações com eficiência e praticidade.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button className="bg-primary hover:bg-primary/90 text-white px-8 py-6 text-lg" onClick={goToLogin}>
+                  Começar Agora <ChevronRight className="ml-2 h-5 w-5" />
+                </Button>
+                <Button variant="outline" className="border-white text-white hover:bg-white hover:text-slate-900 px-8 py-6 text-lg">
+                  Saiba Mais
+                </Button>
+              </div>
+              <div className="mt-8 flex items-center">
+                <p className="text-slate-300 mr-4">Teste grátis por 7 dias</p>
+                <span className="flex items-center text-primary">
+                  <CheckCircle2 className="h-5 w-5 mr-2" /> Sem necessidade de cartão de crédito
+                </span>
+              </div>
+            </div>
+            <div className="lg:w-1/2 flex justify-center">
+              <div className="relative">
+                <div className="absolute inset-0 bg-primary rounded-full blur-3xl opacity-20"></div>
+                <img
+                  src="https://images.unsplash.com/photo-1620733723572-11c53f73a416?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
+                  alt="QUERO FRETES Dashboard"
+                  className="relative z-10 rounded-lg shadow-2xl border border-slate-700 max-w-lg"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold mb-4">Recursos Avançados</h2>
+            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+              O QUERO FRETES oferece todas as ferramentas necessárias para otimizar 
+              suas operações de transporte e logística.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {features.map((feature, index) => (
+              <div key={index} className="bg-white p-6 rounded-lg shadow-lg border border-slate-200 hover:border-primary transition-all">
+                <div className="mb-4">{feature.icon}</div>
+                <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
+                <p className="text-slate-600">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-16 text-center">
+            <Button className="bg-primary hover:bg-primary/90 text-white px-8 py-6 text-lg" onClick={goToLogin}>
+              Experimente Grátis por 7 dias
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <StatsSection />
+
+      {/* Pricing Section */}
+      <section className="py-20 bg-slate-50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold mb-4">Planos Simples e Transparentes</h2>
+            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+              Escolha o plano que melhor se adapta às necessidades da sua empresa.
+            </p>
+          </div>
+
+          <div className="flex flex-col lg:flex-row gap-8 max-w-5xl mx-auto">
+            {/* Free Plan */}
+            <div className="bg-white rounded-lg shadow-lg border border-slate-200 flex-1 overflow-hidden">
+              <div className="p-8">
+                <h3 className="text-xl font-bold mb-4">Motoristas</h3>
+                <div className="mb-4">
+                  <span className="text-4xl font-bold">Grátis</span>
+                </div>
+                <p className="text-slate-600 mb-6">
+                  Ideal para motoristas autônomos que buscam fretes disponíveis.
+                </p>
+                <ul className="space-y-3 mb-8">
+                  <li className="flex items-start">
+                    <CheckCircle2 className="h-5 w-5 text-primary mr-2 mt-0.5" />
+                    <span>Visualização de fretes</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className="h-5 w-5 text-primary mr-2 mt-0.5" />
+                    <span>Contato direto com embarcadores</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className="h-5 w-5 text-primary mr-2 mt-0.5" />
+                    <span>Cadastro de veículos</span>
+                  </li>
+                </ul>
+                <Button variant="outline" className="w-full" onClick={goToLogin}>
+                  Registrar-se
+                </Button>
+              </div>
+            </div>
+
+            {/* Monthly Plan */}
+            <div className="bg-white rounded-lg shadow-lg border-2 border-primary flex-1 relative overflow-hidden">
+              <div className="absolute top-0 right-0 bg-primary text-white py-1 px-4 text-sm font-bold">
+                MAIS POPULAR
+              </div>
+              <div className="p-8">
+                <h3 className="text-xl font-bold mb-4">Mensal</h3>
+                <div className="mb-4">
+                  <span className="text-4xl font-bold">R$ 99,90</span>
+                  <span className="text-slate-600">/mês</span>
+                </div>
+                <p className="text-slate-600 mb-6">
+                  Ideal para empresas que buscam gerenciar fretes e operações.
+                </p>
+                <ul className="space-y-3 mb-8">
+                  <li className="flex items-start">
+                    <CheckCircle2 className="h-5 w-5 text-primary mr-2 mt-0.5" />
+                    <span>Cadastro ilimitado de fretes</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className="h-5 w-5 text-primary mr-2 mt-0.5" />
+                    <span>Gestão de clientes e motoristas</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className="h-5 w-5 text-primary mr-2 mt-0.5" />
+                    <span>Compartilhamento via WhatsApp</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className="h-5 w-5 text-primary mr-2 mt-0.5" />
+                    <span>Relatórios básicos</span>
+                  </li>
+                </ul>
+                <Button className="w-full bg-primary hover:bg-primary/90" onClick={goToLogin}>
+                  Começar Agora
+                </Button>
+              </div>
+            </div>
+
+            {/* Annual Plan */}
+            <div className="bg-white rounded-lg shadow-lg border border-slate-200 flex-1 overflow-hidden">
+              <div className="p-8">
+                <h3 className="text-xl font-bold mb-4">Anual</h3>
+                <div className="mb-4">
+                  <span className="text-4xl font-bold">R$ 960,00</span>
+                  <span className="text-slate-600">/ano</span>
+                </div>
+                <p className="text-slate-600 mb-6">
+                  <span className="text-green-600 font-bold">Economize 20%</span> com o plano anual.
+                </p>
+                <ul className="space-y-3 mb-8">
+                  <li className="flex items-start">
+                    <CheckCircle2 className="h-5 w-5 text-primary mr-2 mt-0.5" />
+                    <span>Todas as funcionalidades do plano mensal</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className="h-5 w-5 text-primary mr-2 mt-0.5" />
+                    <span>Relatórios avançados</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className="h-5 w-5 text-primary mr-2 mt-0.5" />
+                    <span>Suporte prioritário</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className="h-5 w-5 text-primary mr-2 mt-0.5" />
+                    <span>Acesso a novas funcionalidades</span>
+                  </li>
+                </ul>
+                <Button variant="outline" className="w-full" onClick={goToLogin}>
+                  Escolher Anual
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Benefits Section */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold mb-4">Por que escolher o QUERO FRETES?</h2>
+            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+              Conheça os benefícios que nossa plataforma pode trazer para o seu negócio.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {benefits.map((benefit, index) => (
+              <div key={index} className="flex">
+                <div className="mr-4">{benefit.icon}</div>
+                <div>
+                  <h3 className="text-lg font-bold mb-2">{benefit.title}</h3>
+                  <p className="text-slate-600">{benefit.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <TestimonialSection />
+      
+      {/* CTA Section */}
+      <section className="py-20 bg-gradient-to-r from-primary/90 to-primary text-white">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold mb-6">Pronto para simplificar sua gestão de fretes?</h2>
+          <p className="text-xl mb-8 max-w-2xl mx-auto">
+            Comece hoje mesmo e tenha 7 dias gratuitos para explorar todas as funcionalidades do QUERO FRETES.
+          </p>
+          <Button
+            className="bg-white text-primary hover:bg-slate-100 px-8 py-6 text-lg"
+            onClick={goToLogin}
+          >
+            Criar Conta Grátis
+          </Button>
+          <p className="mt-4 text-sm">Não é necessário cartão de crédito</p>
+        </div>
+      </section>
+
+      {/* Contact Section */}
+      <section className="py-20 bg-slate-50">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col lg:flex-row gap-12">
+            <div className="lg:w-1/2">
+              <h2 className="text-3xl font-bold mb-6">Entre em contato</h2>
+              <p className="text-lg text-slate-600 mb-8">
+                Tem dúvidas sobre o QUERO FRETES? Nossa equipe está pronta para ajudar!
+              </p>
+              
+              <div className="flex items-center mb-6">
+                <Button
+                  className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 flex items-center"
+                >
+                  <FaWhatsapp className="mr-2 h-5 w-5" /> Fale Conosco pelo WhatsApp
+                </Button>
+              </div>
+              
+              <div className="space-y-4">
+                <p className="text-lg">
+                  <span className="font-bold">Email:</span> contato@querofretes.com.br
+                </p>
+                <p className="text-lg">
+                  <span className="font-bold">Telefone:</span> (31) 9 9999-9999
+                </p>
+              </div>
+            </div>
+            
+            <div className="lg:w-1/2">
+              <div className="bg-white p-8 rounded-lg shadow-lg border border-slate-200">
+                <h3 className="text-xl font-bold mb-6">Envie uma mensagem</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Nome</label>
+                    <input
+                      type="text"
+                      className="w-full p-3 border border-slate-300 rounded-md"
+                      placeholder="Seu nome"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Email</label>
+                    <input
+                      type="email"
+                      className="w-full p-3 border border-slate-300 rounded-md"
+                      placeholder="seu.email@exemplo.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Mensagem</label>
+                    <textarea
+                      className="w-full p-3 border border-slate-300 rounded-md h-32"
+                      placeholder="Como podemos ajudar?"
+                    ></textarea>
+                  </div>
+                  <Button className="w-full bg-primary hover:bg-primary/90">
+                    Enviar Mensagem
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-slate-900 text-white py-12">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row justify-between mb-8">
+            <div className="mb-8 md:mb-0">
+              <div className="flex items-center space-x-2 mb-4">
+                <img src={logoPath} alt="QUERO FRETES Logo" className="h-10 w-10" />
+                <span className="font-bold text-xl">QUERO FRETES</span>
+              </div>
+              <p className="text-slate-400 max-w-md">
+                A plataforma completa para simplificar a gestão de fretes e transporte, conectando embarcadores, transportadoras e motoristas.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
+              <div>
+                <h4 className="font-bold text-lg mb-4">Plataforma</h4>
+                <ul className="space-y-2">
+                  <li><a href="#" className="text-slate-400 hover:text-white transition-colors">Home</a></li>
+                  <li><a href="#" className="text-slate-400 hover:text-white transition-colors">Recursos</a></li>
+                  <li><a href="#" className="text-slate-400 hover:text-white transition-colors">Planos</a></li>
+                  <li><a href="#" className="text-slate-400 hover:text-white transition-colors">Contato</a></li>
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="font-bold text-lg mb-4">Legal</h4>
+                <ul className="space-y-2">
+                  <li><a href="#" className="text-slate-400 hover:text-white transition-colors">Termos de Uso</a></li>
+                  <li><a href="#" className="text-slate-400 hover:text-white transition-colors">Privacidade</a></li>
+                  <li><a href="#" className="text-slate-400 hover:text-white transition-colors">Cookies</a></li>
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="font-bold text-lg mb-4">Redes Sociais</h4>
+                <ul className="space-y-2">
+                  <li><a href="#" className="text-slate-400 hover:text-white transition-colors">Facebook</a></li>
+                  <li><a href="#" className="text-slate-400 hover:text-white transition-colors">Instagram</a></li>
+                  <li><a href="#" className="text-slate-400 hover:text-white transition-colors">LinkedIn</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          
+          <div className="border-t border-slate-800 pt-8 mt-8">
+            <p className="text-center text-slate-400">
+              &copy; {new Date().getFullYear()} QUERO FRETES. Todos os direitos reservados.
+            </p>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
