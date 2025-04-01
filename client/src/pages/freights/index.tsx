@@ -689,7 +689,7 @@ export default function FreightsPage() {
                                   size="icon"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    navigate(`/freights/${freight.id}?edit=true`);
+                                    navigate(`/freights/${freight.id}/edit`);
                                   }}
                                   title="Editar"
                                 >
@@ -942,7 +942,7 @@ export default function FreightsPage() {
                 {isClientAuthorized(selectedFreight.clientId) && (
                   <Button 
                     variant="outline"
-                    onClick={() => navigate(`/freights/${selectedFreight.id}?edit=true`)}
+                    onClick={() => navigate(`/freights/${selectedFreight.id}/edit`)}
                   >
                     <Edit className="h-4 w-4 mr-2" /> Editar
                   </Button>
