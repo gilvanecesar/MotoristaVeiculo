@@ -104,6 +104,8 @@ export default function FreightForm() {
   const isEditing = Boolean(params.id);
   const freightId = params.id;
 
+  // Inicia como somente leitura apenas se estiver editando e sem parâmetro de edição
+  // Será atualizado após carregar os dados do frete
   const [isViewingInReadOnlyMode, setIsViewingInReadOnlyMode] = useState(
     isEditing && !searchParams.get("edit")
   );
@@ -215,14 +217,21 @@ export default function FreightForm() {
             console.log("Carregando frete para edição:", [freight]);
 
             // Verificar se tem permissão para editar - apenas admin ou dono do frete
-            if (!isClientAuthorized(freight.clientId)) {
+            const canEditFreight = isClientAuthorized(freight.clientId);
+            
+            // Se não tem autorização para editar, mostrar em modo somente leitura
+            // Mesmo que o parâmetro edit esteja na URL
+            if (!canEditFreight) {
               toast({
-                title: "Acesso negado",
+                title: "Modo somente leitura",
                 description: "Você não tem permissão para editar este frete.",
                 variant: "destructive",
               });
-              navigate("/freights");
-              return;
+              // Ativar modo somente leitura independente da URL
+              setIsViewingInReadOnlyMode(true);
+            } else if (searchParams.get("edit")) {
+              // Se tem autorização e o parâmetro edit está na URL, desativar modo somente leitura
+              setIsViewingInReadOnlyMode(false);
             }
 
             // Configurar form com dados do frete
