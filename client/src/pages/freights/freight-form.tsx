@@ -110,10 +110,49 @@ export default function FreightForm() {
     isEditing && !searchParams.get("edit")
   );
   
-  // Esta função será chamada diretamente pelo botão
+  // Esta função será chamada diretamente pelo botão e força a ativação do formulário
   const enableEditMode = () => {
     console.log("Ativando modo de edição diretamente");
+    console.log("Estado atual de somente leitura:", isViewingInReadOnlyMode);
+    
+    // Mudar estado
     setIsViewingInReadOnlyMode(false);
+    
+    // Força remover atributo disabled do fieldset e todos os campos dentro dele
+    setTimeout(() => {
+      try {
+        // Atualizar o fieldset
+        const fieldset = document.getElementById('freight-form-fields');
+        if (fieldset) {
+          console.log("Removendo atributo disabled do fieldset");
+          fieldset.removeAttribute('disabled');
+          
+          // Atualizar todos os inputs, selects e textareas dentro do fieldset
+          const formFields = fieldset.querySelectorAll("input, select, textarea, button");
+          formFields.forEach(field => {
+            field.removeAttribute('disabled');
+            field.removeAttribute('aria-disabled');
+            console.log("Campo habilitado:", field);
+          });
+          
+          // Se tiver uma mensagem de somente leitura, removê-la
+          const readonlyMessage = document.querySelector('.bg-amber-50');
+          if (readonlyMessage) {
+            readonlyMessage.style.display = 'none';
+          }
+          
+          // Exibir mensagem de sucesso
+          toast({
+            title: "Modo de edição ativado",
+            description: "Agora você pode editar os campos do frete.",
+          });
+        } else {
+          console.error("Fieldset não encontrado");
+        }
+      } catch (error) {
+        console.error("Erro ao habilitar campos:", error);
+      }
+    }, 100);
   };
 
   const { user } = useAuth();
@@ -510,7 +549,7 @@ export default function FreightForm() {
                   </p>
                 </div>
               )}
-              <fieldset disabled={isViewingInReadOnlyMode}>
+              <fieldset disabled={isViewingInReadOnlyMode} id="freight-form-fields">
                 <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
                 {/* Client Selection */}
                 <FormField
