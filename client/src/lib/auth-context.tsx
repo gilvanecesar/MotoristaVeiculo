@@ -88,8 +88,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (user && user.clientId) {
       console.log(`Usuário tem clientId: ${user.clientId}`);
       
-      // Se o frete não tem cliente associado (clientId null), qualquer usuário autenticado pode editar
-      if (clientId === null) {
+      // Se o frete não tem cliente associado ou clientId é zero (padrão), qualquer usuário autenticado pode editar
+      if (clientId === null || clientId === 0) {
         console.log("Frete sem cliente associado, permitindo acesso");
         return true;
       }
@@ -102,7 +102,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     // Para compatibilidade, também verifica o currentClient do localStorage (caso ainda esteja em uso)
     if (currentClient) {
-      if (clientId === null) {
+      if (clientId === null || clientId === 0) {
         console.log("Frete sem cliente associado, permitindo acesso");
         return true;
       }
@@ -110,6 +110,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const isAuthorized = currentClient.id === clientId;
       console.log(`Verificando autorização via localStorage: Cliente atual ID ${currentClient.id}, ClienteID do frete ${clientId}, Autorizado: ${isAuthorized}`);
       return isAuthorized;
+    }
+    
+    // Se não houver cliente associado ao frete (clientId é null ou 0), qualquer usuário autenticado pode editar
+    if (clientId === null || clientId === 0) {
+      console.log("Frete sem cliente associado, permitindo acesso para usuário autenticado");
+      return true;
     }
     
     console.log("Não há cliente associado ao usuário, negando acesso");

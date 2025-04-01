@@ -312,6 +312,11 @@ export default function FreightForm() {
     try {
       if (isViewingInReadOnlyMode) {
         // Evitar submissão no modo somente leitura
+        toast({
+          title: "Modo somente leitura",
+          description: "Você precisa clicar em 'Editar Frete' antes de salvar alterações.",
+          variant: "destructive",
+        });
         return;
       }
       
