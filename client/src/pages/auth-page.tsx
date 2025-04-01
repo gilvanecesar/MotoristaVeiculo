@@ -143,20 +143,30 @@ export default function AuthPage() {
   };
 
   const onRegisterSubmit = (data: RegisterFormValues) => {
-    // Adiciona o profileType selecionado
+    // Adiciona o profileType selecionado e o tipo de assinatura
     const registerData = {
       ...data,
       profileType: selectedRole,
+      subscriptionType: subscriptionType, // Inclui o tipo de assinatura no registro
     };
 
     registerMutation.mutate(registerData, {
       onSuccess: () => {
         toast({
           title: "Conta criada com sucesso",
-          description: "Para continuar, é necessário assinar um plano",
+          description: subscriptionType === "trial" 
+            ? "Seu período de teste de 7 dias foi iniciado" 
+            : "Para continuar, finalize o pagamento do plano selecionado",
         });
-        // Após o cadastro, exibe a página de planos
-        setShowPlansOnly(true);
+        
+        // Redireciona com base no tipo de assinatura
+        if (subscriptionType === "trial") {
+          // Se for teste gratuito, apenas mostra a página inicial
+          window.location.href = "/";
+        } else {
+          // Se for assinatura paga, redireciona para o checkout
+          window.location.href = `/checkout?plan=${subscriptionType}`;
+        }
       },
     });
   };

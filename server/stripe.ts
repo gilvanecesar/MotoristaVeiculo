@@ -7,7 +7,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2023-10-16',
 });
 
-// Preço do plano: R$ 80,00/mês com cobrança anual (12x R$ 80,00 = R$ 960,00)
+// Preço do plano: Mensal R$ 99,90 ou Anual R$ 960,00 (equivalente a R$ 80,00/mês)
 const ANNUAL_PLAN_PRICE_ID = process.env.STRIPE_PRICE_ID;
 console.log("Usando ID de preço do Stripe:", ANNUAL_PLAN_PRICE_ID);
 

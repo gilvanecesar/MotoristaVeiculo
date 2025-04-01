@@ -86,11 +86,21 @@ export default function Checkout() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  
+  // Get the plan from URL query parameter
+  const [searchParams] = useState<URLSearchParams>(() => new URLSearchParams(window.location.search));
+  const [selectedPlan, setSelectedPlan] = useState<string>(() => {
+    const planFromURL = searchParams.get("plan");
+    return planFromURL === "monthly" ? "monthly" : "annual";
+  });
 
   useEffect(() => {
     // Create PaymentIntent as soon as the page loads
     setIsLoading(true);
-    apiRequest("POST", "/api/create-payment-intent", { amount: 960.00 }) // R$ 960,00 (assinatura anual)
+    apiRequest("POST", "/api/create-payment-intent", { 
+      amount: selectedPlan === "monthly" ? 99.90 : 960.00, 
+      plan: selectedPlan || "annual" 
+    }) // R$ 99,90 mensal ou R$ 960,00 anual
       .then((res) => {
         if (!res.ok) {
           throw new Error("Falha ao conectar com o servidor de pagamento");
@@ -111,7 +121,7 @@ export default function Checkout() {
           variant: "destructive",
         });
       });
-  }, [toast]);
+  }, [toast, selectedPlan]);
 
   if (isLoading) {
     return (
@@ -175,7 +185,9 @@ export default function Checkout() {
         <CardHeader>
           <CardTitle>Finalizar Assinatura</CardTitle>
           <CardDescription>
-            Assinatura anual do QUERO FRETES - R$ 80,00/mês
+            {selectedPlan === "monthly" 
+              ? "Assinatura mensal do QUERO FRETES - R$ 99,90/mês" 
+              : "Assinatura anual do QUERO FRETES - economia equivalente a R$ 80,00/mês"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -185,7 +197,9 @@ export default function Checkout() {
         </CardContent>
         <CardFooter className="flex-col space-y-2">
           <p className="text-xs text-muted-foreground text-center w-full">
-            Cobrança anual de R$ 960,00 (equivalente a R$ 80,00 por mês)
+            {selectedPlan === "monthly" 
+              ? "Cobrança mensal de R$ 99,90"
+              : "Cobrança anual de R$ 960,00 (equivalente a R$ 80,00 por mês)"}
           </p>
           <p className="text-xs text-muted-foreground text-center w-full">
             Ao finalizar, você concorda com os termos de serviço e política de privacidade.

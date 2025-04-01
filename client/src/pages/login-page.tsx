@@ -83,8 +83,14 @@ export default function LoginPage() {
           title: "Login realizado com sucesso",
           description: "Bem-vindo à plataforma Quero Fretes",
         });
-        // Forçar o redirecionamento para a página inicial após login bem-sucedido
-        window.location.href = "/";
+        
+        // Se um plano não gratuito foi selecionado, redireciona para o checkout
+        if (selectedPlan !== "trial") {
+          window.location.href = `/checkout?plan=${selectedPlan}`;
+        } else {
+          // Caso contrário, redireciona para a página inicial
+          window.location.href = "/";
+        }
       },
     });
   };
@@ -182,7 +188,7 @@ export default function LoginPage() {
                 <CardDescription>Acesso por 30 dias</CardDescription>
               </CardHeader>
               <CardContent className="pt-6">
-                <div className="text-3xl font-bold text-center mb-2">R$ 80,00</div>
+                <div className="text-3xl font-bold text-center mb-2">R$ 99,90</div>
                 <div className="text-sm text-center mb-4 text-muted-foreground">Cobrado a cada mês</div>
                 <ul className="space-y-2 mb-6">
                   <li className="flex items-center text-sm">

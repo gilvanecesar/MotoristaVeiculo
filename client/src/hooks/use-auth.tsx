@@ -28,6 +28,7 @@ type RegisterData = {
   password: string;
   name: string;
   profileType: string;
+  subscriptionType?: string;
 };
 
 // ===== CONTEXT =====
