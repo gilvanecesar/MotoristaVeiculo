@@ -76,9 +76,14 @@ export function ProtectedRoute({
   
   // Verifica se o usuário tem uma assinatura ativa
   if (!user.subscriptionActive) {
+    // Vamos permitir acesso à página inicial mesmo sem assinatura ativa
+    if (path === "/") {
+      return <Route path={path} component={Component} />;
+    }
+    
     return (
       <Route path={path}>
-        <Redirect to="/login?subscription=required" />
+        <Redirect to="/" />
       </Route>
     );
   }
@@ -106,10 +111,14 @@ export function ProtectedRoute({
     const now = new Date();
     
     if (now > endDate) {
-      // Período de teste expirado
+      // Período de teste expirado, mas ainda permitimos acesso à página inicial
+      if (path === "/") {
+        return <Route path={path} component={Component} />;
+      }
+      
       return (
         <Route path={path}>
-          <Redirect to="/login?subscription=required" />
+          <Redirect to="/" />
         </Route>
       );
     }
