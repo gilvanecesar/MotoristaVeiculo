@@ -7,6 +7,7 @@ import logoPath from "@assets/QUEROFRETES BOLINHA.png";
 import "./landing.css";
 import { TestimonialSection } from "./TestimonialSection";
 import { StatsSection } from "./StatsSection";
+import DashboardPreview from "@/assets/dashboard-preview";
 
 export default function LandingPage() {
   const [_, setLocation] = useLocation();
@@ -114,11 +115,9 @@ export default function LandingPage() {
             <div className="lg:w-1/2 flex justify-center">
               <div className="relative">
                 <div className="absolute inset-0 bg-primary rounded-full blur-3xl opacity-20"></div>
-                <img
-                  src="https://images.unsplash.com/photo-1620733723572-11c53f73a416?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
-                  alt="QUERO FRETES Dashboard"
-                  className="relative z-10 rounded-lg shadow-2xl border border-slate-700 max-w-lg"
-                />
+                <div className="relative z-10 rounded-lg shadow-2xl border border-slate-700 max-w-lg overflow-hidden">
+                  <DashboardPreview />
+                </div>
               </div>
             </div>
           </div>
