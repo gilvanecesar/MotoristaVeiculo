@@ -154,6 +154,10 @@ export interface IStorage {
     payment: Partial<InsertPayment>,
   ): Promise<Payment | undefined>;
   deletePayment(id: number): Promise<boolean>;
+  
+  // Finance operations
+  getFinanceStats(): Promise<any>;
+  updateFinanceSettings(settings: any): Promise<any>;
 }
 
 export class MemStorage implements IStorage {
@@ -163,12 +167,18 @@ export class MemStorage implements IStorage {
   private freightsData: Map<number, Freight>;
   private freightDestinationsData: Map<number, FreightDestination>;
   private usersData: Map<number, User>;
+  private subscriptionsData: Map<number, Subscription>;
+  private invoicesData: Map<number, Invoice>;
+  private paymentsData: Map<number, Payment>;
   private driverCurrentId: number;
   private vehicleCurrentId: number;
   private clientCurrentId: number;
   private freightCurrentId: number;
   private freightDestinationCurrentId: number;
   private userCurrentId: number;
+  private subscriptionCurrentId: number;
+  private invoiceCurrentId: number;
+  private paymentCurrentId: number;
   sessionStore: SessionStore;
 
   constructor() {
@@ -183,16 +193,411 @@ export class MemStorage implements IStorage {
     this.freightsData = new Map();
     this.freightDestinationsData = new Map();
     this.usersData = new Map();
+    this.subscriptionsData = new Map();
+    this.invoicesData = new Map();
+    this.paymentsData = new Map();
     this.driverCurrentId = 1;
     this.vehicleCurrentId = 1;
     this.clientCurrentId = 1;
     this.freightCurrentId = 1;
     this.freightDestinationCurrentId = 1;
     this.userCurrentId = 1;
+    this.subscriptionCurrentId = 1;
+    this.invoiceCurrentId = 1;
+    this.paymentCurrentId = 1;
   }
 
-  // Implementação dos métodos para MemStorage...
+  // User operations
+  async getUsers(): Promise<User[]> {
+    return Array.from(this.usersData.values());
+  }
+
+  async getUserById(id: number): Promise<User | undefined> {
+    return this.usersData.get(id);
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return Array.from(this.usersData.values()).find(
+      (user) => user.email.toLowerCase() === email.toLowerCase(),
+    );
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const newUser: User = {
+      ...user,
+      id: this.userCurrentId++,
+      isVerified: false,
+      isActive: true,
+      createdAt: new Date(),
+      lastLogin: null,
+    };
+    this.usersData.set(newUser.id, newUser);
+    return newUser;
+  }
+
+  async updateUser(
+    id: number,
+    userUpdate: Partial<InsertUser>,
+  ): Promise<User | undefined> {
+    const user = this.usersData.get(id);
+    if (!user) return undefined;
+
+    const updatedUser = { ...user, ...userUpdate };
+    this.usersData.set(id, updatedUser);
+    return updatedUser;
+  }
+
+  async verifyUser(id: number): Promise<User | undefined> {
+    return this.updateUser(id, { isVerified: true });
+  }
+
+  async updateLastLogin(id: number): Promise<User | undefined> {
+    const user = this.usersData.get(id);
+    if (!user) return undefined;
+
+    const updatedUser = { ...user, lastLogin: new Date() };
+    this.usersData.set(id, updatedUser);
+    return updatedUser;
+  }
+
+  async toggleUserAccess(id: number, isActive: boolean): Promise<User | undefined> {
+    const user = this.usersData.get(id);
+    if (!user) return undefined;
+
+    const updatedUser = { ...user, isActive };
+    this.usersData.set(id, updatedUser);
+    return updatedUser;
+  }
+
+  async deleteUser(id: number): Promise<boolean> {
+    return this.usersData.delete(id);
+  }
+
+  // Driver operations
   // (código omitido para brevidade)
+  
+  // Outros métodos de operações CRUD
+
+  // Financial operations
+  async getSubscriptions(): Promise<Subscription[]> {
+    return Array.from(this.subscriptionsData.values());
+  }
+
+  async getSubscriptionsByUser(userId: number): Promise<Subscription[]> {
+    return Array.from(this.subscriptionsData.values()).filter(
+      (sub) => sub.userId === userId,
+    );
+  }
+
+  async getSubscriptionsByClient(clientId: number): Promise<Subscription[]> {
+    return Array.from(this.subscriptionsData.values()).filter(
+      (sub) => sub.clientId === clientId,
+    );
+  }
+
+  async getSubscription(
+    id: number,
+  ): Promise<SubscriptionWithInvoices | undefined> {
+    const subscription = this.subscriptionsData.get(id);
+    if (!subscription) return undefined;
+
+    const subscriptionInvoices = Array.from(this.invoicesData.values()).filter(
+      (invoice) => invoice.subscriptionId === id,
+    );
+
+    return {
+      ...subscription,
+      invoices: subscriptionInvoices,
+    };
+  }
+
+  async getSubscriptionByStripeId(
+    stripeId: string,
+  ): Promise<Subscription | undefined> {
+    return Array.from(this.subscriptionsData.values()).find(
+      (sub) => sub.stripeId === stripeId,
+    );
+  }
+
+  async createSubscription(
+    subscription: InsertSubscription,
+  ): Promise<Subscription> {
+    const newSubscription: Subscription = {
+      ...subscription,
+      id: this.subscriptionCurrentId++,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.subscriptionsData.set(newSubscription.id, newSubscription);
+    return newSubscription;
+  }
+
+  async updateSubscription(
+    id: number,
+    subscriptionUpdate: Partial<InsertSubscription>,
+  ): Promise<Subscription | undefined> {
+    const subscription = this.subscriptionsData.get(id);
+    if (!subscription) return undefined;
+
+    const updatedSubscription = {
+      ...subscription,
+      ...subscriptionUpdate,
+      updatedAt: new Date(),
+    };
+    this.subscriptionsData.set(id, updatedSubscription);
+    return updatedSubscription;
+  }
+
+  async deleteSubscription(id: number): Promise<boolean> {
+    return this.subscriptionsData.delete(id);
+  }
+
+  // Invoice operations
+  async getInvoices(): Promise<Invoice[]> {
+    return Array.from(this.invoicesData.values());
+  }
+
+  async getInvoicesByUser(userId: number): Promise<Invoice[]> {
+    return Array.from(this.invoicesData.values()).filter(
+      (invoice) => invoice.userId === userId,
+    );
+  }
+
+  async getInvoicesByClient(clientId: number): Promise<Invoice[]> {
+    return Array.from(this.invoicesData.values()).filter(
+      (invoice) => invoice.clientId === clientId,
+    );
+  }
+
+  async getInvoicesBySubscription(subscriptionId: number): Promise<Invoice[]> {
+    return Array.from(this.invoicesData.values()).filter(
+      (invoice) => invoice.subscriptionId === subscriptionId,
+    );
+  }
+
+  async getInvoice(id: number): Promise<InvoiceWithPayments | undefined> {
+    const invoice = this.invoicesData.get(id);
+    if (!invoice) return undefined;
+
+    const invoicePayments = Array.from(this.paymentsData.values()).filter(
+      (payment) => payment.invoiceId === id,
+    );
+
+    return {
+      ...invoice,
+      payments: invoicePayments,
+    };
+  }
+
+  async getInvoiceByStripeId(stripeId: string): Promise<Invoice | undefined> {
+    return Array.from(this.invoicesData.values()).find(
+      (invoice) => invoice.stripeId === stripeId,
+    );
+  }
+
+  async createInvoice(invoice: InsertInvoice): Promise<Invoice> {
+    const newInvoice: Invoice = {
+      ...invoice,
+      id: this.invoiceCurrentId++,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.invoicesData.set(newInvoice.id, newInvoice);
+    return newInvoice;
+  }
+
+  async updateInvoice(
+    id: number,
+    invoiceUpdate: Partial<InsertInvoice>,
+  ): Promise<Invoice | undefined> {
+    const invoice = this.invoicesData.get(id);
+    if (!invoice) return undefined;
+
+    const updatedInvoice = {
+      ...invoice,
+      ...invoiceUpdate,
+      updatedAt: new Date(),
+    };
+    this.invoicesData.set(id, updatedInvoice);
+    return updatedInvoice;
+  }
+
+  async deleteInvoice(id: number): Promise<boolean> {
+    return this.invoicesData.delete(id);
+  }
+
+  // Payment operations
+  async getPayments(): Promise<Payment[]> {
+    return Array.from(this.paymentsData.values());
+  }
+
+  async getPaymentsByUser(userId: number): Promise<Payment[]> {
+    return Array.from(this.paymentsData.values()).filter(
+      (payment) => payment.userId === userId,
+    );
+  }
+
+  async getPaymentsByClient(clientId: number): Promise<Payment[]> {
+    return Array.from(this.paymentsData.values()).filter(
+      (payment) => payment.clientId === clientId,
+    );
+  }
+
+  async getPaymentsByInvoice(invoiceId: number): Promise<Payment[]> {
+    return Array.from(this.paymentsData.values()).filter(
+      (payment) => payment.invoiceId === invoiceId,
+    );
+  }
+
+  async getPayment(id: number): Promise<Payment | undefined> {
+    return this.paymentsData.get(id);
+  }
+
+  async getPaymentByStripeId(stripeId: string): Promise<Payment | undefined> {
+    return Array.from(this.paymentsData.values()).find(
+      (payment) => payment.stripeId === stripeId,
+    );
+  }
+
+  async createPayment(payment: InsertPayment): Promise<Payment> {
+    const newPayment: Payment = {
+      ...payment,
+      id: this.paymentCurrentId++,
+      createdAt: new Date(),
+    };
+    this.paymentsData.set(newPayment.id, newPayment);
+    return newPayment;
+  }
+
+  async updatePayment(
+    id: number,
+    paymentUpdate: Partial<InsertPayment>,
+  ): Promise<Payment | undefined> {
+    const payment = this.paymentsData.get(id);
+    if (!payment) return undefined;
+
+    const updatedPayment = { ...payment, ...paymentUpdate };
+    this.paymentsData.set(id, updatedPayment);
+    return updatedPayment;
+  }
+
+  async deletePayment(id: number): Promise<boolean> {
+    return this.paymentsData.delete(id);
+  }
+
+  // Finance operations
+  async getFinanceStats(): Promise<any> {
+    try {
+      // Buscar dados em memória
+      const subscriptionsDb = Array.from(this.subscriptionsData.values());
+      const invoicesDb = Array.from(this.invoicesData.values());
+      
+      if (!subscriptionsDb || subscriptionsDb.length === 0) {
+        // Se não houver assinaturas na memória, retornar zeros
+        return {
+          totalRevenue: 0,
+          monthlyRevenue: 0,
+          activeSubscriptions: 0,
+          churnRate: 0,
+          monthlyData: [
+            { month: "Jan", revenue: 0 },
+            { month: "Fev", revenue: 0 },
+            { month: "Mar", revenue: 0 },
+            { month: "Abr", revenue: 0 },
+            { month: "Mai", revenue: 0 },
+            { month: "Jun", revenue: 0 },
+            { month: "Jul", revenue: 0 },
+            { month: "Ago", revenue: 0 },
+            { month: "Set", revenue: 0 },
+            { month: "Out", revenue: 0 },
+            { month: "Nov", revenue: 0 },
+            { month: "Dez", revenue: 0 },
+          ],
+          subscriptionsByStatus: [
+            { status: "Ativas", count: 0 },
+            { status: "Teste", count: 0 },
+            { status: "Canceladas", count: 0 },
+            { status: "Atrasadas", count: 0 }
+          ]
+        };
+      }
+      
+      // Calcular estatísticas com base em dados em memória
+      const activeSubscriptions = subscriptionsDb.filter(s => s.status === 'active').length;
+      const trialing = subscriptionsDb.filter(s => s.status === 'trialing').length;
+      const canceled = subscriptionsDb.filter(s => s.status === 'canceled').length;
+      const pastDue = subscriptionsDb.filter(s => s.status === 'past_due').length;
+      
+      // Calcular receita total baseada nas faturas pagas
+      const paidInvoices = invoicesDb.filter(i => i.status === 'paid');
+      const totalRevenue = paidInvoices.reduce((sum, invoice) => sum + Number(invoice.amount), 0);
+      
+      // Calcular receita mensal (média dos últimos 3 meses)
+      const today = new Date();
+      const threeMonthsAgo = new Date();
+      threeMonthsAgo.setMonth(today.getMonth() - 3);
+      
+      const recentInvoices = paidInvoices.filter(invoice => {
+        return invoice.paidAt && new Date(invoice.paidAt) >= threeMonthsAgo;
+      });
+      
+      const monthlyRevenue = recentInvoices.length > 0
+        ? recentInvoices.reduce((sum, invoice) => sum + Number(invoice.amount), 0) / 3
+        : 0;
+      
+      // Taxa de cancelamento (churn)
+      const totalSubscriptions = subscriptionsDb.length;
+      const churnRate = totalSubscriptions > 0
+        ? (canceled / totalSubscriptions) * 100
+        : 0;
+      
+      // Agrupar receita por mês para os últimos 12 meses
+      const lastYear = new Date();
+      lastYear.setFullYear(today.getFullYear() - 1);
+      
+      const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+      const monthlyData = monthNames.map(month => ({ month, revenue: 0 }));
+      
+      // Processar as faturas pagas para montar o gráfico de receita mensal
+      paidInvoices.forEach(invoice => {
+        if (invoice.paidAt) {
+          const paidDate = new Date(invoice.paidAt);
+          if (paidDate >= lastYear) {
+            const monthIndex = paidDate.getMonth();
+            monthlyData[monthIndex].revenue += Number(invoice.amount);
+          }
+        }
+      });
+      
+      // Arredondar valores para 2 casas decimais
+      monthlyData.forEach(data => {
+        data.revenue = parseFloat(data.revenue.toFixed(2));
+      });
+      
+      return {
+        totalRevenue: parseFloat(totalRevenue.toFixed(2)),
+        monthlyRevenue: parseFloat(monthlyRevenue.toFixed(2)),
+        activeSubscriptions,
+        churnRate: parseFloat(churnRate.toFixed(1)),
+        monthlyData,
+        subscriptionsByStatus: [
+          { status: "Ativas", count: activeSubscriptions },
+          { status: "Teste", count: trialing },
+          { status: "Canceladas", count: canceled },
+          { status: "Atrasadas", count: pastDue }
+        ]
+      };
+    } catch (error) {
+      console.error("Error calculating finance stats:", error);
+      throw error;
+    }
+  }
+  
+  async updateFinanceSettings(settings: any): Promise<any> {
+    // Como estamos usando armazenamento em memória,
+    // simplesmente retornamos as configurações recebidas
+    return settings;
+  }
 }
 
 const PostgresSessionStore = connectPg(session);
@@ -769,6 +1174,121 @@ export class DatabaseStorage implements IStorage {
   async deletePayment(id: number): Promise<boolean> {
     await db.delete(payments).where(eq(payments.id, id));
     return true;
+  }
+
+  // Finanças
+  async getFinanceStats(): Promise<any> {
+    try {
+      // Buscar dados do banco de dados
+      const subscriptionsDb = await this.getSubscriptions();
+      const invoicesDb = await this.getInvoices();
+      
+      if (!subscriptionsDb || subscriptionsDb.length === 0) {
+        // Se não houver assinaturas no banco, retornar zeros
+        return {
+          totalRevenue: 0,
+          monthlyRevenue: 0,
+          activeSubscriptions: 0,
+          churnRate: 0,
+          monthlyData: [
+            { month: "Jan", revenue: 0 },
+            { month: "Fev", revenue: 0 },
+            { month: "Mar", revenue: 0 },
+            { month: "Abr", revenue: 0 },
+            { month: "Mai", revenue: 0 },
+            { month: "Jun", revenue: 0 },
+            { month: "Jul", revenue: 0 },
+            { month: "Ago", revenue: 0 },
+            { month: "Set", revenue: 0 },
+            { month: "Out", revenue: 0 },
+            { month: "Nov", revenue: 0 },
+            { month: "Dez", revenue: 0 },
+          ],
+          subscriptionsByStatus: [
+            { status: "Ativas", count: 0 },
+            { status: "Teste", count: 0 },
+            { status: "Canceladas", count: 0 },
+            { status: "Atrasadas", count: 0 }
+          ]
+        };
+      }
+      
+      // Calcular estatísticas com base em dados reais do banco
+      const activeSubscriptions = subscriptionsDb.filter(s => s.status === 'active').length;
+      const trialing = subscriptionsDb.filter(s => s.status === 'trialing').length;
+      const canceled = subscriptionsDb.filter(s => s.status === 'canceled').length;
+      const pastDue = subscriptionsDb.filter(s => s.status === 'past_due').length;
+      
+      // Calcular receita total baseada nas faturas pagas
+      const paidInvoices = invoicesDb.filter(i => i.status === 'paid');
+      const totalRevenue = paidInvoices.reduce((sum, invoice) => sum + Number(invoice.amount), 0);
+      
+      // Calcular receita mensal (média dos últimos 3 meses)
+      const today = new Date();
+      const threeMonthsAgo = new Date();
+      threeMonthsAgo.setMonth(today.getMonth() - 3);
+      
+      const recentInvoices = paidInvoices.filter(invoice => {
+        return invoice.paidAt && new Date(invoice.paidAt) >= threeMonthsAgo;
+      });
+      
+      const monthlyRevenue = recentInvoices.length > 0
+        ? recentInvoices.reduce((sum, invoice) => sum + Number(invoice.amount), 0) / 3
+        : 0;
+      
+      // Taxa de cancelamento (churn)
+      const totalSubscriptions = subscriptionsDb.length;
+      const churnRate = totalSubscriptions > 0
+        ? (canceled / totalSubscriptions) * 100
+        : 0;
+      
+      // Agrupar receita por mês para os últimos 12 meses
+      const lastYear = new Date();
+      lastYear.setFullYear(today.getFullYear() - 1);
+      
+      const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+      const monthlyData = monthNames.map(month => ({ month, revenue: 0 }));
+      
+      // Processar as faturas pagas para montar o gráfico de receita mensal
+      paidInvoices.forEach(invoice => {
+        if (invoice.paidAt) {
+          const paidDate = new Date(invoice.paidAt);
+          if (paidDate >= lastYear) {
+            const monthIndex = paidDate.getMonth();
+            monthlyData[monthIndex].revenue += Number(invoice.amount);
+          }
+        }
+      });
+      
+      // Arredondar valores para 2 casas decimais
+      monthlyData.forEach(data => {
+        data.revenue = parseFloat(data.revenue.toFixed(2));
+      });
+      
+      return {
+        totalRevenue: parseFloat(totalRevenue.toFixed(2)),
+        monthlyRevenue: parseFloat(monthlyRevenue.toFixed(2)),
+        activeSubscriptions,
+        churnRate: parseFloat(churnRate.toFixed(1)),
+        monthlyData,
+        subscriptionsByStatus: [
+          { status: "Ativas", count: activeSubscriptions },
+          { status: "Teste", count: trialing },
+          { status: "Canceladas", count: canceled },
+          { status: "Atrasadas", count: pastDue }
+        ]
+      };
+    } catch (error) {
+      console.error("Error calculating finance stats:", error);
+      throw error;
+    }
+  }
+  
+  async updateFinanceSettings(settings: any): Promise<any> {
+    // Como não temos uma tabela específica para configurações, 
+    // podemos retornar as próprias configurações recebidas
+    // Em uma implementação completa, isso salvaria em uma tabela de configurações
+    return settings;
   }
 }
 
