@@ -74,7 +74,7 @@ export default function LandingPage() {
           <div className="space-x-4">
             <Button
               variant="outline"
-              className="border-white text-white hover:bg-white hover:text-slate-900"
+              className="border-slate-300 bg-white text-slate-900 hover:bg-slate-100 hover:border-primary"
               onClick={goToLogin}
             >
               Entrar
@@ -101,7 +101,7 @@ export default function LandingPage() {
                 <Button className="bg-primary hover:bg-primary/90 text-white px-8 py-6 text-lg" onClick={goToLogin}>
                   Começar Agora <ChevronRight className="ml-2 h-5 w-5" />
                 </Button>
-                <Button variant="outline" className="border-white text-white hover:bg-white hover:text-slate-900 px-8 py-6 text-lg">
+                <Button variant="outline" className="border-slate-300 text-slate-900 bg-white hover:bg-slate-100 hover:border-primary px-8 py-6 text-lg">
                   Saiba Mais
                 </Button>
               </div>
