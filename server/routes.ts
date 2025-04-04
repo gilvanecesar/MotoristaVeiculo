@@ -95,7 +95,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // API routes for drivers
-  app.get("/api/drivers", async (req: Request, res: Response) => {
+  app.get("/api/drivers", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const search = req.query.search as string;
       if (search) {
@@ -111,7 +111,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/drivers/:id", async (req: Request, res: Response) => {
+  app.get("/api/drivers/:id", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -130,7 +130,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/drivers", async (req: Request, res: Response) => {
+  app.post("/api/drivers", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const driverData = driverValidator.parse(req.body);
       const driver = await storage.createDriver(driverData);
@@ -192,7 +192,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // API routes for vehicles
-  app.get("/api/vehicles", async (req: Request, res: Response) => {
+  app.get("/api/vehicles", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const driverId = req.query.driverId ? parseInt(req.query.driverId as string) : undefined;
       const search = req.query.search as string;
@@ -215,7 +215,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/vehicles/:id", async (req: Request, res: Response) => {
+  app.get("/api/vehicles/:id", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -234,7 +234,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/vehicles", async (req: Request, res: Response) => {
+  app.post("/api/vehicles", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const vehicleData = vehicleValidator.parse(req.body);
       const vehicle = await storage.createVehicle(vehicleData);
@@ -350,7 +350,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/clients", async (req: Request, res: Response) => {
+  app.post("/api/clients", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const clientData = clientValidator.parse(req.body);
       const client = await storage.createClient(clientData);
@@ -422,7 +422,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // API routes for freights
-  app.get("/api/freights", async (req: Request, res: Response) => {
+  app.get("/api/freights", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const search = req.query.search as string;
       
