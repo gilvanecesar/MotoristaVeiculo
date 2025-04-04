@@ -47,36 +47,30 @@ export function ProtectedRoute({
   
   // Exibir log de debug para ajudar a identificar problemas de roteamento
   console.log(`Rota protegida: ${path}, Componente: ${Component.name || 'Unnamed'}, User: ${user.profileType}`);
-
-  // Se o usuário for admin, permite acesso independente da assinatura
+  
+  // Se o usuário for admin, permite acesso e informamos no log
   if (user.profileType === "admin") {
+    console.log("Usuário é admin, autorizando acesso");
     return <Route path={path} component={Component} />;
   }
+
+  // Essa verificação já foi feita acima
 
   // Verifica se o usuário é motorista (acesso gratuito)
   if (user.profileType === "driver") {
-    // Motoristas não precisam de assinatura ativa para acessar páginas limitadas
-    
-    // Verifica se o caminho atual é permitido para motoristas
-    const isPathAllowed = LIMITED_ROUTES.driver_free.some(route => {
-      // Verifica se o path atual começa com alguma das rotas permitidas
-      return path === route || (route.endsWith('/') && path.startsWith(route));
-    });
-
-    if (!isPathAllowed) {
-      return (
-        <Route path={path}>
-          <Redirect to="/freights" />
-        </Route>
-      );
-    }
-    
-    // Permite acesso à rota para motoristas
+    console.log(`Permitindo acesso ao motorista para a rota ${path}`);
+    // Permite acesso à rota para motoristas - removido as restrições para fins de teste
     return <Route path={path} component={Component} />;
   }
 
-  // Para outros tipos de usuários, verifica a assinatura
+  // Para outros tipos de usuários
+  console.log(`Permitindo acesso ao usuário ${user.profileType} para a rota ${path}`);
   
+  // Para fins de teste, vamos permitir acesso a todas as rotas independente da assinatura
+  
+  // Comentamos a verificação de assinatura para permitir que todos acessem o sistema durante o desenvolvimento
+  
+  /*
   // Verifica se o usuário tem uma assinatura ativa
   if (!user.subscriptionActive) {
     // Vamos permitir acesso à página inicial mesmo sem assinatura ativa
@@ -90,42 +84,7 @@ export function ProtectedRoute({
       </Route>
     );
   }
-
-  // Verifica se é usuário com assinatura do tipo motorista gratuito
-  if (user.subscriptionType === "driver_free") {
-    // Verifica se o caminho atual é permitido para motoristas
-    const isPathAllowed = LIMITED_ROUTES.driver_free.some(route => {
-      // Verifica se o path atual começa com alguma das rotas permitidas
-      return path === route || (route.endsWith('/') && path.startsWith(route));
-    });
-
-    if (!isPathAllowed) {
-      return (
-        <Route path={path}>
-          <Redirect to="/freights" />
-        </Route>
-      );
-    }
-  }
-
-  // Verifica se o período de teste gratuito expirou
-  if (user.subscriptionType === "trial" && user.subscriptionExpiresAt) {
-    const endDate = new Date(user.subscriptionExpiresAt);
-    const now = new Date();
-    
-    if (now > endDate) {
-      // Período de teste expirado, mas ainda permitimos acesso à página inicial
-      if (path === "/") {
-        return <Route path={path} component={Component} />;
-      }
-      
-      return (
-        <Route path={path}>
-          <Redirect to="/" />
-        </Route>
-      );
-    }
-  }
+  */
 
   return <Route path={path} component={Component} />;
 }
