@@ -71,6 +71,9 @@ export default function Navigation() {
   
   // Verificar se o usuário é administrador
   const isAdmin = user?.profileType === "admin";
+  const isDriver = user?.profileType === "driver";
+  const isShipper = user?.profileType === "shipper";
+  const isAgent = user?.profileType === "agent";
   
   // Menus administrativos (apenas para administradores)
   const financeMenuItem = {
@@ -86,10 +89,54 @@ export default function Navigation() {
   };
   
   // Items do menu com base nas permissões
-  const menuItems = [...navItems];
-  if (isAdmin) {
-    menuItems.push(financeMenuItem, usersMenuItem);
+  let menuItems = [];
+  
+  // Menu Home sempre visível para todos
+  menuItems.push(navItems[0]); // Home
+  
+  if (user) {
+    // Menus baseados no tipo de perfil
+    if (isAdmin) {
+      // Admins veem tudo
+      menuItems = [...navItems];
+      // Adicionamos os menus administrativos
+      menuItems.push(financeMenuItem, usersMenuItem);
+    } else if (isDriver) {
+      // Motoristas veem fretes disponíveis e podem gerenciar seus veículos
+      menuItems.push(
+        navItems[4], // Fretes
+        navItems[3]  // Veículos
+      );
+    } else if (isShipper) {
+      // Embarcadores podem criar e gerenciar fretes, ver motoristas
+      menuItems.push(
+        navItems[2], // Motoristas
+        navItems[4], // Fretes
+        navItems[6]  // Relatórios
+      );
+    } else if (isAgent) {
+      // Transportadoras podem gerenciar motoristas, veículos e fretes
+      menuItems.push(
+        navItems[2], // Motoristas
+        navItems[3], // Veículos
+        navItems[4], // Fretes
+        navItems[6]  // Relatórios
+      );
+    } else {
+      // Perfil não definido ainda - mostrar apenas home 
+      // (usuário provavelmente será redirecionado para seleção de perfil)
+    }
+    
+    // Todos os usuários (exceto motoristas) podem ver o menu de clientes
+    if (!isDriver && !menuItems.some(item => item.path === "/clients")) {
+      menuItems.push(navItems[5]); // Clientes
+    }
   }
+  
+  // Remover duplicatas usando um Map para garantir chaves únicas
+  const uniqueMenuItems = Array.from(
+    new Map(menuItems.map(item => [item.path, item])).values()
+  );
   
   // Map location to page title
   const getPageTitle = () => {
@@ -158,7 +205,7 @@ export default function Navigation() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-1">
-            {menuItems.map((item) => {
+            {uniqueMenuItems.map((item) => {
               const isActive = location === item.path;
               const Icon = item.icon;
               
@@ -283,8 +330,8 @@ export default function Navigation() {
         {/* Mobile Bottom Navigation Bar */}
         {isMobile && (
           <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 z-50 shadow-lg">
-            <div className="grid grid-cols-5 h-16">
-              {menuItems.slice(0, 5).map((item) => {
+            <div className={`grid ${uniqueMenuItems.length <= 5 ? `grid-cols-${uniqueMenuItems.length}` : 'grid-cols-5'} h-16`}>
+              {uniqueMenuItems.slice(0, 5).map((item) => {
                 const isActive = location === item.path;
                 const Icon = item.icon;
                 
