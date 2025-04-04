@@ -20,6 +20,24 @@ import { Loader2, Search, Users } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import { useToast } from "@/hooks/use-toast";
 
+// Função para retornar o tipo de cadastro do usuário
+const getRegistrationType = (user: any) => {
+  if (user.driverId) {
+    return { type: "Motorista", color: "green" };
+  } else if (user.clientId) {
+    // Determinar o tipo específico de cliente
+    if (user.profileType === "shipper") {
+      return { type: "Embarcador", color: "blue" };
+    } else if (user.profileType === "agent") {
+      return { type: "Transportadora", color: "orange" };
+    } else {
+      return { type: "Cliente", color: "blue" };
+    }
+  } else {
+    return { type: "Sem cadastro específico", color: "gray" };
+  }
+};
+
 export default function AdminUsersPage() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -176,7 +194,8 @@ export default function AdminUsersPage() {
                 <TableHead className="w-[50px]">ID</TableHead>
                 <TableHead>Nome</TableHead>
                 <TableHead className="hidden md:table-cell">E-mail</TableHead>
-                <TableHead className="hidden md:table-cell">Tipo</TableHead>
+                <TableHead className="hidden md:table-cell">Tipo de Perfil</TableHead>
+                <TableHead className="hidden md:table-cell">Tipo de Cadastro</TableHead>
                 <TableHead className="hidden md:table-cell">Registro</TableHead>
                 <TableHead className="hidden md:table-cell">Último Login</TableHead>
                 <TableHead>Status</TableHead>
@@ -191,10 +210,22 @@ export default function AdminUsersPage() {
                     <TableCell>
                       <div className="font-medium">{user.name}</div>
                       <div className="text-sm text-muted-foreground md:hidden">{user.email}</div>
-                      {user.profileType && <div className="text-xs text-muted-foreground md:hidden capitalize">{user.profileType}</div>}
+                      {user.profileType && (
+                        <div className="flex flex-col md:hidden gap-1 mt-1">
+                          <div className="text-xs text-muted-foreground capitalize">{user.profileType}</div>
+                          <Badge variant="outline" className="w-fit" style={{ color: getRegistrationType(user).color }}>
+                            {getRegistrationType(user).type}
+                          </Badge>
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell className="hidden md:table-cell">{user.email}</TableCell>
                     <TableCell className="hidden md:table-cell capitalize">{user.profileType}</TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <Badge variant="outline" style={{ color: getRegistrationType(user).color }}>
+                        {getRegistrationType(user).type}
+                      </Badge>
+                    </TableCell>
                     <TableCell className="hidden md:table-cell">{formatDate(user.createdAt)}</TableCell>
                     <TableCell className="hidden md:table-cell">{user.lastLogin ? formatDate(user.lastLogin) : "Nunca"}</TableCell>
                     <TableCell>

@@ -594,8 +594,9 @@ export class MemStorage implements IStorage {
   }
   
   async updateFinanceSettings(settings: any): Promise<any> {
-    // Como estamos usando armazenamento em memória,
+    // Como estamos usando armazenamento em memória ou não temos uma tabela específica para configurações,
     // simplesmente retornamos as configurações recebidas
+    // Em uma implementação completa, isso salvaria em uma tabela de configurações
     return settings;
   }
 }
