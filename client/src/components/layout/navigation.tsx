@@ -110,10 +110,11 @@ export default function Navigation() {
         navItems[4]   // Fretes
       ];
     } else if (isShipper) {
-      // Embarcadores podem criar e gerenciar fretes, ver motoristas
+      // Embarcadores podem criar e gerenciar fretes, ver motoristas, veículos
       menuItems = [
         navItems[0],  // Home
         navItems[2],  // Motoristas
+        navItems[3],  // Veículos
         navItems[4],  // Fretes
         navItems[5],  // Clientes
         navItems[6]   // Relatórios

@@ -44,6 +44,9 @@ export function ProtectedRoute({
       </Route>
     );
   }
+  
+  // Exibir log de debug para ajudar a identificar problemas de roteamento
+  console.log(`Rota protegida: ${path}, Componente: ${Component.name || 'Unnamed'}, User: ${user.profileType}`);
 
   // Se o usuário for admin, permite acesso independente da assinatura
   if (user.profileType === "admin") {

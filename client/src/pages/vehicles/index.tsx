@@ -230,10 +230,10 @@ export default function VehiclesPage() {
             />
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
           </form>
-          <Link href="/drivers/new">
+          <Link href="/vehicles/new">
             <Button className="flex gap-1 items-center">
               <Plus className="h-4 w-4" />
-              <span>Novo Motorista</span>
+              <span>Novo Veículo</span>
             </Button>
           </Link>
         </div>
