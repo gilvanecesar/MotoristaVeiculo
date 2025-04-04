@@ -102,34 +102,36 @@ export default function Navigation() {
       // Adicionamos os menus administrativos
       menuItems.push(financeMenuItem, usersMenuItem);
     } else if (isDriver) {
-      // Motoristas veem fretes disponíveis e podem gerenciar seus veículos
-      menuItems.push(
-        navItems[4], // Fretes
-        navItems[3]  // Veículos
-      );
+      // Motoristas veem home, fretes disponíveis, seus dados e seus veículos
+      menuItems = [
+        navItems[0],  // Home
+        navItems[2],  // Motoristas (seus dados)
+        navItems[3],  // Veículos
+        navItems[4]   // Fretes
+      ];
     } else if (isShipper) {
       // Embarcadores podem criar e gerenciar fretes, ver motoristas
-      menuItems.push(
-        navItems[2], // Motoristas
-        navItems[4], // Fretes
-        navItems[6]  // Relatórios
-      );
+      menuItems = [
+        navItems[0],  // Home
+        navItems[2],  // Motoristas
+        navItems[4],  // Fretes
+        navItems[5],  // Clientes
+        navItems[6]   // Relatórios
+      ];
     } else if (isAgent) {
       // Transportadoras podem gerenciar motoristas, veículos e fretes
-      menuItems.push(
-        navItems[2], // Motoristas
-        navItems[3], // Veículos
-        navItems[4], // Fretes
-        navItems[6]  // Relatórios
-      );
+      menuItems = [
+        navItems[0],  // Home
+        navItems[2],  // Motoristas
+        navItems[3],  // Veículos
+        navItems[4],  // Fretes
+        navItems[5],  // Clientes
+        navItems[6]   // Relatórios
+      ];
     } else {
       // Perfil não definido ainda - mostrar apenas home 
       // (usuário provavelmente será redirecionado para seleção de perfil)
-    }
-    
-    // Todos os usuários (exceto motoristas) podem ver o menu de clientes
-    if (!isDriver && !menuItems.some(item => item.path === "/clients")) {
-      menuItems.push(navItems[5]); // Clientes
+      menuItems = [navItems[0]]; // Apenas Home
     }
   }
   
