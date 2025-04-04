@@ -20,21 +20,63 @@ import { Loader2, Search, Users } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import { useToast } from "@/hooks/use-toast";
 
-// Função para retornar o tipo de cadastro do usuário
+import { USER_TYPES } from "@shared/schema";
+
+// Função para retornar o tipo de cadastro do usuário com estilo visual aprimorado
 const getRegistrationType = (user: any) => {
-  if (user.driverId) {
-    return { type: "Motorista", color: "green" };
-  } else if (user.clientId) {
-    // Determinar o tipo específico de cliente
-    if (user.profileType === "shipper") {
-      return { type: "Embarcador", color: "blue" };
-    } else if (user.profileType === "agent") {
-      return { type: "Transportadora", color: "orange" };
-    } else {
-      return { type: "Cliente", color: "blue" };
-    }
+  // Primeiro verificamos o tipo de perfil definido
+  if (user.profileType === USER_TYPES.DRIVER) {
+    return { 
+      type: "Motorista", 
+      color: "#16a34a", // green-600
+      bgColor: "#dcfce7", // green-100
+      textColor: "#166534" // green-800
+    };
+  } else if (user.profileType === USER_TYPES.SHIPPER) {
+    return { 
+      type: "Embarcador", 
+      color: "#2563eb", // blue-600
+      bgColor: "#dbeafe", // blue-100
+      textColor: "#1e40af" // blue-800
+    };
+  } else if (user.profileType === USER_TYPES.AGENT) {
+    return { 
+      type: "Transportadora", 
+      color: "#ea580c", // orange-600
+      bgColor: "#ffedd5", // orange-100
+      textColor: "#9a3412" // orange-800
+    };
+  } else if (user.profileType === USER_TYPES.ADMIN) {
+    return { 
+      type: "Administrador", 
+      color: "#7c3aed", // violet-600
+      bgColor: "#ede9fe", // violet-100
+      textColor: "#5b21b6" // violet-800
+    };
   } else {
-    return { type: "Sem cadastro específico", color: "gray" };
+    // Se o perfil não estiver definido, verificamos se tem cliente ou motorista associado
+    if (user.driverId) {
+      return { 
+        type: "Motorista (sem perfil definido)", 
+        color: "#16a34a", // green-600
+        bgColor: "#dcfce7", // green-100
+        textColor: "#166534" // green-800
+      };
+    } else if (user.clientId) {
+      return { 
+        type: "Cliente (sem perfil definido)", 
+        color: "#2563eb", // blue-600
+        bgColor: "#dbeafe", // blue-100
+        textColor: "#1e40af" // blue-800
+      };
+    } else {
+      return { 
+        type: "Sem cadastro específico", 
+        color: "#6b7280", // gray-500
+        bgColor: "#f3f4f6", // gray-100
+        textColor: "#374151" // gray-700
+      };
+    }
   }
 };
 
@@ -213,7 +255,15 @@ export default function AdminUsersPage() {
                       {user.profileType && (
                         <div className="flex flex-col md:hidden gap-1 mt-1">
                           <div className="text-xs text-muted-foreground capitalize">{user.profileType}</div>
-                          <Badge variant="outline" className="w-fit" style={{ color: getRegistrationType(user).color }}>
+                          <Badge 
+                            variant="outline" 
+                            className="w-fit" 
+                            style={{ 
+                              color: getRegistrationType(user).textColor,
+                              backgroundColor: getRegistrationType(user).bgColor,
+                              borderColor: getRegistrationType(user).color
+                            }}
+                          >
                             {getRegistrationType(user).type}
                           </Badge>
                         </div>
@@ -222,7 +272,15 @@ export default function AdminUsersPage() {
                     <TableCell className="hidden md:table-cell">{user.email}</TableCell>
                     <TableCell className="hidden md:table-cell capitalize">{user.profileType}</TableCell>
                     <TableCell className="hidden md:table-cell">
-                      <Badge variant="outline" style={{ color: getRegistrationType(user).color }}>
+                      <Badge 
+                        variant="outline" 
+                        className="w-fit" 
+                        style={{ 
+                          color: getRegistrationType(user).textColor,
+                          backgroundColor: getRegistrationType(user).bgColor,
+                          borderColor: getRegistrationType(user).color
+                        }}
+                      >
                         {getRegistrationType(user).type}
                       </Badge>
                     </TableCell>

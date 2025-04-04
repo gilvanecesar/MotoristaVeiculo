@@ -692,6 +692,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Atualizar tipo de perfil do usuário
+  app.post("/api/users/update-profile-type", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      const { profileType } = req.body;
+      
+      if (!profileType) {
+        return res.status(400).json({ message: "Tipo de perfil é obrigatório" });
+      }
+      
+      // Validar o tipo de perfil
+      const validTypes = ["shipper", "driver", "agent", "admin"];
+      if (!validTypes.includes(profileType)) {
+        return res.status(400).json({ message: "Tipo de perfil inválido" });
+      }
+      
+      // Atualizar o usuário com o novo tipo de perfil
+      const updatedUser = await storage.updateUser(req.user.id, { profileType });
+      
+      if (!updatedUser) {
+        return res.status(500).json({ message: "Erro ao atualizar tipo de perfil" });
+      }
+      
+      // Remover senha antes de enviar
+      const { password, ...userWithoutPassword } = updatedUser;
+      
+      res.status(200).json(userWithoutPassword);
+    } catch (error) {
+      console.error("Erro ao atualizar tipo de perfil:", error);
+      res.status(500).json({ message: "Erro ao atualizar tipo de perfil do usuário" });
+    }
+  });
+
   // Associar usuário a cliente
   app.post("/api/users/associate-client", isAuthenticated, async (req: Request, res: Response) => {
     try {

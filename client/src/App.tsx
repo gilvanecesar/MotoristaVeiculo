@@ -32,6 +32,7 @@ import PaymentSuccessPage from "@/pages/payment-success";
 import PaymentCancelPage from "@/pages/payment-cancel";
 import CheckoutPage from "@/pages/checkout";
 import SubscribePage from "@/pages/subscribe";
+import ProfileSelectionPage from "@/pages/profile-selection";
 
 function Router() {
   return (
@@ -42,6 +43,7 @@ function Router() {
       <Route path="/payment-cancel" component={PaymentCancelPage} />
       <Route path="/checkout" component={CheckoutPage} />
       <Route path="/subscribe" component={SubscribePage} />
+      <ProtectedRoute path="/profile-selection" component={ProfileSelectionPage} />
       <ProtectedRoute path="/dashboard" component={Dashboard} />
       <ProtectedRoute path="/drivers" component={DriversPage} />
       <ProtectedRoute path="/drivers/new" component={DriverForm} />
