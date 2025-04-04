@@ -87,6 +87,10 @@ export default function AdminUsersPage() {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [reminderMessage, setReminderMessage] = useState("");
   const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
+  
+  // Estado para controlar o diálogo de alteração de tipo de perfil
+  const [profileTypeDialogOpen, setProfileTypeDialogOpen] = useState(false);
+  const [selectedProfileType, setSelectedProfileType] = useState("");
 
   // Buscar lista de usuários
   const { data: users, isLoading } = useQuery({
@@ -151,6 +155,34 @@ export default function AdminUsersPage() {
       });
     }
   });
+  
+  // Mutation para atualizar o tipo de perfil do usuário
+  const updateProfileTypeMutation = useMutation({
+    mutationFn: async ({ userId, profileType }: { userId: number, profileType: string }) => {
+      const res = await apiRequest("PUT", `/api/admin/users/${userId}/update-profile-type`, { profileType });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Falha ao atualizar tipo de perfil");
+      }
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      toast({
+        title: "Perfil atualizado",
+        description: "O tipo de perfil do usuário foi atualizado com sucesso",
+      });
+      setProfileTypeDialogOpen(false);
+      setSelectedProfileType("");
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
 
   // Filtragem de usuários com base no termo de pesquisa
   const filteredUsers = searchTerm.trim() === "" 
@@ -205,6 +237,23 @@ export default function AdminUsersPage() {
       sendPaymentReminderMutation.mutate({
         userId: selectedUser.id,
         message: reminderMessage
+      });
+    }
+  };
+  
+  // Abrir o diálogo de alteração de tipo de perfil
+  const openProfileTypeDialog = (user: any) => {
+    setSelectedUser(user);
+    setSelectedProfileType(user.profileType || "");
+    setProfileTypeDialogOpen(true);
+  };
+  
+  // Atualizar o tipo de perfil do usuário
+  const handleUpdateProfileType = () => {
+    if (selectedUser && selectedProfileType) {
+      updateProfileTypeMutation.mutate({
+        userId: selectedUser.id,
+        profileType: selectedProfileType
       });
     }
   };
@@ -301,14 +350,24 @@ export default function AdminUsersPage() {
                           onCheckedChange={() => handleToggleAccess(user.id, user.isActive)}
                           aria-label="Alternar acesso"
                         />
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => openReminderDialog(user)}
-                          className="whitespace-nowrap"
-                        >
-                          Enviar Cobrança
-                        </Button>
+                        <div className="flex flex-col gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => openReminderDialog(user)}
+                            className="whitespace-nowrap"
+                          >
+                            Enviar Cobrança
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => openProfileTypeDialog(user)}
+                            className="whitespace-nowrap"
+                          >
+                            Alterar Perfil
+                          </Button>
+                        </div>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -367,6 +426,88 @@ export default function AdminUsersPage() {
                 </>
               ) : (
                 "Enviar E-mail"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Dialog de alteração de tipo de perfil */}
+      <Dialog open={profileTypeDialogOpen} onOpenChange={setProfileTypeDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Alterar tipo de perfil</DialogTitle>
+            <DialogDescription>
+              Altere o tipo de perfil de {selectedUser?.name}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="profileType">Tipo de perfil</Label>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+                <div 
+                  className={`p-4 border rounded-lg flex flex-col items-center cursor-pointer transition-all ${
+                    selectedProfileType === USER_TYPES.DRIVER 
+                      ? "border-green-500 bg-green-50 dark:bg-green-950" 
+                      : "border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600"
+                  }`}
+                  onClick={() => setSelectedProfileType(USER_TYPES.DRIVER)}
+                >
+                  <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mb-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                  <span className="font-medium">Motorista</span>
+                </div>
+                <div 
+                  className={`p-4 border rounded-lg flex flex-col items-center cursor-pointer transition-all ${
+                    selectedProfileType === USER_TYPES.SHIPPER 
+                      ? "border-blue-500 bg-blue-50 dark:bg-blue-950" 
+                      : "border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600"
+                  }`}
+                  onClick={() => setSelectedProfileType(USER_TYPES.SHIPPER)}
+                >
+                  <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                  <span className="font-medium">Embarcador</span>
+                </div>
+                <div 
+                  className={`p-4 border rounded-lg flex flex-col items-center cursor-pointer transition-all ${
+                    selectedProfileType === USER_TYPES.AGENT 
+                      ? "border-orange-500 bg-orange-50 dark:bg-orange-950" 
+                      : "border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600"
+                  }`}
+                  onClick={() => setSelectedProfileType(USER_TYPES.AGENT)}
+                >
+                  <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center mb-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                  <span className="font-medium">Transportadora</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setProfileTypeDialogOpen(false)}>Cancelar</Button>
+            <Button 
+              onClick={handleUpdateProfileType} 
+              disabled={updateProfileTypeMutation.isPending || !selectedProfileType}
+            >
+              {updateProfileTypeMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Atualizando...
+                </>
+              ) : (
+                "Atualizar Perfil"
               )}
             </Button>
           </DialogFooter>

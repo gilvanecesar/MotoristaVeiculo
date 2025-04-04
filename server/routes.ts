@@ -1139,6 +1139,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to send payment reminder" });
     }
   });
+  
+  // Atualizar o tipo de perfil de um usuário
+  app.put("/api/admin/users/:id/update-profile-type", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid ID format" });
+      }
+      
+      const { profileType } = req.body;
+      
+      // Verificar se o tipo de perfil é válido
+      const validProfileTypes = ["admin", "driver", "shipper", "agent"];
+      if (!validProfileTypes.includes(profileType)) {
+        return res.status(400).json({ 
+          message: "Invalid profile type", 
+          validTypes: validProfileTypes 
+        });
+      }
+      
+      const user = await storage.getUserById(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Atualizar o tipo de perfil do usuário
+      const updatedUser = await storage.updateUser(id, { 
+        profileType: profileType 
+      });
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "Failed to update user profile type" });
+      }
+      
+      res.json({
+        message: `User profile type updated successfully to ${profileType}`,
+        user: {
+          ...updatedUser,
+          password: undefined
+        }
+      });
+    } catch (error) {
+      console.error("Error updating user profile type:", error);
+      res.status(500).json({ message: "Failed to update user profile type" });
+    }
+  });
 
   const httpServer = createServer(app);
 
