@@ -26,6 +26,13 @@ declare global {
       lastLogin: Date | null;
       driverId?: number | null;
       clientId?: number | null;
+      // Campos de assinatura
+      subscriptionActive?: boolean;
+      subscriptionType?: string;
+      subscriptionEndDate?: string | Date;
+      stripeCustomerId?: string;
+      stripeSubscriptionId?: string;
+      paymentRequired?: boolean;
     }
   }
 }
@@ -113,6 +120,32 @@ export function setupAuth(app: Express) {
       // Se o usuário não existir mais ou estiver inativo, consideramos como não autenticado
       if (!user || user.isActive === false) {
         return done(null, false);
+      }
+      
+      // Verificar expiração da assinatura durante a deserialização
+      if (user.subscriptionActive && 
+          user.subscriptionType !== "driver_free" && 
+          user.subscriptionExpiresAt) {
+        
+        const expirationDate = new Date(user.subscriptionExpiresAt);
+        const currentDate = new Date();
+        
+        // Se a assinatura expirou, atualiza o status no banco de dados
+        if (expirationDate < currentDate) {
+          console.log(`Assinatura expirada para usuário ${user.id}. Expiração: ${expirationDate}, Atual: ${currentDate}`);
+          
+          // Atualiza o status da assinatura no banco
+          await storage.updateUser(user.id, { 
+            subscriptionActive: false,
+            paymentRequired: true
+          });
+          
+          // Atualiza o objeto do usuário em memória também
+          user.subscriptionActive = false;
+          user.paymentRequired = true;
+          
+          console.log(`Assinatura desativada para usuário ${user.id}`);
+        }
       }
       
       done(null, user);

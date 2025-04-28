@@ -153,8 +153,7 @@ export const clients = pgTable("clients", {
 export const freights = pgTable("freights", {
   id: serial("id").primaryKey(),
   clientId: integer("client_id").references(() => clients.id).notNull(),
-  // Removendo userId porque a coluna não existe no banco de dados
-  // userId: integer("user_id").references(() => users.id), // Usuário que criou o frete
+  userId: integer("user_id"), // Usuário que criou o frete
   origin: text("origin").notNull(),
   originState: text("origin_state").notNull(),
   destination: text("destination").notNull(),
@@ -376,6 +375,7 @@ export const users = pgTable("users", {
   subscriptionExpiresAt: timestamp("subscription_expires_at"),
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
+  paymentRequired: boolean("payment_required").default(false),
   // Referências opcionais para ligar o usuário aos perfis específicos
   driverId: integer("driver_id").references(() => drivers.id),
   clientId: integer("client_id").references(() => clients.id)

@@ -24,6 +24,53 @@ export function isActive(req: Request, res: Response, next: NextFunction) {
   return next();
 }
 
+// Middleware para verificar se a assinatura do usuário está ativa e não expirada
+export function hasActiveSubscription(req: Request, res: Response, next: NextFunction) {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Não autenticado" });
+  }
+
+  // Verificar se o usuário tem dados de assinatura
+  const user = req.user;
+  
+  // Se for admin, sempre tem acesso
+  if (user.profileType === "admin") {
+    return next();
+  }
+  
+  // Se for motorista com acesso gratuito, permitir acesso
+  if (user.profileType === "driver" && user.subscriptionType === "driver_free") {
+    return next();
+  }
+  
+  // Verificar se a assinatura está ativa
+  if (user.subscriptionActive !== true) {
+    return res.status(402).json({ 
+      code: "subscription_required",
+      message: "Assinatura necessária. Por favor, adquira um plano para continuar."
+    });
+  }
+  
+  // Verificar se a assinatura expirou (exceto para driver_free)
+  if (user.subscriptionType !== "driver_free" && user.subscriptionEndDate) {
+    const subscriptionEndDate = new Date(user.subscriptionEndDate);
+    const currentDate = new Date();
+    
+    if (subscriptionEndDate < currentDate) {
+      // Automaticamente desativa a assinatura quando expirada
+      storage.updateUser(user.id, { subscriptionActive: false })
+        .catch(err => console.error("Erro ao desativar assinatura expirada:", err));
+      
+      return res.status(402).json({ 
+        code: "subscription_expired",
+        message: "Sua assinatura expirou. Por favor, renove seu plano para continuar."
+      });
+    }
+  }
+  
+  return next();
+}
+
 // Middleware para verificar se o usuário é admin
 export function isAdmin(req: Request, res: Response, next: NextFunction) {
   // Verifica se o profileType é "admin" ou "ADMIN" (case insensitive)

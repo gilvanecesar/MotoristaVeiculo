@@ -66,25 +66,53 @@ export function ProtectedRoute({
   // Para outros tipos de usuários
   console.log(`Permitindo acesso ao usuário ${user.profileType} para a rota ${path}`);
   
-  // Para fins de teste, vamos permitir acesso a todas as rotas independente da assinatura
-  
-  // Comentamos a verificação de assinatura para permitir que todos acessem o sistema durante o desenvolvimento
-  
-  /*
   // Verifica se o usuário tem uma assinatura ativa
-  if (!user.subscriptionActive) {
-    // Vamos permitir acesso à página inicial mesmo sem assinatura ativa
-    if (path === "/") {
+  if (user.subscriptionActive === false) {
+    console.log("Usuário sem assinatura ativa, verificando se é a página inicial");
+    
+    // Vamos permitir acesso à página inicial e à página de checkout mesmo sem assinatura ativa
+    if (path === "/" || path === "/checkout") {
+      console.log("Permitindo acesso à página inicial ou checkout");
       return <Route path={path} component={Component} />;
     }
     
+    console.log("Redirecionando para a página inicial pois não tem assinatura ativa");
     return (
       <Route path={path}>
         <Redirect to="/" />
       </Route>
     );
   }
-  */
+  
+  // Verifica se o usuário tem assinatura, mas está expirada (exceto para driver_free)
+  // Usamos "as any" temporariamente para contornar problemas de TypeScript com a definição de usuário
+  const userAny = user as any;
+  
+  if (userAny.subscriptionActive && 
+      userAny.subscriptionType !== "driver_free" && 
+      userAny.subscriptionExpiresAt) {
+    
+    const subscriptionEndDate = new Date(userAny.subscriptionExpiresAt);
+    const currentDate = new Date();
+    
+    console.log(`Verificando expiração: Data atual ${currentDate.toISOString()}, Data fim: ${subscriptionEndDate.toISOString()}`);
+    
+    // Se a data de expiração for anterior à data atual, a assinatura expirou
+    if (subscriptionEndDate < currentDate) {
+      console.log("Assinatura expirada, redirecionando para home");
+      
+      // Permitir acesso à página inicial e checkout mesmo com assinatura expirada
+      if (path === "/" || path === "/checkout") {
+        return <Route path={path} component={Component} />;
+      }
+      
+      return (
+        <Route path={path}>
+          <Redirect to="/" />
+        </Route>
+      );
+    }
+  }
 
   return <Route path={path} component={Component} />;
 }

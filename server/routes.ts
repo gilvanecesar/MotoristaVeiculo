@@ -34,18 +34,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const trialExpirationDate = new Date();
       trialExpirationDate.setDate(trialExpirationDate.getDate() + 7);
       
+      console.log(`Ativando período de teste para usuário ${userId} com expiração em ${trialExpirationDate.toISOString()}`);
+      
       // Atualiza o usuário com status de assinatura ativa e data de expiração
       const updatedUser = await storage.updateUser(userId, {
         subscriptionActive: true,
         subscriptionType: "trial",
-        subscriptionEndDate: trialExpirationDate,
+        subscriptionExpiresAt: trialExpirationDate,
+        paymentRequired: false
       });
       
       if (!updatedUser) {
         return res.status(404).json({ message: "Usuário não encontrado" });
       }
       
-      res.status(200).json({ message: "Teste gratuito ativado com sucesso", expirationDate: trialExpirationDate });
+      // Registra na tabela de assinaturas
+      try {
+        await storage.createSubscription({
+          userId: userId,
+          clientId: updatedUser.clientId || undefined,
+          status: SUBSCRIPTION_STATUS.TRIALING,
+          planType: PLAN_TYPES.TRIAL,
+          currentPeriodStart: new Date(),
+          currentPeriodEnd: trialExpirationDate
+        });
+        
+        console.log(`Assinatura de teste registrada com sucesso para usuário ${userId}`);
+      } catch (subError) {
+        console.error("Erro ao registrar assinatura de teste:", subError);
+        // Não falha o processo se o registro da assinatura falhar
+      }
+      
+      res.status(200).json({ 
+        message: "Teste gratuito ativado com sucesso", 
+        expirationDate: trialExpirationDate,
+        user: {
+          ...updatedUser,
+          password: undefined // Remove a senha antes de retornar para o cliente
+        }
+      });
     } catch (error) {
       console.error("Error activating trial:", error);
       res.status(500).json({ message: "Erro ao ativar período de teste" });
