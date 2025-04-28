@@ -53,8 +53,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.createSubscription({
           userId: userId,
           clientId: updatedUser.clientId || undefined,
-          status: SUBSCRIPTION_STATUS.TRIALING,
-          planType: PLAN_TYPES.TRIAL,
+          status: "trialing",
+          planType: "trial",
           currentPeriodStart: new Date(),
           currentPeriodEnd: trialExpirationDate
         });

@@ -52,13 +52,16 @@ export function hasActiveSubscription(req: Request, res: Response, next: NextFun
   }
   
   // Verificar se a assinatura expirou (exceto para driver_free)
-  if (user.subscriptionType !== "driver_free" && user.subscriptionEndDate) {
-    const subscriptionEndDate = new Date(user.subscriptionEndDate);
+  if (user.subscriptionType !== "driver_free" && user.subscriptionExpiresAt) {
+    const subscriptionExpiresAt = new Date(user.subscriptionExpiresAt);
     const currentDate = new Date();
     
-    if (subscriptionEndDate < currentDate) {
+    if (subscriptionExpiresAt < currentDate) {
       // Automaticamente desativa a assinatura quando expirada
-      storage.updateUser(user.id, { subscriptionActive: false })
+      storage.updateUser(user.id, { 
+        subscriptionActive: false,
+        paymentRequired: true
+      })
         .catch(err => console.error("Erro ao desativar assinatura expirada:", err));
       
       return res.status(402).json({ 

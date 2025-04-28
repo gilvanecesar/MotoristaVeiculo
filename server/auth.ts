@@ -29,7 +29,7 @@ declare global {
       // Campos de assinatura
       subscriptionActive?: boolean;
       subscriptionType?: string;
-      subscriptionEndDate?: string | Date;
+      subscriptionExpiresAt?: string | Date;
       stripeCustomerId?: string;
       stripeSubscriptionId?: string;
       paymentRequired?: boolean;
