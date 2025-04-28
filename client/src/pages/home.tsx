@@ -1,11 +1,93 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CarFront, Users, BarChart3, ClipboardList, Truck, Building2 } from "lucide-react";
+import { CarFront, Users, BarChart3, ClipboardList, Truck, Building2, AlertTriangle, X } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function Home() {
+  const { user } = useAuth();
+  const [_, setLocation] = useLocation();
+  
+  // Verifica se o usuário tem uma assinatura expirada
+  const hasExpiredSubscription = user && !user.subscriptionActive && user.paymentRequired;
+  // Calcula se está em período de teste
+  const isInTrial = user?.subscriptionType === "trial" && user?.subscriptionActive === true;
+  // Calcula dias restantes do período de teste
+  const calculateRemainingDays = () => {
+    if (!user?.subscriptionExpiresAt) return null;
+    const expirationDate = new Date(user.subscriptionExpiresAt);
+    const currentDate = new Date();
+    const timeDiff = expirationDate.getTime() - currentDate.getTime();
+    const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+    return daysDiff > 0 ? daysDiff : 0;
+  };
+  
+  const remainingDays = calculateRemainingDays();
+  
   return (
     <div className="space-y-6">
+      {/* Alerta de assinatura expirada */}
+      {hasExpiredSubscription && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Assinatura expirada</AlertTitle>
+          <AlertDescription>
+            Sua assinatura expirou. Para continuar usando o sistema completo, é necessário renovar sua assinatura.
+            <Button 
+              variant="destructive" 
+              size="sm" 
+              className="mt-2"
+              onClick={() => setLocation("/checkout")}
+            >
+              Renovar agora
+            </Button>
+          </AlertDescription>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="absolute right-2 top-2" 
+            onClick={(e) => {
+              e.currentTarget.parentElement?.classList.add('hidden');
+            }}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </Alert>
+      )}
+      
+      {/* Alerta de período de teste */}
+      {isInTrial && remainingDays !== null && (
+        <Alert variant={remainingDays <= 2 ? "destructive" : "default"} className="mb-4">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Período de teste</AlertTitle>
+          <AlertDescription>
+            Você está usando o período de teste gratuito. 
+            Restam <strong>{remainingDays}</strong> dia{remainingDays !== 1 ? 's' : ''}.
+            {remainingDays <= 2 && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-2"
+                onClick={() => setLocation("/checkout")}
+              >
+                Assinar agora
+              </Button>
+            )}
+          </AlertDescription>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="absolute right-2 top-2" 
+            onClick={(e) => {
+              e.currentTarget.parentElement?.classList.add('hidden');
+            }}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </Alert>
+      )}
+      
       <div className="text-center max-w-3xl mx-auto py-6">
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-3">
           <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600 dark:from-primary dark:to-blue-400">

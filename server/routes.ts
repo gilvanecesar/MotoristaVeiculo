@@ -1,7 +1,7 @@
 import express, { type Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { driverValidator, vehicleValidator, clientValidator, freightValidator, freightDestinationValidator } from "@shared/schema";
+import { driverValidator, vehicleValidator, clientValidator, freightValidator, freightDestinationValidator, SUBSCRIPTION_STATUS, PLAN_TYPES } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { setupAuth } from "./auth";
