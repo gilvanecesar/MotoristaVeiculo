@@ -11,13 +11,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Loader2, Search, Users } from "lucide-react";
 
 // Utils
-import { formatCurrency, formatDate } from "@/lib/utils/format";
+import { formatDate } from "@/lib/utils/format";
 import { useToast } from "@/hooks/use-toast";
 
 import { USER_TYPES } from "@shared/schema";
@@ -83,22 +83,50 @@ const getRegistrationType = (user: any) => {
 export default function AdminUsersPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  
+  // States
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [reminderMessage, setReminderMessage] = useState("");
   const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
-  
-  // Estado para controlar o diálogo de alteração de tipo de perfil
   const [profileTypeDialogOpen, setProfileTypeDialogOpen] = useState(false);
   const [selectedProfileType, setSelectedProfileType] = useState("");
-  
-  // Estado para controlar o diálogo de redefinição de senha
   const [resetPasswordDialogOpen, setResetPasswordDialogOpen] = useState(false);
   const [newPassword, setNewPassword] = useState("");
-
+  
+  // Hooks de consulta e mutação - IMPORTANTE: todos os hooks precisam estar nesta seção
+  // e nunca dentro de condicionais
+  
+  // Resetar senha
+  const resetPasswordMutation = useMutation({
+    mutationFn: async ({ userId, newPassword }: { userId: number, newPassword: string }) => {
+      const res = await apiRequest("POST", `/api/admin/users/${userId}/reset-password`, { newPassword });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Falha ao redefinir senha");
+      }
+      return await res.json();
+    },
+    onSuccess: () => {
+      setResetPasswordDialogOpen(false);
+      setNewPassword("");
+      toast({
+        title: "Senha redefinida",
+        description: "A senha do usuário foi redefinida com sucesso",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+  
   // Buscar lista de usuários
   const { data: users, isLoading } = useQuery({
-    queryKey: ['/api/admin/users'],
+    queryKey: ["/api/admin/users"],
     queryFn: async () => {
       const res = await apiRequest("GET", "/api/admin/users");
       if (!res.ok) throw new Error("Falha ao carregar usuários");
@@ -107,7 +135,7 @@ export default function AdminUsersPage() {
     enabled: !!user && user.profileType === "admin"
   });
 
-  // Mutation para alternar acesso (bloquear/desbloquear)
+  // Alternar acesso (bloquear/desbloquear)
   const toggleAccessMutation = useMutation({
     mutationFn: async ({ userId, blocked }: { userId: number, blocked: boolean }) => {
       const res = await apiRequest("PUT", `/api/admin/users/${userId}/toggle-access`, { blocked });
@@ -118,13 +146,13 @@ export default function AdminUsersPage() {
       return await res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       toast({
         title: "Acesso alterado",
         description: "O acesso do usuário foi alterado com sucesso",
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: "Erro",
         description: error.message,
@@ -133,7 +161,7 @@ export default function AdminUsersPage() {
     }
   });
 
-  // Mutation para enviar e-mail de cobrança
+  // Enviar e-mail de cobrança
   const sendPaymentReminderMutation = useMutation({
     mutationFn: async ({ userId, message }: { userId: number, message: string }) => {
       const res = await apiRequest("POST", `/api/admin/users/${userId}/send-payment-reminder`, { message });
@@ -151,7 +179,7 @@ export default function AdminUsersPage() {
         description: "O e-mail de cobrança foi enviado com sucesso",
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: "Erro",
         description: error.message,
@@ -160,7 +188,7 @@ export default function AdminUsersPage() {
     }
   });
   
-  // Mutation para atualizar o tipo de perfil do usuário
+  // Atualizar tipo de perfil
   const updateProfileTypeMutation = useMutation({
     mutationFn: async ({ userId, profileType }: { userId: number, profileType: string }) => {
       const res = await apiRequest("PUT", `/api/admin/users/${userId}/update-profile-type`, { profileType });
@@ -171,7 +199,7 @@ export default function AdminUsersPage() {
       return await res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       toast({
         title: "Perfil atualizado",
         description: "O tipo de perfil do usuário foi atualizado com sucesso",
@@ -179,7 +207,7 @@ export default function AdminUsersPage() {
       setProfileTypeDialogOpen(false);
       setSelectedProfileType("");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: "Erro",
         description: error.message,
@@ -188,16 +216,17 @@ export default function AdminUsersPage() {
     }
   });
 
-  // Filtragem de usuários com base no termo de pesquisa
+  // Filtragem de usuários
   const filteredUsers = searchTerm.trim() === "" 
     ? users 
     : users?.filter((user: any) => 
-        user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.profileType.toLowerCase().includes(searchTerm.toLowerCase())
+        user.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.profileType?.toLowerCase().includes(searchTerm.toLowerCase())
       );
 
-  // Verifica se o usuário é administrador
+  // Handlers - Podem incluir renderização condicional
+  
   if (user?.profileType !== "admin") {
     return (
       <div className="container mx-auto py-10">
@@ -223,7 +252,8 @@ export default function AdminUsersPage() {
       </div>
     );
   }
-
+  
+  // Funções de manipulação
   const handleToggleAccess = (userId: number, currentStatus: boolean | undefined) => {
     toggleAccessMutation.mutate({
       userId,
@@ -245,14 +275,12 @@ export default function AdminUsersPage() {
     }
   };
   
-  // Abrir o diálogo de alteração de tipo de perfil
   const openProfileTypeDialog = (user: any) => {
     setSelectedUser(user);
     setSelectedProfileType(user.profileType || "");
     setProfileTypeDialogOpen(true);
   };
   
-  // Atualizar o tipo de perfil do usuário
   const handleUpdateProfileType = () => {
     if (selectedUser && selectedProfileType) {
       updateProfileTypeMutation.mutate({
@@ -262,41 +290,12 @@ export default function AdminUsersPage() {
     }
   };
   
-  // Abrir o diálogo de redefinição de senha
   const openResetPasswordDialog = (user: any) => {
     setSelectedUser(user);
-    setNewPassword(""); // Limpa a senha anterior
+    setNewPassword("");
     setResetPasswordDialogOpen(true);
   };
   
-  // Mutation para redefinir a senha do usuário
-  const resetPasswordMutation = useMutation({
-    mutationFn: async ({ userId, newPassword }: { userId: number, newPassword: string }) => {
-      const res = await apiRequest("POST", `/api/admin/users/${userId}/reset-password`, { newPassword });
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Falha ao redefinir senha");
-      }
-      return await res.json();
-    },
-    onSuccess: () => {
-      setResetPasswordDialogOpen(false);
-      setNewPassword("");
-      toast({
-        title: "Senha redefinida",
-        description: "A senha do usuário foi redefinida com sucesso",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Erro",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  });
-  
-  // Funcao para lidar com a redefinição de senha
   const handleResetPassword = () => {
     if (selectedUser && newPassword) {
       resetPasswordMutation.mutate({
@@ -306,6 +305,7 @@ export default function AdminUsersPage() {
     }
   };
 
+  // Renderização da UI
   return (
     <div className="container mx-auto py-8">
       <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
@@ -527,7 +527,7 @@ export default function AdminUsersPage() {
                 >
                   <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-3">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
                     </svg>
                   </div>
                   <span className="font-medium">Embarcador</span>
@@ -542,10 +542,25 @@ export default function AdminUsersPage() {
                 >
                   <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center mb-3">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
                   </div>
                   <span className="font-medium">Transportadora</span>
+                </div>
+                <div 
+                  className={`p-4 border rounded-lg flex flex-col items-center cursor-pointer transition-all ${
+                    selectedProfileType === USER_TYPES.ADMIN 
+                      ? "border-violet-500 bg-violet-50 dark:bg-violet-950" 
+                      : "border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600"
+                  }`}
+                  onClick={() => setSelectedProfileType(USER_TYPES.ADMIN)}
+                >
+                  <div className="w-12 h-12 rounded-full bg-violet-100 flex items-center justify-center mb-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <span className="font-medium">Administrador</span>
                 </div>
               </div>
             </div>
@@ -576,16 +591,20 @@ export default function AdminUsersPage() {
           <DialogHeader>
             <DialogTitle>Redefinir senha</DialogTitle>
             <DialogDescription>
-              Defina uma nova senha para o usuário {selectedUser?.name}
+              Defina uma nova senha para {selectedUser?.name}
             </DialogDescription>
           </DialogHeader>
           
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
+              <Label htmlFor="email">E-mail do usuário</Label>
+              <Input id="email" value={selectedUser?.email} disabled />
+            </div>
+            <div className="grid gap-2">
               <Label htmlFor="newPassword">Nova senha</Label>
               <Input
                 id="newPassword"
-                type="text"
+                type="password"
                 placeholder="Digite a nova senha"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
