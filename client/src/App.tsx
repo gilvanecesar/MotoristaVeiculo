@@ -33,12 +33,14 @@ import PaymentCancelPage from "@/pages/payment-cancel";
 import CheckoutPage from "@/pages/checkout";
 import SubscribePage from "@/pages/subscribe";
 import ProfileSelectionPage from "@/pages/profile-selection";
+import ResetPasswordPage from "@/pages/reset-password";
 
 function Router() {
   return (
     <Switch>
       <Route path="/landing" component={LandingPage} />
       <Route path="/auth" component={LoginPage} />
+      <Route path="/reset-password" component={ResetPasswordPage} />
       <Route path="/payment-success" component={PaymentSuccessPage} />
       <Route path="/payment-cancel" component={PaymentCancelPage} />
       <Route path="/checkout" component={CheckoutPage} />

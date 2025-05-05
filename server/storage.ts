@@ -651,6 +651,8 @@ const PostgresSessionStore = connectPg(session);
 
 export class DatabaseStorage implements IStorage {
   sessionStore: SessionStore;
+  // Armazenamento temporário para tokens de redefinição de senha
+  private passwordResetTokens: Map<string, { token: string; expiry: Date }> = new Map();
 
   constructor() {
     this.sessionStore = new PostgresSessionStore({
@@ -706,6 +708,45 @@ export class DatabaseStorage implements IStorage {
   async deleteUser(id: number): Promise<boolean> {
     await db.delete(users).where(eq(users.id, id));
     return true;
+  }
+
+  async createPasswordResetToken(email: string): Promise<{ token: string; user: User } | undefined> {
+    const user = await this.getUserByEmail(email);
+    if (!user) return undefined;
+
+    // Gerar um token aleatório
+    const token = crypto.randomBytes(20).toString('hex');
+    
+    // O token expira em 24 horas
+    const expiry = new Date();
+    expiry.setHours(expiry.getHours() + 24);
+    
+    // Armazenar o token com data de expiração
+    this.passwordResetTokens.set(email, { token, expiry });
+    
+    return { token, user };
+  }
+
+  async verifyPasswordResetToken(token: string, email: string): Promise<User | undefined> {
+    const tokenData = this.passwordResetTokens.get(email);
+    
+    // Verificar se o token existe, está correto e não expirou
+    if (!tokenData || tokenData.token !== token || tokenData.expiry < new Date()) {
+      return undefined;
+    }
+    
+    // Se o token for válido, retorna o usuário
+    const user = await this.getUserByEmail(email);
+    if (user) {
+      // Após verificação, remover o token (uso único)
+      this.passwordResetTokens.delete(email);
+    }
+    
+    return user;
+  }
+
+  async updatePassword(id: number, newPassword: string): Promise<User | undefined> {
+    return this.updateUser(id, { password: newPassword });
   }
 
   // Motoristas
