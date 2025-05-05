@@ -355,7 +355,7 @@ export default function LoginPage() {
                 <CardContent>
                   <div className="mb-6">
                     <h3 className="text-sm font-medium mb-3">Selecione seu perfil:</h3>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                       <Card 
                         className={`cursor-pointer transition-all hover:bg-muted ${selectedRole === USER_TYPES.SHIPPER ? 'border-primary ring-2 ring-primary' : ''}`}
                         onClick={() => setSelectedRole(USER_TYPES.SHIPPER)}
@@ -367,8 +367,8 @@ export default function LoginPage() {
                       </Card>
                       
                       <Card 
-                        className={`cursor-pointer transition-all hover:bg-muted ${selectedRole === USER_TYPES.DRIVER ? 'border-primary ring-2 ring-primary' : ''}`}
-                        onClick={() => setSelectedRole(USER_TYPES.DRIVER)}
+                        className={`cursor-pointer transition-all hover:bg-muted ${selectedRole === USER_TYPES.CARRIER ? 'border-primary ring-2 ring-primary' : ''}`}
+                        onClick={() => setSelectedRole(USER_TYPES.CARRIER)}
                       >
                         <CardContent className="p-3 text-center">
                           <Icons.truck className="h-6 w-6 mx-auto mb-2" />
@@ -383,6 +383,17 @@ export default function LoginPage() {
                         <CardContent className="p-3 text-center">
                           <Icons.package className="h-6 w-6 mx-auto mb-2" />
                           <p className="text-xs font-medium">Agente</p>
+                        </CardContent>
+                      </Card>
+                      
+                      <Card 
+                        className={`cursor-pointer transition-all hover:bg-muted ${selectedRole === USER_TYPES.DRIVER ? 'border-green-500 ring-2 ring-green-500' : ''}`}
+                        onClick={() => setSelectedRole(USER_TYPES.DRIVER)}
+                      >
+                        <CardContent className="p-3 text-center">
+                          <Icons.truck className="h-6 w-6 mx-auto mb-2" />
+                          <p className="text-xs font-medium">Motorista</p>
+                          <p className="text-[10px] mt-1 text-green-600">Acesso Gratuito</p>
                         </CardContent>
                       </Card>
                     </div>
