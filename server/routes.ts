@@ -197,7 +197,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // API routes for drivers
-  app.get("/api/drivers", isAuthenticated, async (req: Request, res: Response) => {
+  app.get("/api/drivers", hasActiveSubscription, async (req: Request, res: Response) => {
     try {
       const search = req.query.search as string;
       if (search) {
@@ -213,7 +213,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/drivers/:id", isAuthenticated, async (req: Request, res: Response) => {
+  app.get("/api/drivers/:id", hasActiveSubscription, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -232,7 +232,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/drivers", isAuthenticated, async (req: Request, res: Response) => {
+  app.post("/api/drivers", hasActiveSubscription, async (req: Request, res: Response) => {
     try {
       const driverData = driverValidator.parse(req.body);
       const driver = await storage.createDriver(driverData);
@@ -294,7 +294,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // API routes for vehicles
-  app.get("/api/vehicles", isAuthenticated, async (req: Request, res: Response) => {
+  app.get("/api/vehicles", hasActiveSubscription, async (req: Request, res: Response) => {
     try {
       const driverId = req.query.driverId ? parseInt(req.query.driverId as string) : undefined;
       const search = req.query.search as string;
@@ -317,7 +317,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/vehicles/:id", isAuthenticated, async (req: Request, res: Response) => {
+  app.get("/api/vehicles/:id", hasActiveSubscription, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -336,7 +336,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/vehicles", isAuthenticated, async (req: Request, res: Response) => {
+  app.post("/api/vehicles", hasActiveSubscription, async (req: Request, res: Response) => {
     try {
       const vehicleData = vehicleValidator.parse(req.body);
       const vehicle = await storage.createVehicle(vehicleData);
@@ -524,7 +524,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // API routes for freights
-  app.get("/api/freights", isAuthenticated, async (req: Request, res: Response) => {
+  app.get("/api/freights", hasActiveSubscription, async (req: Request, res: Response) => {
     try {
       const search = req.query.search as string;
       
@@ -541,7 +541,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/freights/:id", isAuthenticated, async (req: Request, res: Response) => {
+  app.get("/api/freights/:id", hasActiveSubscription, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -565,7 +565,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/freights", isAuthenticated, async (req: Request, res: Response) => {
+  app.post("/api/freights", hasActiveSubscription, async (req: Request, res: Response) => {
     try {
       // Pré-processamento dos dados para garantir que campos numéricos sejam tratados corretamente
       const processedData = {
@@ -681,7 +681,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // API routes for freight destinations
-  app.get("/api/freight-destinations", isAuthenticated, async (req: Request, res: Response) => {
+  app.get("/api/freight-destinations", hasActiveSubscription, async (req: Request, res: Response) => {
     try {
       const freightId = req.query.freightId ? parseInt(req.query.freightId as string) : undefined;
       
@@ -697,7 +697,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/freight-destinations", isAuthenticated, async (req: Request, res: Response) => {
+  app.post("/api/freight-destinations", hasActiveSubscription, async (req: Request, res: Response) => {
     try {
       console.log("Creating freight destination:", req.body);
       
@@ -750,7 +750,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/freight-destinations/:id", isAuthenticated, async (req: Request, res: Response) => {
+  app.delete("/api/freight-destinations/:id", hasActiveSubscription, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
