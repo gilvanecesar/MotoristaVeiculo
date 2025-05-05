@@ -5,7 +5,7 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { User } from "@shared/schema";
+import { User, USER_TYPES } from "@shared/schema";
 import { sendWelcomeEmail } from "./email-service";
 
 declare global {
@@ -167,6 +167,27 @@ export function setupAuth(app: Express) {
 
       // Cria novo usuário
       const hashedPassword = await hashPassword(password);
+      let userSubscriptionType = req.body.subscriptionType || "trial";
+      
+      // Configura data de expiração da assinatura para teste gratuito
+      let subscriptionExpiresAt = null;
+      let subscriptionActive = false;
+      
+      if (userSubscriptionType === "trial") {
+        // Para teste gratuito, a assinatura expira em 7 dias
+        const expirationDate = new Date();
+        expirationDate.setDate(expirationDate.getDate() + 7);
+        subscriptionExpiresAt = expirationDate;
+        subscriptionActive = true;
+      }
+      
+      // Configura valor para motoristas (acesso gratuito)
+      if (profileType === USER_TYPES.DRIVER) {
+        userSubscriptionType = "driver_free";
+        subscriptionActive = true;
+        subscriptionExpiresAt = null; // Sem data de expiração para motoristas
+      }
+      
       const newUser = await storage.createUser({
         email,
         name,
@@ -176,7 +197,10 @@ export function setupAuth(app: Express) {
         isVerified: false,
         isActive: true,
         avatarUrl: null,
-        providerId: null
+        providerId: null,
+        subscriptionType: userSubscriptionType,
+        subscriptionActive,
+        subscriptionExpiresAt
       });
 
       // Envia email de boas-vindas
