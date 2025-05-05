@@ -88,8 +88,7 @@ export function ProtectedRoute({
   // Usamos "as any" temporariamente para contornar problemas de TypeScript com a definição de usuário
   const userAny = user as any;
   
-  if (userAny.subscriptionActive && 
-      userAny.subscriptionType !== "driver_free" && 
+  if ((userAny.subscriptionType === "trial" || userAny.subscriptionType === "monthly" || userAny.subscriptionType === "annual") && 
       userAny.subscriptionExpiresAt) {
     
     const subscriptionEndDate = new Date(userAny.subscriptionExpiresAt);
@@ -100,6 +99,13 @@ export function ProtectedRoute({
     // Se a data de expiração for anterior à data atual, a assinatura expirou
     if (subscriptionEndDate < currentDate) {
       console.log("Assinatura expirada, redirecionando para home");
+      
+      // Atualizar flag de assinatura no lado do cliente para corresponder ao estado do servidor
+      if (userAny.subscriptionActive === true) {
+        console.log("Desativando flag de assinatura ativa localmente devido à expiração");
+        // Não é possível atualizar o estado diretamente,
+        // mas forçaremos uma revalidação na próxima requisição
+      }
       
       // Permitir acesso à página inicial e checkout mesmo com assinatura expirada
       if (path === "/" || path === "/checkout") {

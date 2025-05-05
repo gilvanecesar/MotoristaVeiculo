@@ -56,12 +56,19 @@ export function hasActiveSubscription(req: Request, res: Response, next: NextFun
     const subscriptionExpiresAt = new Date(user.subscriptionExpiresAt);
     const currentDate = new Date();
     
+    console.log(`[hasActiveSubscription] Verificando: User ID ${user.id}, Tipo: ${user.subscriptionType}, Expira em: ${subscriptionExpiresAt.toISOString()}, Data atual: ${currentDate.toISOString()}`);
+    
     if (subscriptionExpiresAt < currentDate) {
+      console.log(`[hasActiveSubscription] Assinatura expirou para usuário ID ${user.id}`);
+      
       // Automaticamente desativa a assinatura quando expirada
       storage.updateUser(user.id, { 
         subscriptionActive: false,
         paymentRequired: true
       })
+        .then(() => {
+          console.log(`[hasActiveSubscription] Usuário ID ${user.id} marcado como expirado no banco de dados`);
+        })
         .catch(err => console.error("Erro ao desativar assinatura expirada:", err));
       
       return res.status(402).json({ 

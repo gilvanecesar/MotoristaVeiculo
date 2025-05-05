@@ -13,7 +13,8 @@ import {
   hasClientAccess,
   hasDriverAccess,
   hasFreightAccess,
-  hasVehicleAccess
+  hasVehicleAccess,
+  hasActiveSubscription
 } from "./middlewares";
 import { createCheckoutSession, createPortalSession, handleWebhook } from "./stripe";
 import Stripe from "stripe";
