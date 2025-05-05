@@ -80,12 +80,22 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/utils/format";
 import { FaWhatsapp } from "react-icons/fa";
 
+// Função para verificar se um frete está expirado
+const isExpired = (expirationDate: string | Date | null | undefined): boolean => {
+  if (!expirationDate) return false;
+  
+  const today = new Date();
+  const expDate = new Date(expirationDate);
+  
+  return today > expDate;
+};
+
 export default function FreightsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [, navigate] = useLocation();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedFreight, setSelectedFreight] = useState<FreightWithDestinations | null>(null);
-  const [filterStatus, setFilterStatus] = useState<string>("todos");
+  const [filterStatus, setFilterStatus] = useState<string>("ativo");
   const [expandedFreight, setExpandedFreight] = useState<number | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
