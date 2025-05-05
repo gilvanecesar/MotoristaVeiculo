@@ -23,6 +23,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Configurar autenticação
   setupAuth(app);
   
+  // Rota para solicitar redefinição de senha
+  app.post("/api/forgot-password", async (req: Request, res: Response) => {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        return res.status(400).json({ message: "Email não fornecido" });
+      }
+
+      // Gerar token de redefinição de senha
+      const resetData = await storage.createPasswordResetToken(email);
+      
+      if (!resetData) {
+        return res.status(404).json({ message: "Email não encontrado" });
+      }
+      
+      // Enviar email com o token de redefinição
+      const emailSent = await sendPasswordResetEmail(
+        email,
+        resetData.token,
+        resetData.user.name
+      );
+
+      if (!emailSent) {
+        return res.status(500).json({ 
+          message: "Não foi possível enviar o email de redefinição. Contate o administrador."
+        });
+      }
+
+      res.status(200).json({ 
+        message: "Email de redefinição de senha enviado com sucesso" 
+      });
+    } catch (error) {
+      console.error("Erro ao processar solicitação de recuperação de senha:", error);
+      res.status(500).json({ 
+        message: "Erro ao processar solicitação. Tente novamente mais tarde"
+      });
+    }
+  });
+
+  // Rota para redefinir senha com token
+  app.post("/api/reset-password", async (req: Request, res: Response) => {
+    try {
+      const { email, token, password } = req.body;
+
+      if (!email || !token || !password) {
+        return res.status(400).json({ message: "Dados insuficientes" });
+      }
+
+      // Verificar token
+      const user = await storage.verifyPasswordResetToken(token, email);
+      
+      if (!user) {
+        return res.status(400).json({ 
+          message: "Token inválido ou expirado" 
+        });
+      }
+
+      // Atualizar senha
+      const hashedPassword = await hashPassword(password);
+      await storage.updatePassword(user.id, hashedPassword);
+
+      res.status(200).json({ 
+        message: "Senha redefinida com sucesso" 
+      });
+    } catch (error) {
+      console.error("Erro ao redefinir senha:", error);
+      res.status(500).json({ 
+        message: "Erro ao redefinir senha. Tente novamente mais tarde."
+      });
+    }
+  });
+  
   // Ativação de teste gratuito (7 dias)
   app.post("/api/activate-trial", isAuthenticated, async (req: Request, res: Response) => {
     try {

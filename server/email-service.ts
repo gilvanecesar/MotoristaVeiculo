@@ -12,19 +12,52 @@ export function initEmailService() {
     return;
   }
 
-  // Configurar o transportador de email
-  transporter = nodemailer.createTransport({
-    service: process.env.EMAIL_SERVICE || 'gmail',
+  // Configurações para serviços comuns
+  const emailConfig: nodemailer.TransportOptions = {
+    // Para desenvolvimento, usar o Ethereal (serviço de teste do Nodemailer)
+    host: process.env.NODE_ENV === 'development' ? 'smtp.ethereal.email' : undefined,
+    port: 587,
+    secure: false, // true para 465, false para outras portas
+    service: process.env.EMAIL_SERVICE,
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD
     }
-  });
+  };
 
-  // Verificar conexão com o serviço de email
-  transporter.verify()
-    .then(() => console.log('Serviço de email configurado com sucesso'))
-    .catch(err => console.error('Erro ao configurar serviço de email:', err));
+  try {
+    // Configurar o transportador de email
+    transporter = nodemailer.createTransport(emailConfig);
+
+    // Verificar conexão com o serviço de email
+    transporter.verify()
+      .then(() => console.log('Serviço de email configurado com sucesso'))
+      .catch(err => {
+        console.error('Erro ao verificar serviço de email:', err);
+        
+        // Em ambiente de desenvolvimento, criar uma conta de teste Ethereal
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Criando conta de teste Ethereal...');
+          nodemailer.createTestAccount().then(testAccount => {
+            // Criar transportador Ethereal para testes
+            transporter = nodemailer.createTransport({
+              host: 'smtp.ethereal.email',
+              port: 587,
+              secure: false,
+              auth: {
+                user: testAccount.user,
+                pass: testAccount.pass
+              }
+            });
+            console.log('Conta de teste Ethereal criada. Emails serão interceptados em:', testAccount.web);
+          }).catch(err => {
+            console.error('Falha ao criar conta de teste Ethereal:', err);
+          });
+        }
+      });
+  } catch (error) {
+    console.error('Erro ao configurar serviço de email:', error);
+  }
 }
 
 /**
