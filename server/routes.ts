@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { driverValidator, vehicleValidator, clientValidator, freightValidator, freightDestinationValidator, SUBSCRIPTION_STATUS, PLAN_TYPES } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
-import { setupAuth } from "./auth";
+import { setupAuth, hashPassword } from "./auth";
 import { 
   isAuthenticated, 
   isAdmin, 
@@ -1168,6 +1168,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Atualizar o tipo de perfil de um usuário
+  // Endpoint para redefinir a senha de um usuário (admin apenas)
+  app.post("/api/admin/users/:id/reset-password", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { newPassword } = req.body;
+      
+      if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({ message: "A nova senha deve ter pelo menos 6 caracteres" });
+      }
+      
+      const user = await storage.getUserById(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "Usuário não encontrado" });
+      }
+      
+      // Gerar hash para a nova senha
+      const hashedPassword = await hashPassword(newPassword);
+      
+      // Atualizar a senha do usuário usando a função de storage
+      await storage.updateUser(userId, { password: hashedPassword });
+        
+      res.status(200).json({ message: "Senha redefinida com sucesso" });
+    } catch (error) {
+      console.error("Erro ao redefinir senha:", error);
+      res.status(500).json({ message: "Erro ao redefinir senha" });
+    }
+  });
+  
   app.put("/api/admin/users/:id/update-profile-type", isAdmin, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
