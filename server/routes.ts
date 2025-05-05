@@ -993,7 +993,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const paymentIntent = await stripe.paymentIntents.create({
         amount: amountInCents,
         currency: "brl",
-        payment_method_types: ["card", "boleto", "pix"],
+        payment_method_types: ["card", "boleto"],
         description: invoiceDescription || `Pagamento de R$ ${(amountInCents / 100).toFixed(2)}`,
         metadata: {
           userId: req.user?.id.toString(),
@@ -1101,7 +1101,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           payment_behavior: "default_incomplete",
           payment_settings: { 
             save_default_payment_method: "on_subscription",
-            payment_method_types: ["card", "boleto", "pix"]
+            payment_method_types: ["card", "boleto"]
           },
           expand: ["latest_invoice.payment_intent"],
           metadata: {
