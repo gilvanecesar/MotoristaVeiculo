@@ -277,3 +277,64 @@ export async function sendPaymentReminderEmail(
     return false;
   }
 }
+
+/**
+ * Envia um email com link de recuperação de senha
+ * @param email Email do usuário
+ * @param resetToken Token de recuperação de senha
+ * @param userName Nome do usuário (opcional)
+ */
+export async function sendPasswordResetEmail(
+  email: string,
+  resetToken: string,
+  userName?: string
+): Promise<boolean> {
+  if (!transporter) {
+    console.warn('Serviço de email não configurado. Email de recuperação de senha não enviado.');
+    return false;
+  }
+
+  // URL base da aplicação
+  const appUrl = process.env.APP_URL || 'https://querofretes.com.br';
+  
+  // Link de recuperação de senha
+  const resetLink = `${appUrl}/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
+  
+  try {
+    const mailOptions = {
+      from: `"QUERO FRETES" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: 'Recuperação de Senha - QUERO FRETES',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <img src="https://seusite.com.br/logo.png" alt="QUERO FRETES" style="max-width: 200px;">
+          </div>
+          <h2 style="color: #4a6cf7;">Recuperação de Senha</h2>
+          <p>Olá${userName ? `, <strong>${userName}</strong>` : ''}!</p>
+          <p>Recebemos uma solicitação para redefinição de senha da sua conta.</p>
+          <p>Clique no botão abaixo para criar uma nova senha. O link é válido por 24 horas.</p>
+          
+          <div style="text-align: center; margin-top: 30px; margin-bottom: 30px;">
+            <a href="${resetLink}" style="background-color: #4a6cf7; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+              REDEFINIR MINHA SENHA
+            </a>
+          </div>
+          
+          <p>Se você não solicitou a redefinição de senha, por favor ignore este email ou entre em contato com o suporte.</p>
+          <p style="margin-top: 30px; font-size: 12px; color: #666; text-align: center;">
+            Este é um email automático, por favor não responda.<br>
+            QUERO FRETES © ${new Date().getFullYear()}
+          </p>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`Email de recuperação de senha enviado para ${email}`);
+    return true;
+  } catch (error) {
+    console.error('Erro ao enviar email de recuperação de senha:', error);
+    return false;
+  }
+}

@@ -40,6 +40,7 @@ import {
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { and, eq, ilike, or, sql } from "drizzle-orm";
+import crypto from "crypto";
 import session from "express-session";
 import { Store as SessionStore } from "express-session";
 import connectPg from "connect-pg-simple";
@@ -59,6 +60,9 @@ export interface IStorage {
   updateLastLogin(id: number): Promise<User | undefined>;
   toggleUserAccess(id: number, isActive: boolean): Promise<User | undefined>;
   deleteUser(id: number): Promise<boolean>;
+  createPasswordResetToken(email: string): Promise<{ token: string; user: User } | undefined>;
+  verifyPasswordResetToken(token: string, email: string): Promise<User | undefined>;
+  updatePassword(id: number, newPassword: string): Promise<User | undefined>;
 
   // Driver operations
   getDrivers(): Promise<DriverWithVehicles[]>;
@@ -271,6 +275,48 @@ export class MemStorage implements IStorage {
 
   async deleteUser(id: number): Promise<boolean> {
     return this.usersData.delete(id);
+  }
+
+  // Token map para armazenar tokens de redefinição de senha (email -> {token, expiração})
+  private passwordResetTokens: Map<string, { token: string; expiry: Date }> = new Map();
+
+  async createPasswordResetToken(email: string): Promise<{ token: string; user: User } | undefined> {
+    const user = await this.getUserByEmail(email);
+    if (!user) return undefined;
+
+    // Gerar um token aleatório
+    const token = crypto.randomBytes(20).toString('hex');
+    
+    // O token expira em 24 horas
+    const expiry = new Date();
+    expiry.setHours(expiry.getHours() + 24);
+    
+    // Armazenar o token com data de expiração
+    this.passwordResetTokens.set(email, { token, expiry });
+    
+    return { token, user };
+  }
+
+  async verifyPasswordResetToken(token: string, email: string): Promise<User | undefined> {
+    const tokenData = this.passwordResetTokens.get(email);
+    
+    // Verificar se o token existe, está correto e não expirou
+    if (!tokenData || tokenData.token !== token || tokenData.expiry < new Date()) {
+      return undefined;
+    }
+    
+    // Se o token for válido, retorna o usuário
+    const user = await this.getUserByEmail(email);
+    if (user) {
+      // Após verificação, remover o token (uso único)
+      this.passwordResetTokens.delete(email);
+    }
+    
+    return user;
+  }
+
+  async updatePassword(id: number, newPassword: string): Promise<User | undefined> {
+    return this.updateUser(id, { password: newPassword });
   }
 
   // Driver operations

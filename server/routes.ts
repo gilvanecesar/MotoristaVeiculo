@@ -2,6 +2,7 @@ import express, { type Express, Request, Response, NextFunction } from "express"
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { driverValidator, vehicleValidator, clientValidator, freightValidator, freightDestinationValidator, SUBSCRIPTION_STATUS, PLAN_TYPES } from "@shared/schema";
+import { sendPasswordResetEmail } from "./email-service";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { setupAuth, hashPassword } from "./auth";
