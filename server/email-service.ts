@@ -1,62 +1,89 @@
 import nodemailer from 'nodemailer';
+import crypto from 'crypto';
 import { User } from '@shared/schema';
 
 // Configuração do serviço de email
 let transporter: nodemailer.Transporter;
+let etherealInfo: {
+  user: string;
+  pass: string;
+  web: string;
+} | null = null;
+
+// Função auxiliar para criar conta de teste Ethereal
+async function createEtherealAccount(): Promise<boolean> {
+  try {
+    console.log('Criando conta de teste Ethereal para email...');
+    const testAccount = await nodemailer.createTestAccount();
+    
+    // Criar transportador Ethereal para testes
+    transporter = nodemailer.createTransport({
+      host: 'smtp.ethereal.email',
+      port: 587,
+      secure: false,
+      auth: {
+        user: testAccount.user,
+        pass: testAccount.pass
+      }
+    });
+    
+    etherealInfo = {
+      user: testAccount.user,
+      pass: testAccount.pass,
+      web: testAccount.web
+    };
+    
+    console.log('Conta Ethereal criada para testes de email:');
+    console.log(`- Email: ${testAccount.user}`);
+    console.log(`- Interface web: ${testAccount.web}`);
+    console.log('Use esta interface para visualizar os emails enviados durante o desenvolvimento');
+    
+    return true;
+  } catch (err) {
+    console.error('Erro ao criar conta Ethereal:', err);
+    return false;
+  }
+}
 
 // Função para inicializar o serviço de email
-export function initEmailService() {
-  // Precisamos verificar se as credenciais de email estão configuradas
+export async function initEmailService() {
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  
+  // Em ambiente de desenvolvimento, sempre usar Ethereal para testes de email
+  if (isDevelopment) {
+    await createEtherealAccount();
+    return;
+  }
+  
+  // Em produção, verificar credenciais
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
     console.warn('Atenção: Credenciais de email não configuradas. Funcionalidade de envio de emails desativada.');
+    // Tentar criar um fallback com Ethereal mesmo em produção como último recurso
+    await createEtherealAccount();
     return;
   }
 
-  // Configurações para serviços comuns
-  const emailConfig: nodemailer.TransportOptions = {
-    // Para desenvolvimento, usar o Ethereal (serviço de teste do Nodemailer)
-    host: process.env.NODE_ENV === 'development' ? 'smtp.ethereal.email' : undefined,
-    port: 587,
-    secure: false, // true para 465, false para outras portas
-    service: process.env.EMAIL_SERVICE,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASSWORD
-    }
-  };
-
+  // Em produção, criar transportador com as configurações do serviço de email
   try {
-    // Configurar o transportador de email
+    const emailConfig = {
+      service: process.env.EMAIL_SERVICE,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD
+      }
+    };
+    
     transporter = nodemailer.createTransport(emailConfig);
-
+    
     // Verificar conexão com o serviço de email
-    transporter.verify()
-      .then(() => console.log('Serviço de email configurado com sucesso'))
-      .catch(err => {
-        console.error('Erro ao verificar serviço de email:', err);
-        
-        // Em ambiente de desenvolvimento, criar uma conta de teste Ethereal
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Criando conta de teste Ethereal...');
-          nodemailer.createTestAccount().then(testAccount => {
-            // Criar transportador Ethereal para testes
-            transporter = nodemailer.createTransport({
-              host: 'smtp.ethereal.email',
-              port: 587,
-              secure: false,
-              auth: {
-                user: testAccount.user,
-                pass: testAccount.pass
-              }
-            });
-            console.log('Conta de teste Ethereal criada. Emails serão interceptados em:', testAccount.web);
-          }).catch(err => {
-            console.error('Falha ao criar conta de teste Ethereal:', err);
-          });
-        }
-      });
+    const verifyResult = await transporter.verify();
+    console.log('Serviço de email configurado com sucesso');
   } catch (error) {
     console.error('Erro ao configurar serviço de email:', error);
+    console.warn('Tentando criar conta Ethereal como fallback...');
+    
+    // Se falhar a configuração normal, tentar criar uma conta Ethereal como fallback
+    await createEtherealAccount();
   }
 }
 
