@@ -91,6 +91,10 @@ export default function AdminUsersPage() {
   // Estado para controlar o diálogo de alteração de tipo de perfil
   const [profileTypeDialogOpen, setProfileTypeDialogOpen] = useState(false);
   const [selectedProfileType, setSelectedProfileType] = useState("");
+  
+  // Estado para controlar o diálogo de redefinição de senha
+  const [resetPasswordDialogOpen, setResetPasswordDialogOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
 
   // Buscar lista de usuários
   const { data: users, isLoading } = useQuery({
@@ -257,6 +261,50 @@ export default function AdminUsersPage() {
       });
     }
   };
+  
+  // Abrir o diálogo de redefinição de senha
+  const openResetPasswordDialog = (user: any) => {
+    setSelectedUser(user);
+    setNewPassword(""); // Limpa a senha anterior
+    setResetPasswordDialogOpen(true);
+  };
+  
+  // Mutation para redefinir a senha do usuário
+  const resetPasswordMutation = useMutation({
+    mutationFn: async ({ userId, newPassword }: { userId: number, newPassword: string }) => {
+      const res = await apiRequest("POST", `/api/admin/users/${userId}/reset-password`, { newPassword });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Falha ao redefinir senha");
+      }
+      return await res.json();
+    },
+    onSuccess: () => {
+      setResetPasswordDialogOpen(false);
+      setNewPassword("");
+      toast({
+        title: "Senha redefinida",
+        description: "A senha do usuário foi redefinida com sucesso",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Funcao para lidar com a redefinição de senha
+  const handleResetPassword = () => {
+    if (selectedUser && newPassword) {
+      resetPasswordMutation.mutate({
+        userId: selectedUser.id,
+        newPassword
+      });
+    }
+  };
 
   return (
     <div className="container mx-auto py-8">
@@ -366,6 +414,14 @@ export default function AdminUsersPage() {
                             className="whitespace-nowrap"
                           >
                             Alterar Perfil
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => openResetPasswordDialog(user)}
+                            className="whitespace-nowrap"
+                          >
+                            Redefinir Senha
                           </Button>
                         </div>
                       </div>
@@ -508,6 +564,48 @@ export default function AdminUsersPage() {
                 </>
               ) : (
                 "Atualizar Perfil"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Dialog de redefinição de senha */}
+      <Dialog open={resetPasswordDialogOpen} onOpenChange={setResetPasswordDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Redefinir senha</DialogTitle>
+            <DialogDescription>
+              Defina uma nova senha para o usuário {selectedUser?.name}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="newPassword">Nova senha</Label>
+              <Input
+                id="newPassword"
+                type="text"
+                placeholder="Digite a nova senha"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResetPasswordDialogOpen(false)}>Cancelar</Button>
+            <Button 
+              onClick={handleResetPassword} 
+              disabled={resetPasswordMutation.isPending || !newPassword}
+            >
+              {resetPasswordMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Redefinindo...
+                </>
+              ) : (
+                "Redefinir Senha"
               )}
             </Button>
           </DialogFooter>
