@@ -159,7 +159,7 @@ export default function ProfileSelectionPage() {
           {/* Motorista */}
           <Card 
             className={`cursor-pointer transition-all hover:shadow-md ${
-              selectedRole === USER_TYPES.DRIVER ? 'border-primary ring-2 ring-primary' : ''
+              selectedRole === USER_TYPES.DRIVER ? 'border-green-500 ring-2 ring-green-500' : ''
             }`}
             onClick={() => setSelectedRole(USER_TYPES.DRIVER)}
           >
@@ -192,8 +192,8 @@ export default function ProfileSelectionPage() {
             </CardContent>
             <CardFooter>
               <div className="w-full text-center">
-                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
-                  Gratuito
+                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">
+                  Acesso Gratuito
                 </span>
               </div>
             </CardFooter>
