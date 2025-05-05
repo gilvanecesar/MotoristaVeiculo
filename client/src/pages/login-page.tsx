@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { useLocation } from "wouter";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -52,6 +54,9 @@ export default function LoginPage() {
   const [activeTab, setActiveTab] = useState<string>("login");
   const [selectedRole, setSelectedRole] = useState<string>(USER_TYPES.SHIPPER);
   const [selectedPlan, setSelectedPlan] = useState<string>("trial");
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [isRequestingReset, setIsRequestingReset] = useState(false);
   
   const { toast } = useToast();
   const { loginMutation, registerMutation } = useAuth();
@@ -121,6 +126,46 @@ export default function LoginPage() {
         }
       },
     });
+  };
+
+  // Função para solicitar redefinição de senha
+  const handlePasswordReset = async () => {
+    if (!resetEmail) return;
+    
+    setIsRequestingReset(true);
+    
+    try {
+      const response = await fetch('/api/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: resetEmail }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Erro ao solicitar redefinição de senha');
+      }
+      
+      toast({
+        title: "Email enviado",
+        description: "Verifique sua caixa de entrada para redefinir sua senha",
+      });
+      
+      setForgotPasswordOpen(false);
+      setResetEmail("");
+    } catch (error) {
+      console.error('Erro ao solicitar redefinição de senha:', error);
+      toast({
+        title: "Erro",
+        description: error instanceof Error ? error.message : 'Falha ao solicitar redefinição de senha',
+        variant: "destructive",
+      });
+    } finally {
+      setIsRequestingReset(false);
+    }
   };
 
   return (
@@ -321,6 +366,12 @@ export default function LoginPage() {
                           "Entrar"
                         )}
                       </Button>
+                      
+                      <div className="text-right mt-2">
+                        <Button variant="link" className="text-sm p-0" type="button" onClick={() => setForgotPasswordOpen(true)}>
+                          Esqueci minha senha
+                        </Button>
+                      </div>
                     </form>
                   </Form>
                 </CardContent>
@@ -471,6 +522,53 @@ export default function LoginPage() {
           © {new Date().getFullYear()} QUERO FRETES. Todos os direitos reservados.
         </div>
       </footer>
+      
+      {/* Modal de recuperação de senha */}
+      <Dialog open={forgotPasswordOpen} onOpenChange={setForgotPasswordOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Recuperação de senha</DialogTitle>
+            <DialogDescription>
+              Digite seu e-mail para receber um link de recuperação de senha.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="reset-email">E-mail de cadastro</Label>
+              <Input
+                id="reset-email"
+                type="email"
+                placeholder="seu@email.com"
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter className="sm:justify-end">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setForgotPasswordOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              type="button" 
+              disabled={isRequestingReset || !resetEmail}
+              onClick={handlePasswordReset}
+            >
+              {isRequestingReset ? (
+                <>
+                  <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                "Enviar link"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
