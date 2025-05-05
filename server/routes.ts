@@ -580,10 +580,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validação com valores processados
       const freightData = freightValidator.parse(processedData);
       
-      // Definir data de expiração para 30 dias após a criação
+      // Definir data de expiração para 24 horas após a criação
       const today = new Date();
       const expirationDate = new Date(today);
-      expirationDate.setDate(today.getDate() + 30);
+      expirationDate.setHours(today.getHours() + 24);
       
       // Adicionar a data de expiração ao frete
       const freightWithExpiration = {
