@@ -346,7 +346,8 @@ export const USER_TYPES = {
   DRIVER: "driver",
   AGENT: "agent",
   SHIPPER: "shipper",
-  ADMIN: "admin"
+  ADMIN: "admin",
+  CARRIER: "carrier"
 } as const;
 
 // Authentication providers
@@ -393,7 +394,8 @@ export const userValidator = insertUserSchema.extend({
     USER_TYPES.DRIVER, 
     USER_TYPES.AGENT, 
     USER_TYPES.SHIPPER, 
-    USER_TYPES.ADMIN
+    USER_TYPES.ADMIN,
+    USER_TYPES.CARRIER
   ], {
     errorMap: () => ({ message: "Selecione um tipo de perfil válido" })
   }),

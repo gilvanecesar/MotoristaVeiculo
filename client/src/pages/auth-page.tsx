@@ -400,7 +400,7 @@ export default function AuthPage() {
                     <CardContent>
                       <div className="mb-6">
                         <h3 className="text-sm font-medium mb-3">Selecione seu perfil:</h3>
-                        <div className="grid grid-cols-4 gap-3">
+                        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                           <Card 
                             className={`cursor-pointer transition-all hover:bg-muted ${selectedRole === USER_TYPES.SHIPPER ? 'border-primary ring-2 ring-primary' : ''}`}
                             onClick={() => setSelectedRole(USER_TYPES.SHIPPER)}
@@ -432,18 +432,6 @@ export default function AuthPage() {
                           </Card>
                           
                           <Card 
-                            className={`cursor-pointer transition-all hover:bg-muted ${selectedRole === USER_TYPES.DRIVER ? 'border-green-500 ring-2 ring-green-500' : ''}`}
-                            onClick={() => setSelectedRole(USER_TYPES.DRIVER)}
-                          >
-                            <CardContent className="p-3 text-center">
-                              <Icons.truck className="h-6 w-6 mx-auto mb-2" />
-                              <p className="text-xs font-medium">Motorista</p>
-                              <p className="text-[10px] mt-1 text-green-600">Acesso Gratuito</p>
-                            </CardContent>
-                          </Card>
-                          
-                          {/* Opção para Motorista */}
-                          <Card
                             className={`cursor-pointer transition-all hover:bg-muted ${selectedRole === USER_TYPES.DRIVER ? 'border-green-500 ring-2 ring-green-500' : ''}`}
                             onClick={() => setSelectedRole(USER_TYPES.DRIVER)}
                           >
