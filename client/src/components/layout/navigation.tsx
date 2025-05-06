@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
-import { LayoutDashboard, Users, Car, BarChart3, Menu, X, Moon, Sun, Truck, Building2, Home, DollarSign, UserCog } from "lucide-react";
+import { LayoutDashboard, Users, Car, BarChart3, Menu, X, Moon, Sun, Truck, Building2, Home, DollarSign, UserCog, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -266,7 +266,9 @@ export default function Navigation() {
                 <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>Perfil</DropdownMenuItem>
-                <DropdownMenuItem>Configurações</DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/settings">Configurações</Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleLogout} className="text-red-600 dark:text-red-400 focus:text-red-700 focus:bg-red-50 dark:focus:bg-red-900/20">
                   Sair
                 </DropdownMenuItem>

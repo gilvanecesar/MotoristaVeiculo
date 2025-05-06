@@ -34,6 +34,7 @@ import CheckoutPage from "@/pages/checkout";
 import SubscribePage from "@/pages/subscribe";
 import ProfileSelectionPage from "@/pages/profile-selection";
 import ResetPasswordPage from "@/pages/reset-password";
+import SettingsPage from "@/pages/settings";
 
 function Router() {
   return (
@@ -63,6 +64,7 @@ function Router() {
       <ProtectedRoute path="/admin/finance" component={FinanceDashboard} />
       <ProtectedRoute path="/admin/finance/settings" component={FinanceSettings} />
       <ProtectedRoute path="/admin/users" component={AdminUsersPage} />
+      <ProtectedRoute path="/settings" component={SettingsPage} />
       <ProtectedRoute path="/" component={Home} />
       <Route component={NotFound} />
     </Switch>

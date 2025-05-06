@@ -947,6 +947,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Endpoint para obter informações da assinatura do usuário
+  app.get("/api/user/subscription-info", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      if (!process.env.STRIPE_SECRET_KEY) {
+        throw new Error("Missing Stripe API Key");
+      }
+
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+        apiVersion: "2023-10-16",
+      });
+
+      const user = req.user;
+      if (!user) {
+        return res.status(401).send({ error: { message: "Não autenticado" } });
+      }
+
+      // Verificar se o usuário tem uma assinatura
+      if (!user.stripeSubscriptionId) {
+        return res.status(404).send({ error: { message: "Nenhuma assinatura encontrada" } });
+      }
+
+      // Buscar dados da assinatura no Stripe
+      const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+
+      // Montar objeto com informações da assinatura
+      const subscriptionInfo = {
+        id: subscription.id,
+        status: subscription.status,
+        currentPeriodStart: subscription.current_period_start ? new Date(subscription.current_period_start * 1000).toISOString() : null,
+        currentPeriodEnd: subscription.current_period_end ? new Date(subscription.current_period_end * 1000).toISOString() : null,
+        trialStart: subscription.trial_start ? new Date(subscription.trial_start * 1000).toISOString() : null,
+        trialEnd: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
+        cancelAtPeriodEnd: subscription.cancel_at_period_end,
+        canceledAt: subscription.canceled_at ? new Date(subscription.canceled_at * 1000).toISOString() : null,
+        planType: subscription.metadata?.planType || "monthly"
+      };
+
+      res.json(subscriptionInfo);
+    } catch (error: any) {
+      console.error("Erro ao buscar informações da assinatura:", error.message);
+      res.status(500).json({ error: { message: error.message } });
+    }
+  });
+
   // Endpoint para cancelar assinatura
   app.post("/api/cancel-subscription", isAuthenticated, async (req: Request, res: Response) => {
     try {
