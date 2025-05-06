@@ -947,6 +947,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Endpoint para cancelar assinatura
+  app.post("/api/cancel-subscription", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      if (!process.env.STRIPE_SECRET_KEY) {
+        throw new Error("Missing Stripe API Key");
+      }
+
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+        apiVersion: "2023-10-16",
+      });
+
+      const user = req.user;
+      if (!user) {
+        return res.status(401).send({ error: { message: "Não autenticado" } });
+      }
+
+      // Verificar se o usuário tem uma assinatura
+      if (!user.stripeSubscriptionId) {
+        return res.status(400).send({ error: { message: "Nenhuma assinatura encontrada para cancelar" } });
+      }
+
+      // Cancelar a assinatura no Stripe
+      await stripe.subscriptions.cancel(user.stripeSubscriptionId, {
+        prorate: true
+      });
+
+      // Atualizar o status da assinatura no banco de dados
+      await storage.updateUser(user.id, {
+        subscriptionActive: false,
+        subscriptionExpiresAt: new Date().toISOString()
+      });
+
+      res.json({ success: true, message: "Assinatura cancelada com sucesso" });
+    } catch (error: any) {
+      console.error("Erro ao cancelar assinatura:", error.message);
+      res.status(500).json({ error: { message: error.message } });
+    }
+  });
+
   app.post("/api/create-portal-session", isAuthenticated, async (req: Request, res: Response) => {
     try {
       await createPortalSession(req, res);
@@ -1090,7 +1129,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Usar o preço mensal ou anual com base no tipo de plano
         const priceId = process.env.STRIPE_PRICE_ID || "price_invalid";
         
-        // Criar a assinatura
+        // Criar a assinatura com período de teste de 7 dias
+        // Iniciar o trial imediatamente, mas iniciar a cobrança apenas após 7 dias
+        const now = new Date();
+        const trialEnd = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 dias após agora
+        
         const subscription = await stripe.subscriptions.create({
           customer: customerId,
           items: [
@@ -1098,6 +1141,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               price: priceId,
             },
           ],
+          trial_end: Math.floor(trialEnd.getTime() / 1000), // Timestamp em segundos
           payment_behavior: "default_incomplete",
           payment_settings: { 
             save_default_payment_method: "on_subscription",
@@ -1107,6 +1151,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           metadata: {
             userId: user.id.toString(),
             planType: planType,
+            trialEndDate: trialEnd.toISOString(),
           },
         });
         
@@ -1163,6 +1208,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Gerenciamento de usuários (admin)
+  // Endpoint para obter informações de pagamento de usuários (admin)
+  app.get("/api/admin/users/payment-info/:id", isAdmin, async (req: Request, res: Response) => {
+    try {
+      if (!process.env.STRIPE_SECRET_KEY) {
+        throw new Error("Missing Stripe API Key");
+      }
+
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+        apiVersion: "2023-10-16",
+      });
+
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid ID format" });
+      }
+
+      const user = await storage.getUserById(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Verificar se o usuário tem um customer ID no Stripe
+      if (!user.stripeCustomerId) {
+        return res.status(404).json({ message: "Usuário sem informações de pagamento" });
+      }
+
+      // Buscar dados do cliente no Stripe
+      const customer = await stripe.customers.retrieve(user.stripeCustomerId, {
+        expand: ['sources', 'subscriptions', 'payment_methods']
+      });
+
+      // Buscar métodos de pagamento do cliente
+      const paymentMethods = await stripe.paymentMethods.list({
+        customer: user.stripeCustomerId,
+        type: 'card'
+      });
+
+      // Formatar e retornar dados de pagamento
+      const paymentInfo = {
+        customerId: user.stripeCustomerId,
+        subscriptionId: user.stripeSubscriptionId || null,
+        subscriptionStatus: null,
+        trialEnd: null,
+        paymentMethods: paymentMethods.data.map(pm => ({
+          id: pm.id,
+          brand: pm.card?.brand || 'Unknown',
+          last4: pm.card?.last4 || '****',
+          expMonth: pm.card?.exp_month || 0,
+          expYear: pm.card?.exp_year || 0,
+          isDefault: pm.id === (customer.invoice_settings?.default_payment_method || null)
+        }))
+      };
+
+      // Adicionar informações de assinatura, se existir
+      if (user.stripeSubscriptionId && customer.subscriptions?.data?.length > 0) {
+        const subscription = customer.subscriptions.data.find(s => s.id === user.stripeSubscriptionId);
+        if (subscription) {
+          paymentInfo.subscriptionStatus = subscription.status;
+          paymentInfo.trialEnd = subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null;
+        }
+      }
+
+      res.json(paymentInfo);
+    } catch (error: any) {
+      console.error("Error fetching payment info:", error.message);
+      res.status(500).json({ message: "Failed to fetch payment information" });
+    }
+  });
+
   app.get("/api/admin/users", isAdmin, async (req: Request, res: Response) => {
     try {
       const users = await storage.getUsers();
