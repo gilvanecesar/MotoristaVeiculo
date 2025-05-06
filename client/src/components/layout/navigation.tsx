@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
-import { LayoutDashboard, Users, Car, BarChart3, Menu, X, Moon, Sun, Truck, Building2, Home, DollarSign, UserCog, Settings } from "lucide-react";
+import { LayoutDashboard, Users, Car, BarChart3, Menu, X, Moon, Sun, Truck, Building2, Home, DollarSign, UserCog, Settings, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -162,6 +162,8 @@ export default function Navigation() {
         return "Configurações Financeiras";
       case "/admin/users":
         return "Gerenciamento de Usuários";
+      case "/settings":
+        return "Configurações da Conta";
       default:
         if (location.startsWith("/drivers/new")) {
           return "Cadastrar Motorista";
@@ -265,7 +267,9 @@ export default function Navigation() {
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Perfil</DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/profile">Perfil</Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/settings">Configurações</Link>
                 </DropdownMenuItem>
@@ -316,6 +320,26 @@ export default function Navigation() {
                 </div>
               </li>
               
+              {/* Profile for Mobile */}
+              <li>
+                <Link href="/profile">
+                  <div className="flex items-center justify-start gap-3 w-full px-3 py-2 rounded-md transition-all text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">
+                    <User className="h-5 w-5" />
+                    <span className="font-medium">Perfil</span>
+                  </div>
+                </Link>
+              </li>
+
+              {/* Settings for Mobile */}
+              <li>
+                <Link href="/settings">
+                  <div className="flex items-center justify-start gap-3 w-full px-3 py-2 rounded-md transition-all text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">
+                    <Settings className="h-5 w-5" />
+                    <span className="font-medium">Configurações</span>
+                  </div>
+                </Link>
+              </li>
+
               {/* Logout Button for Mobile */}
               <li>
                 <button
