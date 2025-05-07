@@ -399,7 +399,7 @@ export default function LandingPage() {
             <div className="mb-8 md:mb-0">
               <div className="flex items-center space-x-2 mb-4">
                 <img src={logoPath} alt="QUERO FRETES Logo" className="h-10 w-10" />
-                <span className="font-bold text-xl">QUERO FRETES</span>
+                <span className="font-bold text-xl text-white">QUERO FRETES</span>
               </div>
               <p className="text-slate-400 max-w-md">
                 A plataforma completa para simplificar a gestão de fretes e transporte, conectando embarcadores, transportadoras e motoristas.
@@ -418,7 +418,7 @@ export default function LandingPage() {
               </div>
               
               <div>
-                <h4 className="font-bold text-lg mb-4">Legal</h4>
+                <h4 className="font-bold text-lg mb-4 text-white">Legal</h4>
                 <ul className="space-y-2">
                   <li><a href="#" className="text-slate-400 hover:text-white transition-colors">Termos de Uso</a></li>
                   <li><a href="#" className="text-slate-400 hover:text-white transition-colors">Privacidade</a></li>
@@ -427,7 +427,7 @@ export default function LandingPage() {
               </div>
               
               <div>
-                <h4 className="font-bold text-lg mb-4">Contato & Redes</h4>
+                <h4 className="font-bold text-lg mb-4 text-white">Contato & Redes</h4>
                 <ul className="space-y-2">
                   <li>
                     <a 
