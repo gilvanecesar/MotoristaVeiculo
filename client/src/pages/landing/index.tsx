@@ -184,15 +184,15 @@ export default function LandingPage() {
                 <ul className="space-y-3 mb-8">
                   <li className="flex items-start">
                     <CheckCircle2 className="h-5 w-5 text-primary mr-2 mt-0.5" />
-                    <span>Visualização de fretes</span>
+                    <span className="text-slate-800">Visualização de fretes</span>
                   </li>
                   <li className="flex items-start">
                     <CheckCircle2 className="h-5 w-5 text-primary mr-2 mt-0.5" />
-                    <span>Contato direto com embarcadores</span>
+                    <span className="text-slate-800">Contato direto com embarcadores</span>
                   </li>
                   <li className="flex items-start">
                     <CheckCircle2 className="h-5 w-5 text-primary mr-2 mt-0.5" />
-                    <span>Cadastro de veículos</span>
+                    <span className="text-slate-800">Cadastro de veículos</span>
                   </li>
                 </ul>
                 <Button variant="outline" className="w-full" onClick={goToLogin}>
@@ -209,7 +209,7 @@ export default function LandingPage() {
               <div className="p-8">
                 <h3 className="text-xl font-bold mb-4 text-slate-900">Mensal</h3>
                 <div className="mb-4">
-                  <span className="text-4xl font-bold">R$ 99,90</span>
+                  <span className="text-4xl font-bold text-slate-900">R$ 99,90</span>
                   <span className="text-slate-600">/mês</span>
                 </div>
                 <p className="text-slate-600 mb-6">
@@ -218,19 +218,19 @@ export default function LandingPage() {
                 <ul className="space-y-3 mb-8">
                   <li className="flex items-start">
                     <CheckCircle2 className="h-5 w-5 text-primary mr-2 mt-0.5" />
-                    <span>Cadastro ilimitado de fretes</span>
+                    <span className="text-slate-800">Cadastro ilimitado de fretes</span>
                   </li>
                   <li className="flex items-start">
                     <CheckCircle2 className="h-5 w-5 text-primary mr-2 mt-0.5" />
-                    <span>Gestão de clientes e motoristas</span>
+                    <span className="text-slate-800">Gestão de clientes e motoristas</span>
                   </li>
                   <li className="flex items-start">
                     <CheckCircle2 className="h-5 w-5 text-primary mr-2 mt-0.5" />
-                    <span>Compartilhamento via WhatsApp</span>
+                    <span className="text-slate-800">Compartilhamento via WhatsApp</span>
                   </li>
                   <li className="flex items-start">
                     <CheckCircle2 className="h-5 w-5 text-primary mr-2 mt-0.5" />
-                    <span>Relatórios básicos</span>
+                    <span className="text-slate-800">Relatórios básicos</span>
                   </li>
                 </ul>
                 <Button className="w-full bg-primary hover:bg-primary/90" onClick={goToLogin}>
@@ -244,7 +244,7 @@ export default function LandingPage() {
               <div className="p-8">
                 <h3 className="text-xl font-bold mb-4 text-slate-900">Anual</h3>
                 <div className="mb-4">
-                  <span className="text-4xl font-bold">R$ 960,00</span>
+                  <span className="text-4xl font-bold text-slate-900">R$ 960,00</span>
                   <span className="text-slate-600">/ano</span>
                 </div>
                 <p className="text-slate-600 mb-6">
@@ -253,19 +253,19 @@ export default function LandingPage() {
                 <ul className="space-y-3 mb-8">
                   <li className="flex items-start">
                     <CheckCircle2 className="h-5 w-5 text-primary mr-2 mt-0.5" />
-                    <span>Todas as funcionalidades do plano mensal</span>
+                    <span className="text-slate-800">Todas as funcionalidades do plano mensal</span>
                   </li>
                   <li className="flex items-start">
                     <CheckCircle2 className="h-5 w-5 text-primary mr-2 mt-0.5" />
-                    <span>Relatórios avançados</span>
+                    <span className="text-slate-800">Relatórios avançados</span>
                   </li>
                   <li className="flex items-start">
                     <CheckCircle2 className="h-5 w-5 text-primary mr-2 mt-0.5" />
-                    <span>Suporte prioritário</span>
+                    <span className="text-slate-800">Suporte prioritário</span>
                   </li>
                   <li className="flex items-start">
                     <CheckCircle2 className="h-5 w-5 text-primary mr-2 mt-0.5" />
-                    <span>Acesso a novas funcionalidades</span>
+                    <span className="text-slate-800">Acesso a novas funcionalidades</span>
                   </li>
                 </ul>
                 <Button variant="outline" className="w-full" onClick={goToLogin}>
@@ -292,7 +292,7 @@ export default function LandingPage() {
               <div key={index} className="flex">
                 <div className="mr-4">{benefit.icon}</div>
                 <div>
-                  <h3 className="text-lg font-bold mb-2">{benefit.title}</h3>
+                  <h3 className="text-lg font-bold mb-2 text-slate-900">{benefit.title}</h3>
                   <p className="text-slate-600">{benefit.description}</p>
                 </div>
               </div>
@@ -408,7 +408,7 @@ export default function LandingPage() {
             
             <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
               <div>
-                <h4 className="font-bold text-lg mb-4">Plataforma</h4>
+                <h4 className="font-bold text-lg mb-4 text-white">Plataforma</h4>
                 <ul className="space-y-2">
                   <li><a href="#" className="text-slate-400 hover:text-white transition-colors">Home</a></li>
                   <li><a href="#" className="text-slate-400 hover:text-white transition-colors">Recursos</a></li>
