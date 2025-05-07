@@ -350,7 +350,7 @@ export default function LandingPage() {
                   <span className="font-bold">Email:</span> contato@querofretes.com.br
                 </p>
                 <p className="text-lg">
-                  <span className="font-bold">Telefone:</span> (31) 9 7155-9484
+                  <span className="font-bold">Telefone:</span> (31) 97155-9484
                 </p>
               </div>
             </div>
@@ -427,8 +427,18 @@ export default function LandingPage() {
               </div>
               
               <div>
-                <h4 className="font-bold text-lg mb-4">Redes Sociais</h4>
+                <h4 className="font-bold text-lg mb-4">Contato & Redes</h4>
                 <ul className="space-y-2">
+                  <li>
+                    <a 
+                      href="https://wa.me/5531971559484" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-slate-400 hover:text-green-500 transition-colors flex items-center"
+                    >
+                      <FaWhatsapp className="mr-2" /> WhatsApp
+                    </a>
+                  </li>
                   <li><a href="#" className="text-slate-400 hover:text-white transition-colors">Facebook</a></li>
                   <li><a href="#" className="text-slate-400 hover:text-white transition-colors">Instagram</a></li>
                   <li><a href="#" className="text-slate-400 hover:text-white transition-colors">LinkedIn</a></li>
