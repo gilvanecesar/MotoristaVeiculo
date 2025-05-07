@@ -530,10 +530,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (search) {
         const freights = await storage.searchFreights(search);
+        // Ordenar fretes por data de criação (mais recentes primeiro)
+        freights.sort((a, b) => 
+          new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+        );
         return res.json(freights);
       }
       
       const freights = await storage.getFreights();
+      // Ordenar fretes por data de criação (mais recentes primeiro)
+      freights.sort((a, b) => 
+        new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+      );
       res.json(freights);
     } catch (error) {
       console.error("Error fetching freights:", error);
