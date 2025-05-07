@@ -2,7 +2,7 @@ import React from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, Truck, Users, BarChart3, CheckCircle2, Globe, Shield, Clock, CreditCard, Menu } from "lucide-react";
-import { FaWhatsapp } from "react-icons/fa";
+import { FaWhatsapp, FaInstagram, FaYoutube, FaLinkedin } from "react-icons/fa";
 import logoPath from "@assets/QUEROFRETES BOLINHA.png";
 import "./landing.css";
 import { TestimonialSection } from "./TestimonialSection";
@@ -368,6 +368,40 @@ export default function LandingPage() {
                       <span className="font-bold min-w-24 inline-block">Telefone:</span> 
                       <span>(31) 97155-9484</span>
                     </p>
+                    
+                    {/* Redes Sociais */}
+                    <div className="mt-6">
+                      <p className="font-bold text-slate-800 mb-3">Nossas Redes Sociais:</p>
+                      <div className="flex space-x-4">
+                        <a 
+                          href="https://instagram.com/querofretes" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-slate-700 hover:text-pink-600 transition-colors"
+                          title="Instagram"
+                        >
+                          <FaInstagram className="h-8 w-8" />
+                        </a>
+                        <a 
+                          href="https://www.youtube.com/@QueroFretes-YT" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-slate-700 hover:text-red-600 transition-colors"
+                          title="YouTube"
+                        >
+                          <FaYoutube className="h-8 w-8" />
+                        </a>
+                        <a 
+                          href="https://www.linkedin.com/company/quero-fretes" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-slate-700 hover:text-blue-600 transition-colors"
+                          title="LinkedIn"
+                        >
+                          <FaLinkedin className="h-8 w-8" />
+                        </a>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 
@@ -475,9 +509,36 @@ export default function LandingPage() {
                       <FaWhatsapp className="mr-2" /> WhatsApp
                     </a>
                   </li>
-                  <li><a href="#" className="text-slate-400 hover:text-white transition-colors">Facebook</a></li>
-                  <li><a href="#" className="text-slate-400 hover:text-white transition-colors">Instagram</a></li>
-                  <li><a href="#" className="text-slate-400 hover:text-white transition-colors">LinkedIn</a></li>
+                  <li>
+                    <a 
+                      href="https://instagram.com/querofretes" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-slate-400 hover:text-pink-500 transition-colors inline-flex items-center"
+                    >
+                      <FaInstagram className="mr-2" /> Instagram
+                    </a>
+                  </li>
+                  <li>
+                    <a 
+                      href="https://www.youtube.com/@QueroFretes-YT" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-slate-400 hover:text-red-500 transition-colors inline-flex items-center"
+                    >
+                      <FaYoutube className="mr-2" /> YouTube
+                    </a>
+                  </li>
+                  <li>
+                    <a 
+                      href="https://www.linkedin.com/company/quero-fretes" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-slate-400 hover:text-blue-500 transition-colors inline-flex items-center"
+                    >
+                      <FaLinkedin className="mr-2" /> LinkedIn
+                    </a>
+                  </li>
                 </ul>
               </div>
             </div>
