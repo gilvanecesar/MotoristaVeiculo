@@ -39,7 +39,7 @@ import SettingsPage from "@/pages/settings";
 function Router() {
   return (
     <Switch>
-      <Route path="/landing" component={LandingPage} />
+      <Route path="/" component={LandingPage} />
       <Route path="/auth" component={LoginPage} />
       <Route path="/reset-password" component={ResetPasswordPage} />
       <Route path="/payment-success" component={PaymentSuccessPage} />
@@ -65,7 +65,7 @@ function Router() {
       <ProtectedRoute path="/admin/finance/settings" component={FinanceSettings} />
       <ProtectedRoute path="/admin/users" component={AdminUsersPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
-      <ProtectedRoute path="/" component={Home} />
+      <ProtectedRoute path="/home" component={Home} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -73,7 +73,7 @@ function Router() {
 
 function App() {
   const [location] = useLocation();
-  const isLandingPage = location === "/landing";
+  const isLandingPage = location === "/";
 
   return (
     <QueryClientProvider client={queryClient}>
