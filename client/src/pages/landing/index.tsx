@@ -7,6 +7,7 @@ import logoPath from "@assets/QUEROFRETES BOLINHA.png";
 import "./landing.css";
 import { TestimonialSection } from "./TestimonialSection";
 import { StatsSection } from "./StatsSection";
+import { RecentFreightsSection } from "./RecentFreightsSection";
 import DashboardPreview from "@/assets/dashboard-preview";
 
 export default function LandingPage() {
@@ -164,6 +165,9 @@ export default function LandingPage() {
 
       {/* Stats Section */}
       <StatsSection />
+      
+      {/* Recent Freights Section */}
+      <RecentFreightsSection />
 
       {/* Pricing Section */}
       <section className="py-16 md:py-20 bg-slate-50">
