@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useLocation } from "wouter";
 import { Truck, Calendar, MapPin, DollarSign, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
@@ -71,6 +72,7 @@ export const RecentFreightsSection: React.FC = () => {
   const [freightsData, setFreightsData] = useState<RecentFreight[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [_, setLocation] = useLocation();
 
   useEffect(() => {
     const fetchFreights = async () => {
@@ -130,7 +132,11 @@ export const RecentFreightsSection: React.FC = () => {
         </div>
         
         <div className="text-center mt-10">
-          <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-white">
+          <Button 
+            variant="outline" 
+            className="border-primary text-primary hover:bg-primary hover:text-white"
+            onClick={() => setLocation("/auth")}
+          >
             Ver Todos os Fretes
           </Button>
         </div>
