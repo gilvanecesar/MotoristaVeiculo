@@ -277,6 +277,11 @@ export default function FreightsPage() {
     const clientFound = clients.find((client: Client) => client.id === freight.clientId);
     const clientName = clientFound ? clientFound.name : "Cliente não encontrado";
     
+    // Obter a URL base do sistema (domínio atual)
+    const baseUrl = window.location.origin;
+    // URL específica do frete
+    const freightUrl = `${baseUrl}/freights/${freight.id}`;
+    
     return encodeURIComponent(`
 🚛 *FRETE DISPONÍVEL* 🚛
 
@@ -294,7 +299,8 @@ export default function FreightsPage() {
 ℹ️ *Contato:* ${freight.contactName}
 📱 *Telefone:* ${freight.contactPhone}
 
-🔗 Sistema QUERO FRETES
+🔗 *Sistema QUERO FRETES:* ${baseUrl}
+🔗 *Link do frete:* ${freightUrl}
 `);
   };
 
