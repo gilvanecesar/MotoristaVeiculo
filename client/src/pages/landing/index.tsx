@@ -143,7 +143,7 @@ export default function LandingPage() {
             {features.map((feature, index) => (
               <div key={index} className="bg-white p-6 rounded-lg shadow-lg border border-slate-200 hover:border-primary transition-all">
                 <div className="mb-4">{feature.icon}</div>
-                <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
+                <h3 className="text-xl font-bold mb-2 text-slate-900">{feature.title}</h3>
                 <p className="text-slate-600">{feature.description}</p>
               </div>
             ))}
@@ -176,7 +176,7 @@ export default function LandingPage() {
               <div className="p-8">
                 <h3 className="text-xl font-bold mb-4 text-slate-900">Motoristas</h3>
                 <div className="mb-4">
-                  <span className="text-4xl font-bold">Grátis</span>
+                  <span className="text-4xl font-bold text-slate-900">Grátis</span>
                 </div>
                 <p className="text-slate-600 mb-6">
                   Ideal para motoristas autônomos que buscam fretes disponíveis.
