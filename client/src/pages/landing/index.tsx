@@ -8,6 +8,7 @@ import "./landing.css";
 import { TestimonialSection } from "./TestimonialSection";
 import { StatsSection } from "./StatsSection";
 import { RecentFreightsSection } from "./RecentFreightsSection";
+import { DashboardSection } from "./DashboardSection";
 import DashboardPreview from "@/assets/dashboard-preview";
 
 export default function LandingPage() {
@@ -166,8 +167,8 @@ export default function LandingPage() {
       {/* Stats Section */}
       <StatsSection />
       
-      {/* Recent Freights Section */}
-      <RecentFreightsSection />
+      {/* Dashboard Section (no estilo da imagem) */}
+      <DashboardSection />
 
       {/* Pricing Section */}
       <section className="py-16 md:py-20 bg-slate-50">
