@@ -39,7 +39,7 @@ import {
   type ClientWithSubscriptions,
 } from "@shared/schema";
 import { db, pool } from "./db";
-import { and, eq, ilike, or, sql } from "drizzle-orm";
+import { and, eq, ilike, or, sql, desc } from "drizzle-orm";
 import crypto from "crypto";
 import session from "express-session";
 import { Store as SessionStore } from "express-session";
