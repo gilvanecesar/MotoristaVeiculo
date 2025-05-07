@@ -1475,6 +1475,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to update user profile type" });
     }
   });
+  
+  // API para obter estatísticas públicas para exibição na landing page
+  app.get("/api/public/stats", async (req: Request, res: Response) => {
+    try {
+      // Obter dados reais do sistema
+      const allFreights = await storage.getFreights();
+      const allDrivers = await storage.getDrivers();
+      const allUsers = await storage.getUsers();
+      const allClients = await storage.getClients();
+      
+      // Filtrar fretes ativos (não expirados)
+      const now = new Date();
+      const activeFreights = allFreights.filter(freight => {
+        // Se tem data de expiração e não passou, ou não tem data de expiração
+        return !freight.expirationDate || new Date(freight.expirationDate) > now;
+      });
+      
+      // Calcular cidades únicas atendidas (origem + destino)
+      const citiesSet = new Set<string>();
+      allFreights.forEach(freight => {
+        citiesSet.add(freight.origin);
+        citiesSet.add(freight.destination);
+        // Adicionar também cidades dos destinos adicionais
+        freight.destinations?.forEach(dest => {
+          citiesSet.add(dest.destination);
+        });
+      });
+      
+      // Obter fretes recentes (10 mais recentes por data de criação)
+      const recentFreights = [...allFreights]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 3);
+      
+      // Montar objetos com dados para o frontend  
+      const stats = {
+        totalFreights: allFreights.length,
+        activeFreights: activeFreights.length,
+        totalDrivers: allDrivers.length,
+        totalCities: citiesSet.size,
+        // Anos no mercado (3 conforme indicado no mock)
+        yearsActive: 3,
+        totalUsers: allUsers.length,
+        totalClients: allClients.length,
+        recentFreights: recentFreights.map(freight => ({
+          id: freight.id,
+          origin: freight.origin,
+          originState: freight.originState,
+          destination: freight.destination,
+          destinationState: freight.destinationState,
+          value: freight.freightValue,
+          createdAt: freight.createdAt
+        }))
+      };
+      
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching public stats:", error);
+      res.status(500).json({ message: "Failed to fetch public statistics" });
+    }
+  });
 
   const httpServer = createServer(app);
 
