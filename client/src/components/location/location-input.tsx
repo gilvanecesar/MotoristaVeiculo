@@ -5,6 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Check, ChevronsUpDown, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CompleteIBGECity, searchCitiesByName } from "@/lib/utils/ibge-api";
 
 interface LocationInputProps {
   value: string;
@@ -47,19 +48,6 @@ const BRAZILIAN_STATES = [
   { value: "TO", label: "Tocantins" }
 ];
 
-// Interface para os dados da cidade retornados da API
-interface IbgeCity {
-  id: number;
-  nome: string;
-  microrregiao: {
-    mesorregiao: {
-      UF: {
-        sigla: string;
-      }
-    }
-  }
-}
-
 // Interface para sugestões no formato que queremos exibir
 interface CitySuggestion {
   id: number;
@@ -68,6 +56,20 @@ interface CitySuggestion {
   state: string;
   displayText: string;
 }
+
+// Lista de cidades principais por estado para usar como fallback
+const POPULAR_CITIES: Record<string, string[]> = {
+  "SP": ["São Paulo", "Campinas", "Guarulhos", "Santos", "Ribeirão Preto"],
+  "RJ": ["Rio de Janeiro", "Niterói", "São Gonçalo", "Duque de Caxias"],
+  "MG": ["Belo Horizonte", "Contagem", "Juiz de Fora", "Uberlândia", "Betim"],
+  "RS": ["Porto Alegre", "Caxias do Sul", "Canoas", "Pelotas"],
+  "PR": ["Curitiba", "Londrina", "Maringá", "Ponta Grossa"],
+  "BA": ["Salvador", "Feira de Santana", "Vitória da Conquista"],
+  "GO": ["Goiânia", "Anápolis", "Aparecida de Goiânia"],
+  "SC": ["Florianópolis", "Joinville", "Blumenau"],
+  "PE": ["Recife", "Jaboatão dos Guararapes", "Olinda"],
+  "CE": ["Fortaleza", "Caucaia", "Juazeiro do Norte"]
+};
 
 const LocationInput: React.FC<LocationInputProps> = ({
   value,
@@ -110,7 +112,7 @@ const LocationInput: React.FC<LocationInputProps> = ({
     }
   };
 
-  // Buscar cidades da API do IBGE
+  // Buscar cidades usando a API do IBGE
   const searchCities = async (query: string) => {
     if (query.length < 3) return;
     setLoading(true);
@@ -119,27 +121,85 @@ const LocationInput: React.FC<LocationInputProps> = ({
       // Remover " - UF" para buscar apenas pelo nome da cidade
       const searchQuery = query.includes(" - ") ? query.split(" - ")[0] : query;
       
-      const response = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/municipios?nome=${searchQuery}`);
+      console.log("Buscando cidades com a query:", searchQuery);
       
-      if (response.ok) {
-        const cities: IbgeCity[] = await response.json();
-        
+      const cities = await searchCitiesByName(searchQuery);
+      console.log("Cidades encontradas:", cities);
+      
+      if (cities.length > 0) {
         // Formatar os resultados para exibição
         const suggestions: CitySuggestion[] = cities.map(city => {
-          const state = city.microrregiao.mesorregiao.UF.sigla;
-          return {
-            id: city.id,
-            name: city.nome,
-            fullName: `${city.nome} - ${state}`,
-            state,
-            displayText: `${city.nome} - ${state}`
-          };
+          try {
+            const state = city.microrregiao?.mesorregiao?.UF?.sigla || "N/A";
+            return {
+              id: city.id,
+              name: city.nome,
+              fullName: `${city.nome} - ${state}`,
+              state,
+              displayText: `${city.nome} - ${state}`
+            };
+          } catch (err) {
+            console.error("Erro ao processar cidade:", city, err);
+            return {
+              id: city.id || 0,
+              name: city.nome || "Desconhecido",
+              fullName: `${city.nome || "Desconhecido"} - N/A`,
+              state: "N/A",
+              displayText: `${city.nome || "Desconhecido"} - N/A`
+            };
+          }
         });
         
+        console.log("Sugestões formatadas:", suggestions);
         setCitySuggestions(suggestions);
+      } else {
+        // Se a API não retornar resultados, use o fallback
+        console.log("Usando sugestões populares como fallback");
+        
+        // Verificar se o termo de busca tem alguma correspondência com estados
+        const stateMatch = BRAZILIAN_STATES.find(
+          state => state.value.toLowerCase() === searchQuery.toLowerCase() || 
+                  state.label.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        
+        if (stateMatch) {
+          // Se corresponder a um estado, mostrar cidades populares daquele estado
+          const popularCities = POPULAR_CITIES[stateMatch.value] || [];
+          const fallbackSuggestions: CitySuggestion[] = popularCities.map((cityName, index) => ({
+            id: index,
+            name: cityName,
+            fullName: `${cityName} - ${stateMatch.value}`,
+            state: stateMatch.value,
+            displayText: `${cityName} - ${stateMatch.value}`
+          }));
+          
+          setCitySuggestions(fallbackSuggestions);
+        } else {
+          // Se não corresponder a um estado, mostrar sugestão com o texto digitado
+          // para cada estado brasileiro
+          const fallbackSuggestions: CitySuggestion[] = BRAZILIAN_STATES.slice(0, 5).map(state => ({
+            id: 0,
+            name: searchQuery,
+            fullName: `${searchQuery} - ${state.value}`,
+            state: state.value,
+            displayText: `${searchQuery} - ${state.value}`
+          }));
+          
+          setCitySuggestions(fallbackSuggestions);
+        }
       }
     } catch (error) {
       console.error("Erro ao buscar cidades:", error);
+      // Usar fallback em caso de erro
+      const fallbackSuggestions: CitySuggestion[] = BRAZILIAN_STATES.slice(0, 5).map(state => ({
+        id: 0,
+        name: query,
+        fullName: `${query} - ${state.value}`,
+        state: state.value,
+        displayText: `${query} - ${state.value}`
+      }));
+      
+      setCitySuggestions(fallbackSuggestions);
     } finally {
       setLoading(false);
     }
