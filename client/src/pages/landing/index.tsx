@@ -132,7 +132,7 @@ export default function LandingPage() {
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold mb-4">Recursos Avançados</h2>
+            <h2 className="text-3xl font-bold mb-4 text-slate-900">Recursos Avançados</h2>
             <p className="text-lg text-slate-600 max-w-2xl mx-auto">
               O QUERO FRETES oferece todas as ferramentas necessárias para otimizar 
               suas operações de transporte e logística.
@@ -164,7 +164,7 @@ export default function LandingPage() {
       <section className="py-20 bg-slate-50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold mb-4">Planos Simples e Transparentes</h2>
+            <h2 className="text-3xl font-bold mb-4 text-slate-900">Planos Simples e Transparentes</h2>
             <p className="text-lg text-slate-600 max-w-2xl mx-auto">
               Escolha o plano que melhor se adapta às necessidades da sua empresa.
             </p>
@@ -174,7 +174,7 @@ export default function LandingPage() {
             {/* Free Plan */}
             <div className="bg-white rounded-lg shadow-lg border border-slate-200 flex-1 overflow-hidden">
               <div className="p-8">
-                <h3 className="text-xl font-bold mb-4">Motoristas</h3>
+                <h3 className="text-xl font-bold mb-4 text-slate-900">Motoristas</h3>
                 <div className="mb-4">
                   <span className="text-4xl font-bold">Grátis</span>
                 </div>
@@ -207,7 +207,7 @@ export default function LandingPage() {
                 MAIS POPULAR
               </div>
               <div className="p-8">
-                <h3 className="text-xl font-bold mb-4">Mensal</h3>
+                <h3 className="text-xl font-bold mb-4 text-slate-900">Mensal</h3>
                 <div className="mb-4">
                   <span className="text-4xl font-bold">R$ 99,90</span>
                   <span className="text-slate-600">/mês</span>
@@ -242,7 +242,7 @@ export default function LandingPage() {
             {/* Annual Plan */}
             <div className="bg-white rounded-lg shadow-lg border border-slate-200 flex-1 overflow-hidden">
               <div className="p-8">
-                <h3 className="text-xl font-bold mb-4">Anual</h3>
+                <h3 className="text-xl font-bold mb-4 text-slate-900">Anual</h3>
                 <div className="mb-4">
                   <span className="text-4xl font-bold">R$ 960,00</span>
                   <span className="text-slate-600">/ano</span>
@@ -281,7 +281,7 @@ export default function LandingPage() {
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold mb-4">Por que escolher o QUERO FRETES?</h2>
+            <h2 className="text-3xl font-bold mb-4 text-slate-900">Por que escolher o QUERO FRETES?</h2>
             <p className="text-lg text-slate-600 max-w-2xl mx-auto">
               Conheça os benefícios que nossa plataforma pode trazer para o seu negócio.
             </p>
@@ -326,7 +326,7 @@ export default function LandingPage() {
         <div className="container mx-auto px-4">
           <div className="flex flex-col lg:flex-row gap-12">
             <div className="lg:w-1/2">
-              <h2 className="text-3xl font-bold mb-6">Entre em contato</h2>
+              <h2 className="text-3xl font-bold mb-6 text-slate-900">Entre em contato</h2>
               <p className="text-lg text-slate-600 mb-8">
                 Tem dúvidas sobre o QUERO FRETES? Nossa equipe está pronta para ajudar!
               </p>
@@ -357,7 +357,7 @@ export default function LandingPage() {
             
             <div className="lg:w-1/2">
               <div className="bg-white p-8 rounded-lg shadow-lg border border-slate-200">
-                <h3 className="text-xl font-bold mb-6">Envie uma mensagem</h3>
+                <h3 className="text-xl font-bold mb-6 text-slate-900">Envie uma mensagem</h3>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium mb-1">Nome</label>
