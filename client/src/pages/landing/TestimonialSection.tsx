@@ -22,8 +22,8 @@ const Testimonial: React.FC<TestimonialProps> = ({ quote, author, role, company,
       </div>
       <p className="text-slate-700 mb-6 italic">{quote}</p>
       <div>
-        <p className="font-bold">{author}</p>
-        <p className="text-slate-600 text-sm">
+        <p className="font-bold text-slate-900">{author}</p>
+        <p className="text-slate-700 text-sm">
           {role}, {company}
         </p>
       </div>
@@ -63,7 +63,7 @@ export const TestimonialSection: React.FC = () => {
     <section className="py-20 bg-slate-50">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
-          <h2 className="text-3xl font-bold mb-4">O que nossos clientes dizem</h2>
+          <h2 className="text-3xl font-bold mb-4 text-slate-900">O que nossos clientes dizem</h2>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto">
             Veja como o QUERO FRETES tem ajudado empresas e profissionais do setor de transporte a otimizar suas operações.
           </p>

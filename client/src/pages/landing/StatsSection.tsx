@@ -15,8 +15,8 @@ const StatItem: React.FC<StatItemProps> = ({ icon, value, label }) => {
           {icon}
         </div>
       </div>
-      <div className="text-4xl font-bold mb-2">{value}</div>
-      <div className="text-slate-500">{label}</div>
+      <div className="text-4xl font-bold mb-2 text-slate-900">{value}</div>
+      <div className="text-slate-700">{label}</div>
     </div>
   );
 };
