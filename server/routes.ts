@@ -1369,9 +1369,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (!clientSubscriptions || clientSubscriptions.length === 0) {
             console.log("Criando assinatura manual para 4G Logística");
             
+            // Encontrar um usuário associado a este cliente ou o administrador
+            const users = await storage.getUsers();
+            
+            // Primeiro, tenta encontrar um usuário associado a este cliente
+            let userId = null;
+            const associatedUser = users.find(u => u.clientId === client4G.id);
+            
+            if (associatedUser) {
+              userId = associatedUser.id;
+            } else {
+              // Se não encontrar um usuário associado, usa o admin
+              const adminUser = users.find(u => u.profileType === 'admin');
+              userId = adminUser ? adminUser.id : 2; // ID 2 é comum ser o admin
+            }
+            
+            if (!userId) {
+              console.log("Erro: Não foi possível encontrar um usuário válido para associar à assinatura");
+              return res.status(500).json({ error: 'Não foi possível criar a assinatura manual' });
+            }
+            
+            console.log(`Usando usuário ID ${userId} para criar assinatura manual`);
+            
             // Criar assinatura no banco local
             await storage.createSubscription({
-              userId: 0,
+              userId,
               clientId: client4G.id,
               planType: 'monthly',
               status: 'active',
@@ -1389,7 +1411,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             // Criar fatura correspondente
             await storage.createInvoice({
-              userId: 0,
+              userId,
               clientId: client4G.id,
               status: 'paid',
               amount: '99.90',
@@ -1509,13 +1531,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }
               
               if (!userId && !clientId) {
-                console.log(`Não foi possível associar a assinatura ${subscription.id} a um usuário ou cliente`);
-                continue;
+                console.log(`Não foi possível associar a assinatura ${subscription.id} a um usuário ou cliente existente, buscando admin`);
+                
+                // Buscar usuário administrador como fallback
+                const adminUsers = await storage.getUsers();
+                const adminUser = adminUsers.find(u => u.profileType === 'admin');
+                
+                if (adminUser) {
+                  userId = adminUser.id;
+                  console.log(`Associando assinatura ao admin ID ${userId}`);
+                } else {
+                  console.log(`Não foi possível encontrar um usuário admin para associar à assinatura`);
+                  continue;
+                }
               }
               
               // Criar registro da assinatura
               const newSubscription = await storage.createSubscription({
-                userId: userId || 0,
+                userId: userId, // userId já foi verificado
                 clientId,
                 planType,
                 status: subscription.status,
@@ -1535,7 +1568,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               // Criar registro de fatura
               await storage.createInvoice({
                 subscriptionId: newSubscription.id,
-                userId: userId || 0,
+                userId, // userId já foi verificado acima
                 clientId,
                 status: 'paid',
                 amount: amount.toString(),

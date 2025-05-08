@@ -238,9 +238,25 @@ export class MemStorage implements IStorage {
   }
   
   async getClientByStripeCustomerId(stripeCustomerId: string): Promise<Client | undefined> {
-    return Array.from(this.clientsData.values()).find(
-      (client) => client.stripeCustomerId === stripeCustomerId
+    // Como o campo stripeCustomerId não existe na tabela de clientes, vamos buscar
+    // primeiro o usuário que tem esse stripeCustomerId
+    const user = await this.getUserByStripeCustomerId(stripeCustomerId);
+    
+    // Se encontrarmos o usuário e ele tiver um clientId, retornamos o cliente correspondente
+    if (user && user.clientId) {
+      return this.getClient(user.clientId);
+    }
+    
+    // Se não encontrarmos o usuário, tentamos procurar nas assinaturas
+    const subscription = Array.from(this.subscriptionsData.values()).find(
+      sub => sub.stripeCustomerId === stripeCustomerId
     );
+    
+    if (subscription && subscription.clientId) {
+      return this.getClient(subscription.clientId);
+    }
+    
+    return undefined;
   }
   
   async searchClientsByEmail(email: string): Promise<Client[]> {
