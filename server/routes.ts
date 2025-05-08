@@ -888,6 +888,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/subscriptions", isAdmin, async (req: Request, res: Response) => {
     try {
       const subscriptions = await storage.getSubscriptions();
+      console.log("Assinaturas brutas:", JSON.stringify(subscriptions, null, 2));
       
       // Enriquecer as assinaturas com dados do cliente
       const enrichedSubscriptions = [];
@@ -903,6 +904,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (client) {
               clientName = client.name;
               email = client.email;
+              console.log(`Encontrou cliente: ${client.name} para assinatura ${subscription.id}`);
             }
           } catch (err) {
             console.error(`Erro ao buscar cliente ID ${subscription.clientId}:`, err);
@@ -916,6 +918,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (user) {
               clientName = user.name || "Usuário sem nome";
               email = user.email || "";
+              console.log(`Encontrou usuário: ${user.name} para assinatura ${subscription.id}`);
             }
           } catch (err) {
             console.error(`Erro ao buscar usuário ID ${subscription.userId}:`, err);
@@ -930,7 +933,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
           amount = 99.9; // R$ 99,90
         }
         
-        enrichedSubscriptions.push({
+        // Garantir que as datas estejam no formato ISO
+        let startDate = subscription.currentPeriodStart;
+        let endDate = subscription.currentPeriodEnd;
+        
+        if (startDate && typeof startDate === 'object' && startDate.toISOString) {
+          startDate = startDate.toISOString();
+        } else if (!startDate) {
+          startDate = new Date().toISOString();
+        }
+        
+        if (endDate && typeof endDate === 'object' && endDate.toISOString) {
+          endDate = endDate.toISOString();
+        } else if (!endDate) {
+          // Se não houver data de término, criar uma baseada no tipo de plano
+          const start = new Date(startDate);
+          const end = new Date(start);
+          
+          if (subscription.planType === 'annual') {
+            end.setFullYear(end.getFullYear() + 1);
+          } else {
+            end.setMonth(end.getMonth() + 1);
+          }
+          
+          endDate = end.toISOString();
+        }
+        
+        const enrichedSubscription = {
           id: subscription.id,
           clientId: subscription.clientId,
           clientName: clientName || "Cliente não encontrado",
@@ -938,11 +967,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           plan: subscription.planType || "monthly", 
           status: subscription.status || "active",
           amount,
-          startDate: subscription.currentPeriodStart,
-          endDate: subscription.currentPeriodEnd
-        });
+          startDate,
+          endDate
+        };
+        
+        console.log(`Assinatura enriquecida: ${JSON.stringify(enrichedSubscription, null, 2)}`);
+        enrichedSubscriptions.push(enrichedSubscription);
       }
       
+      console.log("Assinaturas enriquecidas:", JSON.stringify(enrichedSubscriptions, null, 2));
       res.json(enrichedSubscriptions);
     } catch (error) {
       console.error("Error fetching subscriptions:", error);
@@ -1078,6 +1111,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/invoices", isAdmin, async (req: Request, res: Response) => {
     try {
       const invoices = await storage.getInvoices();
+      console.log("Faturas brutas:", JSON.stringify(invoices, null, 2));
       
       // Enriquecer as faturas com dados do cliente
       const enrichedInvoices = [];
@@ -1093,6 +1127,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (client) {
               clientName = client.name;
               email = client.email;
+              console.log(`Encontrou cliente: ${client.name} para fatura ${invoice.id}`);
             }
           } catch (err) {
             console.error(`Erro ao buscar cliente ID ${invoice.clientId}:`, err);
@@ -1106,22 +1141,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (user) {
               clientName = user.name || "Usuário sem nome";
               email = user.email || "";
+              console.log(`Encontrou usuário: ${user.name} para fatura ${invoice.id}`);
             }
           } catch (err) {
             console.error(`Erro ao buscar usuário ID ${invoice.userId}:`, err);
           }
         }
         
-        enrichedInvoices.push({
+        // Garantir que a data está em formato ISO
+        let invoiceDate = invoice.invoiceDate || invoice.createdAt;
+        
+        if (invoiceDate && typeof invoiceDate === 'object' && invoiceDate.toISOString) {
+          invoiceDate = invoiceDate.toISOString();
+        } else if (!invoiceDate) {
+          invoiceDate = new Date().toISOString();
+        }
+        
+        const enrichedInvoice = {
           id: invoice.id,
           clientName: clientName || "Cliente não encontrado",
           email: email || "Email não disponível",
           amount: Number(invoice.amount) || 0,
           status: invoice.status || "pending",
-          date: invoice.invoiceDate || invoice.createdAt
-        });
+          date: invoiceDate
+        };
+        
+        console.log(`Fatura enriquecida: ${JSON.stringify(enrichedInvoice, null, 2)}`);
+        enrichedInvoices.push(enrichedInvoice);
       }
       
+      console.log("Faturas enriquecidas:", JSON.stringify(enrichedInvoices, null, 2));
       res.json(enrichedInvoices);
     } catch (error) {
       console.error("Error fetching invoices:", error);
