@@ -1442,7 +1442,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         console.log(`Encontradas ${activeSubscriptions.length} assinaturas ativas no Stripe`);
         
-        // 2. Calcular receita apenas com assinaturas ativas (não testes ou canceladas)
+        // 2. Calcular receita com todas as assinaturas ativas (Stripe e assinaturas manuais)
         let totalRevenue = 0;
         const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
         const monthlyData = monthNames.map(month => ({ month, revenue: 0 }));
@@ -1454,8 +1454,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let pastDueCount = 0;
         let monthlyRevenue = 0;
         
+        // Primeiro, obter assinaturas do banco de dados local
+        console.log("Verificando assinaturas no banco de dados local...");
+        const localSubscriptions = await storage.getSubscriptions();
+        const activeLocalSubs = localSubscriptions.filter(sub => sub.status === 'active');
+        
+        console.log(`Encontradas ${activeLocalSubs.length} assinaturas ativas no banco local`);
+        
+        // Adicionar assinaturas manuais ao cálculo
+        for (const localSub of activeLocalSubs) {
+          // Incrementar contador de assinaturas ativas
+          activeCount++;
+          
+          // Determinar o valor da assinatura
+          let amount = 0;
+          
+          if (localSub.planType === 'annual') {
+            amount = 960; // valor anual (R$ 960,00)
+          } else {
+            amount = 99.9; // valor mensal (R$ 99,90)
+          }
+          
+          // Adicionar ao total
+          totalRevenue += amount;
+          
+          // Distribuir o valor para o gráfico mensal (mês atual)
+          const currentMonth = new Date().getMonth();
+          monthlyData[currentMonth].revenue += amount;
+          
+          console.log(`Assinatura local: ${localSub.id} - Plano: ${localSub.planType} - Valor: ${amount} - Total: ${totalRevenue}`);
+        }
+        
+        // Processar assinaturas do Stripe
         for (const subscription of activeSubscriptions) {
-          // Incrementar contador
+          // Verificar se esta assinatura do Stripe já foi contabilizada localmente
+          const alreadyCounted = activeLocalSubs.some(
+            sub => sub.stripeSubscriptionId === subscription.id
+          );
+          
+          if (alreadyCounted) {
+            console.log(`Assinatura Stripe ${subscription.id} já contabilizada localmente, pulando`);
+            continue;
+          }
+          
+          // Se não foi contabilizada, incrementar contador
           activeCount++;
           
           // Determinar o valor da assinatura

@@ -582,27 +582,19 @@ export class MemStorage implements IStorage {
       const subscriptionsDb = Array.from(this.subscriptionsData.values());
       const invoicesDb = Array.from(this.invoicesData.values());
       
+      // Default monthly data array
+      const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+      const monthlyData = monthNames.map(month => ({ month, revenue: 0 }));
+      
       if (!subscriptionsDb || subscriptionsDb.length === 0) {
+        console.log("Não há assinaturas no banco de dados para calcular estatísticas financeiras");
         // Se não houver assinaturas na memória, retornar zeros
         return {
           totalRevenue: 0,
           monthlyRevenue: 0,
           activeSubscriptions: 0,
           churnRate: 0,
-          monthlyData: [
-            { month: "Jan", revenue: 0 },
-            { month: "Fev", revenue: 0 },
-            { month: "Mar", revenue: 0 },
-            { month: "Abr", revenue: 0 },
-            { month: "Mai", revenue: 0 },
-            { month: "Jun", revenue: 0 },
-            { month: "Jul", revenue: 0 },
-            { month: "Ago", revenue: 0 },
-            { month: "Set", revenue: 0 },
-            { month: "Out", revenue: 0 },
-            { month: "Nov", revenue: 0 },
-            { month: "Dez", revenue: 0 },
-          ],
+          monthlyData,
           subscriptionsByStatus: [
             { status: "Ativas", count: 0 },
             { status: "Teste", count: 0 },
@@ -610,6 +602,59 @@ export class MemStorage implements IStorage {
             { status: "Atrasadas", count: 0 }
           ]
         };
+      }
+      
+      console.log(`Calculando estatísticas com ${subscriptionsDb.length} assinaturas no banco de dados`);
+      
+      // Filtrar assinaturas por status
+      const activeSubscriptions = subscriptionsDb.filter(sub => sub.status === 'active');
+      const trialSubscriptions = subscriptionsDb.filter(sub => sub.status === 'trialing');
+      const canceledSubscriptions = subscriptionsDb.filter(sub => sub.status === 'canceled');
+      const pastDueSubscriptions = subscriptionsDb.filter(sub => sub.status === 'past_due');
+      
+      // Calcular receita total apenas das assinaturas ativas
+      let totalRevenue = 0;
+      
+      for (const subscription of activeSubscriptions) {
+        // Determinar o valor da assinatura
+        let amount = 0;
+        
+        if (subscription.planType === 'annual') {
+          amount = 960; // valor anual (R$ 960,00)
+        } else {
+          amount = 99.9; // valor mensal (R$ 99,90)
+        }
+        
+        // Adicionar ao total
+        totalRevenue += amount;
+        
+        // Distribuir o valor para o gráfico mensal (mês atual)
+        const currentMonth = new Date().getMonth();
+        monthlyData[currentMonth].revenue += amount;
+        
+        console.log(`Contabilizando assinatura: ${subscription.id} - Valor: ${amount} - Total: ${totalRevenue}`);
+      }
+      
+      // Calcular taxa de churn
+      const totalSubscriptions = activeSubscriptions.length + canceledSubscriptions.length;
+      const churnRate = totalSubscriptions > 0 ? (canceledSubscriptions.length / totalSubscriptions) * 100 : 0;
+      
+      // Calcular receita mensal (dividindo por 12 meses)
+      const monthlyRevenue = totalRevenue / 12;
+      
+      return {
+        totalRevenue: parseFloat(totalRevenue.toFixed(2)),
+        monthlyRevenue: parseFloat(monthlyRevenue.toFixed(2)),
+        activeSubscriptions: activeSubscriptions.length,
+        churnRate: parseFloat(churnRate.toFixed(1)),
+        monthlyData,
+        subscriptionsByStatus: [
+          { status: "Ativas", count: activeSubscriptions.length },
+          { status: "Teste", count: trialSubscriptions.length },
+          { status: "Canceladas", count: canceledSubscriptions.length },
+          { status: "Atrasadas", count: pastDueSubscriptions.length }
+        ]
+      };
       }
       
       // Calcular estatísticas com base em dados em memória
