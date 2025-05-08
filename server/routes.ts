@@ -1324,7 +1324,131 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/finance/stats", isAdmin, async (req: Request, res: Response) => {
     try {
-      // Executar estatísticas para o dashboard financeiro
+      // Verificar se temos API key do Stripe
+      if (!process.env.STRIPE_SECRET_KEY) {
+        console.warn("Missing Stripe API Key, using local stats only");
+        const stats = await storage.getFinanceStats();
+        return res.json(stats);
+      }
+
+      // Inicializar Stripe para buscar dados atualizados
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+        apiVersion: "2023-10-16",
+      });
+      
+      // Buscar todos os usuários para verificar informações Stripe
+      const allUsers = await storage.getUsers();
+      let stripeCustomers = [];
+      let stripeSubscriptions = [];
+      
+      // Buscar todos os cliente com IDs no Stripe
+      const usersWithStripeIds = allUsers.filter(user => user.stripeCustomerId);
+      
+      if (usersWithStripeIds.length > 0) {
+        console.log(`Encontrados ${usersWithStripeIds.length} usuários com IDs Stripe`);
+        
+        // Buscar dados Stripe de cada usuário
+        for (const user of usersWithStripeIds) {
+          try {
+            if (user.stripeCustomerId) {
+              const customer = await stripe.customers.retrieve(user.stripeCustomerId, {
+                expand: ['subscriptions']
+              });
+              
+              // Verificar se o customer existe e não está marcado como excluído
+              if (customer && !('deleted' in customer)) {
+                stripeCustomers.push(customer);
+                
+                // Verificar assinaturas ativas
+                if ('subscriptions' in customer && customer.subscriptions?.data?.length > 0) {
+                  // Encontrou assinaturas ativas no Stripe
+                  for (const subscription of customer.subscriptions.data) {
+                    stripeSubscriptions.push(subscription);
+                    
+                    // Verificar se esta assinatura já está registrada no banco local
+                    const existingSubscription = await storage.getSubscriptionByStripeId(subscription.id);
+                    
+                    if (!existingSubscription) {
+                      // Criar registro local da assinatura
+                      console.log(`Registrando assinatura Stripe ${subscription.id} para o usuário ${user.email}`);
+                      
+                      // Determinar o tipo de plano com base no preço ou produto
+                      let planType = 'monthly'; // Padrão
+                      if (subscription.items?.data?.[0]?.price) {
+                        const priceId = subscription.items.data[0].price.id;
+                        if (priceId.includes('annual') || subscription.items.data[0].price.recurring?.interval === 'year') {
+                          planType = 'annual';
+                        }
+                      }
+                      
+                      // Buscar informações do cliente
+                      let clientId = null;
+                      if (user.clientId) {
+                        clientId = user.clientId;
+                      } else {
+                        // Tentar buscar cliente pelo nome/email
+                        const clients = await storage.searchClientsByEmail(user.email);
+                        if (clients.length > 0) {
+                          clientId = clients[0].id;
+                        }
+                      }
+                      
+                      // Criar registro da assinatura
+                      const newSubscription = await storage.createSubscription({
+                        userId: user.id,
+                        clientId,
+                        planType,
+                        status: subscription.status,
+                        stripeSubscriptionId: subscription.id,
+                        stripeCustomerId: user.stripeCustomerId,
+                        stripePriceId: subscription.items?.data?.[0]?.price?.id || null,
+                        currentPeriodStart: new Date(subscription.current_period_start * 1000),
+                        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+                        canceledAt: subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : null,
+                        metadata: JSON.stringify({
+                          imported: true,
+                          importDate: new Date().toISOString()
+                        })
+                      });
+                      
+                      // Atualizar usuário com informações da assinatura
+                      await storage.updateUser(user.id, {
+                        subscriptionActive: subscription.status === 'active' || subscription.status === 'trialing',
+                        subscriptionType: planType,
+                        subscriptionExpiresAt: new Date(subscription.current_period_end * 1000)
+                      });
+                      
+                      // Criar registro de fatura
+                      let amount = planType === 'annual' ? 960 : 99.9;
+                      await storage.createInvoice({
+                        subscriptionId: newSubscription.id,
+                        userId: user.id,
+                        clientId,
+                        status: 'paid',
+                        amount: amount.toString(),
+                        currency: 'brl',
+                        invoiceDate: new Date(subscription.current_period_start * 1000),
+                        dueDate: new Date(subscription.current_period_start * 1000),
+                        paidAt: new Date(subscription.current_period_start * 1000),
+                        description: `Assinatura ${planType === 'annual' ? 'anual' : 'mensal'} - Importada`,
+                        metadata: JSON.stringify({
+                          imported: true,
+                          importDate: new Date().toISOString(),
+                          stripeSubscriptionId: subscription.id
+                        })
+                      });
+                    }
+                  }
+                }
+              }
+            }
+          } catch (error) {
+            console.error(`Erro ao buscar dados do Stripe para o usuário ${user.email}:`, error);
+          }
+        }
+      }
+      
+      // Buscar estatísticas atualizadas (agora incluindo os dados importados do Stripe)
       const stats = await storage.getFinanceStats();
       res.json(stats);
     } catch (error) {
