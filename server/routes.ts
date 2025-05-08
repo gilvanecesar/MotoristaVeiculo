@@ -1350,7 +1350,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Buscar cliente 4G Logística no banco de dados
         const allClients = await storage.getClients();
-        const client4G = allClients.find(c => c.name && c.name.includes("4G Logística"));
+        console.log("Todos os clientes:", allClients.map(c => c.name));
+        
+        // O nome real pode estar como "4G LOGISTICA" com caracteres maiúsculos e sem acento
+        const client4G = allClients.find(c => 
+          c.name && 
+          (c.name.toUpperCase().includes("4G LOGISTICA") || 
+           c.name.includes("4G Logística") ||
+           c.name.includes("4G LOGÍSTICA"))
+        );
         
         if (client4G) {
           console.log("Cliente 4G Logística encontrado, ID:", client4G.id);
