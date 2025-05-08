@@ -888,7 +888,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/subscriptions", isAdmin, async (req: Request, res: Response) => {
     try {
       const subscriptions = await storage.getSubscriptions();
-      res.json(subscriptions);
+      
+      // Enriquecer as assinaturas com dados do cliente
+      const enrichedSubscriptions = [];
+      
+      for (const subscription of subscriptions) {
+        let clientName = "";
+        let email = "";
+        
+        // Buscar informações do cliente
+        if (subscription.clientId) {
+          try {
+            const client = await storage.getClient(subscription.clientId);
+            if (client) {
+              clientName = client.name;
+              email = client.email;
+            }
+          } catch (err) {
+            console.error(`Erro ao buscar cliente ID ${subscription.clientId}:`, err);
+          }
+        }
+        
+        // Se não encontrou informações do cliente, buscar do usuário
+        if (!clientName && subscription.userId) {
+          try {
+            const user = await storage.getUserById(subscription.userId);
+            if (user) {
+              clientName = user.name || "Usuário sem nome";
+              email = user.email || "";
+            }
+          } catch (err) {
+            console.error(`Erro ao buscar usuário ID ${subscription.userId}:`, err);
+          }
+        }
+        
+        // Calcular o valor da assinatura
+        let amount = 0;
+        if (subscription.planType === 'annual') {
+          amount = 960; // R$ 960,00
+        } else {
+          amount = 99.9; // R$ 99,90
+        }
+        
+        enrichedSubscriptions.push({
+          id: subscription.id,
+          clientId: subscription.clientId,
+          clientName: clientName || "Cliente não encontrado",
+          email: email || "Email não disponível",
+          plan: subscription.planType || "monthly", 
+          status: subscription.status || "active",
+          amount,
+          startDate: subscription.currentPeriodStart,
+          endDate: subscription.currentPeriodEnd
+        });
+      }
+      
+      res.json(enrichedSubscriptions);
     } catch (error) {
       console.error("Error fetching subscriptions:", error);
       res.status(500).json({ message: "Failed to fetch subscriptions" });
@@ -1023,7 +1078,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/invoices", isAdmin, async (req: Request, res: Response) => {
     try {
       const invoices = await storage.getInvoices();
-      res.json(invoices);
+      
+      // Enriquecer as faturas com dados do cliente
+      const enrichedInvoices = [];
+      
+      for (const invoice of invoices) {
+        let clientName = "";
+        let email = "";
+        
+        // Buscar informações do cliente
+        if (invoice.clientId) {
+          try {
+            const client = await storage.getClient(invoice.clientId);
+            if (client) {
+              clientName = client.name;
+              email = client.email;
+            }
+          } catch (err) {
+            console.error(`Erro ao buscar cliente ID ${invoice.clientId}:`, err);
+          }
+        }
+        
+        // Se não encontrou informações do cliente, buscar do usuário
+        if (!clientName && invoice.userId) {
+          try {
+            const user = await storage.getUserById(invoice.userId);
+            if (user) {
+              clientName = user.name || "Usuário sem nome";
+              email = user.email || "";
+            }
+          } catch (err) {
+            console.error(`Erro ao buscar usuário ID ${invoice.userId}:`, err);
+          }
+        }
+        
+        enrichedInvoices.push({
+          id: invoice.id,
+          clientName: clientName || "Cliente não encontrado",
+          email: email || "Email não disponível",
+          amount: Number(invoice.amount) || 0,
+          status: invoice.status || "pending",
+          date: invoice.invoiceDate || invoice.createdAt
+        });
+      }
+      
+      res.json(enrichedInvoices);
     } catch (error) {
       console.error("Error fetching invoices:", error);
       res.status(500).json({ message: "Failed to fetch invoices" });
