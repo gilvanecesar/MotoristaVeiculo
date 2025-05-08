@@ -54,6 +54,9 @@ export interface IStorage {
   getUsers(): Promise<User[]>;
   getUserById(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByStripeCustomerId(stripeCustomerId: string): Promise<User | undefined>;
+  getClientByStripeCustomerId(stripeCustomerId: string): Promise<Client | undefined>;
+  searchClientsByEmail(email: string): Promise<Client[]>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
   verifyUser(id: number): Promise<User | undefined>;

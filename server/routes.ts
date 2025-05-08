@@ -1336,121 +1336,222 @@ export async function registerRoutes(app: Express): Promise<Server> {
         apiVersion: "2023-10-16",
       });
       
-      // Buscar todos os usuários para verificar informações Stripe
-      const allUsers = await storage.getUsers();
-      let stripeCustomers = [];
-      let stripeSubscriptions = [];
-      
-      // Buscar todos os cliente com IDs no Stripe
-      const usersWithStripeIds = allUsers.filter(user => user.stripeCustomerId);
-      
-      if (usersWithStripeIds.length > 0) {
-        console.log(`Encontrados ${usersWithStripeIds.length} usuários com IDs Stripe`);
+      // Obter dados diretamente do Stripe
+      try {
+        // Buscar todas as assinaturas ativas no Stripe
+        const stripeSubscriptions = await stripe.subscriptions.list({
+          status: 'active',
+          limit: 100,
+          expand: ['data.customer', 'data.items.data.price']
+        });
         
-        // Buscar dados Stripe de cada usuário
-        for (const user of usersWithStripeIds) {
-          try {
-            if (user.stripeCustomerId) {
-              const customer = await stripe.customers.retrieve(user.stripeCustomerId, {
-                expand: ['subscriptions']
-              });
+        console.log(`Encontradas ${stripeSubscriptions.data.length} assinaturas ativas no Stripe`);
+        
+        // Calcular valores reais a partir dos dados do Stripe
+        let totalRevenue = 0;
+        let activeSubscriptions = 0;
+        let monthlyRevenue = 0;
+        
+        // Dados para o gráfico mensal
+        const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+        const monthlyData = monthNames.map(month => ({ month, revenue: 0 }));
+        
+        // Contadores por status
+        let activeCount = 0;
+        let trialCount = 0;
+        let canceledCount = 0;
+        let pastDueCount = 0;
+        
+        // Importar os dados de assinaturas reais do Stripe
+        for (const subscription of stripeSubscriptions.data) {
+          // Registrar assinatura no banco local se não existir
+          const existingSubscription = await storage.getSubscriptionByStripeId(subscription.id);
+          
+          // Incrementar contadores
+          activeCount++;
+          
+          // Adicionar receita baseada no plano de assinatura
+          let amount = 0;
+          let planType = 'monthly';
+          
+          if (subscription.items.data && subscription.items.data.length > 0) {
+            const price = subscription.items.data[0].price;
+            if (price) {
+              if (price.recurring) {
+                if (price.recurring.interval === 'year') {
+                  planType = 'annual';
+                  amount = 960; // Preço anual
+                } else {
+                  amount = 99.9; // Preço mensal
+                }
+              }
               
-              // Verificar se o customer existe e não está marcado como excluído
-              if (customer && !('deleted' in customer)) {
-                stripeCustomers.push(customer);
+              // Acessar o valor real do preço, se disponível
+              if (price.unit_amount) {
+                amount = price.unit_amount / 100; // Stripe armazena em centavos
+              }
+            }
+          }
+          
+          // Adicionar ao total
+          totalRevenue += amount;
+          
+          // Adicionar ao gráfico mensal (distribuindo ao longo do período)
+          const currentMonth = new Date().getMonth();
+          monthlyData[currentMonth].revenue += amount / 12;
+          
+          // Se não estiver no banco local, importar
+          if (!existingSubscription) {
+            try {
+              console.log(`Importando assinatura ${subscription.id} do Stripe`);
+              
+              // Buscar usuário pelo customerId
+              let userId = null;
+              let clientId = null;
+              
+              if (subscription.customer) {
+                const customerId = typeof subscription.customer === 'string' ? 
+                  subscription.customer : subscription.customer.id;
                 
-                // Verificar assinaturas ativas
-                if ('subscriptions' in customer && customer.subscriptions?.data?.length > 0) {
-                  // Encontrou assinaturas ativas no Stripe
-                  for (const subscription of customer.subscriptions.data) {
-                    stripeSubscriptions.push(subscription);
-                    
-                    // Verificar se esta assinatura já está registrada no banco local
-                    const existingSubscription = await storage.getSubscriptionByStripeId(subscription.id);
-                    
-                    if (!existingSubscription) {
-                      // Criar registro local da assinatura
-                      console.log(`Registrando assinatura Stripe ${subscription.id} para o usuário ${user.email}`);
-                      
-                      // Determinar o tipo de plano com base no preço ou produto
-                      let planType = 'monthly'; // Padrão
-                      if (subscription.items?.data?.[0]?.price) {
-                        const priceId = subscription.items.data[0].price.id;
-                        if (priceId.includes('annual') || subscription.items.data[0].price.recurring?.interval === 'year') {
-                          planType = 'annual';
-                        }
-                      }
-                      
-                      // Buscar informações do cliente
-                      let clientId = null;
-                      if (user.clientId) {
-                        clientId = user.clientId;
-                      } else {
-                        // Tentar buscar cliente pelo nome/email
-                        const clients = await storage.searchClientsByEmail(user.email);
-                        if (clients.length > 0) {
-                          clientId = clients[0].id;
-                        }
-                      }
-                      
-                      // Criar registro da assinatura
-                      const newSubscription = await storage.createSubscription({
-                        userId: user.id,
-                        clientId,
-                        planType,
-                        status: subscription.status,
-                        stripeSubscriptionId: subscription.id,
-                        stripeCustomerId: user.stripeCustomerId,
-                        stripePriceId: subscription.items?.data?.[0]?.price?.id || null,
-                        currentPeriodStart: new Date(subscription.current_period_start * 1000),
-                        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-                        canceledAt: subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : null,
-                        metadata: JSON.stringify({
-                          imported: true,
-                          importDate: new Date().toISOString()
-                        })
-                      });
-                      
-                      // Atualizar usuário com informações da assinatura
-                      await storage.updateUser(user.id, {
-                        subscriptionActive: subscription.status === 'active' || subscription.status === 'trialing',
-                        subscriptionType: planType,
-                        subscriptionExpiresAt: new Date(subscription.current_period_end * 1000)
-                      });
-                      
-                      // Criar registro de fatura
-                      let amount = planType === 'annual' ? 960 : 99.9;
-                      await storage.createInvoice({
-                        subscriptionId: newSubscription.id,
-                        userId: user.id,
-                        clientId,
-                        status: 'paid',
-                        amount: amount.toString(),
-                        currency: 'brl',
-                        invoiceDate: new Date(subscription.current_period_start * 1000),
-                        dueDate: new Date(subscription.current_period_start * 1000),
-                        paidAt: new Date(subscription.current_period_start * 1000),
-                        description: `Assinatura ${planType === 'annual' ? 'anual' : 'mensal'} - Importada`,
-                        metadata: JSON.stringify({
-                          imported: true,
-                          importDate: new Date().toISOString(),
-                          stripeSubscriptionId: subscription.id
-                        })
-                      });
-                    }
+                // Buscar usuário pelo customerId
+                const user = await storage.getUserByStripeCustomerId(customerId);
+                
+                if (user) {
+                  userId = user.id;
+                  clientId = user.clientId;
+                  
+                  // Atualizar usuário com informações da assinatura
+                  await storage.updateUser(user.id, {
+                    subscriptionActive: true,
+                    subscriptionType: planType,
+                    subscriptionExpiresAt: new Date(subscription.current_period_end * 1000),
+                    stripeSubscriptionId: subscription.id
+                  });
+                } else {
+                  // Se não encontrar usuário, verificar client
+                  console.log(`Usuário não encontrado para customer ${customerId}, buscando entre clients`);
+                  
+                  // Buscar cliente pelo customerId
+                  const client = await storage.getClientByStripeCustomerId(customerId);
+                  if (client) {
+                    clientId = client.id;
                   }
                 }
               }
+              
+              if (!userId && !clientId) {
+                console.log(`Não foi possível associar a assinatura ${subscription.id} a um usuário ou cliente`);
+                continue;
+              }
+              
+              // Criar registro da assinatura
+              const newSubscription = await storage.createSubscription({
+                userId: userId || 0,
+                clientId,
+                planType,
+                status: subscription.status,
+                stripeSubscriptionId: subscription.id,
+                stripeCustomerId: typeof subscription.customer === 'string' ? 
+                  subscription.customer : subscription.customer.id,
+                stripePriceId: subscription.items?.data?.[0]?.price?.id || null,
+                currentPeriodStart: new Date(subscription.current_period_start * 1000),
+                currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+                canceledAt: subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : null,
+                metadata: JSON.stringify({
+                  imported: true,
+                  importDate: new Date().toISOString()
+                })
+              });
+              
+              // Criar registro de fatura
+              await storage.createInvoice({
+                subscriptionId: newSubscription.id,
+                userId: userId || 0,
+                clientId,
+                status: 'paid',
+                amount: amount.toString(),
+                currency: 'brl',
+                invoiceDate: new Date(subscription.current_period_start * 1000),
+                dueDate: new Date(subscription.current_period_start * 1000),
+                paidAt: new Date(subscription.current_period_start * 1000),
+                description: `Assinatura ${planType === 'annual' ? 'anual' : 'mensal'} - Importada`,
+                metadata: JSON.stringify({
+                  imported: true,
+                  importDate: new Date().toISOString(),
+                  stripeSubscriptionId: subscription.id
+                })
+              });
+            } catch (error) {
+              console.error(`Erro ao importar assinatura ${subscription.id}:`, error);
             }
-          } catch (error) {
-            console.error(`Erro ao buscar dados do Stripe para o usuário ${user.email}:`, error);
           }
         }
+        
+        // Adicionar assinaturas trialing e outras (não ativas)
+        const otherSubscriptions = await stripe.subscriptions.list({
+          status: 'trialing',
+          limit: 100
+        });
+        
+        trialCount = otherSubscriptions.data.length;
+        
+        // Buscar assinaturas canceladas
+        const canceledSubscriptions = await stripe.subscriptions.list({
+          status: 'canceled',
+          limit: 100
+        });
+        
+        canceledCount = canceledSubscriptions.data.length;
+        
+        // Buscar assinaturas com pagamento atrasado
+        const pastDueSubscriptions = await stripe.subscriptions.list({
+          status: 'past_due',
+          limit: 100
+        });
+        
+        pastDueCount = pastDueSubscriptions.data.length;
+        
+        // Arredondar valores para 2 casas decimais
+        monthlyData.forEach(data => {
+          data.revenue = parseFloat(data.revenue.toFixed(2));
+        });
+        
+        // Calcular receita mensal (dividindo por 12 meses)
+        monthlyRevenue = totalRevenue / 12;
+        
+        // Calcular taxa de churn
+        const totalSubscriptions = activeCount + canceledCount;
+        const churnRate = totalSubscriptions > 0 ? (canceledCount / totalSubscriptions) * 100 : 0;
+        
+        // Obter contagens de usuários e clientes
+        const usersDb = await storage.getUsers();
+        const clientsDb = await storage.getClients();
+        
+        // Construir objeto de resposta
+        const stats = {
+          totalRevenue: parseFloat(totalRevenue.toFixed(2)),
+          monthlyRevenue: parseFloat(monthlyRevenue.toFixed(2)),
+          activeSubscriptions: activeCount,
+          totalUsers: usersDb.length,
+          totalClients: clientsDb.length,
+          churnRate: parseFloat(churnRate.toFixed(1)),
+          monthlyData,
+          subscriptionsByStatus: [
+            { status: "Ativas", count: activeCount },
+            { status: "Teste", count: trialCount },
+            { status: "Canceladas", count: canceledCount },
+            { status: "Atrasadas", count: pastDueCount }
+          ]
+        };
+        
+        return res.json(stats);
+        
+      } catch (stripeError) {
+        console.error("Erro ao buscar dados do Stripe:", stripeError);
+        // Fallback para dados locais se houver erro com o Stripe
+        const stats = await storage.getFinanceStats();
+        return res.json(stats);
       }
-      
-      // Buscar estatísticas atualizadas (agora incluindo os dados importados do Stripe)
-      const stats = await storage.getFinanceStats();
-      res.json(stats);
     } catch (error) {
       console.error("Error fetching financial stats:", error);
       res.status(500).json({ message: "Failed to fetch financial statistics" });
