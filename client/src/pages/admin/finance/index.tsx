@@ -593,8 +593,23 @@ export default function FinancePage() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={7} className="h-24 text-center">
-                        Nenhuma assinatura encontrada.
+                      <TableCell colSpan={7} className="h-32 text-center">
+                        <div className="flex flex-col items-center justify-center">
+                          <DollarSign className="h-8 w-8 text-muted-foreground mb-2" />
+                          <p>Nenhuma assinatura encontrada.</p>
+                          <p className="text-xs text-muted-foreground mb-2">
+                            Crie uma nova assinatura usando o botão acima.
+                          </p>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="mt-2"
+                            onClick={() => setShowSubscriptionDialog(true)}
+                          >
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Criar Assinatura
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   )}
@@ -650,8 +665,23 @@ export default function FinancePage() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={6} className="h-24 text-center">
-                        Nenhuma fatura encontrada.
+                      <TableCell colSpan={6} className="h-32 text-center">
+                        <div className="flex flex-col items-center justify-center">
+                          <FileDown className="h-8 w-8 text-muted-foreground mb-2" />
+                          <p>Nenhuma fatura encontrada.</p>
+                          <p className="text-xs text-muted-foreground">
+                            As faturas serão geradas automaticamente quando houver assinaturas ativas.
+                          </p>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="mt-4"
+                            onClick={() => setShowSubscriptionDialog(true)}
+                          >
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Criar Assinatura
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   )}
