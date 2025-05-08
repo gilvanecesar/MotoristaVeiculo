@@ -1460,6 +1460,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const activeLocalSubs = localSubscriptions.filter(sub => sub.status === 'active');
         
         console.log(`Encontradas ${activeLocalSubs.length} assinaturas ativas no banco local`);
+        console.log("Detalhes das assinaturas locais:", JSON.stringify(activeLocalSubs, null, 2));
         
         // Adicionar assinaturas manuais ao cálculo
         for (const localSub of activeLocalSubs) {
@@ -1469,9 +1470,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Determinar o valor da assinatura
           let amount = 0;
           
+          console.log(`Processando assinatura local ID: ${localSub.id}, Status: ${localSub.status}, Plano: ${localSub.planType}`);
+          
           if (localSub.planType === 'annual') {
             amount = 960; // valor anual (R$ 960,00)
           } else {
+            // Garantir que todos os planos não anuais sejam considerados como mensais
             amount = 99.9; // valor mensal (R$ 99,90)
           }
           
@@ -1482,7 +1486,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const currentMonth = new Date().getMonth();
           monthlyData[currentMonth].revenue += amount;
           
-          console.log(`Assinatura local: ${localSub.id} - Plano: ${localSub.planType} - Valor: ${amount} - Total: ${totalRevenue}`);
+          console.log(`Assinatura contabilizada: ${localSub.id} - Plano: ${localSub.planType || 'mensal'} - Valor: ${amount} - Total acumulado: ${totalRevenue}`);
         }
         
         // Processar assinaturas do Stripe
