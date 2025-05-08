@@ -897,35 +897,120 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/subscriptions", isAdmin, async (req: Request, res: Response) => {
     try {
-      const { userId, clientId, planType, status, currentPeriodStart, currentPeriodEnd } = req.body;
+      // Aceita userId ou clientName, email para maior flexibilidade
+      const { 
+        userId, 
+        clientId, 
+        clientName, 
+        email, 
+        planType, 
+        amount, 
+        status, 
+        startDate, 
+        endDate 
+      } = req.body;
       
-      if (!userId) {
-        return res.status(400).json({ message: "User ID is required" });
+      // Validações
+      if (!userId && !clientId) {
+        return res.status(400).json({ message: "Usuário ou cliente é obrigatório" });
       }
       
       if (!planType) {
-        return res.status(400).json({ message: "Plan type is required" });
+        return res.status(400).json({ message: "Tipo de plano é obrigatório" });
       }
       
-      // Criar ou atualizar assinatura manualmente
+      // Obter usuário pelo ID, se fornecido
+      let user = null;
+      if (userId) {
+        user = await storage.getUserById(parseInt(userId));
+        if (!user) {
+          return res.status(404).json({ message: "Usuário não encontrado" });
+        }
+      }
+      
+      // Obter cliente pelo ID, se fornecido
+      let client = null;
+      if (clientId) {
+        client = await storage.getClient(parseInt(clientId));
+        if (!client) {
+          return res.status(404).json({ message: "Cliente não encontrado" });
+        }
+      }
+      
+      // Se não tiver usuário mas tiver email, buscar pelo email
+      if (!user && email) {
+        user = await storage.getUserByEmail(email);
+      }
+      
+      // Se não tiver cliente mas tiver nome, buscar pelo nome
+      if (!client && clientName) {
+        const clients = await storage.searchClients(clientName);
+        client = clients.length > 0 ? clients[0] : null;
+      }
+      
+      if (!user && !client) {
+        return res.status(400).json({ message: "Não foi possível identificar o usuário ou cliente para esta assinatura" });
+      }
+      
+      // Definir início e fim do período
+      const currentPeriodStart = startDate ? new Date(startDate) : new Date();
+      let currentPeriodEnd = null;
+      
+      if (endDate) {
+        currentPeriodEnd = new Date(endDate);
+      } else {
+        currentPeriodEnd = new Date(currentPeriodStart);
+        if (planType === "annual") {
+          currentPeriodEnd.setFullYear(currentPeriodEnd.getFullYear() + 1);
+        } else if (planType === "monthly") {
+          currentPeriodEnd.setMonth(currentPeriodEnd.getMonth() + 1);
+        } else if (planType === "trial") {
+          currentPeriodEnd.setDate(currentPeriodEnd.getDate() + 7);
+        }
+      }
+      
+      // Criar assinatura manualmente
       const subscription = await storage.createSubscription({
-        userId: parseInt(userId),
-        clientId: clientId ? parseInt(clientId) : null,
+        userId: user ? user.id : 0, // Fallback para 0 se não tiver usuário
+        clientId: client ? client.id : null,
         planType,
         status: status || "active",
-        currentPeriodStart: new Date(currentPeriodStart || Date.now()),
-        currentPeriodEnd: new Date(currentPeriodEnd || (() => {
-          const date = new Date();
-          date.setMonth(date.getMonth() + (planType === "annual" ? 12 : 1));
-          return date;
-        })()),
+        currentPeriodStart,
+        currentPeriodEnd,
+        stripeCustomerId: user?.stripeCustomerId || null,
+        stripePriceId: process.env.STRIPE_PRICE_ID || null,
+        metadata: JSON.stringify({
+          createdManually: true,
+          amount: amount || (planType === "annual" ? 960 : planType === "monthly" ? 99.9 : 0)
+        })
       });
       
-      // Atualizar o status de assinatura do usuário
-      await storage.updateUser(parseInt(userId), {
-        subscriptionActive: true,
-        subscriptionType: planType,
-        subscriptionExpiresAt: new Date(currentPeriodEnd),
+      // Se tiver usuário, atualizar seus dados de assinatura
+      if (user) {
+        await storage.updateUser(user.id, {
+          subscriptionActive: true,
+          subscriptionType: planType,
+          subscriptionExpiresAt: currentPeriodEnd,
+        });
+      }
+      
+      // Criar uma fatura para esta assinatura
+      const invoiceAmount = amount || (planType === "annual" ? 960 : planType === "monthly" ? 99.9 : 0);
+      await storage.createInvoice({
+        subscriptionId: subscription.id,
+        userId: user ? user.id : 0,
+        clientId: client ? client.id : null,
+        status: "paid",
+        amount: invoiceAmount.toString(),
+        currency: "brl",
+        invoiceDate: currentPeriodStart,
+        dueDate: currentPeriodStart,
+        paidAt: currentPeriodStart,
+        description: `Assinatura ${planType === "annual" ? "anual" : planType === "monthly" ? "mensal" : "teste"} - Criada manualmente`,
+        metadata: JSON.stringify({
+          createdManually: true,
+          amount: invoiceAmount
+        })
       });
       
       res.status(201).json(subscription);
