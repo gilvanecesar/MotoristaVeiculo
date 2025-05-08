@@ -230,6 +230,24 @@ export class MemStorage implements IStorage {
       (user) => user.email.toLowerCase() === email.toLowerCase(),
     );
   }
+  
+  async getUserByStripeCustomerId(stripeCustomerId: string): Promise<User | undefined> {
+    return Array.from(this.usersData.values()).find(
+      (user) => user.stripeCustomerId === stripeCustomerId
+    );
+  }
+  
+  async getClientByStripeCustomerId(stripeCustomerId: string): Promise<Client | undefined> {
+    return Array.from(this.clientsData.values()).find(
+      (client) => client.stripeCustomerId === stripeCustomerId
+    );
+  }
+  
+  async searchClientsByEmail(email: string): Promise<Client[]> {
+    return Array.from(this.clientsData.values()).filter(
+      (client) => client.email && client.email.toLowerCase().includes(email.toLowerCase())
+    );
+  }
 
   async createUser(user: InsertUser): Promise<User> {
     const newUser: User = {
@@ -344,6 +362,11 @@ export class MemStorage implements IStorage {
     return Array.from(this.subscriptionsData.values()).filter(
       (sub) => sub.clientId === clientId,
     );
+  }
+  
+  async getSubscriptionsByClientId(clientId: number): Promise<Subscription[]> {
+    // This is an alias for getSubscriptionsByClient to maintain backward compatibility
+    return this.getSubscriptionsByClient(clientId);
   }
 
   async getSubscription(
@@ -679,6 +702,24 @@ export class DatabaseStorage implements IStorage {
   async getUserByEmail(email: string): Promise<User | undefined> {
     const results = await db.select().from(users).where(eq(users.email, email));
     return results[0];
+  }
+  
+  async getUserByStripeCustomerId(stripeCustomerId: string): Promise<User | undefined> {
+    const results = await db.select().from(users).where(eq(users.stripeCustomerId, stripeCustomerId));
+    return results[0];
+  }
+  
+  async getClientByStripeCustomerId(stripeCustomerId: string): Promise<Client | undefined> {
+    const results = await db.select().from(clients).where(eq(clients.stripeCustomerId, stripeCustomerId));
+    return results[0];
+  }
+  
+  async searchClientsByEmail(email: string): Promise<Client[]> {
+    // Using ilike for case-insensitive search with partial matching
+    const results = await db.select().from(clients).where(
+      sql`${clients.email} ILIKE ${`%${email}%`}`
+    );
+    return results;
   }
 
   async createUser(user: InsertUser): Promise<User> {
@@ -1057,6 +1098,11 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(subscriptions)
       .where(eq(subscriptions.clientId, clientId));
+  }
+  
+  async getSubscriptionsByClientId(clientId: number): Promise<Subscription[]> {
+    // This is an alias for getSubscriptionsByClient to maintain backward compatibility
+    return this.getSubscriptionsByClient(clientId);
   }
 
   async getSubscription(
