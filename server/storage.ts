@@ -56,6 +56,7 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserByStripeCustomerId(stripeCustomerId: string): Promise<User | undefined>;
   getClientByStripeCustomerId(stripeCustomerId: string): Promise<Client | undefined>;
+  getSubscriptionsByClientId(clientId: number): Promise<Subscription[]>;
   searchClientsByEmail(email: string): Promise<Client[]>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
@@ -123,6 +124,7 @@ export interface IStorage {
   getSubscriptions(): Promise<Subscription[]>;
   getSubscriptionsByUser(userId: number): Promise<Subscription[]>;
   getSubscriptionsByClient(clientId: number): Promise<Subscription[]>;
+  getSubscriptionsByClientId(clientId: number): Promise<Subscription[]>;
   getSubscription(id: number): Promise<SubscriptionWithInvoices | undefined>;
   getSubscriptionByStripeId(
     stripeId: string,
