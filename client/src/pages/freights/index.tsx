@@ -398,9 +398,11 @@ export default function FreightsPage() {
                 Gerenciamento de fretes disponíveis no sistema
               </CardDescription>
             </div>
-            <Button onClick={() => navigate("/freights/new")}>
-              <Plus className="h-4 w-4 mr-2" /> Novo Frete
-            </Button>
+            {user?.profileType !== 'driver' && (
+              <Button onClick={() => navigate("/freights/new")}>
+                <Plus className="h-4 w-4 mr-2" /> Novo Frete
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent>
