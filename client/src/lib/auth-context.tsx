@@ -84,6 +84,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return true;
     }
     
+    // Permite acesso a motoristas para visualização (mas não para edição/exclusão)
+    // Os botões de edição/exclusão são condicionalmente renderizados na UI
+    if (user && user.profileType && user.profileType.toLowerCase() === 'driver') {
+      console.log("Usuário é motorista, permitindo visualização");
+      // Motoristas só podem ver, não editar/excluir, então retornamos false
+      // mas isso não impede a visualização na lista
+      return false;
+    }
+    
     // Verifica se o usuário atual tem clientId (está associado a um cliente)
     if (user && user.clientId) {
       console.log(`Usuário tem clientId: ${user.clientId}`);
@@ -118,7 +127,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return true;
     }
     
-    console.log("Não há cliente associado ao usuário, negando acesso");
+    console.log("Não há cliente associado ao usuário, negando acesso para edição");
+    // Retorna false para impedir edição/exclusão, mas isso não impede a visualização na lista
     return false;
   };
 

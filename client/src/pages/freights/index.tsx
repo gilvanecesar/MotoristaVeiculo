@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useClientAuth } from "@/lib/auth-context";
@@ -359,7 +359,31 @@ export default function FreightsPage() {
   };
 
   // Filtrar os fretes
-  const filteredFreights = filterFreights(freights || []);
+  const filteredFreights = useMemo(() => {
+    if (!freights || !Array.isArray(freights)) {
+      return [];
+    }
+    
+    let filtered = filterFreights(freights);
+    
+    // Se for admin, mostrar todos
+    if (user?.profileType === 'admin') {
+      return filtered;
+    }
+    
+    // Se for motorista, mostrar todos os fretes (apenas visualização)
+    if (user?.profileType === 'driver') {
+      console.log("Usuário é motorista, mostrando todos os fretes disponíveis");
+      return filtered;
+    }
+    
+    // Para outros perfis, filtrar com base no cliente associado
+    if (currentClient) {
+      filtered = filtered.filter(freight => freight.clientId === currentClient.id);
+    }
+    
+    return filtered;
+  }, [freights, searchQuery, filterStatus, filters, currentClient, user?.profileType]);
 
   return (
     <div className="container mx-auto py-6">
@@ -781,9 +805,17 @@ export default function FreightsPage() {
           ) : (
             <div className="text-center py-10">
               <p className="text-slate-500 mb-4">Nenhum frete encontrado.</p>
-              <Button onClick={() => navigate("/freights/new")}>
-                <Plus className="h-4 w-4 mr-2" /> Novo Frete
-              </Button>
+              {user?.profileType !== 'driver' && (
+                <Button onClick={() => navigate("/freights/new")}>
+                  <Plus className="h-4 w-4 mr-2" /> Novo Frete
+                </Button>
+              )}
+              {user?.profileType === 'driver' && (
+                <p className="text-sm text-slate-500 max-w-md mx-auto">
+                  Como motorista, você pode visualizar todos os fretes disponíveis no sistema. 
+                  Aguarde o cadastro de novos fretes pelos embarcadores e transportadoras.
+                </p>
+              )}
             </div>
           )}
         </CardContent>
