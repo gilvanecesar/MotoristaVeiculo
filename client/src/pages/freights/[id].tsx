@@ -166,7 +166,7 @@ export default function FreightDetailPage() {
       <div className="flex flex-col gap-6">
         {/* Cabeçalho */}
         <div className="flex justify-between items-center">
-          <Button variant="outline" onClick={() => navigate(-1)}>
+          <Button variant="outline" onClick={() => navigate("/freights")}>
             <ArrowLeft className="h-4 w-4 mr-2" /> Voltar
           </Button>
           
@@ -363,7 +363,7 @@ export default function FreightDetailPage() {
           </CardContent>
           
           <CardFooter className="flex justify-between pt-4 border-t border-slate-200 dark:border-slate-700">
-            <Button variant="outline" onClick={() => navigate(-1)}>
+            <Button variant="outline" onClick={() => navigate("/freights")}>
               <ArrowLeft className="h-4 w-4 mr-2" /> Voltar
             </Button>
             
