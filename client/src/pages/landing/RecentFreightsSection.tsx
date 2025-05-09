@@ -26,9 +26,18 @@ interface FreightCardProps {
 const FreightCard: React.FC<FreightCardProps> = ({ freight }) => {
   const formattedDate = new Date(freight.createdAt).toLocaleDateString('pt-BR');
   const formattedValue = formatCurrency(freight.value);
+  const [, navigate] = useLocation();
+  
+  // Função para ir para a página de detalhes do frete
+  const handleClick = () => {
+    navigate(`/freights/${freight.id}`);
+  };
   
   return (
-    <div className="bg-white p-6 rounded-lg shadow-lg border border-slate-200 hover:border-primary transition-all">
+    <div 
+      className="bg-white p-6 rounded-lg shadow-lg border border-slate-200 hover:border-primary transition-all cursor-pointer"
+      onClick={handleClick}
+    >
       <div className="flex justify-between items-start mb-4">
         <div className="p-3 bg-primary/10 rounded-full">
           <Truck className="h-6 w-6 text-primary" />
