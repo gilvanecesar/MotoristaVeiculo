@@ -65,8 +65,25 @@ export default function Navigation() {
   const { user, logoutMutation } = useAuth();
   
   // Função para fazer logout
+  const [_, navigate] = useLocation();
+  
   const handleLogout = () => {
-    logoutMutation.mutate();
+    try {
+      logoutMutation.mutate(undefined, {
+        onSuccess: () => {
+          console.log("Logout efetuado com sucesso");
+          // Limpar dados locais que possam interferir
+          localStorage.removeItem('currentClientId');
+          // Redirecionar para a página inicial após o logout
+          navigate('/');
+        },
+        onError: (error) => {
+          console.error("Erro ao fazer logout:", error);
+        }
+      });
+    } catch (error) {
+      console.error("Erro ao processar logout:", error);
+    }
   };
   
   // Verificar se o usuário é administrador
