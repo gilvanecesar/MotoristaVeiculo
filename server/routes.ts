@@ -543,7 +543,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // API routes for freights
-  app.get("/api/freights", hasActiveSubscription, async (req: Request, res: Response) => {
+  app.get("/api/freights", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const search = req.query.search as string;
       
