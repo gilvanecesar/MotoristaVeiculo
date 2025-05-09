@@ -402,7 +402,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const search = req.query.search as string;
       
-      // Se não for admin, só retorna o cliente do próprio usuário
+      // Se for motorista ou qualquer usuário visualizando fretes, permitir acesso a todos os clientes
+      // para visualização adequada dos detalhes de fretes
+      if (req.user?.profileType === "driver" || req.user?.profileType === "admin") {
+        // Retornar todos os clientes para motoristas e admins
+        if (search) {
+          const clients = await storage.searchClients(search);
+          return res.json(clients);
+        }
+        
+        const clients = await storage.getClients();
+        return res.json(clients);
+      }
+      
+      // Para outros tipos de usuário, manter a lógica original
       if (req.user?.profileType !== "admin") {
         // Verificar se o usuário tem um cliente associado
         if (!req.user?.clientId) {
@@ -440,8 +453,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Client not found" });
       }
 
-      // Se não for admin, verifica se é o próprio cliente do usuário
-      if (req.user?.profileType !== "admin" && req.user?.clientId !== id) {
+      // Se for motorista ou admin, permitir acesso
+      // Isso permite que motoristas vejam os dados dos clientes ao visualizar fretes
+      if (req.user?.profileType === "driver" || req.user?.profileType === "admin") {
+        return res.json(client);
+      }
+
+      // Para outros tipos de usuário, manter a verificação original
+      if (req.user?.clientId !== id) {
         return res.status(403).json({ message: "Acesso não autorizado a este cliente" });
       }
 
@@ -549,7 +568,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/freights/:id", hasActiveSubscription, async (req: Request, res: Response) => {
+  app.get("/api/freights/:id", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -561,10 +580,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Freight not found" });
       }
 
-      // Se não for admin, verifica se o frete pertence ao cliente do usuário
-      if (req.user?.profileType !== "admin" && freight.clientId !== req.user?.clientId) {
-        return res.status(403).json({ message: "Acesso não autorizado a este frete" });
-      }
+      // Permitir acesso para todos os usuários autenticados, incluindo motoristas
+      // Isso permite que motoristas vejam os detalhes completos dos fretes
 
       res.json(freight);
     } catch (error) {
@@ -689,7 +706,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // API routes for freight destinations
-  app.get("/api/freight-destinations", hasActiveSubscription, async (req: Request, res: Response) => {
+  app.get("/api/freight-destinations", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const freightId = req.query.freightId ? parseInt(req.query.freightId as string) : undefined;
       
