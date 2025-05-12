@@ -121,9 +121,37 @@ export default function ClientForm() {
   });
 
   useEffect(() => {
+    // Log dos valores iniciais do formulário para debug
+    console.log("Valores iniciais do formulário antes do reset:", form.getValues());
+    
     // Se estiver editando um cliente existente
     if (client && !isClientLoading) {
-      form.reset(client);
+      console.log("Dados recebidos para edição:", client);
+      
+      // Garantir que todos os campos esperados existam com valores padrão
+      const safeClient = {
+        name: client.name || "",
+        email: client.email || "",
+        phone: client.phone || "",
+        whatsapp: client.whatsapp || "",
+        street: client.street || "",
+        number: client.number || "",
+        complement: client.complement || "",
+        neighborhood: client.neighborhood || "",
+        city: client.city || "",
+        state: client.state || "",
+        zipcode: client.zipcode || "",
+        contactName: client.contactName || "",
+        contactPhone: client.contactPhone || "",
+        notes: client.notes || "",
+        cnpj: client.cnpj || "",
+        clientType: client.clientType || CLIENT_TYPES.SHIPPER,
+        logoUrl: client.logoUrl || ""
+      };
+      
+      console.log("Dados normalizados para edição:", safeClient);
+      form.reset(safeClient);
+      
       const clientLogoUrl = client.logoUrl as string | undefined;
       if (clientLogoUrl) {
         setLogoPreview(clientLogoUrl);
@@ -131,7 +159,32 @@ export default function ClientForm() {
     } 
     // Se estiver criando um novo cliente e o usuário já tiver um cliente
     else if (userClient && !isUserClientLoading) {
-      form.reset(userClient);
+      console.log("Dados de cliente existente para novo registro:", userClient);
+      
+      // Garantir que todos os campos esperados existam com valores padrão
+      const safeUserClient = {
+        name: userClient.name || "",
+        email: userClient.email || "",
+        phone: userClient.phone || "",
+        whatsapp: userClient.whatsapp || "",
+        street: userClient.street || "",
+        number: userClient.number || "",
+        complement: userClient.complement || "",
+        neighborhood: userClient.neighborhood || "",
+        city: userClient.city || "",
+        state: userClient.state || "",
+        zipcode: userClient.zipcode || "",
+        contactName: userClient.contactName || "",
+        contactPhone: userClient.contactPhone || "",
+        notes: userClient.notes || "",
+        cnpj: userClient.cnpj || "",
+        clientType: userClient.clientType || CLIENT_TYPES.SHIPPER,
+        logoUrl: userClient.logoUrl || ""
+      };
+      
+      console.log("Dados normalizados para novo cliente:", safeUserClient);
+      form.reset(safeUserClient);
+      
       const userClientLogoUrl = userClient.logoUrl as string | undefined;
       if (userClientLogoUrl) {
         setLogoPreview(userClientLogoUrl);
@@ -205,23 +258,75 @@ export default function ClientForm() {
       // Log para depuração
       console.log("Enviando dados do cliente:", data);
       
+      // Verificar campos obrigatórios manualmente
+      if (!data.name) {
+        toast({
+          title: "Erro de validação",
+          description: "O nome é obrigatório",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      if (!data.email) {
+        toast({
+          title: "Erro de validação",
+          description: "O email é obrigatório",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      if (!data.cnpj) {
+        toast({
+          title: "Erro de validação",
+          description: "O CNPJ é obrigatório",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Preparar dados para envio
+      const clientDataToSend = {
+        ...data,
+        // Garantir que campos opcionais tenham valores vazios em vez de undefined
+        whatsapp: data.whatsapp || "",
+        complement: data.complement || "",
+        contactName: data.contactName || "",
+        contactPhone: data.contactPhone || "",
+        notes: data.notes || "",
+        logoUrl: data.logoUrl || ""
+      };
+      
       let clientResponse;
       
       if (isEditing) {
-        console.log(`Editando cliente ID: ${clientId}`, data);
-        clientResponse = await apiRequest(
-          'PUT',
-          `/api/clients/${clientId}`,
-          data
-        );
+        console.log(`Editando cliente ID: ${clientId}`, clientDataToSend);
+        
+        // Usando fetch diretamente para maior controle e debug
+        const response = await fetch(`/api/clients/${clientId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(clientDataToSend)
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("Erro na resposta:", errorData);
+          throw new Error(errorData.message || "Erro ao salvar os dados");
+        }
+        
+        clientResponse = await response.json();
         console.log("Resposta da edição:", clientResponse);
       } else {
         // Quando estamos criando um novo cliente
-        console.log("Criando novo cliente:", data);
+        console.log("Criando novo cliente:", clientDataToSend);
         clientResponse = await apiRequest(
           'POST',
           '/api/clients',
-          data
+          clientDataToSend
         );
         console.log("Resposta da criação:", clientResponse);
         
