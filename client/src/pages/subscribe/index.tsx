@@ -399,13 +399,21 @@ export default function SubscribePage() {
                   </li>
                 </ul>
                 
-                <Button 
-                  onClick={() => createCheckoutSessionMutation.mutate("monthly")} 
-                  disabled={createCheckoutSessionMutation.isPending}
-                  className="mt-auto"
-                >
-                  {createCheckoutSessionMutation.isPending ? "Carregando..." : "Escolher Plano Mensal"}
-                </Button>
+                <div className="flex flex-col space-y-2 mt-auto">
+                  <MercadoPagoButton 
+                    planType="monthly"
+                    className="w-full"
+                  />
+                  
+                  <Button 
+                    onClick={() => createCheckoutSessionMutation.mutate("monthly")} 
+                    disabled={createCheckoutSessionMutation.isPending}
+                    variant="outline"
+                    className="mt-2"
+                  >
+                    {createCheckoutSessionMutation.isPending ? "Carregando..." : "Pagar com Stripe"}
+                  </Button>
+                </div>
               </div>
               
               {/* Plano Anual */}
@@ -448,14 +456,21 @@ export default function SubscribePage() {
                   </li>
                 </ul>
                 
-                <Button 
-                  onClick={() => createCheckoutSessionMutation.mutate("annual")} 
-                  disabled={createCheckoutSessionMutation.isPending}
-                  className="mt-auto"
-                  variant="default"
-                >
-                  {createCheckoutSessionMutation.isPending ? "Carregando..." : "Escolher Plano Anual"}
-                </Button>
+                <div className="flex flex-col space-y-2 mt-auto">
+                  <MercadoPagoButton 
+                    planType="yearly"
+                    className="w-full"
+                  />
+                  
+                  <Button 
+                    onClick={() => createCheckoutSessionMutation.mutate("annual")} 
+                    disabled={createCheckoutSessionMutation.isPending}
+                    variant="outline"
+                    className="mt-2"
+                  >
+                    {createCheckoutSessionMutation.isPending ? "Carregando..." : "Pagar com Stripe"}
+                  </Button>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -470,7 +485,7 @@ export default function SubscribePage() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Aceitamos cartões de crédito das principais bandeiras. Os pagamentos são processados com segurança pelo Stripe.
+              Aceitamos cartões de crédito, PIX e boleto bancário. Os pagamentos são processados com segurança pelo Mercado Pago ou Stripe.
             </p>
           </CardContent>
         </Card>
