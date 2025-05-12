@@ -46,6 +46,28 @@ import { Store as SessionStore } from "express-session";
 import connectPg from "connect-pg-simple";
 import createMemoryStore from "memorystore";
 
+// Interface para ticket de suporte (problemas de pagamento/assinatura)
+export interface SupportTicket {
+  id: number;
+  userId: number;
+  issueType: string;
+  description: string;
+  contactEmail: string;
+  status: string;
+  createdAt: Date;
+  resolvedAt: Date | null;
+}
+
+// Interface para eventos de assinatura
+export interface SubscriptionEvent {
+  id: number;
+  userId: number;
+  eventType: string;
+  eventDate: string;
+  planType: string;
+  details: string;
+}
+
 export interface IStorage {
   // Session store
   sessionStore: SessionStore;
@@ -67,6 +89,11 @@ export interface IStorage {
   createPasswordResetToken(email: string): Promise<{ token: string; user: User } | undefined>;
   verifyPasswordResetToken(token: string, email: string): Promise<User | undefined>;
   updatePassword(id: number, newPassword: string): Promise<User | undefined>;
+  
+  // Gerenciamento de assinatura
+  getSubscriptionEvents(userId: number): Promise<SubscriptionEvent[]>;
+  createSubscriptionEvent(event: Omit<SubscriptionEvent, "id">): Promise<SubscriptionEvent>;
+  createSupportTicket(ticket: Omit<SupportTicket, "id">): Promise<SupportTicket>;
 
   // Driver operations
   getDrivers(): Promise<DriverWithVehicles[]>;

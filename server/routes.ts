@@ -25,6 +25,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Configurar autenticação
   setupAuth(app);
   
+  // Registrar rotas de gerenciamento de assinatura
+  registerUserSubscriptionRoutes(app);
+  
   // Rota para solicitar redefinição de senha
   app.post("/api/forgot-password", async (req: Request, res: Response) => {
     try {
