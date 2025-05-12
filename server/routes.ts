@@ -504,14 +504,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid ID format" });
       }
 
-      const clientData = clientValidator.parse(req.body);
-      const client = await storage.updateClient(id, clientData);
-      
-      if (!client) {
-        return res.status(404).json({ message: "Client not found" });
-      }
+      console.log("Editando cliente:", id);
+      console.log("Dados recebidos:", req.body);
 
-      res.json(client);
+      try {
+        // Usa o validador mas exibe informações detalhadas em caso de erro
+        const clientData = clientValidator.parse(req.body);
+        console.log("Dados validados com sucesso:", clientData);
+        
+        const client = await storage.updateClient(id, clientData);
+        
+        if (!client) {
+          console.log("Cliente não encontrado após tentativa de atualização");
+          return res.status(404).json({ message: "Cliente não encontrado" });
+        }
+
+        console.log("Cliente atualizado com sucesso:", client.id);
+        res.json(client);
+      } catch (validationError: any) {
+        console.error("Erro de validação:", validationError);
+        
+        // Responde com detalhes do erro de validação para facilitar diagnóstico
+        return res.status(400).json({ 
+          message: "Erro de validação dos dados", 
+          details: validationError.errors || validationError.message
+        });
+      }
     } catch (error) {
       if (error instanceof ZodError) {
         const validationError = fromZodError(error);

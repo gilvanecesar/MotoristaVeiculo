@@ -114,9 +114,13 @@ export function hasClientAccess(req: Request, res: Response, next: NextFunction)
 
   const clientId = parseInt(req.params.id, 10);
   
+  // Permite acesso se o usuário for admin ou se o cliente estiver associado ao usuário
   if (req.user?.profileType?.toLowerCase() === "admin" || req.user?.clientId === clientId) {
     return next();
   }
+  
+  // Log para depuração
+  console.log(`Acesso negado ao cliente ${clientId}. User ID: ${req.user?.id}, User clientId: ${req.user?.clientId}, User profileType: ${req.user?.profileType}`);
   
   res.status(403).json({ message: "Acesso não autorizado" });
 }

@@ -202,21 +202,28 @@ export default function ClientForm() {
 
   const onSubmit = async (data: any) => {
     try {
+      // Log para depuração
+      console.log("Enviando dados do cliente:", data);
+      
       let clientResponse;
       
       if (isEditing) {
+        console.log(`Editando cliente ID: ${clientId}`, data);
         clientResponse = await apiRequest(
           'PUT',
           `/api/clients/${clientId}`,
           data
         );
+        console.log("Resposta da edição:", clientResponse);
       } else {
         // Quando estamos criando um novo cliente
+        console.log("Criando novo cliente:", data);
         clientResponse = await apiRequest(
           'POST',
           '/api/clients',
           data
         );
+        console.log("Resposta da criação:", clientResponse);
         
         // A associação automática ao usuário já é feita no backend
         // O objeto req.user é atualizado automaticamente no servidor
