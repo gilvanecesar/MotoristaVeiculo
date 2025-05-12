@@ -43,14 +43,18 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 type Invoice = {
   id: string;
-  amount: number;
+  invoiceNumber: string;
+  amountDue: number;
+  amountPaid: number;
+  currency: string;
   status: string;
-  created: string | null;
-  period_start: string | null;
-  period_end: string | null;
-  subscription: string;
-  pdf: string | null;
-  payment_method?: {
+  createdAt: string | null;
+  periodStart: string | null;
+  periodEnd: string | null;
+  receiptUrl: string | null;
+  pdfUrl: string | null;
+  description: string;
+  paymentMethod?: {
     card?: {
       brand: string;
       last4: string;
@@ -273,33 +277,33 @@ export default function InvoicesPage() {
                 <TableBody>
                   {invoices.map((invoice) => (
                     <TableRow key={invoice.id}>
-                      <TableCell>{formatDate(invoice.created)}</TableCell>
+                      <TableCell>{formatDate(invoice.createdAt)}</TableCell>
                       <TableCell>
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <div className="flex items-center gap-1">
-                                <span>{formatDate(invoice.period_start)}</span>
+                                <span>{formatDate(invoice.periodStart)}</span>
                                 <HelpCircle className="h-4 w-4 text-muted-foreground" />
                               </div>
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>De {formatDate(invoice.period_start)} até {formatDate(invoice.period_end)}</p>
+                              <p>De {formatDate(invoice.periodStart)} até {formatDate(invoice.periodEnd)}</p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
                       </TableCell>
-                      <TableCell className="font-medium">{formatCurrency(invoice.amount)}</TableCell>
+                      <TableCell className="font-medium">{formatCurrency(invoice.amountPaid || invoice.amountDue)}</TableCell>
                       <TableCell>
                         <Badge variant="outline" className={getInvoiceStatus(invoice.status).color}>
                           {getInvoiceStatus(invoice.status).label}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {invoice.payment_method?.card ? (
+                        {invoice.paymentMethod?.card ? (
                           <div className="flex items-center gap-2">
                             <CreditCard className="h-4 w-4 text-slate-400" />
-                            <span>•••• {invoice.payment_method.card.last4}</span>
+                            <span>•••• {invoice.paymentMethod.card.last4}</span>
                           </div>
                         ) : (
                           <span className="text-muted-foreground">Não disponível</span>
@@ -307,11 +311,11 @@ export default function InvoicesPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          {invoice.pdf ? (
+                          {invoice.pdfUrl ? (
                             <Button 
                               variant="outline" 
                               size="sm" 
-                              onClick={() => window.open(invoice.pdf || '#', '_blank')}
+                              onClick={() => window.open(invoice.pdfUrl || '#', '_blank')}
                             >
                               <Download className="h-4 w-4 mr-1" />
                               PDF
