@@ -225,11 +225,15 @@ export default function InvoicesPage() {
           </Button>
           
           <Button 
-            onClick={() => createPortalSessionMutation.mutate()}
-            disabled={createPortalSessionMutation.isPending}
+            onClick={() => toast({
+              title: "Portal não disponível",
+              description: "O portal de gerenciamento de pagamentos está sendo configurado e estará disponível em breve.",
+              variant: "default"
+            })}
+            variant="outline"
           >
             <CreditCard className="h-4 w-4 mr-2" />
-            {createPortalSessionMutation.isPending ? "Carregando..." : "Gerenciar Pagamentos"}
+            Gerenciar Pagamentos
           </Button>
         </div>
       </div>

@@ -301,10 +301,13 @@ export default function SubscribePage() {
               <>
                 <Button 
                   variant="outline" 
-                  onClick={() => createPortalSessionMutation.mutate()}
-                  disabled={createPortalSessionMutation.isPending}
+                  onClick={() => toast({
+                    title: "Portal não disponível",
+                    description: "O portal de gerenciamento de pagamentos está sendo configurado e estará disponível em breve.",
+                    variant: "default"
+                  })}
                 >
-                  {createPortalSessionMutation.isPending ? "Carregando..." : "Gerenciar Pagamentos"}
+                  Gerenciar Pagamentos
                 </Button>
                 <Button 
                   variant="outline" 
