@@ -22,18 +22,38 @@ export default function MercadoPagoButton({
     try {
       setLoading(true);
       
+      // Logar informações úteis para depuração
+      console.log('Iniciando processamento de pagamento Mercado Pago para plano:', planType);
+      
       // Criar preferência de pagamento no Mercado Pago
       const response = await apiRequest('POST', '/api/mercadopago/create-payment', {
-        planType
+        // Converter para o formato que o backend espera
+        planType: planType === 'monthly' ? 'monthly' : 'yearly'
       });
       
+      // Verificar resposta
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Erro na resposta da API:', errorData);
+        throw new Error(errorData.error?.message || 'Falha na comunicação com o servidor');
+      }
+      
       const data = await response.json();
+      console.log('Resposta do servidor:', data);
       
       if (data.url) {
+        // Mostrar mensagem de sucesso
+        toast({
+          title: 'Redirecionando para pagamento',
+          description: 'Você será redirecionado para a página de pagamento do Mercado Pago.',
+          variant: 'default'
+        });
+        
         // Redirecionar para página de pagamento do Mercado Pago
         window.location.href = data.url;
       } else {
-        throw new Error('URL de pagamento não disponível');
+        console.error('Dados de resposta inválidos:', data);
+        throw new Error('URL de pagamento não disponível na resposta');
       }
     } catch (error: any) {
       console.error('Erro ao criar pagamento:', error);

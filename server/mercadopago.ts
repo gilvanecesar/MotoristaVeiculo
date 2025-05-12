@@ -67,17 +67,30 @@ export async function getUserPayments(userId: number) {
  */
 export async function createPaymentPreference(req: Request, res: Response) {
   try {
+    console.log('Iniciando criação de preferência de pagamento:', req.body);
     const { planType } = req.body;
     const user = req.user;
     
     if (!user) {
+      console.log('Falha na autenticação: usuário não encontrado na requisição');
       return res.status(401).json({ 
         error: "Usuário não autenticado" 
       });
     }
     
+    console.log('Processando pagamento para usuário:', user.id, user.email);
+    
     // Definir preço com base no tipo de plano
     const amount = planType === 'yearly' ? 960.00 : 99.90;
+    console.log('Tipo de plano selecionado:', planType, 'Valor:', amount);
+    
+    // Verificar integridade do token
+    if (!process.env.MERCADOPAGO_ACCESS_TOKEN) {
+      console.error('ERRO: Token do Mercado Pago não configurado');
+      return res.status(500).json({ 
+        error: { message: 'Configuração do Mercado Pago ausente' } 
+      });
+    }
     
     // Configurar preferência de pagamento
     const preference = {
@@ -110,45 +123,73 @@ export async function createPaymentPreference(req: Request, res: Response) {
       statement_descriptor: 'QUERO FRETES',
     };
     
-    // Criar preferência de pagamento
-    const response = await preferenceClient.create({ body: preference });
+    console.log('Criando preferência de pagamento com o Mercado Pago...');
     
-    // Registrar assinatura no banco de dados
-    await storage.createSubscription({
-      userId: user.id,
-      status: 'pending',
-      planType: planType,
-      currentPeriodStart: new Date(),
-      currentPeriodEnd: new Date(
-        new Date().setMonth(
-          new Date().getMonth() + (planType === 'yearly' ? 12 : 1)
-        )
-      ),
-      clientId: user.clientId,
-      metadata: {
-        preferenceId: response.id,
-        amount: amount.toString(),
-        planType: planType
-      }
-    });
-    
-    // Registrar evento na tabela de eventos
-    await storage.createSubscriptionEvent({
-      userId: user.id,
-      eventType: 'subscription_created',
-      metadata: {
-        preferenceId: response.id,
+    try {
+      // Criar preferência de pagamento
+      const response = await preferenceClient.create({ body: preference });
+      console.log('Preferência criada com sucesso. ID:', response.id);
+      
+      // Registrar assinatura no banco de dados
+      await storage.createSubscription({
+        userId: user.id,
+        status: 'pending',
         planType: planType,
-        amount: amount.toString()
-      }
-    });
-    
-    // Retornar URL de pagamento
-    return res.json({
-      url: response.init_point,
-      preferenceId: response.id,
-      success: true
-    });
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(
+          new Date().setMonth(
+            new Date().getMonth() + (planType === 'yearly' ? 12 : 1)
+          )
+        ),
+        clientId: user.clientId,
+        metadata: {
+          preferenceId: response.id,
+          amount: amount.toString(),
+          planType: planType
+        }
+      });
+      
+      // Registrar evento na tabela de eventos
+      await storage.createSubscriptionEvent({
+        userId: user.id,
+        eventType: 'subscription_created',
+        metadata: {
+          preferenceId: response.id,
+          planType: planType,
+          amount: amount.toString()
+        }
+      });
+      
+      // Retornar URL de pagamento
+      console.log('Retornando URL de pagamento:', response.init_point);
+      return res.json({
+        url: response.init_point,
+        preferenceId: response.id,
+        success: true
+      });
+    } catch (mpError: any) {
+      console.error('Erro específico do Mercado Pago:', mpError);
+      console.error('Detalhes do erro:', mpError.response?.data || 'Sem detalhes adicionais');
+      
+      // Registrar erro como evento
+      await storage.createSubscriptionEvent({
+        userId: user.id,
+        eventType: 'payment_error',
+        metadata: {
+          error: mpError.message,
+          errorDetails: JSON.stringify(mpError.response?.data || {}),
+          planType: planType,
+          amount: amount.toString()
+        }
+      });
+      
+      return res.status(500).json({ 
+        error: { 
+          message: 'Falha na comunicação com o Mercado Pago. Por favor, tente novamente.',
+          details: mpError.message
+        } 
+      });
+    }
   } catch (error: any) {
     console.error('Erro ao criar preferência de pagamento:', error);
     return res.status(500).json({ 
