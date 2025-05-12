@@ -395,13 +395,27 @@ export default function SubscribePage() {
                   </li>
                 </ul>
                 
+                <div className="mt-auto space-y-2">
                 <Button 
                   onClick={() => createCheckoutSessionMutation.mutate("monthly")} 
                   disabled={createCheckoutSessionMutation.isPending}
-                  className="mt-auto"
+                  className="w-full"
                 >
                   {createCheckoutSessionMutation.isPending ? "Carregando..." : "Escolher Plano Mensal"}
                 </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => window.location.href = "/subscribe/paypal"}
+                  className="w-full flex items-center justify-center gap-2"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19.2881 7.00415C19.4611 7.88815 19.2341 8.52715 18.9031 9.20315C18.1121 10.8111 16.4581 11.8381 14.5721 11.8381H13.2921C13.1041 11.8381 12.9341 11.9761 12.8971 12.1621L12.3641 15.1991C12.3451 15.2901 12.2891 15.3711 12.2081 15.4251C12.1271 15.4801 12.0321 15.5081 11.9351 15.5081H9.62012C9.38112 15.5081 9.20312 15.2991 9.24512 15.0661L10.5951 7.41415C10.6211 7.28815 10.7351 7.19915 10.8641 7.19915H18.5871C18.8431 7.19915 19.0651 7.32915 19.1941 7.54215C19.2391 7.63915 19.2731 7.81315 19.2881 7.00415Z" fill="#1434CB"/>
+                    <path d="M8.32505 15.0391L8.32605 15.0341L9.01105 10.9121C9.03605 10.7551 9.16605 10.6401 9.32505 10.6401H11.5081C11.7031 10.6401 11.8311 10.7721 11.8081 10.9651L11.6841 11.7631C11.6611 11.9291 11.5271 12.0401 11.3691 12.0401H10.1341C9.89405 12.0401 9.71605 12.2491 9.75705 12.4831L9.94205 13.7851C9.97505 13.9721 10.1331 14.1101 10.3221 14.1101H10.9131C11.1531 14.1101 11.3311 14.3191 11.2891 14.5531L11.1861 15.1911C11.1671 15.2811 11.1111 15.3611 11.0301 15.4161C10.9491 15.4711 10.8531 15.4991 10.7561 15.4991H8.44105C8.20205 15.5001 8.02505 15.2901 8.06705 15.0571C8.06505 15.0511 8.32505 15.0391 8.32505 15.0391Z" fill="#0070E0"/>
+                    <path d="M7.03896 7.15698C7.07996 6.92298 7.32396 6.75098 7.56296 6.75098H11.562C11.791 6.75098 11.968 6.92998 11.944 7.15798L11.873 7.69998C11.836 7.99998 11.566 8.19998 11.281 8.19998H7.49096C7.46596 8.19998 7.44196 8.19698 7.41896 8.19098C7.24296 8.14798 7.11296 7.99298 7.14296 7.80398L7.03896 7.15698Z" fill="#003087"/>
+                  </svg>
+                  Pagar com PayPal
+                </Button>
+              </div>
               </div>
               
               {/* Plano Anual */}
@@ -444,13 +458,14 @@ export default function SubscribePage() {
                   </li>
                 </ul>
                 
-                <Button 
-                  onClick={() => createCheckoutSessionMutation.mutate("annual")} 
-                  disabled={createCheckoutSessionMutation.isPending}
-                  className="mt-auto"
-                  variant="default"
-                >
-                  {createCheckoutSessionMutation.isPending ? "Carregando..." : "Escolher Plano Anual"}
+                <div className="mt-auto space-y-2">
+                  <Button 
+                    onClick={() => createCheckoutSessionMutation.mutate("annual")} 
+                    disabled={createCheckoutSessionMutation.isPending}
+                    className="w-full"
+                    variant="default"
+                  >
+                    {createCheckoutSessionMutation.isPending ? "Carregando..." : "Escolher Plano Anual"}
                 </Button>
               </div>
             </div>
