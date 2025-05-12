@@ -43,7 +43,7 @@ export function hasActiveSubscription(req: Request, res: Response, next: NextFun
     return next();
   }
   
-  // Verificar se a assinatura está ativa
+  // Verificar se a assinatura está marcada como ativa
   if (user.subscriptionActive !== true) {
     return res.status(402).json({ 
       code: "subscription_required",
@@ -74,6 +74,42 @@ export function hasActiveSubscription(req: Request, res: Response, next: NextFun
       return res.status(402).json({ 
         code: "subscription_expired",
         message: "Sua assinatura expirou. Por favor, renove seu plano para continuar."
+      });
+    }
+  }
+  
+  // Verificação adicional para usuários com período de teste
+  // Mesmo que não tenha data de expiração definida, verificamos pela data de criação
+  if (user.subscriptionType === "trial" && !user.subscriptionExpiresAt) {
+    const createdAt = new Date(user.createdAt);
+    const currentDate = new Date();
+    const trialDays = 7; // Período de teste de 7 dias
+    
+    // Calcula a data de expiração baseada na data de criação + 7 dias
+    const calculatedExpirationDate = new Date(createdAt);
+    calculatedExpirationDate.setDate(calculatedExpirationDate.getDate() + trialDays);
+    
+    console.log(`[hasActiveSubscription] Verificando trial pela data de criação: User ID ${user.id}, Criado em: ${createdAt.toISOString()}, Calculada expiração: ${calculatedExpirationDate.toISOString()}`);
+    
+    // Se a data atual for maior que a data calculada de expiração
+    if (currentDate > calculatedExpirationDate) {
+      console.log(`[hasActiveSubscription] Período de teste expirou para usuário ID ${user.id} baseado na data de criação`);
+      
+      // Atualiza o usuário para marcar a assinatura como inativa
+      storage.updateUser(user.id, { 
+        subscriptionActive: false,
+        paymentRequired: true,
+        // Define a data de expiração para facilitar verificações futuras
+        subscriptionExpiresAt: calculatedExpirationDate
+      })
+        .then(() => {
+          console.log(`[hasActiveSubscription] Usuário trial ID ${user.id} marcado como expirado no banco de dados`);
+        })
+        .catch(err => console.error("Erro ao desativar período de teste expirado:", err));
+      
+      return res.status(402).json({ 
+        code: "trial_expired",
+        message: "Seu período de teste gratuito expirou. Por favor, adquira um plano para continuar."
       });
     }
   }
