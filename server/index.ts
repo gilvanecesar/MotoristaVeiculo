@@ -1,6 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes.fixed";
-import { registerUserSubscriptionRoutes } from "./routes/user-subscription.fixed";
+import { registerRoutes } from "./routes";
+import { registerUserSubscriptionRoutes } from "./routes/user-subscription";
 import { setupVite, serveStatic, log } from "./vite";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { db } from "./db";
