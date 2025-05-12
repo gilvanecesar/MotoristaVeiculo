@@ -152,11 +152,10 @@ export function registerUserSubscriptionRoutes(app: Express) {
         try {
           console.log("Buscando faturas para o stripe customer ID:", user.stripeCustomerId);
           
-          // Buscar apenas faturas reais, pagas e com valores positivos
+          // Buscar todas as faturas do cliente, incluindo todas as que têm status paid
           const stripeInvoices = await stripe.invoices.list({
             customer: user.stripeCustomerId,
-            status: 'paid', // Apenas faturas pagas
-            limit: 20,
+            limit: 100, // Aumentar limite para garantir que encontremos todas as faturas
           });
           
           if (stripeInvoices.data.length > 0) {
@@ -169,26 +168,38 @@ export function registerUserSubscriptionRoutes(app: Express) {
           // Transformar dados do Stripe para o formato esperado pelo frontend
           const invoices = [];
           
-          // Filtrar e validar rigorosamente as faturas
+          // Despejar todos os dados de faturas para debug
+          console.log("Todas as faturas do cliente:", JSON.stringify(stripeInvoices.data.map(inv => ({
+            id: inv.id,
+            status: inv.status,
+            amount_paid: inv.amount_paid,
+            total: inv.total,
+            created: inv.created,
+            period_start: inv.period_start,
+            period_end: inv.period_end
+          }))));
+          
+          // Filtrar faturas para incluir todas que têm dados básicos válidos, 
+          // mesmo que o status não seja 'paid' ou o amount_paid seja 0
           const validInvoices = stripeInvoices.data.filter(invoice => {
-            // Verificar se a fatura é válida, tem status pago e valor positivo
-            const isValid = 
-              invoice.status === 'paid' && 
-              invoice.amount_paid > 0 && 
-              invoice.total > 0 &&
+            // Verificar se a fatura tem os campos básicos necessários
+            const hasBasicData = 
+              invoice.id &&
               invoice.created &&
               invoice.period_start &&
               invoice.period_end;
               
-            // Verificar se as datas são válidas (não futuras)
-            if (isValid) {
+            // Manter todas as faturas com dados básicos válidos para debug
+            if (hasBasicData) {
               const currentDate = new Date();
               const createdDate = new Date(invoice.created * 1000);
-              return createdDate <= currentDate;
+              return true; // Incluir todas as faturas, mesmo as futuras, para debug
             }
             
             return false;
           });
+          
+          console.log(`Encontradas ${validInvoices.length} faturas com dados básicos válidos`);
           
           console.log(`Encontradas ${validInvoices.length} faturas válidas após filtragem rigorosa`);
           
