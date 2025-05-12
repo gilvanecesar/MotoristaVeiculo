@@ -96,20 +96,66 @@ export default function SubscribePage() {
   // Mutation para iniciar uma nova assinatura
   const createCheckoutSessionMutation = useMutation({
     mutationFn: async (planType: string) => {
-      const res = await apiRequest('POST', '/api/create-checkout-session', { planType });
-      const data = await res.json();
-      return data;
+      try {
+        // Primeiro, tente usar o método principal
+        const res = await apiRequest('POST', '/api/create-checkout-session', { planType });
+        const data = await res.json();
+        
+        if (data.url) {
+          return data;
+        } else {
+          throw new Error("URL de checkout não disponível");
+        }
+      } catch (primaryError) {
+        console.error("Erro no método principal de checkout:", primaryError);
+        
+        // Fallback para o método alternativo
+        try {
+          const res = await apiRequest('POST', '/api/get-or-create-subscription', { planType });
+          const data = await res.json();
+          
+          if (data.clientSecret) {
+            // Formato diferente para o retorno do fallback
+            return {
+              isClientSecret: true,
+              clientSecret: data.clientSecret,
+              subscriptionId: data.subscriptionId
+            };
+          } else {
+            throw new Error("Client secret não disponível");
+          }
+        } catch (fallbackError) {
+          console.error("Erro ao criar assinatura:", fallbackError);
+          throw fallbackError;
+        }
+      }
     },
     onSuccess: (data) => {
-      // Redirecionar para o checkout do Stripe
-      window.location.href = data.url;
+      // Verificar qual método foi usado com base na resposta
+      if (data.isClientSecret) {
+        // Se for o método alternativo, exibir message com link de próximos passos
+        toast({
+          title: "Assinatura iniciada",
+          description: "Sua assinatura foi criada com sucesso! Você pode gerenciar os detalhes de pagamento na página de assinaturas.",
+          variant: "default"
+        });
+        
+        // Atualizar a página para mostrar as informações atualizadas
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } else {
+        // Método principal - redirecionar para o checkout do Stripe
+        window.location.href = data.url;
+      }
     },
     onError: (error: Error) => {
       toast({
         title: "Erro ao iniciar pagamento",
-        description: error.message,
+        description: "Não foi possível criar a assinatura. Por favor, tente novamente mais tarde.",
         variant: "destructive"
       });
+      console.error("Erro detalhado:", error);
     }
   });
   
