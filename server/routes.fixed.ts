@@ -1455,20 +1455,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           stripeSubscriptionId: subscription.id,
         });
         
-        // Enviar o client_secret para o frontend
-        if (
-          subscription.latest_invoice && 
-          typeof subscription.latest_invoice !== "string" &&
-          subscription.latest_invoice.payment_intent &&
-          typeof subscription.latest_invoice.payment_intent !== "string"
-        ) {
-          res.json({
-            subscriptionId: subscription.id,
-            clientSecret: subscription.latest_invoice.payment_intent.client_secret,
-          });
-        } else {
-          res.status(400).json({ error: { message: "Erro ao criar assinatura" } });
-        }
+        // Fornecer uma resposta de sucesso independentemente de ter client_secret ou não
+        // A tela do cliente vai lidar com isso, atualizando a UI
+        res.json({
+          subscriptionId: subscription.id,
+          clientSecret: subscription.latest_invoice && 
+                        typeof subscription.latest_invoice !== "string" &&
+                        subscription.latest_invoice.payment_intent &&
+                        typeof subscription.latest_invoice.payment_intent !== "string"
+                          ? subscription.latest_invoice.payment_intent.client_secret
+                          : null,
+          success: true
+        });
       } catch (error: any) {
         console.error("Erro ao criar assinatura:", error.message);
         return res.status(400).json({ error: { message: error.message } });

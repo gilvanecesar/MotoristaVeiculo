@@ -114,15 +114,16 @@ export default function SubscribePage() {
           const res = await apiRequest('POST', '/api/get-or-create-subscription', { planType });
           const data = await res.json();
           
-          if (data.clientSecret) {
-            // Formato diferente para o retorno do fallback
+          // Verificar se a resposta tem sucesso, mesmo sem clientSecret
+          if (data.success) {
             return {
               isClientSecret: true,
-              clientSecret: data.clientSecret,
-              subscriptionId: data.subscriptionId
+              clientSecret: data.clientSecret || null,
+              subscriptionId: data.subscriptionId,
+              success: true
             };
           } else {
-            throw new Error("Client secret não disponível");
+            throw new Error("Não foi possível criar a assinatura");
           }
         } catch (fallbackError) {
           console.error("Erro ao criar assinatura:", fallbackError);
@@ -142,6 +143,7 @@ export default function SubscribePage() {
         
         // Atualizar a página para mostrar as informações atualizadas
         setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: ['/api/user/subscription-info'] });
           window.location.reload();
         }, 1500);
       } else {
