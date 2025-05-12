@@ -100,7 +100,7 @@ export default function InvoicesPage() {
   
   // Formatar valor em reais
   const formatCurrency = (amount: number) => {
-    if (!amount || isNaN(amount)) {
+    if (amount === undefined || amount === null || isNaN(amount)) {
       return "R$ 0,00";
     }
     
