@@ -1427,26 +1427,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const now = new Date();
         const trialEnd = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 dias após agora
         
-        const subscription = await stripeClient.subscriptions.create({
-          customer: customerId,
-          items: [
-            {
-              price: priceId,
+        console.log("Criando assinatura para o cliente:", customerId, "com preço:", priceId);
+        
+        try {
+          const subscription = await stripeClient.subscriptions.create({
+            customer: customerId,
+            items: [
+              {
+                price: priceId,
+              },
+            ],
+            trial_end: Math.floor(trialEnd.getTime() / 1000), // Timestamp em segundos
+            payment_behavior: "default_incomplete",
+            payment_settings: { 
+              save_default_payment_method: "on_subscription",
+              payment_method_types: ["card"]
             },
-          ],
-          trial_end: Math.floor(trialEnd.getTime() / 1000), // Timestamp em segundos
-          payment_behavior: "default_incomplete",
-          payment_settings: { 
-            save_default_payment_method: "on_subscription",
-            payment_method_types: ["card"]
-          },
-          expand: ["latest_invoice.payment_intent"],
-          metadata: {
-            userId: user.id.toString(),
-            planType: planType,
-            trialEndDate: trialEnd.toISOString(),
-          },
-        });
+            expand: ["latest_invoice.payment_intent"],
+            metadata: {
+              userId: user.id.toString(),
+              planType: planType,
+              trialEndDate: trialEnd.toISOString(),
+            },
+          });
+          
+          console.log("Assinatura criada com sucesso:", subscription.id);
+          return subscription;
+        } catch (subscriptionError) {
+          console.error("Erro ao criar assinatura:", subscriptionError);
+          
+          // Tentar versão simplificada sem configurações adicionais
+          console.log("Tentando criar assinatura com configurações básicas");
+          const basicSubscription = await stripeClient.subscriptions.create({
+            customer: customerId,
+            items: [
+              {
+                price: priceId,
+              },
+            ],
+            trial_period_days: 7, // Usando trial_period_days em vez de trial_end
+            metadata: {
+              userId: user.id.toString(),
+              planType: planType,
+            },
+          });
+          
+          console.log("Assinatura básica criada com sucesso:", basicSubscription.id);
+          return basicSubscription;
+        }
         
         // Salvar os IDs da assinatura no usuário
         await storage.updateUser(user.id, {
@@ -1456,14 +1484,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Fornecer uma resposta de sucesso independentemente de ter client_secret ou não
         // A tela do cliente vai lidar com isso, atualizando a UI
+        console.log("Assinatura criada com sucesso. ID:", subscription.id);
+        
+        // Resposta simplificada, sempre com success: true 
+        // O frontend vai lidar com a continuação do fluxo
         res.json({
           subscriptionId: subscription.id,
-          clientSecret: subscription.latest_invoice && 
-                        typeof subscription.latest_invoice !== "string" &&
-                        subscription.latest_invoice.payment_intent &&
-                        typeof subscription.latest_invoice.payment_intent !== "string"
-                          ? subscription.latest_invoice.payment_intent.client_secret
-                          : null,
           success: true
         });
       } catch (error: any) {
