@@ -152,26 +152,45 @@ export function registerUserSubscriptionRoutes(app: Express) {
         try {
           console.log("Buscando faturas para o stripe customer ID:", user.stripeCustomerId);
           
+          // Buscar apenas faturas reais, pagas e com valores positivos
           const stripeInvoices = await stripe.invoices.list({
             customer: user.stripeCustomerId,
             status: 'paid', // Apenas faturas pagas
             limit: 20,
           });
           
-          console.log("Resposta do Stripe (primeiros 200 caracteres):", 
-            JSON.stringify(stripeInvoices.data[0]).substring(0, 200));
+          if (stripeInvoices.data.length > 0) {
+            console.log("Resposta do Stripe (primeiros 200 caracteres):", 
+              JSON.stringify(stripeInvoices.data[0]).substring(0, 200));
+          } else {
+            console.log("Nenhuma fatura encontrada no Stripe para este cliente");
+          }
 
           // Transformar dados do Stripe para o formato esperado pelo frontend
           const invoices = [];
           
-          // Filtrar faturas reais com valores positivos
-          const validInvoices = stripeInvoices.data.filter(invoice => 
-            invoice.status === 'paid' && 
-            invoice.amount_paid > 0 && 
-            invoice.total > 0
-          );
+          // Filtrar e validar rigorosamente as faturas
+          const validInvoices = stripeInvoices.data.filter(invoice => {
+            // Verificar se a fatura é válida, tem status pago e valor positivo
+            const isValid = 
+              invoice.status === 'paid' && 
+              invoice.amount_paid > 0 && 
+              invoice.total > 0 &&
+              invoice.created &&
+              invoice.period_start &&
+              invoice.period_end;
+              
+            // Verificar se as datas são válidas (não futuras)
+            if (isValid) {
+              const currentDate = new Date();
+              const createdDate = new Date(invoice.created * 1000);
+              return createdDate <= currentDate;
+            }
+            
+            return false;
+          });
           
-          console.log(`Encontradas ${validInvoices.length} faturas válidas pagas com valor positivo`);
+          console.log(`Encontradas ${validInvoices.length} faturas válidas após filtragem rigorosa`);
           
           for (const invoice of validInvoices) {
             const createdDate = invoice.created ? new Date(invoice.created * 1000) : null;
@@ -200,8 +219,14 @@ export function registerUserSubscriptionRoutes(app: Express) {
               }
             }
 
-            // Só adicionar faturas com valor positivo
-            if (invoice.amount_paid > 0) {
+            // Só adicionar faturas válidas com valor positivo e data válida
+            if (
+                invoice.amount_paid > 0 && 
+                createdDate && 
+                periodStartDate && 
+                periodEndDate && 
+                createdDate <= new Date()
+            ) {
               invoices.push({
                 id: invoice.id,
                 invoiceNumber: invoice.number || 'N/A',
@@ -209,9 +234,9 @@ export function registerUserSubscriptionRoutes(app: Express) {
                 amountPaid: invoice.amount_paid || 0,
                 currency: invoice.currency || 'brl',
                 status: invoice.status || 'draft',
-                createdAt: createdDate ? createdDate.toISOString() : null,
-                periodStart: periodStartDate ? periodStartDate.toISOString() : null,
-                periodEnd: periodEndDate ? periodEndDate.toISOString() : null,
+                createdAt: createdDate.toISOString(),
+                periodStart: periodStartDate.toISOString(),
+                periodEnd: periodEndDate.toISOString(),
                 receiptUrl: invoice.hosted_invoice_url || null,
                 pdfUrl: invoice.invoice_pdf || null,
                 description: invoice.description || 'Assinatura QUERO FRETES',
