@@ -154,6 +154,7 @@ export function registerUserSubscriptionRoutes(app: Express) {
           
           const stripeInvoices = await stripe.invoices.list({
             customer: user.stripeCustomerId,
+            status: 'paid', // Apenas faturas pagas
             limit: 20,
           });
           
@@ -168,6 +169,28 @@ export function registerUserSubscriptionRoutes(app: Express) {
             const periodStartDate = invoice.period_start ? new Date(invoice.period_start * 1000) : null;
             const periodEndDate = invoice.period_end ? new Date(invoice.period_end * 1000) : null;
             
+            // Obter dados do cartão se disponível
+            let cardDetails = null;
+            
+            if (invoice.payment_intent) {
+              try {
+                const paymentIntent = await stripe.paymentIntents.retrieve(invoice.payment_intent);
+                if (paymentIntent.payment_method) {
+                  const paymentMethod = await stripe.paymentMethods.retrieve(paymentIntent.payment_method);
+                  if (paymentMethod.card) {
+                    cardDetails = {
+                      brand: paymentMethod.card.brand,
+                      last4: paymentMethod.card.last4,
+                      exp_month: paymentMethod.card.exp_month,
+                      exp_year: paymentMethod.card.exp_year
+                    };
+                  }
+                }
+              } catch (err) {
+                console.error("Erro ao buscar método de pagamento:", err);
+              }
+            }
+
             invoices.push({
               id: invoice.id,
               invoiceNumber: invoice.number || 'N/A',
@@ -181,14 +204,7 @@ export function registerUserSubscriptionRoutes(app: Express) {
               receiptUrl: invoice.hosted_invoice_url || null,
               pdfUrl: invoice.invoice_pdf || null,
               description: invoice.description || 'Assinatura QUERO FRETES',
-              paymentMethod: {
-                card: {
-                  brand: 'visa',
-                  last4: '4242',
-                  exp_month: 12,
-                  exp_year: 2025
-                }
-              }
+              paymentMethod: cardDetails ? { card: cardDetails } : null
             });
           }
 
@@ -196,33 +212,8 @@ export function registerUserSubscriptionRoutes(app: Express) {
         } catch (err: any) {
           console.error("Erro ao obter faturas do Stripe:", err.message);
           
-          // Retornar uma lista de faturas de exemplo para desenvolvimento/debug
-          const mockInvoices = [
-            {
-              id: "sample_invoice_1",
-              invoiceNumber: "INV-001",
-              amountDue: 9990,
-              amountPaid: 9990,
-              currency: "brl",
-              status: "paid",
-              createdAt: new Date().toISOString(),
-              periodStart: new Date().toISOString(),
-              periodEnd: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString(),
-              receiptUrl: null,
-              pdfUrl: null,
-              description: "Assinatura QUERO FRETES - Mensal",
-              paymentMethod: {
-                card: {
-                  brand: "visa",
-                  last4: "4242",
-                  exp_month: 12,
-                  exp_year: 2025
-                }
-              }
-            }
-          ];
-          
-          return res.json({ invoices: mockInvoices });
+          // Retornar uma lista vazia em caso de erro
+          return res.json({ invoices: [] });
         }
       } else {
         // Se o usuário não tiver um customer ID no Stripe, retornar uma lista vazia
