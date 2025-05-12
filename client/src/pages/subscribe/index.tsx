@@ -98,58 +98,43 @@ export default function SubscribePage() {
   const createCheckoutSessionMutation = useMutation({
     mutationFn: async (planType: string) => {
       try {
-        // Primeiro, tente usar o método principal
-        const res = await apiRequest('POST', '/api/create-checkout-session', { planType });
+        // Método principal: usar Mercado Pago
+        const res = await apiRequest('POST', '/api/mercadopago/create-payment', { 
+          planType,
+          description: planType === "monthly" ? "Assinatura Mensal QUERO FRETES" : "Assinatura Anual QUERO FRETES",
+          amount: planType === "monthly" ? 99.90 : 960.00,
+          isSubscription: true
+        });
         const data = await res.json();
         
-        if (data.url) {
-          return data;
-        } else {
-          throw new Error("URL de checkout não disponível");
-        }
-      } catch (primaryError) {
-        console.error("Erro no método principal de checkout:", primaryError);
+        console.log("Resposta Mercado Pago:", data);
         
-        // Fallback para o método alternativo
-        try {
-          const res = await apiRequest('POST', '/api/get-or-create-subscription', { planType });
-          const data = await res.json();
-          
-          // Verificar se a resposta tem sucesso, mesmo sem clientSecret
-          if (data.success) {
-            return {
-              isClientSecret: true,
-              clientSecret: data.clientSecret || null,
-              subscriptionId: data.subscriptionId,
-              success: true
-            };
-          } else {
-            throw new Error("Não foi possível criar a assinatura");
-          }
-        } catch (fallbackError) {
-          console.error("Erro ao criar assinatura:", fallbackError);
-          throw fallbackError;
+        if (data.init_point || data.url) {
+          return {
+            url: data.init_point || data.url,
+            isMercadoPago: true
+          };
+        } else {
+          throw new Error("URL de pagamento Mercado Pago não disponível");
         }
+      } catch (error) {
+        console.error("Erro ao criar pagamento Mercado Pago:", error);
+        throw error;
       }
     },
     onSuccess: (data) => {
-      // Verificar qual método foi usado com base na resposta
-      if (data.isClientSecret) {
-        // Se for o método alternativo, exibir message com link de próximos passos
-        toast({
-          title: "Assinatura iniciada",
-          description: "Sua assinatura foi criada com sucesso! Você pode gerenciar os detalhes de pagamento na página de assinaturas.",
-          variant: "default"
-        });
-        
-        // Apenas invalidar as consultas para atualizar os dados sem recarregar a página
-        setTimeout(() => {
-          queryClient.invalidateQueries({ queryKey: ['/api/user/subscription-info'] });
-          // Removendo o reload para evitar loops infinitos
-        }, 1500);
-      } else {
-        // Método principal - redirecionar para o checkout do Stripe
+      // Verificar se temos uma URL do Mercado Pago
+      if (data.url) {
+        console.log("Redirecionando para URL do Mercado Pago:", data.url);
+        // Redirecionar para o Mercado Pago
         window.location.href = data.url;
+      } else {
+        // Exibir mensagem de erro se não tiver URL
+        toast({
+          title: "Erro no processamento",
+          description: "Não foi possível obter o link de pagamento. Tente novamente mais tarde.",
+          variant: "destructive"
+        });
       }
     },
     onError: (error: Error) => {
