@@ -142,10 +142,10 @@ export default function SubscribePage() {
           variant: "default"
         });
         
-        // Atualizar a página para mostrar as informações atualizadas
+        // Apenas invalidar as consultas para atualizar os dados sem recarregar a página
         setTimeout(() => {
           queryClient.invalidateQueries({ queryKey: ['/api/user/subscription-info'] });
-          window.location.reload();
+          // Removendo o reload para evitar loops infinitos
         }, 1500);
       } else {
         // Método principal - redirecionar para o checkout do Stripe

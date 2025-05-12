@@ -1288,15 +1288,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Para usuários com assinatura no Stripe, buscar informações detalhadas
       try {
         if (!process.env.STRIPE_SECRET_KEY) {
-          throw new Error("Missing Stripe API Key");
+          console.log("Stripe API Key não configurada, retornando informações básicas");
+          return res.json({
+            active,
+            isTrial,
+            trialUsed,
+            planType: user.subscriptionType || null,
+            expiresAt: user.subscriptionExpiresAt || null,
+            paymentMethod: null,
+            stripeCustomerId: user.stripeCustomerId || null,
+            stripeSubscriptionId: user.stripeSubscriptionId || null
+          });
         }
 
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
           apiVersion: "2023-10-16",
         });
         
-        // Buscar dados da assinatura no Stripe
-        const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+        // Buscar dados da assinatura no Stripe, com tratamento de erro melhorado
+        let subscription;
+        try {
+          subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+        } catch (stripeError) {
+          console.log("Erro ao buscar assinatura do Stripe:", stripeError);
+          // Se houver erro, retornar apenas as informações básicas do banco
+          return res.json({
+            active,
+            isTrial,
+            trialUsed,
+            planType: user.subscriptionType || null,
+            expiresAt: user.subscriptionExpiresAt || null,
+            paymentMethod: null,
+            stripeCustomerId: user.stripeCustomerId || null,
+            stripeSubscriptionId: user.stripeSubscriptionId
+          });
+        }
 
         // Montar objeto com informações da assinatura
         return res.json({
