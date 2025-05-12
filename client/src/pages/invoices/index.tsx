@@ -45,19 +45,19 @@ type Invoice = {
   id: string;
   amount: number;
   status: string;
-  created: string;
-  period_start: string;
-  period_end: string;
+  created: string | null;
+  period_start: string | null;
+  period_end: string | null;
   subscription: string;
-  pdf: string;
-  payment_method: {
+  pdf: string | null;
+  payment_method?: {
     card?: {
       brand: string;
       last4: string;
       exp_month: number;
       exp_year: number;
     }
-  };
+  } | null;
 };
 
 export default function InvoicesPage() {
@@ -100,24 +100,50 @@ export default function InvoicesPage() {
   
   // Formatar valor em reais
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(amount / 100); // Stripe retorna valores em centavos
+    if (!amount || isNaN(amount)) {
+      return "R$ 0,00";
+    }
+    
+    try {
+      return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+      }).format(amount / 100); // Stripe retorna valores em centavos
+    } catch (error) {
+      console.error("Erro ao formatar valor:", amount, error);
+      return "R$ 0,00";
+    }
   };
   
   // Formatar data
-  const formatDate = (date: string) => {
+  const formatDate = (date: string | null) => {
     try {
+      if (!date) {
+        return "Data não disponível";
+      }
+      
       // Verificar se a data é um timestamp (número) ou já está no formato ISO
-      const dateValue = !isNaN(Number(date)) 
-        ? new Date(Number(date) * 1000) // Se for número, multiplicar por 1000 para converter de segundos para milissegundos
-        : new Date(date); // Se já for string de data, usar diretamente
-        
+      let dateValue;
+      
+      if (!isNaN(Number(date))) {
+        // Se for número, multiplicar por 1000 para converter de segundos para milissegundos
+        dateValue = new Date(Number(date) * 1000);
+      } else if (typeof date === 'string' && date.trim() !== '') {
+        // Se já for string de data, usar diretamente
+        dateValue = new Date(date);
+      } else {
+        return "Data não disponível";
+      }
+      
+      // Verificar se a data é válida
+      if (isNaN(dateValue.getTime())) {
+        return "Data não disponível";
+      }
+      
       return format(dateValue, "dd 'de' MMMM 'de' yyyy", { locale: pt });
     } catch (error) {
       console.error("Erro ao formatar data:", date, error);
-      return "Data inválida";
+      return "Data não disponível";
     }
   };
   
@@ -281,11 +307,20 @@ export default function InvoicesPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          {invoice.pdf && (
+                          {invoice.pdf ? (
                             <Button 
                               variant="outline" 
                               size="sm" 
-                              onClick={() => window.open(invoice.pdf, '_blank')}
+                              onClick={() => window.open(invoice.pdf || '#', '_blank')}
+                            >
+                              <Download className="h-4 w-4 mr-1" />
+                              PDF
+                            </Button>
+                          ) : (
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              disabled
                             >
                               <Download className="h-4 w-4 mr-1" />
                               PDF
