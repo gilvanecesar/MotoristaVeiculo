@@ -108,5 +108,8 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+    
+    // Iniciar o verificador de assinaturas expiradas
+    startSubscriptionChecker(true, 6);
   });
 })();

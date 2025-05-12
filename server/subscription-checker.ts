@@ -33,7 +33,7 @@ export async function checkExpiredTrials() {
       try {
         // Se tiver data de expiração definida
         if (user.subscription_expires_at) {
-          const expirationDate = new Date(user.subscription_expires_at);
+          const expirationDate = new Date(String(user.subscription_expires_at));
           
           if (currentDate > expirationDate) {
             console.log(`[Verificador de Assinaturas] Desativando período de teste expirado para usuário ID ${user.id}, email: ${user.email}`);
@@ -48,9 +48,9 @@ export async function checkExpiredTrials() {
         } 
         // Se não tiver data de expiração, calcula baseado na data de criação
         else if (user.created_at) {
-          const createdAt = new Date(user.created_at);
+          const createdAt = new Date(String(user.created_at));
           const calculatedExpirationDate = new Date(createdAt);
-          calculatedExpirationDate.setDate(calculatedExpirationDate.getDate() + trialDays);
+          calculatedExpirationDate.setDate(createdAt.getDate() + trialDays);
           
           if (currentDate > calculatedExpirationDate) {
             console.log(`[Verificador de Assinaturas] Desativando período de teste expirado para usuário ID ${user.id}, email: ${user.email} (baseado na data de criação)`);
