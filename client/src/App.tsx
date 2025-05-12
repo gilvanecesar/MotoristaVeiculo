@@ -7,6 +7,7 @@ import { AuthProvider as UserAuthProvider } from "@/hooks/use-auth";
 import { AuthProvider as ClientAuthProvider } from "@/lib/auth-context";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { ClientRegistrationCheck } from "@/components/client-registration-check";
+import { SubscriptionStatusBanner } from "@/components/ui/subscription-status-banner";
 
 import NotFound from "@/pages/not-found";
 import Navigation from "@/components/layout/navigation";
