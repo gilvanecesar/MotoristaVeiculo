@@ -164,7 +164,16 @@ export function registerUserSubscriptionRoutes(app: Express) {
           // Transformar dados do Stripe para o formato esperado pelo frontend
           const invoices = [];
           
-          for (const invoice of stripeInvoices.data) {
+          // Filtrar faturas reais com valores positivos
+          const validInvoices = stripeInvoices.data.filter(invoice => 
+            invoice.status === 'paid' && 
+            invoice.amount_paid > 0 && 
+            invoice.total > 0
+          );
+          
+          console.log(`Encontradas ${validInvoices.length} faturas válidas pagas com valor positivo`);
+          
+          for (const invoice of validInvoices) {
             const createdDate = invoice.created ? new Date(invoice.created * 1000) : null;
             const periodStartDate = invoice.period_start ? new Date(invoice.period_start * 1000) : null;
             const periodEndDate = invoice.period_end ? new Date(invoice.period_end * 1000) : null;
@@ -191,21 +200,24 @@ export function registerUserSubscriptionRoutes(app: Express) {
               }
             }
 
-            invoices.push({
-              id: invoice.id,
-              invoiceNumber: invoice.number || 'N/A',
-              amountDue: invoice.amount_due || 0,
-              amountPaid: invoice.amount_paid || 0,
-              currency: invoice.currency || 'brl',
-              status: invoice.status || 'draft',
-              createdAt: createdDate ? createdDate.toISOString() : null,
-              periodStart: periodStartDate ? periodStartDate.toISOString() : null,
-              periodEnd: periodEndDate ? periodEndDate.toISOString() : null,
-              receiptUrl: invoice.hosted_invoice_url || null,
-              pdfUrl: invoice.invoice_pdf || null,
-              description: invoice.description || 'Assinatura QUERO FRETES',
-              paymentMethod: cardDetails ? { card: cardDetails } : null
-            });
+            // Só adicionar faturas com valor positivo
+            if (invoice.amount_paid > 0) {
+              invoices.push({
+                id: invoice.id,
+                invoiceNumber: invoice.number || 'N/A',
+                amountDue: invoice.amount_due || 0,
+                amountPaid: invoice.amount_paid || 0,
+                currency: invoice.currency || 'brl',
+                status: invoice.status || 'draft',
+                createdAt: createdDate ? createdDate.toISOString() : null,
+                periodStart: periodStartDate ? periodStartDate.toISOString() : null,
+                periodEnd: periodEndDate ? periodEndDate.toISOString() : null,
+                receiptUrl: invoice.hosted_invoice_url || null,
+                pdfUrl: invoice.invoice_pdf || null,
+                description: invoice.description || 'Assinatura QUERO FRETES',
+                paymentMethod: cardDetails ? { card: cardDetails } : null
+              });
+            }
           }
 
           return res.json({ invoices });
