@@ -9,6 +9,7 @@ import { useClientAuth } from "@/lib/auth-context";
 import { useAuth } from "@/hooks/use-auth";
 import { ClientSelector } from "@/components/client-selector";
 import { PaymentBanner } from "@/components/payment-banner";
+import { SubscriptionStatusBanner } from "@/components/ui/subscription-status-banner";
 import logoImage from "../../assets/logo.png";
 import { 
   DropdownMenu,

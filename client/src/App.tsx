@@ -84,6 +84,7 @@ function App() {
             <ClientRegistrationCheck />
             <div className="flex flex-col min-h-screen bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-200">
               {!isLandingPage && <Navigation />}
+              <SubscriptionStatusBanner />
               <div className={`flex flex-col flex-grow ${isLandingPage ? 'px-0 py-0' : ''}`}>
                 <main className={`
                   ${isLandingPage ? 'p-0' : 'px-3 sm:px-6 py-4 sm:py-6 pb-20 md:pb-6'} 
