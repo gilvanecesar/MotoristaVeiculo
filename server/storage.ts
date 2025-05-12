@@ -702,6 +702,38 @@ export class DatabaseStorage implements IStorage {
   sessionStore: SessionStore;
   // Armazenamento temporário para tokens de redefinição de senha
   private passwordResetTokens: Map<string, { token: string; expiry: Date }> = new Map();
+  
+  // Implementação das funções de gerenciamento de assinatura
+  async getSubscriptionEvents(userId: number): Promise<SubscriptionEvent[]> {
+    // Implementação temporária - retorna array vazio
+    return [];
+  }
+  
+  async createSubscriptionEvent(event: Omit<SubscriptionEvent, "id">): Promise<SubscriptionEvent> {
+    // Implementação temporária - retorna um evento simulado
+    return {
+      id: 1,
+      userId: event.userId,
+      eventType: event.eventType,
+      eventDate: event.eventDate,
+      planType: event.planType,
+      details: event.details
+    };
+  }
+  
+  async createSupportTicket(ticket: Omit<SupportTicket, "id">): Promise<SupportTicket> {
+    // Implementação temporária - retorna um ticket simulado
+    return {
+      id: 1,
+      userId: ticket.userId,
+      issueType: ticket.issueType,
+      description: ticket.description,
+      contactEmail: ticket.contactEmail,
+      status: ticket.status,
+      createdAt: ticket.createdAt,
+      resolvedAt: ticket.resolvedAt
+    };
+  }
 
   constructor() {
     this.sessionStore = new PostgresSessionStore({

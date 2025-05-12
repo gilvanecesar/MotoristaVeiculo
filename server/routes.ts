@@ -22,6 +22,7 @@ import { sendSubscriptionEmail, sendPaymentReminderEmail } from "./email-service
 import { registerUserSubscriptionRoutes } from "./routes/user-subscription";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  const httpServer = createServer(app);
   // Configurar autenticação
   setupAuth(app);
   
