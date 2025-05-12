@@ -1258,43 +1258,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Endpoint para obter informações da assinatura do usuário
   app.get("/api/user/subscription-info", isAuthenticated, async (req: Request, res: Response) => {
     try {
-      if (!process.env.STRIPE_SECRET_KEY) {
-        throw new Error("Missing Stripe API Key");
-      }
-
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-        apiVersion: "2023-10-16",
-      });
-
       const user = req.user;
       if (!user) {
         return res.status(401).send({ error: { message: "Não autenticado" } });
       }
-
-      // Verificar se o usuário tem uma assinatura
+      
+      // Verificar se o usuário tem um período de teste ativo
+      const isTrial = user.subscriptionType === "trial";
+      const trialUsed = user.subscriptionType === "trial" || user.subscriptionExpiresAt != null;
+      
+      // Determinar status da assinatura com base nos dados do usuário
+      const active = user.subscriptionActive || false;
+      
+      // Para usuários sem assinatura no Stripe, retornar as informações básicas
       if (!user.stripeSubscriptionId) {
-        return res.status(404).send({ error: { message: "Nenhuma assinatura encontrada" } });
+        console.log("Usuário sem assinatura Stripe, retornando informações básicas");
+        return res.json({
+          active,
+          isTrial,
+          trialUsed,
+          planType: user.subscriptionType || null,
+          expiresAt: user.subscriptionExpiresAt || null,
+          paymentMethod: null,
+          stripeCustomerId: user.stripeCustomerId || null,
+          stripeSubscriptionId: null
+        });
       }
+      
+      // Para usuários com assinatura no Stripe, buscar informações detalhadas
+      try {
+        if (!process.env.STRIPE_SECRET_KEY) {
+          throw new Error("Missing Stripe API Key");
+        }
 
-      // Buscar dados da assinatura no Stripe
-      const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+          apiVersion: "2023-10-16",
+        });
+        
+        // Buscar dados da assinatura no Stripe
+        const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
 
-      // Montar objeto com informações da assinatura
-      const subscriptionInfo = {
-        id: subscription.id,
-        status: subscription.status,
-        currentPeriodStart: subscription.current_period_start ? new Date(subscription.current_period_start * 1000).toISOString() : null,
-        currentPeriodEnd: subscription.current_period_end ? new Date(subscription.current_period_end * 1000).toISOString() : null,
-        trialStart: subscription.trial_start ? new Date(subscription.trial_start * 1000).toISOString() : null,
-        trialEnd: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
-        cancelAtPeriodEnd: subscription.cancel_at_period_end,
-        canceledAt: subscription.canceled_at ? new Date(subscription.canceled_at * 1000).toISOString() : null,
-        planType: subscription.metadata?.planType || "monthly"
-      };
-
-      res.json(subscriptionInfo);
+        // Montar objeto com informações da assinatura
+        return res.json({
+          active,
+          isTrial,
+          trialUsed,
+          id: subscription.id,
+          status: subscription.status,
+          planType: subscription.metadata?.planType || user.subscriptionType || "monthly",
+          currentPeriodStart: subscription.current_period_start ? new Date(subscription.current_period_start * 1000).toISOString() : null,
+          currentPeriodEnd: subscription.current_period_end ? new Date(subscription.current_period_end * 1000).toISOString() : null,
+          expiresAt: user.subscriptionExpiresAt || (subscription.current_period_end ? new Date(subscription.current_period_end * 1000).toISOString() : null),
+          trialStart: subscription.trial_start ? new Date(subscription.trial_start * 1000).toISOString() : null,
+          trialEnd: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
+          cancelAtPeriodEnd: subscription.cancel_at_period_end,
+          canceledAt: subscription.canceled_at ? new Date(subscription.canceled_at * 1000).toISOString() : null,
+          stripeCustomerId: user.stripeCustomerId,
+          stripeSubscriptionId: user.stripeSubscriptionId
+        });
+      } catch (stripeError) {
+        console.error("Erro ao buscar dados no Stripe:", stripeError);
+        
+        // Em caso de erro no Stripe, retornar informações básicas do usuário sem falhar
+        return res.json({
+          active,
+          isTrial,
+          trialUsed,
+          planType: user.subscriptionType || null,
+          expiresAt: user.subscriptionExpiresAt || null,
+          paymentMethod: null,
+          stripeCustomerId: user.stripeCustomerId || null,
+          stripeSubscriptionId: user.stripeSubscriptionId || null,
+          error: "Erro ao buscar detalhes da assinatura"
+        });
+      }
     } catch (error: any) {
-      console.error("Erro ao buscar informações da assinatura:", error.message);
+      console.error("Erro ao processar informações da assinatura:", error.message);
       res.status(500).json({ error: { message: error.message } });
     }
   });
