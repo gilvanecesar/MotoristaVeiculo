@@ -28,6 +28,8 @@ import { format } from "date-fns";
 import { registerUserSubscriptionRoutes } from "./routes/user-subscription.fixed";
 import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./paypal";
 
+import { createPaymentPreference, processWebhook, createTestPayment } from "./mercadopago";
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configurar autenticação
   setupAuth(app);
@@ -36,6 +38,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/paypal/setup", loadPaypalDefault);
   app.post("/api/paypal/order", createPaypalOrder);
   app.post("/api/paypal/order/:orderID/capture", capturePaypalOrder);
+  
+  // Configurar rotas Mercado Pago
+  app.post("/api/mercadopago/create-payment", isAuthenticated, createPaymentPreference);
+  app.post("/api/mercadopago-webhook", processWebhook);
+  app.get("/api/mercadopago/test-payment", isAdmin, createTestPayment);
   
   // Registrar rotas de gerenciamento de assinatura
   registerUserSubscriptionRoutes(app);
