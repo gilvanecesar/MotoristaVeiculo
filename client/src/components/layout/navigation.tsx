@@ -1,6 +1,10 @@
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
-import { LayoutDashboard, Users, Car, BarChart3, Menu, X, Moon, Sun, Truck, Building2, Home, DollarSign, UserCog, Settings, User } from "lucide-react";
+import { 
+  LayoutDashboard, Users, Car, BarChart3, Menu, X, Moon, Sun, Truck, 
+  Building2, Home, DollarSign, UserCog, Settings, User, CreditCard,
+  Receipt, CalendarClock, AlertCircle, Bell
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -214,6 +218,18 @@ export default function Navigation() {
             </div>
           </div>
 
+          {/* Notification Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative text-slate-600 dark:text-slate-300 hover:text-primary hover:bg-slate-100/80 dark:hover:bg-slate-700/80"
+          >
+            <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+              2
+            </div>
+            <Bell className="h-5 w-5" />
+          </Button>
+          
           {/* Mobile Menu Toggle */}
           {isMobile && (
             <Button
@@ -282,17 +298,98 @@ export default function Navigation() {
                   </Avatar>
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium">{user?.name}</p>
+                    <p className="text-xs text-muted-foreground">Usuário: {user?.profileType}</p>
+                  </div>
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                
+                {/* Seção de Assinatura - Aparece apenas para usuários não-admin */}
+                {user?.profileType !== 'admin' && (
+                  <>
+                    <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">
+                      ASSINATURA
+                    </DropdownMenuLabel>
+                    
+                    {/* Status da Assinatura */}
+                    <DropdownMenuItem asChild>
+                      <Link href="/subscribe">
+                        <div className="flex items-center gap-2 w-full">
+                          <CreditCard className="h-4 w-4" />
+                          <span>Gerenciar Assinatura</span>
+                        </div>
+                      </Link>
+                    </DropdownMenuItem>
+                    
+                    {/* Faturas e Pagamentos */}
+                    <DropdownMenuItem asChild>
+                      <Link href="/invoices">
+                        <div className="flex items-center gap-2 w-full">
+                          <Receipt className="h-4 w-4" />
+                          <span>Faturas e Pagamentos</span>
+                        </div>
+                      </Link>
+                    </DropdownMenuItem>
+                    
+                    {/* Histórico de Assinatura */}
+                    <DropdownMenuItem asChild>
+                      <Link href="/subscription-history">
+                        <div className="flex items-center gap-2 w-full">
+                          <CalendarClock className="h-4 w-4" />
+                          <span>Histórico de Assinatura</span>
+                        </div>
+                      </Link>
+                    </DropdownMenuItem>
+                    
+                    {/* Reportar Problema */}
+                    <DropdownMenuItem asChild>
+                      <Link href="/report-payment-issue">
+                        <div className="flex items-center gap-2 w-full">
+                          <AlertCircle className="h-4 w-4" />
+                          <span>Reportar Problema</span>
+                        </div>
+                      </Link>
+                    </DropdownMenuItem>
+                    
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                
+                {/* Configurações da Conta */}
+                <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">
+                  CONTA
+                </DropdownMenuLabel>
+                
                 <DropdownMenuItem asChild>
-                  <Link href="/profile">Perfil</Link>
+                  <Link href="/profile">
+                    <div className="flex items-center gap-2 w-full">
+                      <User className="h-4 w-4" />
+                      <span>Perfil</span>
+                    </div>
+                  </Link>
                 </DropdownMenuItem>
+                
                 <DropdownMenuItem asChild>
-                  <Link href="/settings">Configurações</Link>
+                  <Link href="/settings">
+                    <div className="flex items-center gap-2 w-full">
+                      <Settings className="h-4 w-4" />
+                      <span>Configurações</span>
+                    </div>
+                  </Link>
                 </DropdownMenuItem>
+                
+                <DropdownMenuSeparator />
+                
                 <DropdownMenuItem onClick={handleLogout} className="text-red-600 dark:text-red-400 focus:text-red-700 focus:bg-red-50 dark:focus:bg-red-900/20">
-                  Sair
+                  <div className="flex items-center gap-2 w-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    <span>Sair</span>
+                  </div>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
