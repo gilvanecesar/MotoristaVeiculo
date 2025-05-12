@@ -25,7 +25,7 @@ import Stripe from "stripe";
 import { sendSubscriptionEmail, sendPaymentReminderEmail } from "./email-service";
 import { stripe } from "./stripe";
 import { format } from "date-fns";
-import { registerUserSubscriptionRoutes } from "./routes/user-subscription";
+import { registerUserSubscriptionRoutes } from "./routes/user-subscription.fixed";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configurar autenticação
