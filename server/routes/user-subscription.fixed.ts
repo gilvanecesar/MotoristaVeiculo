@@ -230,13 +230,12 @@ export function registerUserSubscriptionRoutes(app: Express) {
               }
             }
 
-            // Só adicionar faturas válidas com valor positivo e data válida
+            // Incluir todas as faturas e transações para debug, independente do valor
+            // Isto permitirá que qualquer transação apareça no histórico para análise
             if (
-                invoice.amount_paid > 0 && 
                 createdDate && 
                 periodStartDate && 
-                periodEndDate && 
-                createdDate <= new Date()
+                periodEndDate
             ) {
               invoices.push({
                 id: invoice.id,
