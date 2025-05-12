@@ -70,10 +70,22 @@ export function ProtectedRoute({
   if (user.subscriptionActive === false) {
     console.log("Usuário sem assinatura ativa, verificando se é a página inicial");
     
-    // Vamos permitir acesso à página inicial e à página de checkout mesmo sem assinatura ativa
-    if (path === "/" || path === "/checkout") {
-      console.log("Permitindo acesso à página inicial ou checkout");
+    // Permitir acesso às páginas essenciais mesmo sem assinatura ativa
+    const allowedPaths = ["/", "/checkout", "/dashboard", "/home", "/profile-selection", "/payment-success", "/subscribe"];
+    
+    if (allowedPaths.includes(path)) {
+      console.log(`Permitindo acesso à rota permitida: ${path}`);
       return <Route path={path} component={Component} />;
+    }
+    
+    // Se a assinatura está desativada porque pagou, direciona para o dashboard em vez da landing page
+    if (user.stripeCustomerId || user.stripeSubscriptionId) {
+      console.log("Usuário tem info de pagamento, direcionando para o dashboard");
+      return (
+        <Route path={path}>
+          <Redirect to="/dashboard" />
+        </Route>
+      );
     }
     
     console.log("Redirecionando para a página inicial pois não tem assinatura ativa");
@@ -98,7 +110,13 @@ export function ProtectedRoute({
     
     // Se a data de expiração for anterior à data atual, a assinatura expirou
     if (subscriptionEndDate < currentDate) {
-      console.log("Assinatura expirada, redirecionando para home");
+      console.log("Assinatura expirada, verificando se tem stripe customer ID");
+      
+      // Se o usuário tem dados de pagamento no Stripe, pode ter pago recentemente
+      if (userAny.stripeCustomerId || userAny.stripeSubscriptionId) {
+        console.log("Usuário tem info de pagamento no Stripe, permitindo acesso");
+        return <Route path={path} component={Component} />;
+      }
       
       // Atualizar flag de assinatura no lado do cliente para corresponder ao estado do servidor
       if (userAny.subscriptionActive === true) {
@@ -107,14 +125,15 @@ export function ProtectedRoute({
         // mas forçaremos uma revalidação na próxima requisição
       }
       
-      // Permitir acesso à página inicial e checkout mesmo com assinatura expirada
-      if (path === "/" || path === "/checkout") {
+      // Permitir acesso à página inicial, checkout, dashboard e outras páginas essenciais
+      const allowedPaths = ["/", "/checkout", "/dashboard", "/home", "/profile-selection", "/payment-success", "/subscribe"];
+      if (allowedPaths.includes(path)) {
         return <Route path={path} component={Component} />;
       }
       
       return (
         <Route path={path}>
-          <Redirect to="/" />
+          <Redirect to="/dashboard" />
         </Route>
       );
     }
