@@ -26,10 +26,16 @@ import { sendSubscriptionEmail, sendPaymentReminderEmail } from "./email-service
 import { stripe } from "./stripe";
 import { format } from "date-fns";
 import { registerUserSubscriptionRoutes } from "./routes/user-subscription.fixed";
+import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./paypal";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configurar autenticação
   setupAuth(app);
+  
+  // Configurar rotas PayPal
+  app.get("/api/paypal/setup", loadPaypalDefault);
+  app.post("/api/paypal/order", createPaypalOrder);
+  app.post("/api/paypal/order/:orderID/capture", capturePaypalOrder);
   
   // Registrar rotas de gerenciamento de assinatura
   registerUserSubscriptionRoutes(app);
