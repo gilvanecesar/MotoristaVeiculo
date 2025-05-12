@@ -40,6 +40,7 @@ import ReportPaymentIssuePage from "@/pages/report-payment-issue";
 import ProfileSelectionPage from "@/pages/profile-selection";
 import ResetPasswordPage from "@/pages/reset-password";
 import SettingsPage from "@/pages/settings";
+import PaypalSubscribePage from "@/pages/subscribe/paypal-subscribe";
 
 function Router() {
   return (
@@ -51,6 +52,7 @@ function Router() {
       <Route path="/payment-cancel" component={PaymentCancelPage} />
       <Route path="/checkout" component={CheckoutPage} />
       <ProtectedRoute path="/subscribe" component={SubscribePage} />
+      <ProtectedRoute path="/subscribe/paypal" component={PaypalSubscribePage} />
       <ProtectedRoute path="/invoices" component={InvoicesPage} />
       <ProtectedRoute path="/subscription-history" component={SubscriptionHistoryPage} />
       <ProtectedRoute path="/report-payment-issue" component={ReportPaymentIssuePage} />

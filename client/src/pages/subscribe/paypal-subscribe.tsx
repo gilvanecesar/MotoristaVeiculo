@@ -5,25 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { FaShieldAlt, FaCheckCircle } from "react-icons/fa";
 import { Separator } from "@/components/ui/separator";
-import { useNavigate } from "wouter";
+import { useLocation } from "wouter";
 import PayPalButton from "@/components/ui/paypal-button";
 
 export default function PayPalSubscription() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [navigate, setLocation] = useNavigate();
+  const [location, setLocation] = useLocation();
 
-  const handleSuccess = () => {
-    toast({
-      title: "Pagamento realizado com sucesso!",
-      description: "Sua assinatura foi ativada.",
-      variant: "default",
-    });
-
-    setTimeout(() => {
-      setLocation("/dashboard");
-    }, 2000);
+  const goToDashboard = () => {
+    setLocation("/dashboard");
   };
 
   return (
@@ -146,7 +138,7 @@ export default function PayPalSubscription() {
         <p className="text-muted-foreground mb-6">
           Teste o Quero Fretes por 7 dias grátis. Se não estiver satisfeito, cancele facilmente sem compromisso.
         </p>
-        <Button variant="outline" onClick={() => navigate("/subscribe")}>
+        <Button variant="outline" onClick={() => setLocation("/subscribe")}>
           Ver outras opções de pagamento
         </Button>
       </div>
