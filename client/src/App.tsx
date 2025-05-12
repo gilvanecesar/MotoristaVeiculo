@@ -34,6 +34,9 @@ import PaymentSuccessPage from "@/pages/payment-success";
 import PaymentCancelPage from "@/pages/payment-cancel";
 import CheckoutPage from "@/pages/checkout";
 import SubscribePage from "@/pages/subscribe";
+import InvoicesPage from "@/pages/invoices";
+import SubscriptionHistoryPage from "@/pages/subscription-history";
+import ReportPaymentIssuePage from "@/pages/report-payment-issue";
 import ProfileSelectionPage from "@/pages/profile-selection";
 import ResetPasswordPage from "@/pages/reset-password";
 import SettingsPage from "@/pages/settings";
@@ -47,7 +50,10 @@ function Router() {
       <Route path="/payment-success" component={PaymentSuccessPage} />
       <Route path="/payment-cancel" component={PaymentCancelPage} />
       <Route path="/checkout" component={CheckoutPage} />
-      <Route path="/subscribe" component={SubscribePage} />
+      <ProtectedRoute path="/subscribe" component={SubscribePage} />
+      <ProtectedRoute path="/invoices" component={InvoicesPage} />
+      <ProtectedRoute path="/subscription-history" component={SubscriptionHistoryPage} />
+      <ProtectedRoute path="/report-payment-issue" component={ReportPaymentIssuePage} />
       <ProtectedRoute path="/profile-selection" component={ProfileSelectionPage} />
       <ProtectedRoute path="/dashboard" component={Dashboard} />
       <ProtectedRoute path="/drivers" component={DriversPage} />

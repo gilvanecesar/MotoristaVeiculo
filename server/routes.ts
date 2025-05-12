@@ -19,6 +19,7 @@ import {
 import { createCheckoutSession, createPortalSession, handleWebhook } from "./stripe";
 import Stripe from "stripe";
 import { sendSubscriptionEmail, sendPaymentReminderEmail } from "./email-service";
+import { registerUserSubscriptionRoutes } from "./routes/user-subscription";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configurar autenticação
