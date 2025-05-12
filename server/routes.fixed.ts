@@ -440,7 +440,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Se um ID de cliente for especificado, filtrar por esse cliente
       if (req.query.clientId) {
         const clientId = parseInt(req.query.clientId as string);
-        freights = await storage.getFreightsByClient(clientId);
+        // Filtrar fretes por cliente usando o método getFreights e filtrando depois
+        const allFreights = await storage.getFreights();
+        freights = allFreights.filter(f => f.clientId === clientId);
       } else {
         // Se o usuário for administrador, obter todos os fretes
         // Se for cliente ou motorista, obter apenas os fretes associados
@@ -448,7 +450,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           freights = await storage.getFreights();
         } else if (req.user?.clientId) {
           // Para usuários com perfil de cliente, obter fretes do cliente
-          freights = await storage.getFreightsByClient(req.user.clientId);
+          // Filtrar fretes por cliente usando o método getFreights e filtrando depois
+          const allFreights = await storage.getFreights();
+          freights = allFreights.filter(f => f.clientId === req.user?.clientId);
         } else {
           // Outros perfis (motoristas) veem todos os fretes ativos
           // Com acesso limitado apenas para visualização
