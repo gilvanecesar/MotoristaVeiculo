@@ -218,18 +218,6 @@ export default function Navigation() {
             </div>
           </div>
 
-          {/* Notification Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative text-slate-600 dark:text-slate-300 hover:text-primary hover:bg-slate-100/80 dark:hover:bg-slate-700/80"
-          >
-            <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-              2
-            </div>
-            <Bell className="h-5 w-5" />
-          </Button>
-          
           {/* Mobile Menu Toggle */}
           {isMobile && (
             <Button

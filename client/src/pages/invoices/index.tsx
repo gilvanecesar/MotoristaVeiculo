@@ -108,7 +108,17 @@ export default function InvoicesPage() {
   
   // Formatar data
   const formatDate = (date: string) => {
-    return format(new Date(date * 1000), "dd 'de' MMMM 'de' yyyy", { locale: pt });
+    try {
+      // Verificar se a data é um timestamp (número) ou já está no formato ISO
+      const dateValue = !isNaN(Number(date)) 
+        ? new Date(Number(date) * 1000) // Se for número, multiplicar por 1000 para converter de segundos para milissegundos
+        : new Date(date); // Se já for string de data, usar diretamente
+        
+      return format(dateValue, "dd 'de' MMMM 'de' yyyy", { locale: pt });
+    } catch (error) {
+      console.error("Erro ao formatar data:", date, error);
+      return "Data inválida";
+    }
   };
   
   // Obter status da fatura em português
