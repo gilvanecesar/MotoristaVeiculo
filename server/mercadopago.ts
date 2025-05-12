@@ -1,6 +1,7 @@
 import { MercadoPagoConfig, Payment, Preference } from 'mercadopago';
 import { Request, Response } from 'express';
 import { storage } from './storage';
+import { format } from 'date-fns';
 
 // Configurar o Mercado Pago com a chave de acesso
 if (!process.env.MERCADOPAGO_ACCESS_TOKEN) {
@@ -15,6 +16,51 @@ const client = new MercadoPagoConfig({
 // Criar instâncias para métodos específicos
 const paymentClient = new Payment(client);
 const preferenceClient = new Preference(client);
+
+/**
+ * Busca pagamentos do usuário no Mercado Pago
+ * @param userId ID do usuário
+ * @returns Lista de pagamentos formatada para o frontend
+ */
+export async function getUserPayments(userId: number) {
+  try {
+    // Buscar pagamentos do usuário no banco de dados local
+    const userPayments = await storage.getMercadoPagoPaymentsByUser(userId);
+    
+    if (!userPayments || userPayments.length === 0) {
+      return [];
+    }
+    
+    // Formatar pagamentos para o formato esperado pelo frontend
+    const formattedPayments = userPayments.map(payment => {
+      const createdDate = payment.createdAt instanceof Date 
+        ? payment.createdAt 
+        : new Date(payment.createdAt || Date.now());
+      
+      return {
+        id: `mp_${payment.id}`,
+        invoiceNumber: `MP-${payment.id}`,
+        amountDue: Number(payment.amount) * 100, // Converter para centavos como no Stripe
+        amountPaid: Number(payment.amount) * 100,
+        currency: 'brl',
+        status: payment.status || 'paid',
+        createdAt: String(Math.floor(createdDate.getTime() / 1000)), // Timestamp em segundos
+        periodStart: String(Math.floor(createdDate.getTime() / 1000)),
+        periodEnd: String(Math.floor(createdDate.getTime() / 1000)),
+        dueDate: String(Math.floor(createdDate.getTime() / 1000)),
+        paymentMethod: 'mercadopago',
+        description: payment.description || 'Pagamento via Mercado Pago',
+        url: payment.receiptUrl || null,
+        pdf: null
+      };
+    });
+    
+    return formattedPayments;
+  } catch (error) {
+    console.error('Erro ao buscar pagamentos do Mercado Pago:', error);
+    return [];
+  }
+}
 
 /**
  * Cria uma preferência de pagamento para assinatura única

@@ -184,6 +184,7 @@ export interface IStorage {
   getPaymentsByInvoice(invoiceId: number): Promise<Payment[]>;
   getPayment(id: number): Promise<Payment | undefined>;
   getPaymentByStripeId(stripeId: string): Promise<Payment | undefined>;
+  getMercadoPagoPaymentsByUser(userId: number): Promise<Payment[]>;
   createPayment(payment: InsertPayment): Promise<Payment>;
   updatePayment(
     id: number,
@@ -546,6 +547,12 @@ export class MemStorage implements IStorage {
   // Payment operations
   async getPayments(): Promise<Payment[]> {
     return Array.from(this.paymentsData.values());
+  }
+  
+  async getMercadoPagoPaymentsByUser(userId: number): Promise<Payment[]> {
+    return Array.from(this.paymentsData.values()).filter(
+      (payment) => payment.userId === userId && payment.paymentMethod === 'mercadopago'
+    );
   }
 
   async getPaymentsByUser(userId: number): Promise<Payment[]> {
@@ -1318,6 +1325,18 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(payments).where(eq(payments.userId, userId));
   }
 
+  async getMercadoPagoPaymentsByUser(userId: number): Promise<Payment[]> {
+    return await db
+      .select()
+      .from(payments)
+      .where(
+        and(
+          eq(payments.userId, userId),
+          eq(payments.paymentMethod, 'mercadopago')
+        )
+      );
+  }
+  
   async getPaymentsByClient(clientId: number): Promise<Payment[]> {
     return await db
       .select()

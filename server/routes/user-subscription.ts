@@ -76,53 +76,87 @@ export function registerUserSubscriptionRoutes(app: Express) {
       }
 
       const user = await storage.getUser(userId);
-      if (!user || !user.stripeCustomerId) {
-        // Usuário não tem ID de cliente Stripe, retornar lista vazia
-        return res.json({ invoices: [] });
+      
+      // Array para armazenar todas as faturas
+      let allInvoices = [];
+      
+      // Buscar faturas do Stripe (se o usuário tiver um ID de cliente Stripe)
+      if (user && user.stripeCustomerId) {
+        try {
+          console.log(`Buscando faturas para o stripe customer ID: ${user.stripeCustomerId}`);
+          const stripeInvoices = await stripe.invoices.list({
+            customer: user.stripeCustomerId,
+            limit: 100, // Limitar para as 100 faturas mais recentes
+          });
+          
+          // Processar os dados da fatura para um formato adequado ao frontend
+          const processedStripeInvoices = stripeInvoices.data.map(invoice => {
+            // Valores monetários do Stripe vêm em centavos
+            const amountDue = invoice.amount_due || 0;
+            const amountPaid = invoice.amount_paid || 0;
+            
+            return {
+              id: invoice.id,
+              invoiceNumber: invoice.number || invoice.id,
+              amountDue: amountDue,
+              amountPaid: amountPaid,
+              currency: invoice.currency || 'brl',
+              status: invoice.status || 'draft',
+              createdAt: invoice.created ? String(invoice.created) : null,
+              periodStart: invoice.period_start ? String(invoice.period_start) : null,
+              periodEnd: invoice.period_end ? String(invoice.period_end) : null,
+              dueDate: invoice.due_date ? String(invoice.due_date) : null,
+              paymentMethod: 'stripe',
+              description: invoice.description || 'Assinatura via Stripe',
+              url: invoice.hosted_invoice_url,
+              pdf: invoice.invoice_pdf
+            };
+          });
+          
+          console.log(`Encontradas ${processedStripeInvoices.length} faturas do Stripe com dados básicos válidos`);
+          
+          // Filtrar faturas inválidas ou de teste
+          const validStripeInvoices = processedStripeInvoices.filter(invoice => 
+            invoice.id && (invoice.amountDue > 0 || invoice.amountPaid > 0)
+          );
+          
+          console.log(`Encontradas ${validStripeInvoices.length} faturas do Stripe válidas após filtragem`);
+          
+          // Adicionar faturas do Stripe ao resultado final
+          allInvoices = [...validStripeInvoices];
+        } catch (error) {
+          console.error("Erro ao buscar faturas do Stripe:", error);
+          // Continuar com a execução para buscar faturas do Mercado Pago
+        }
       }
-
-      // Buscar faturas no Stripe
-      console.log(`Buscando faturas para o stripe customer ID: ${user.stripeCustomerId}`);
-      const stripeInvoices = await stripe.invoices.list({
-        customer: user.stripeCustomerId,
-        limit: 100, // Limitar para as 100 faturas mais recentes
+      
+      // Buscar pagamentos do Mercado Pago
+      try {
+        if (userId) {
+          // Função importada de mercadopago.ts
+          const { getUserPayments } = require('../mercadopago');
+          const mercadoPagoPayments = await getUserPayments(userId);
+          
+          console.log(`Encontrados ${mercadoPagoPayments.length} pagamentos do Mercado Pago`);
+          
+          // Adicionar pagamentos do Mercado Pago ao resultado final
+          allInvoices = [...allInvoices, ...mercadoPagoPayments];
+        }
+      } catch (error) {
+        console.error("Erro ao buscar pagamentos do Mercado Pago:", error);
+      }
+      
+      // Ordenar por data de criação (mais recentes primeiro)
+      allInvoices.sort((a, b) => {
+        const dateA = a.createdAt ? Number(a.createdAt) : 0;
+        const dateB = b.createdAt ? Number(b.createdAt) : 0;
+        return dateB - dateA;
       });
       
-      // Processar os dados da fatura para um formato adequado ao frontend
-      const processedInvoices = stripeInvoices.data.map(invoice => {
-        // Valores monetários do Stripe vêm em centavos
-        const amountDue = invoice.amount_due || 0;
-        const amountPaid = invoice.amount_paid || 0;
-        
-        return {
-          id: invoice.id,
-          invoiceNumber: invoice.number || invoice.id,
-          amountDue: amountDue,
-          amountPaid: amountPaid,
-          currency: invoice.currency || 'brl',
-          status: invoice.status || 'draft',
-          createdAt: invoice.created ? String(invoice.created) : null,
-          periodStart: invoice.period_start ? String(invoice.period_start) : null,
-          periodEnd: invoice.period_end ? String(invoice.period_end) : null,
-          dueDate: invoice.due_date ? String(invoice.due_date) : null,
-          paymentMethod: invoice.payment_intent ? 'card' : null,
-          description: invoice.description,
-          url: invoice.hosted_invoice_url,
-          pdf: invoice.invoice_pdf
-        };
-      });
-      
-      console.log(`Encontradas ${processedInvoices.length} faturas com dados básicos válidos`);
-      
-      // Filtrar faturas inválidas ou de teste
-      const validInvoices = processedInvoices.filter(invoice => 
-        invoice.id && (invoice.amountDue > 0 || invoice.amountPaid > 0)
-      );
-      
-      console.log(`Encontradas ${validInvoices.length} faturas válidas após filtragem rigorosa`);
+      console.log(`Total de ${allInvoices.length} faturas/pagamentos encontrados para o usuário`);
       
       return res.json({
-        invoices: validInvoices
+        invoices: allInvoices
       });
     } catch (error) {
       console.error("Erro ao obter faturas:", error);
