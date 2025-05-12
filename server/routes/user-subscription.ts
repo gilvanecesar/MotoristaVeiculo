@@ -82,13 +82,47 @@ export function registerUserSubscriptionRoutes(app: Express) {
       }
 
       // Buscar faturas no Stripe
-      const invoices = await stripe.invoices.list({
+      console.log(`Buscando faturas para o stripe customer ID: ${user.stripeCustomerId}`);
+      const stripeInvoices = await stripe.invoices.list({
         customer: user.stripeCustomerId,
         limit: 100, // Limitar para as 100 faturas mais recentes
       });
-
+      
+      // Processar os dados da fatura para um formato adequado ao frontend
+      const processedInvoices = stripeInvoices.data.map(invoice => {
+        // Valores monetários do Stripe vêm em centavos
+        const amountDue = invoice.amount_due || 0;
+        const amountPaid = invoice.amount_paid || 0;
+        
+        return {
+          id: invoice.id,
+          invoiceNumber: invoice.number || invoice.id,
+          amountDue: amountDue,
+          amountPaid: amountPaid,
+          currency: invoice.currency || 'brl',
+          status: invoice.status || 'draft',
+          createdAt: invoice.created ? String(invoice.created) : null,
+          periodStart: invoice.period_start ? String(invoice.period_start) : null,
+          periodEnd: invoice.period_end ? String(invoice.period_end) : null,
+          dueDate: invoice.due_date ? String(invoice.due_date) : null,
+          paymentMethod: invoice.payment_intent ? 'card' : null,
+          description: invoice.description,
+          url: invoice.hosted_invoice_url,
+          pdf: invoice.invoice_pdf
+        };
+      });
+      
+      console.log(`Encontradas ${processedInvoices.length} faturas com dados básicos válidos`);
+      
+      // Filtrar faturas inválidas ou de teste
+      const validInvoices = processedInvoices.filter(invoice => 
+        invoice.id && (invoice.amountDue > 0 || invoice.amountPaid > 0)
+      );
+      
+      console.log(`Encontradas ${validInvoices.length} faturas válidas após filtragem rigorosa`);
+      
       return res.json({
-        invoices: invoices.data
+        invoices: validInvoices
       });
     } catch (error) {
       console.error("Erro ao obter faturas:", error);
