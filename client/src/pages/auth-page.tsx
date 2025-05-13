@@ -114,9 +114,9 @@ export default function AuthPage() {
           description: "Bem-vindo à plataforma Quero Fretes",
         });
         
-        // Se o usuário não tem assinatura ativa, redireciona para a página de seleção de planos
+        // Se o usuário não tem assinatura ativa, redireciona para a página fixa de assinatura
         if (!userData.subscriptionActive) {
-          navigate("/subscribe/fixed");
+          window.location.href = "https://querofretes.com.br/subscribe/fixed";
         } else if (!userData.clientId) {
           // Se tem assinatura mas não tem cliente associado, redireciona para página de cadastro de cliente
           navigate("/clients/new");
@@ -210,8 +210,8 @@ export default function AuthPage() {
           description: "Para continuar, selecione um plano de assinatura",
         });
         
-        // Redireciona para a página de seleção de planos
-        navigate("/subscribe/fixed");
+        // Redireciona para a página fixa de assinatura do site
+        window.location.href = "https://querofretes.com.br/subscribe/fixed";
       },
     });
   };
