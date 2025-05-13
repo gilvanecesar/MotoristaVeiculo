@@ -3,11 +3,27 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Função para formatar valores monetários
-function formatCurrency(value: number): string {
+function formatCurrency(value: number | string | null | undefined): string {
+  // Garantir que temos um número válido
+  if (value === null || value === undefined) {
+    return 'R$ 0,00';
+  }
+  
+  // Se for string, tentar converter para número
+  if (typeof value === 'string') {
+    value = parseFloat(value.replace(/[^\d.,]/g, '').replace(',', '.'));
+  }
+  
+  // Verificar se é um número válido
+  if (isNaN(Number(value))) {
+    console.warn('Valor inválido para formatação de moeda:', value);
+    return 'R$ 0,00';
+  }
+  
   return new Intl.NumberFormat('pt-BR', { 
     style: 'currency', 
     currency: 'BRL' 
-  }).format(value);
+  }).format(Number(value));
 }
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
