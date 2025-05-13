@@ -23,7 +23,7 @@ type LoginData = {
   password: string;
 };
 
-type RegisterData = {
+export type RegisterData = {
   email: string;
   password: string;
   name: string;

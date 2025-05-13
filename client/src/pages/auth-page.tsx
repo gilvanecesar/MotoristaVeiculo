@@ -204,11 +204,37 @@ export default function AuthPage() {
         
         // Redireciona com base no tipo de assinatura
         if (subscriptionType === "trial") {
-          // Se for teste gratuito, apenas mostra a página inicial
-          window.location.href = "/";
+          // Se for teste gratuito, ativa o trial via API
+          apiRequest("POST", "/api/activate-trial")
+            .then(response => {
+              if (!response.ok) {
+                throw new Error("Erro ao ativar período de teste");
+              }
+              return response.json();
+            })
+            .then(data => {
+              toast({
+                title: "Período de teste ativado",
+                description: `Seu período de teste foi ativado até ${new Date(data.expiresAt).toLocaleDateString()}`,
+              });
+              // Redireciona para a página inicial após ativar o trial
+              setTimeout(() => {
+                window.location.href = '/home';
+              }, 2000);
+            })
+            .catch(error => {
+              console.error("Erro ao ativar período de teste:", error);
+              window.location.href = '/home'; // Redireciona mesmo assim
+            });
         } else {
-          // Se for assinatura paga, redireciona para o checkout
-          window.location.href = `/checkout?plan=${subscriptionType}`;
+          // Links diretos para os planos do Mercado Pago
+          const mercadoPagoLinks = {
+            monthly: "https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=2c93808496c606170196c6d5ebde0047",
+            annual: "https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=2c93808496c606170196c9eaef0c0171"
+          };
+          
+          // Para assinaturas pagas, redireciona diretamente para o Mercado Pago
+          window.location.href = mercadoPagoLinks[subscriptionType as keyof typeof mercadoPagoLinks] || mercadoPagoLinks.monthly;
         }
       },
     });
