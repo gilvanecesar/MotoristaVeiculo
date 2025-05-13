@@ -18,7 +18,7 @@ export default function AdminPage() {
 
   // Verificar se o usuário é um administrador
   if (user?.profileType !== "admin") {
-    navigate("/");
+    navigate("/home");
     toast({
       title: "Acesso restrito",
       description: "Você não tem permissão para acessar esta página",
@@ -32,7 +32,7 @@ export default function AdminPage() {
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight">Painel do Administrador</h2>
         <Button onClick={() => navigate("/admin/finance")} className="flex items-center gap-2">
-          <Icons.dollarSign className="h-4 w-4" />
+          <Icons.dollar className="h-4 w-4" />
           Gestão Financeira
         </Button>
       </div>

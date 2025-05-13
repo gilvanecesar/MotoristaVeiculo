@@ -48,6 +48,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={LandingPage} />
+      <ProtectedRoute path="/home" component={Home} />
       <Route path="/auth" component={LoginPage} />
       <Route path="/reset-password" component={ResetPasswordPage} />
       <Route path="/payment-success" component={PaymentSuccessPage} />

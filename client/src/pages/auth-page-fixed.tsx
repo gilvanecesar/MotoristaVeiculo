@@ -58,9 +58,9 @@ export default function AuthPage() {
   // Redirecionamento se o usuário já estiver logado
   useEffect(() => {
     if (user) {
-      // Se o usuário tem assinatura ativa, redireciona para a página inicial
+      // Se o usuário tem assinatura ativa, redireciona para a página de dashboard/home
       if (user.subscriptionActive) {
-        navigate("/");
+        navigate("/home");
       } else {
         // Se o usuário está logado mas não tem assinatura, mostra a página de planos
         setShowPlans(true);
