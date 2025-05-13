@@ -29,6 +29,7 @@ import { stripe } from "./stripe";
 import { format } from "date-fns";
 import { registerUserSubscriptionRoutes } from "./routes/user-subscription.fixed";
 import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./paypal";
+import { setupInvoicesAPI } from "./routes/invoices-api";
 
 import { createPaymentPreference, processWebhook, createTestPayment } from "./mercadopago";
 
@@ -51,6 +52,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Configurar rotas de assinatura com Mercado Pago
   setupSubscriptionRoutes(app);
+  
+  // Configurar rotas de faturas e histórico de pagamentos
+  setupInvoicesAPI(app);
   
   // Rota para solicitar redefinição de senha
   app.post("/api/forgot-password", async (req: Request, res: Response) => {
