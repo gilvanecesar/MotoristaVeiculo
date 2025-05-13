@@ -47,6 +47,31 @@ function formatCurrency(value: number | string | null | undefined): string {
     return 'R$ 0,00';
   }
 }
+
+// Função para formatar datas com tratamento de erros
+function formatDate(dateValue: string | Date | null | undefined): string {
+  try {
+    // Se for null, undefined ou string vazia
+    if (!dateValue) {
+      return '—';
+    }
+    
+    // Criar objeto Date
+    const date = new Date(dateValue);
+    
+    // Verificar se a data é válida
+    if (isNaN(date.getTime())) {
+      console.warn('Data inválida:', dateValue);
+      return '—';
+    }
+    
+    // Formatar a data
+    return date.toLocaleDateString('pt-BR');
+  } catch (error) {
+    console.error('Erro ao formatar data:', error);
+    return '—';
+  }
+}
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Loader2, PlusCircle, FileDown, Settings, LineChart, Users, DollarSign, X } from "lucide-react";
@@ -614,8 +639,15 @@ export default function FinancePage() {
                         let numAmount = 0;
                         
                         if (typeof subscription.amount === 'string') {
-                          const cleanAmount = subscription.amount.replace(/[^\d.,]/g, '').replace(',', '.');
-                          numAmount = parseFloat(cleanAmount);
+                          // Verificar se é uma string válida
+                          if (subscription.amount) {
+                            try {
+                              const cleanAmount = subscription.amount.toString().replace(/[^\d.,]/g, '').replace(',', '.');
+                              numAmount = parseFloat(cleanAmount);
+                            } catch (e) {
+                              console.warn('Erro ao processar string de valor:', e);
+                            }
+                          }
                         } else if (typeof subscription.amount === 'number') {
                           numAmount = subscription.amount;
                         }
@@ -635,8 +667,8 @@ export default function FinancePage() {
                               {subscriptionStatusMap[subscription.status] || subscription.status}
                             </Badge>
                           </TableCell>
-                          <TableCell>{new Date(subscription.startDate).toLocaleDateString('pt-BR')}</TableCell>
-                          <TableCell>{new Date(subscription.endDate).toLocaleDateString('pt-BR')}</TableCell>
+                          <TableCell>{formatDate(subscription.startDate)}</TableCell>
+                          <TableCell>{formatDate(subscription.endDate)}</TableCell>
                           <TableCell className="text-right">
                             <Button variant="ghost" size="sm">
                               Detalhes
@@ -723,7 +755,7 @@ export default function FinancePage() {
                               {invoiceStatusMap[invoice.status] || invoice.status}
                             </Badge>
                           </TableCell>
-                          <TableCell>{new Date(invoice.date).toLocaleDateString('pt-BR')}</TableCell>
+                          <TableCell>{formatDate(invoice.date)}</TableCell>
                           <TableCell className="text-right">
                           <Button variant="ghost" size="sm">
                             Baixar
