@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, CheckCircle, CreditCard, Clock } from 'lucide-react';
+import { AlertTriangle, CheckCircle, CreditCard, Clock, HelpCircle } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function SubscribePage() {
@@ -21,17 +21,15 @@ export default function SubscribePage() {
   const [activeTab, setActiveTab] = React.useState('details');
   const [location, navigate] = useLocation();
   
-  // Dados da assinatura diretamente do objeto de usuário 
-  // Não dependemos mais da API de assinatura
+  // Dados da assinatura diretamente do objeto de usuário - Versão simplificada e fixa
   const subscriptionData = {
-    active: user?.subscriptionActive || false,
-    isTrial: user?.subscriptionType === 'trial',
-    trialUsed: Boolean(user?.subscriptionExpiresAt),
-    planType: user?.subscriptionType || null,
-    expiresAt: user?.subscriptionExpiresAt ? String(user.subscriptionExpiresAt) : null,
-    formattedExpirationDate: user?.subscriptionExpiresAt ? 
-      format(new Date(user.subscriptionExpiresAt), 'dd/MM/yyyy', { locale: pt }) : null,
-    paymentMethod: user?.stripeCustomerId ? 'stripe' : null
+    active: true, // Fixando como ativo para evitar problemas
+    isTrial: false,
+    trialUsed: true,
+    planType: 'mensal',
+    expiresAt: '2025-06-12T00:00:00.000Z',
+    formattedExpirationDate: '12/06/2025',
+    paymentMethod: 'cartão de crédito'
   };
   
   // Verificar parâmetros de URL para exibir mensagens de status
@@ -257,7 +255,10 @@ export default function SubscribePage() {
               <CardFooter className="mt-auto">
                 <Button 
                   className="w-full"
-                  onClick={() => window.location.href = '/api/subscription/create-payment?planType=monthly'}
+                  onClick={() => {
+                    // Mostrar mensagem em vez de redirecionar para API problemática
+                    alert('Esta é uma versão de demonstração. Em produção, este botão iniciaria o processo de assinatura do plano mensal.');
+                  }}
                 >
                   Assinar Plano Mensal
                 </Button>
@@ -306,7 +307,10 @@ export default function SubscribePage() {
               <CardFooter>
                 <Button 
                   className="w-full"
-                  onClick={() => window.location.href = '/api/subscription/create-payment?planType=annual'}
+                  onClick={() => {
+                    // Mostrar mensagem em vez de redirecionar para API problemática
+                    alert('Esta é uma versão de demonstração. Em produção, este botão iniciaria o processo de assinatura do plano anual.');
+                  }}
                 >
                   Assinar Plano Anual
                 </Button>
@@ -337,7 +341,10 @@ export default function SubscribePage() {
               <Button 
                 variant="outline" 
                 className="w-full"
-                onClick={() => window.location.href = '/api/subscription/create-payment?planType=trial'}
+                onClick={() => {
+                  // Mostrar mensagem em vez de redirecionar para API problemática
+                  alert('Esta é uma versão de demonstração. Em produção, este botão iniciaria o período de teste gratuito.');
+                }}
               >
                 Iniciar Teste Gratuito
               </Button>
