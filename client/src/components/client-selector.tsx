@@ -30,6 +30,13 @@ import {
 
 export function ClientSelector() {
   const { user, loginMutation, logoutMutation, isLoading } = useAuth();
+  
+  // Para debug
+  useEffect(() => {
+    if (user) {
+      console.log("ClientSelector - profileType:", user.profileType);
+    }
+  }, [user]);
   const [loginDialogOpen, setLoginDialogOpen] = useState(false);
   const { toast } = useToast();
 
@@ -80,7 +87,13 @@ export function ClientSelector() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Usuário: {user.profileType}</DropdownMenuLabel>
+            <DropdownMenuLabel>Usuário: {
+              user.profileType === "admin" ? "Administrador" :
+              user.profileType === "driver" ? "Motorista" :
+              user.profileType === "shipper" ? "Embarcador" :
+              user.profileType === "agent" ? "Agente" :
+              user.profileType // Se já estiver em português, mantem
+            }</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="text-red-500 focus:text-red-500">
               <LogOut className="h-4 w-4 mr-2" />
