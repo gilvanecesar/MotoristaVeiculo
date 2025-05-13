@@ -210,16 +210,11 @@ export default function LoginPage() {
                     Acesso a relatórios básicos
                   </li>
                 </ul>
-                <Button 
-                  className={`w-full ${selectedPlan === "trial" ? "bg-primary" : "bg-primary/10 hover:bg-primary/20 text-primary"}`}
-                  variant={selectedPlan === "trial" ? "default" : "outline"}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedPlan("trial");
-                  }}
-                >
-                  {selectedPlan === "trial" ? "Selecionado" : "Selecionar"}
-                </Button>
+                {selectedPlan === "trial" && (
+                  <div className="w-full text-center text-sm text-primary font-medium">
+                    Plano Selecionado
+                  </div>
+                )}
               </CardContent>
             </Card>
             
@@ -249,16 +244,11 @@ export default function LoginPage() {
                     Relatórios avançados
                   </li>
                 </ul>
-                <Button 
-                  className={`w-full ${selectedPlan === "monthly" ? "bg-primary" : "bg-primary/10 hover:bg-primary/20 text-primary"}`}
-                  variant={selectedPlan === "monthly" ? "default" : "outline"}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedPlan("monthly");
-                  }}
-                >
-                  {selectedPlan === "monthly" ? "Selecionado" : "Selecionar"}
-                </Button>
+                {selectedPlan === "monthly" && (
+                  <div className="w-full text-center text-sm text-primary font-medium">
+                    Plano Selecionado
+                  </div>
+                )}
               </CardContent>
             </Card>
             
@@ -291,16 +281,11 @@ export default function LoginPage() {
                     Pagamento único anual
                   </li>
                 </ul>
-                <Button 
-                  className={`w-full ${selectedPlan === "annual" ? "bg-primary" : "bg-primary/10 hover:bg-primary/20 text-primary"}`}
-                  variant={selectedPlan === "annual" ? "default" : "outline"}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedPlan("annual");
-                  }}
-                >
-                  {selectedPlan === "annual" ? "Selecionado" : "Selecionar"}
-                </Button>
+                {selectedPlan === "annual" && (
+                  <div className="w-full text-center text-sm text-primary font-medium">
+                    Plano Selecionado
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
