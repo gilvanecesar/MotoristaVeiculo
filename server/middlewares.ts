@@ -150,8 +150,8 @@ export function hasClientAccess(req: Request, res: Response, next: NextFunction)
 
   const clientId = parseInt(req.params.id, 10);
   
-  // Permite acesso se o usuário for admin ou se o cliente estiver associado ao usuário
-  if (req.user?.profileType?.toLowerCase() === "admin" || req.user?.clientId === clientId) {
+  // Permite acesso se o usuário for administrador ou se o cliente estiver associado ao usuário
+  if (req.user?.profileType?.toLowerCase() === "administrador" || req.user?.clientId === clientId) {
     return next();
   }
   
@@ -169,7 +169,7 @@ export function hasDriverAccess(req: Request, res: Response, next: NextFunction)
 
   const driverId = parseInt(req.params.id, 10);
   
-  if (req.user?.profileType?.toLowerCase() === "admin" || req.user?.driverId === driverId) {
+  if (req.user?.profileType?.toLowerCase() === "administrador" || req.user?.driverId === driverId) {
     return next();
   }
   
@@ -182,9 +182,9 @@ export async function hasFreightAccess(req: Request, res: Response, next: NextFu
     return res.status(401).json({ message: "Não autenticado" });
   }
 
-  // Admin sempre tem acesso
-  if (req.user?.profileType?.toLowerCase() === "admin") {
-    console.log(`[hasFreightAccess] Usuário admin (${req.user.id}) com acesso autorizado`);
+  // Administrador sempre tem acesso
+  if (req.user?.profileType?.toLowerCase() === "administrador") {
+    console.log(`[hasFreightAccess] Usuário administrador (${req.user.id}) com acesso autorizado`);
     return next();
   }
 
@@ -238,8 +238,8 @@ export async function hasVehicleAccess(req: Request, res: Response, next: NextFu
     return res.status(401).json({ message: "Não autenticado" });
   }
 
-  // Admin sempre tem acesso
-  if (req.user?.profileType?.toLowerCase() === "admin") {
+  // Administrador sempre tem acesso
+  if (req.user?.profileType?.toLowerCase() === "administrador") {
     return next();
   }
 
@@ -252,7 +252,7 @@ export async function hasVehicleAccess(req: Request, res: Response, next: NextFu
   }
   
   // Se o usuário for motorista, verifica se o veículo pertence a ele
-  if (req.user?.profileType?.toLowerCase() === "driver" && req.user?.driverId === vehicle.driverId) {
+  if (req.user?.profileType?.toLowerCase() === "motorista" && req.user?.driverId === vehicle.driverId) {
     return next();
   }
   
