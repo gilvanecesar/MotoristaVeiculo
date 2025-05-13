@@ -93,11 +93,14 @@ export default function Navigation() {
     }
   };
   
-  // Verificar o tipo de perfil do usuário
-  const isAdmin = user?.profileType === "administrador";
-  const isDriver = user?.profileType === "motorista";
-  const isShipper = user?.profileType === "embarcador";
-  const isAgent = user?.profileType === "agente";
+  // Verificar o tipo de perfil do usuário (suporta tanto nomes antigos quanto novos)
+  const isAdmin = user?.profileType === "administrador" || user?.profileType === "admin";
+  const isDriver = user?.profileType === "motorista" || user?.profileType === "driver";
+  const isShipper = user?.profileType === "embarcador" || user?.profileType === "shipper";
+  const isAgent = user?.profileType === "agente" || user?.profileType === "agent";
+  
+  // Para depuração
+  console.log("Tipo de perfil do usuário:", user?.profileType);
   
   // Menus administrativos (apenas para administradores)
   const financeMenuItem = {

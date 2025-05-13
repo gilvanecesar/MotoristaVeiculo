@@ -135,7 +135,7 @@ export function isAdminOrSelf(req: Request, res: Response, next: NextFunction) {
 
   const userId = parseInt(req.params.id, 10);
   
-  if (req.user?.profileType?.toLowerCase() === "administrador" || req.user?.id === userId) {
+  if (req.user?.profileType?.toLowerCase() === "administrador" || req.user?.profileType?.toLowerCase() === "admin" || req.user?.id === userId) {
     return next();
   }
   
@@ -151,7 +151,7 @@ export function hasClientAccess(req: Request, res: Response, next: NextFunction)
   const clientId = parseInt(req.params.id, 10);
   
   // Permite acesso se o usuário for administrador ou se o cliente estiver associado ao usuário
-  if (req.user?.profileType?.toLowerCase() === "administrador" || req.user?.clientId === clientId) {
+  if (req.user?.profileType?.toLowerCase() === "administrador" || req.user?.profileType?.toLowerCase() === "admin" || req.user?.clientId === clientId) {
     return next();
   }
   
