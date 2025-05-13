@@ -577,3 +577,26 @@ export type FreightWithDestinations = Freight & { destinations?: FreightDestinat
 export type ClientWithSubscriptions = Client & { subscriptions?: Subscription[] };
 export type SubscriptionWithInvoices = Subscription & { invoices?: Invoice[] };
 export type InvoiceWithPayments = Invoice & { payments?: Payment[] };
+
+// Tabela de eventos de assinatura (para log de atividades)
+export const subscriptionEvents = pgTable("subscription_events", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  eventType: text("event_type").notNull(),
+  description: text("description"),
+  metadata: json("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Insert schema para eventos de assinatura
+export const insertSubscriptionEventSchema = createInsertSchema(subscriptionEvents)
+  .omit({ id: true, createdAt: true });
+
+// Validator para eventos de assinatura
+export const subscriptionEventValidator = insertSubscriptionEventSchema.extend({
+  eventType: z.string().min(1, "Tipo de evento é obrigatório"),
+});
+
+// Tipo para eventos de assinatura
+export type SubscriptionEvent = typeof subscriptionEvents.$inferSelect;
+export type InsertSubscriptionEvent = z.infer<typeof insertSubscriptionEventSchema>;

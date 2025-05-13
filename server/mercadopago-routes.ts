@@ -20,6 +20,64 @@ export function setupMercadoPagoRoutes(app: Express) {
   // Rota de teste para administradores
   app.get("/api/mercadopago/test-payment", isAdmin, createTestPayment);
   
+  // Rota para simular pagamento bem-sucedido (ambiente de desenvolvimento)
+  app.post('/api/mercadopago/simulate-payment', isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: { message: 'Usuário não autenticado' } });
+      }
+      
+      const { planType } = req.body;
+      console.log('Simulando pagamento para plano:', planType);
+      
+      // Atualizar usuário com assinatura ativa
+      const user = req.user;
+      const userId = user.id;
+      
+      // Verificar se ambiente é de desenvolvimento
+      if (process.env.NODE_ENV === 'production') {
+        return res.status(403).json({ error: { message: 'Esta rota só está disponível em ambiente de desenvolvimento' } });
+      }
+      
+      // Calcular data de expiração
+      const now = new Date();
+      const expiresAt = new Date(now);
+      if (planType === 'yearly') {
+        expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+      } else {
+        expiresAt.setMonth(expiresAt.getMonth() + 1);
+      }
+      
+      // Atualizar informações de assinatura
+      await storage.updateUser(userId, {
+        subscriptionActive: true,
+        subscriptionType: planType,
+        subscriptionExpiresAt: expiresAt,
+        paymentRequired: false
+      });
+      
+      // Criar evento de assinatura
+      await storage.createSubscriptionEvent({
+        userId,
+        eventType: 'subscription_activated',
+        description: `Assinatura ${planType} ativada via simulação de pagamento`
+      });
+      
+      return res.json({
+        success: true,
+        message: 'Pagamento simulado com sucesso',
+        subscriptionDetails: {
+          active: true,
+          type: planType,
+          expiresAt: expiresAt,
+        }
+      });
+    } catch (error: any) {
+      console.error('Erro ao simular pagamento:', error);
+      return res.status(500).json({ error: { message: 'Erro ao simular pagamento' } });
+    }
+  });
+  
   // Rota para obter informações de assinatura do usuário atual
   app.get('/api/user/subscription-info', isAuthenticated, async (req: Request, res: Response) => {
     try {
