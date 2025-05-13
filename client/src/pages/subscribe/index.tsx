@@ -25,7 +25,8 @@ export default function SubscribePage() {
   const [activeTab, setActiveTab] = React.useState('details');
   const [location, navigate] = useLocation();
   
-  // Buscar informações da assinatura com tratamento de erro aprimorado
+  // Buscar informações da assinatura apenas como um extra, não vamos depender disso para renderizar
+  // Esta é uma mudança crítica para resolver o problema - não mais depender da API para mostrar a UI
   const { 
     data: subscriptionData, 
     isLoading,
@@ -34,29 +35,20 @@ export default function SubscribePage() {
     queryKey: ['/api/user/subscription-info'],
     queryFn: async () => {
       try {
+        // Fazemos a requisição, mas a UI não depende dela agora
         const res = await apiRequest('GET', '/api/user/subscription-info');
         if (!res.ok) {
-          throw new Error(`API retornou status ${res.status}`);
+          console.warn(`API de assinatura retornou ${res.status}`);
+          return null;
         }
-        const data = await res.json();
-        return data;
+        return await res.json();
       } catch (err) {
         console.error("Erro ao buscar informações de assinatura:", err);
-        // Retornar um objeto vazio mas válido em caso de erro
-        return {
-          active: false,
-          isTrial: false,
-          trialUsed: false,
-          planType: null,
-          expiresAt: null,
-          formattedExpirationDate: null,
-          paymentMethod: null,
-          paymentRequired: true
-        };
+        return null;
       }
     },
-    retry: 1, // Limitar a 1 tentativa para evitar requisições infinitas
-    refetchOnWindowFocus: false // Evitar refetch quando o usuário volta à janela
+    retry: 0, // Sem retry
+    refetchOnWindowFocus: false // Sem refetch automático
   });
   
   // Verificar parâmetros de URL para exibir mensagens de status
@@ -130,17 +122,25 @@ export default function SubscribePage() {
     );
   }
   
-  // Mostrar o indicador de carregamento por no máximo 3 segundos 
-  // Assim evitamos que o usuário fique preso em um estado de carregamento infinito
-  const [showLoadingIndicator, setShowLoadingIndicator] = React.useState(true);
+  // Não vamos mais usar o estado de carregamento, vamos mostrar diretamente os planos
+  // Se houver dados de assinatura, usamos. Caso contrário, mostramos a interface padrão
+  // Desta forma o usuário não fica travado em "Preparando ambiente"
   
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowLoadingIndicator(false);
-    }, 3000); // 3 segundos
-    
-    return () => clearTimeout(timer);
-  }, []);
+  // Se não houver dados, fornecemos um objeto vazio mas com estrutura válida
+  const safeSubscriptionData = {
+    active: user?.subscriptionActive || false,
+    isTrial: user?.subscriptionType === 'trial' || false,
+    trialUsed: Boolean(user?.subscriptionExpiresAt) || false,
+    planType: user?.subscriptionType || null,
+    expiresAt: user?.subscriptionExpiresAt ? String(user.subscriptionExpiresAt) : null,
+    formattedExpirationDate: user?.subscriptionExpiresAt ? 
+      format(new Date(user.subscriptionExpiresAt), 'dd/MM/yyyy', { locale: pt }) : null,
+    paymentMethod: null,
+    lastPaymentDate: null,
+    nextPaymentDate: null,
+    paymentRequired: false,
+    subscription: null
+  };
   
   return (
     <div className="container mx-auto py-6 px-4">
@@ -164,58 +164,54 @@ export default function SubscribePage() {
         </TabsList>
         
         <TabsContent value="details" className="space-y-6">
-          {/* Detalhes da assinatura - com limite de tempo para o estado de carregamento */}
-          {isLoading && showLoadingIndicator ? (
-            <Card>
-              <CardHeader>
-                <Skeleton className="h-8 w-1/3 mb-2" />
-                <Skeleton className="h-4 w-1/2" />
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Skeleton className="h-24 w-full" />
-              </CardContent>
-              <CardFooter>
-                <Skeleton className="h-10 w-full" />
-              </CardFooter>
-            </Card>
-          ) : subscriptionData ? (
+          {/* Detalhes da assinatura - mostramos SEMPRE a interface, sem esperar carregamento */}
+          {/* Se temos dados, usamos, senão usamos dados básicos do usuário */}
+          {subscriptionData ? (
             <SubscriptionDetails 
               subscriptionData={subscriptionData} 
               isLoading={false} 
             />
           ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle>Status da Assinatura</CardTitle>
-                <CardDescription>Informações sobre sua assinatura atual</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col sm:flex-row gap-6">
-                  <div className="flex-1">
-                    <div className="mb-6 flex items-center gap-4">
-                      <AlertTriangle className="h-8 w-8 text-amber-500" />
-                      <div>
-                        <h3 className="text-lg font-medium">Sem Assinatura Ativa</h3>
-                        <p className="text-sm text-muted-foreground">Você ainda não possui uma assinatura ativa. Escolha um plano para começar.</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex-1 flex flex-col justify-center">
-                    <div className="space-y-3">
-                      <Button 
-                        variant="outline" 
-                        className="w-full" 
-                        onClick={() => setActiveTab('plans')}
-                      >
-                        Ver Planos Disponíveis
-                      </Button>
+            <SubscriptionDetails 
+              subscriptionData={safeSubscriptionData}
+              isLoading={false} 
+            />
+          )}
+        </TabsContent>
+        
+        <TabsContent value="plans" className="space-y-6">
+          {/* Os planos sempre são mostrados, independente do estado da assinatura */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Status da Assinatura</CardTitle>
+              <CardDescription>Informações sobre sua assinatura atual</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col sm:flex-row gap-6">
+                <div className="flex-1">
+                  <div className="mb-6 flex items-center gap-4">
+                    <AlertTriangle className="h-8 w-8 text-amber-500" />
+                    <div>
+                      <h3 className="text-lg font-medium">Sem Assinatura Ativa</h3>
+                      <p className="text-sm text-muted-foreground">Você ainda não possui uma assinatura ativa. Escolha um plano para começar.</p>
                     </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+                
+                <div className="flex-1 flex flex-col justify-center">
+                  <div className="space-y-3">
+                    <Button 
+                      variant="outline" 
+                      className="w-full" 
+                      onClick={() => setActiveTab('plans')}
+                    >
+                      Ver Planos Disponíveis
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
           
           {/* Informações adicionais */}
           <Card>
