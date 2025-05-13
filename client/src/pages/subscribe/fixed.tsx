@@ -259,7 +259,7 @@ export default function SubscribeFixed() {
                 </ul>
               </CardContent>
               <CardFooter>
-                <MercadoPagoButton planType="annual" className="w-full" />
+                <MercadoPagoButton planType="yearly" className="w-full" />
               </CardFooter>
             </Card>
           </div>
