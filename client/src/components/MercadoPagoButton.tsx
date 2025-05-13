@@ -24,6 +24,13 @@ export function MercadoPagoButton({
 
   // Determinar se estamos em ambiente de desenvolvimento
   const isDev = process.env.NODE_ENV !== 'production' || window.location.hostname.includes('replit');
+  
+  // No ambiente de desenvolvimento, sempre mostrar opção de simulação (para contornar erro de "não pode pagar para si mesmo")
+  React.useEffect(() => {
+    if (isDev) {
+      setShowSimulateOption(true);
+    }
+  }, [isDev]);
 
   const handleSubscribe = async () => {
     try {
@@ -130,7 +137,26 @@ export function MercadoPagoButton({
   };
 
   return (
-    <div className="w-full space-y-2">
+    <div className="w-full space-y-4">
+      {isDev && (
+        <div className="bg-amber-50 p-3 rounded-md border border-amber-200 text-amber-800 text-sm space-y-3">
+          <div className="flex items-start">
+            <AlertCircle className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0 text-amber-600" />
+            <span>
+              <strong>Ambiente de Desenvolvimento:</strong> O Mercado Pago não permite "pagar para si mesmo" com a mesma conta. Use a opção abaixo para simular um pagamento bem-sucedido.
+            </span>
+          </div>
+          <Button 
+            onClick={handleSimulatePayment} 
+            disabled={isSimulating}
+            className="w-full"
+            variant="default"
+          >
+            {isSimulating ? 'Simulando Pagamento...' : 'Simular Pagamento Bem-Sucedido'}
+          </Button>
+        </div>
+      )}
+      
       <Button 
         onClick={handleSubscribe} 
         disabled={isLoading}
@@ -139,25 +165,6 @@ export function MercadoPagoButton({
       >
         {isLoading ? 'Processando...' : 'Pagar com Mercado Pago'}
       </Button>
-      
-      {showSimulateOption && isDev && (
-        <div className="space-y-2">
-          <div className="bg-amber-50 p-2 rounded border border-amber-200 text-amber-800 text-sm flex items-start">
-            <AlertCircle className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
-            <span>
-              Em ambiente de desenvolvimento, você pode simular um pagamento para testar o fluxo completo.
-            </span>
-          </div>
-          <Button 
-            onClick={handleSimulatePayment} 
-            disabled={isSimulating}
-            className={className}
-            variant="outline"
-          >
-            {isSimulating ? 'Simulando...' : 'Simular Pagamento (Dev)'}
-          </Button>
-        </div>
-      )}
     </div>
   );
 }
