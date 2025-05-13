@@ -170,17 +170,10 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="border-b">
-        <div className="container mx-auto flex items-center py-4">
-          <img src={logoQueroFretes} alt="QUERO FRETES" className="h-10 mr-4" />
-          <h1 className="text-lg font-bold">QUERO FRETES</h1>
-          <div className="ml-auto text-sm text-muted-foreground">
-            Sistema de gerenciamento de cargas
-          </div>
-        </div>
-      </header>
-      
       <main className="flex-grow flex flex-col items-center justify-center p-6">
+        <div className="flex justify-center mb-8">
+          <img src={logoQueroFretes} alt="QUERO FRETES" className="h-16" />
+        </div>
         <div className="w-full max-w-screen-xl mb-8">
           <h2 className="text-2xl font-bold text-center mb-6">Nossos Planos</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
