@@ -28,7 +28,7 @@ import {
 const navItems = [
   { 
     label: "Home", 
-    path: "/",
+    path: "/home",
     icon: Home
   },
   { 
@@ -81,8 +81,8 @@ export default function Navigation() {
           console.log("Logout efetuado com sucesso");
           // Limpar dados locais que possam interferir
           localStorage.removeItem('currentClientId');
-          // Redirecionar para a página inicial após o logout
-          navigate('/');
+          // Redirecionar para a página de login após o logout
+          navigate('/auth');
         },
         onError: (error) => {
           console.error("Erro ao fazer logout:", error);
