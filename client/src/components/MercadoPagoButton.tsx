@@ -98,14 +98,40 @@ export function MercadoPagoButton({
       // Converter 'annual' para 'yearly' para compatibilidade com o backend
       const normalizedPlanType = planType === 'annual' ? 'yearly' : planType;
       
-      const response = await apiRequest('POST', '/api/mercadopago/simulate-payment', {
-        planType: normalizedPlanType
-      });
+      console.log('Iniciando simulação de pagamento para plano:', normalizedPlanType);
       
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Resposta da simulação:', data);
+      let responseData;
+      
+      try {
+        // Tente usando o endpoint diretamente
+        const response = await fetch('/api/mercadopago/simulate-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ planType: normalizedPlanType })
+        });
         
+        if (!response.ok) {
+          throw new Error(`Erro HTTP: ${response.status}`);
+        }
+        
+        responseData = await response.json();
+      } catch (fetchError) {
+        console.error('Falha na primeira tentativa, usando apiRequest:', fetchError);
+        
+        const response = await apiRequest('POST', '/api/mercadopago/simulate-payment', {
+          planType: normalizedPlanType
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Erro na API: ${response.status}`);
+        }
+        
+        responseData = await response.json();
+      }
+      
+      console.log('Resposta da simulação:', responseData);
+      
+      if (responseData && responseData.success) {
         toast({
           title: 'Pagamento simulado com sucesso',
           description: 'Sua assinatura foi ativada em modo de simulação',
@@ -121,8 +147,7 @@ export function MercadoPagoButton({
           onSuccess();
         }
       } else {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Erro ao simular pagamento');
+        throw new Error(responseData?.message || 'Erro ao simular pagamento');
       }
     } catch (error) {
       console.error('Erro na simulação:', error);
