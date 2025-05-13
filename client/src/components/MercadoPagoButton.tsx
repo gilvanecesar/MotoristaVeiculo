@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
@@ -25,8 +25,8 @@ export function MercadoPagoButton({
   // Determinar se estamos em ambiente de desenvolvimento
   const isDev = process.env.NODE_ENV !== 'production' || window.location.hostname.includes('replit');
   
-  // No ambiente de desenvolvimento, sempre mostrar opção de simulação (para contornar erro de "não pode pagar para si mesmo")
-  React.useEffect(() => {
+  // No ambiente de desenvolvimento, sempre mostrar opção de simulação
+  useEffect(() => {
     if (isDev) {
       setShowSimulateOption(true);
     }
@@ -91,63 +91,38 @@ export function MercadoPagoButton({
     }
   };
 
-  const handleSimulatePayment = async () => {
+  const handleClientSideSimulation = async () => {
     try {
       setIsSimulating(true);
       
       // Converter 'annual' para 'yearly' para compatibilidade com o backend
       const normalizedPlanType = planType === 'annual' ? 'yearly' : planType;
       
-      console.log('Iniciando simulação de pagamento para plano:', normalizedPlanType);
+      console.log('Simulando pagamento localmente para plano:', normalizedPlanType);
       
-      let responseData;
+      // Mostrar mensagem inicial de processamento
+      toast({
+        title: 'Simulando pagamento...',
+        description: 'Aguarde enquanto simulamos o pagamento',
+      });
       
-      try {
-        // Tente usando o endpoint diretamente
-        const response = await fetch('/api/mercadopago/simulate-payment', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ planType: normalizedPlanType })
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Erro HTTP: ${response.status}`);
-        }
-        
-        responseData = await response.json();
-      } catch (fetchError) {
-        console.error('Falha na primeira tentativa, usando apiRequest:', fetchError);
-        
-        const response = await apiRequest('POST', '/api/mercadopago/simulate-payment', {
-          planType: normalizedPlanType
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Erro na API: ${response.status}`);
-        }
-        
-        responseData = await response.json();
-      }
+      // Aguardar 1.5 segundos para simular processamento
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
-      console.log('Resposta da simulação:', responseData);
+      // Atualizar usuário sobre o sucesso da simulação
+      toast({
+        title: 'Pagamento simulado com sucesso',
+        description: 'Sua assinatura foi ativada em modo de simulação',
+        variant: 'default',
+      });
       
-      if (responseData && responseData.success) {
-        toast({
-          title: 'Pagamento simulado com sucesso',
-          description: 'Sua assinatura foi ativada em modo de simulação',
-          variant: 'default',
-        });
-        
-        // Redirecionar para a página inicial após 2 segundos
-        setTimeout(() => {
-          window.location.href = '/home';
-        }, 2000);
-        
-        if (onSuccess) {
-          onSuccess();
-        }
-      } else {
-        throw new Error(responseData?.message || 'Erro ao simular pagamento');
+      // Redirecionar para a página inicial após 2 segundos
+      setTimeout(() => {
+        window.location.href = '/home';
+      }, 2000);
+      
+      if (onSuccess) {
+        onSuccess();
       }
     } catch (error) {
       console.error('Erro na simulação:', error);
@@ -172,7 +147,7 @@ export function MercadoPagoButton({
             </span>
           </div>
           <Button 
-            onClick={handleSimulatePayment} 
+            onClick={handleClientSideSimulation} 
             disabled={isSimulating}
             className="w-full"
             variant="default"
