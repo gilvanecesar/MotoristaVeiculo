@@ -174,8 +174,8 @@ export default function SubscribeFixed() {
               </CardContent>
               <CardFooter className="flex flex-col gap-2">
                 <a 
-                  href="https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=2c93808496c606170196c6d5ebde0047" 
-                  name="MP-payButton" 
+                  href="https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=2c93808496c606170196c6d5ebde0047"
+                  data-mp-button="true"
                   className='w-full text-center bg-[#3483FA] hover:bg-[#2a68c8] text-white py-2 px-6 rounded font-medium transition-colors'
                 >
                   Assinar Plano Mensal
@@ -269,8 +269,8 @@ export default function SubscribeFixed() {
               </CardContent>
               <CardFooter className="flex flex-col gap-2">
                 <a 
-                  href="https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=2c93808496c606170196c9eaef0c0171" 
-                  name="MP-payButton" 
+                  href="https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=2c93808496c606170196c9eaef0c0171"
+                  data-mp-button="true"
                   className='w-full text-center bg-[#3483FA] hover:bg-[#2a68c8] text-white py-2 px-6 rounded font-medium transition-colors'
                 >
                   Assinar Plano Anual
@@ -342,9 +342,19 @@ export default function SubscribeFixed() {
         <p className="text-muted-foreground mb-2">
           Dúvidas sobre nossos planos? Entre em contato com nosso suporte
         </p>
-        <Link href="/home">
-          <Button variant="link">Voltar para a página inicial</Button>
-        </Link>
+        <div className="flex justify-center space-x-4">
+          <Link href="/home">
+            <Button variant="outline">Voltar para a página inicial</Button>
+          </Link>
+          <Link href="/subscription-history/fixed">
+            <Button variant="link">Ver minhas assinaturas</Button>
+          </Link>
+        </div>
+        <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-md text-amber-800 text-sm max-w-2xl mx-auto">
+          <p><strong>Nota:</strong> A janela de pagamento do Mercado Pago é gerenciada pelo próprio Mercado Pago. 
+          Para fechar essa janela, você pode usar o botão de voltar do seu navegador ou clicar fora do modal 
+          caso o pagamento ainda não tenha sido iniciado.</p>
+        </div>
       </div>
     </div>
   );
