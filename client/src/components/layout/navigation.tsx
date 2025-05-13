@@ -331,7 +331,7 @@ export default function Navigation() {
                     
                     {/* Histórico de Assinatura */}
                     <DropdownMenuItem asChild>
-                      <Link href="/subscription-history">
+                      <Link href="/subscription-history/fixed">
                         <div className="flex items-center gap-2 w-full">
                           <CalendarClock className="h-4 w-4" />
                           <span>Histórico de Assinatura</span>
