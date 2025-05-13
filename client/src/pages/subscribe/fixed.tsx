@@ -267,8 +267,17 @@ export default function SubscribeFixed() {
                   </li>
                 </ul>
               </CardContent>
-              <CardFooter>
-                <MercadoPagoButton planType="yearly" className="w-full" />
+              <CardFooter className="flex flex-col gap-2">
+                <a 
+                  href="https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=2c93808496c606170196c9eaef0c0171" 
+                  name="MP-payButton" 
+                  className='w-full text-center bg-[#3483FA] hover:bg-[#2a68c8] text-white py-2 px-6 rounded font-medium transition-colors'
+                >
+                  Assinar Plano Anual
+                </a>
+                <div className="text-xs text-center text-muted-foreground">
+                  Assinatura processada pelo Mercado Pago
+                </div>
               </CardFooter>
             </Card>
           </div>
