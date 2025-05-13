@@ -44,6 +44,41 @@ export default function SubscribeFixed() {
       setIsActivatingTrial(false);
     }
   };
+  
+  const handleCancelSubscription = async () => {
+    if (!confirm('Tem certeza que deseja cancelar sua assinatura? Esta ação não pode ser desfeita.')) {
+      return;
+    }
+    
+    try {
+      setIsCancellingSubscription(true);
+      const response = await apiRequest('POST', '/api/cancel-subscription');
+      
+      if (response.ok) {
+        toast({
+          title: 'Assinatura cancelada',
+          description: 'Sua assinatura foi cancelada com sucesso. Você ainda terá acesso até o final do período já pago.',
+        });
+        
+        // Redirecionar para a página inicial após cancelar
+        setTimeout(() => {
+          window.location.href = '/home';
+        }, 2000);
+      } else {
+        const error = await response.json();
+        throw new Error(error.message || 'Não foi possível cancelar a assinatura');
+      }
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: 'Erro',
+        description: error instanceof Error ? error.message : 'Erro ao cancelar assinatura',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCancellingSubscription(false);
+    }
+  };
 
   return (
     <div className="container max-w-6xl py-10">
@@ -56,9 +91,10 @@ export default function SubscribeFixed() {
 
       <Tabs defaultValue="monthly" className="w-full">
         <div className="flex justify-center mb-6">
-          <TabsList>
+          <TabsList className="grid grid-cols-3 w-full max-w-md">
             <TabsTrigger value="monthly">Mensal</TabsTrigger>
-            <TabsTrigger value="annual">Anual (20% de desconto)</TabsTrigger>
+            <TabsTrigger value="annual">Anual</TabsTrigger>
+            <TabsTrigger value="manage">Gerenciar</TabsTrigger>
           </TabsList>
         </div>
 
@@ -224,6 +260,60 @@ export default function SubscribeFixed() {
               </CardContent>
               <CardFooter>
                 <MercadoPagoButton planType="annual" className="w-full" />
+              </CardFooter>
+            </Card>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="manage" className="w-full">
+          <div className="max-w-2xl mx-auto">
+            <Card>
+              <CardHeader>
+                <CardTitle>Gerenciar Assinatura</CardTitle>
+                <CardDescription>Gerencie sua assinatura atual do QueroFretes</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between border-b pb-4">
+                  <div>
+                    <h3 className="font-medium">Status da Assinatura</h3>
+                    <p className="text-sm text-muted-foreground">Ativa até 12/06/2025</p>
+                  </div>
+                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">Ativa</span>
+                </div>
+                
+                <div className="flex items-center justify-between border-b pb-4">
+                  <div>
+                    <h3 className="font-medium">Plano Atual</h3>
+                    <p className="text-sm text-muted-foreground">Plano Mensal - R$ 99,90/mês</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between border-b pb-4">
+                  <div>
+                    <h3 className="font-medium">Próxima Cobrança</h3>
+                    <p className="text-sm text-muted-foreground">12/06/2025</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-medium">Método de Pagamento</h3>
+                    <p className="text-sm text-muted-foreground">MercadoPago</p>
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter className="flex flex-col space-y-2">
+                <Button 
+                  onClick={handleCancelSubscription} 
+                  variant="destructive" 
+                  className="w-full"
+                  disabled={isCancellingSubscription}
+                >
+                  {isCancellingSubscription ? 'Cancelando...' : 'Cancelar Assinatura'}
+                </Button>
+                <p className="text-xs text-muted-foreground text-center mt-2">
+                  Ao cancelar, você terá acesso até o final do período já pago
+                </p>
               </CardFooter>
             </Card>
           </div>
