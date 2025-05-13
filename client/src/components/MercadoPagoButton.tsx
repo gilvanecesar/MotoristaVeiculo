@@ -42,14 +42,16 @@ export function MercadoPagoButton({
       
       if (response.ok) {
         const data = await response.json();
+        console.log('Resposta da API:', data);
         
         // Redirecionar para a página de pagamento do Mercado Pago
-        if (data.init_point) {
-          window.location.href = data.init_point;
+        if (data.url) {
+          window.location.href = data.url;
           if (onSuccess) {
             onSuccess();
           }
         } else {
+          console.error('Dados recebidos sem URL:', data);
           throw new Error('Link de pagamento não recebido');
         }
       } else {
