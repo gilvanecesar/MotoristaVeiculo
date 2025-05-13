@@ -29,41 +29,33 @@ export function ClientRegistrationCheck() {
     // Ignore for admin users or if no user logged in
     if (!user || user.profileType === 'admin' || user.profileType === 'administrador') return;
     
-    // If user has no clientId associated, show dialog or redirect directly
-    if (!user.clientId) {
-      // Ignore if already on the client/new page, auth page, or subscription pages
+    // Se o usuário não tem assinatura ativa, redireciona imediatamente para a página fixa no site principal
+    if (!user.subscriptionActive) {
+      // Ignore se já estiver em páginas específicas
       const ignorePaths = [
-        '/clients/new', 
         '/auth', 
-        '/subscribe', 
-        '/subscribe/fixed', 
-        '/subscribe/plans',
+        '/reset-password',
         '/payment-success',
-        '/payment-cancel',
-        '/profile-selection'
+        '/payment-cancel'
       ];
       
       const currentPath = window.location.pathname;
       if (ignorePaths.some(path => currentPath.startsWith(path))) return;
       
-      // Se o usuário não tem assinatura ativa, redireciona para a página fixa no site principal
-      if (!user.subscriptionActive) {
-        window.location.href = "https://querofretes.com.br/subscribe/fixed";
-        return;
-      }
+      // Redireciona para o site externo
+      window.location.href = "https://querofretes.com.br/subscribe/fixed";
+      return;
+    }
+    
+    // If user has no clientId associated, show dialog or redirect directly
+    if (!user.clientId) {
+      // Ignore if already on the client/new page
+      const currentPath = window.location.pathname;
+      if (currentPath.startsWith('/clients/new')) return;
       
       // Se tem assinatura mas não tem cliente, redireciona para o formulário de cliente
-      if (user.subscriptionActive && !user.clientId) {
-        setLocation("/clients/new");
-        return;
-      }
-      
-      // Mostra o diálogo somente em casos específicos (comportamento de fallback)
-      const hasShownDialog = sessionStorage.getItem('clientDialogShown');
-      if (!hasShownDialog) {
-        setShowDialog(true);
-        sessionStorage.setItem('clientDialogShown', 'true');
-      }
+      setLocation("/clients/new");
+      return;
     }
   }, [user, setLocation]);
 

@@ -68,30 +68,28 @@ export function ProtectedRoute({
   
   // Verifica se o usuário tem uma assinatura ativa
   if (user.subscriptionActive === false) {
-    console.log("Usuário sem assinatura ativa, verificando se é a página inicial");
+    console.log("Usuário sem assinatura ativa, redirecionando para o site externo");
     
-    // Permitir acesso às páginas essenciais mesmo sem assinatura ativa
-    const allowedPaths = ["/", "/checkout", "/dashboard", "/home", "/profile-selection", "/payment-success", "/subscribe"];
+    // Lista de páginas que podem ser acessadas sem assinatura ativa
+    // Reduzida para apenas as páginas essenciais conforme solicitado
+    const allowedPaths = ["/auth", "/reset-password", "/payment-success", "/payment-cancel"];
     
     if (allowedPaths.includes(path)) {
       console.log(`Permitindo acesso à rota permitida: ${path}`);
       return <Route path={path} component={Component} />;
     }
     
-    // Se a assinatura está desativada porque pagou, direciona para a página HOME em vez da landing page
-    if (user.stripeCustomerId || user.stripeSubscriptionId) {
-      console.log("Usuário tem info de pagamento, direcionando para a página HOME");
-      return (
-        <Route path={path}>
-          <Redirect to="/home" />
-        </Route>
-      );
-    }
+    // Redirecionar para o site externo de assinatura
+    console.log("Redirecionando para o site externo de assinatura");
+    window.location.href = "https://querofretes.com.br/subscribe/fixed";
     
-    console.log("Redirecionando para a página inicial pois não tem assinatura ativa");
+    // Retornamos uma tela de carregamento enquanto o redirecionamento acontece
     return (
       <Route path={path}>
-        <Redirect to="/" />
+        <div className="flex flex-col items-center justify-center min-h-screen">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+          <p className="text-lg">Redirecionando para o plano de assinatura...</p>
+        </div>
       </Route>
     );
   }
@@ -112,28 +110,25 @@ export function ProtectedRoute({
     if (subscriptionEndDate < currentDate) {
       console.log("Assinatura expirada, verificando se tem stripe customer ID");
       
-      // Se o usuário tem dados de pagamento no Stripe, pode ter pago recentemente
-      if (userAny.stripeCustomerId || userAny.stripeSubscriptionId) {
-        console.log("Usuário tem info de pagamento no Stripe, permitindo acesso");
-        return <Route path={path} component={Component} />;
-      }
-      
-      // Atualizar flag de assinatura no lado do cliente para corresponder ao estado do servidor
-      if (userAny.subscriptionActive === true) {
-        console.log("Desativando flag de assinatura ativa localmente devido à expiração");
-        // Não é possível atualizar o estado diretamente,
-        // mas forçaremos uma revalidação na próxima requisição
-      }
-      
-      // Permitir acesso à página inicial, checkout, dashboard e outras páginas essenciais
-      const allowedPaths = ["/", "/checkout", "/dashboard", "/home", "/profile-selection", "/payment-success", "/subscribe"];
+      // Reduzimos para apenas páginas essenciais
+      const allowedPaths = ["/auth", "/reset-password", "/payment-success", "/payment-cancel"];
       if (allowedPaths.includes(path)) {
+        console.log(`Permitindo acesso à rota permitida: ${path}`);
         return <Route path={path} component={Component} />;
       }
       
+      // Redirecionar para o site externo de assinatura
+      console.log("Assinatura expirada, redirecionando para o site externo de assinatura");
+      window.location.href = "https://querofretes.com.br/subscribe/fixed";
+      
+      // Retornamos uma tela de carregamento enquanto o redirecionamento acontece
       return (
         <Route path={path}>
-          <Redirect to="/dashboard" />
+          <div className="flex flex-col items-center justify-center min-h-screen">
+            <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+            <p className="text-lg">Sua assinatura expirou</p>
+            <p className="mb-4">Redirecionando para a renovação...</p>
+          </div>
         </Route>
       );
     }
