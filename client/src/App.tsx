@@ -54,7 +54,9 @@ function Router() {
       <ProtectedRoute path="/subscribe" component={SubscribePage} />
       <ProtectedRoute path="/subscribe/plans" component={SubscribePlansPage} />
       <ProtectedRoute path="/subscribe/paypal" component={PaypalSubscribePage} />
+      <ProtectedRoute path="/subscribe/fixed" component={() => import("./pages/subscribe/fixed-page").then(module => module.default)} />
       <ProtectedRoute path="/invoices" component={InvoicesPage} />
+      <ProtectedRoute path="/invoices/fixed" component={InvoicesPage} />
       <ProtectedRoute path="/user/payment-history" component={PaymentHistoryPage} />
       <ProtectedRoute path="/profile-selection" component={ProfileSelectionPage} />
       <ProtectedRoute path="/dashboard" component={Dashboard} />

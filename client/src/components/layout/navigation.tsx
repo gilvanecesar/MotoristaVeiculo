@@ -312,9 +312,9 @@ export default function Navigation() {
                       </Link>
                     </DropdownMenuItem>
                     
-                    {/* Faturas e Pagamentos */}
+                    {/* Faturas e Pagamentos - Versão Fixa */}
                     <DropdownMenuItem asChild>
-                      <Link href="/invoices">
+                      <Link href="/invoices/fixed">
                         <div className="flex items-center gap-2 w-full">
                           <Receipt className="h-4 w-4" />
                           <span>Faturas e Pagamentos</span>
