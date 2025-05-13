@@ -33,13 +33,13 @@ export function hasActiveSubscription(req: Request, res: Response, next: NextFun
   // Verificar se o usuário tem dados de assinatura
   const user = req.user;
   
-  // Se for admin, sempre tem acesso
-  if (user.profileType === "admin") {
+  // Se for administrador, sempre tem acesso
+  if (user.profileType === "administrador") {
     return next();
   }
   
   // Se for motorista com acesso gratuito, permitir acesso
-  if (user.profileType === "driver" && user.subscriptionType === "driver_free") {
+  if (user.profileType === "motorista" && user.subscriptionType === "driver_free") {
     return next();
   }
   
@@ -117,17 +117,17 @@ export function hasActiveSubscription(req: Request, res: Response, next: NextFun
   return next();
 }
 
-// Middleware para verificar se o usuário é admin
+// Middleware para verificar se o usuário é administrador
 export function isAdmin(req: Request, res: Response, next: NextFunction) {
-  // Verifica se o profileType é "admin" ou "ADMIN" (case insensitive)
+  // Verifica se o profileType é "administrador"
   if (req.isAuthenticated() && 
-      (req.user?.profileType?.toLowerCase() === "admin")) {
+      (req.user?.profileType?.toLowerCase() === "administrador")) {
     return next();
   }
   res.status(403).json({ message: "Acesso não autorizado" });
 }
 
-// Middleware para verificar se é o próprio usuário ou admin
+// Middleware para verificar se é o próprio usuário ou administrador
 export function isAdminOrSelf(req: Request, res: Response, next: NextFunction) {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ message: "Não autenticado" });
@@ -135,7 +135,7 @@ export function isAdminOrSelf(req: Request, res: Response, next: NextFunction) {
 
   const userId = parseInt(req.params.id, 10);
   
-  if (req.user?.profileType?.toLowerCase() === "admin" || req.user?.id === userId) {
+  if (req.user?.profileType?.toLowerCase() === "administrador" || req.user?.id === userId) {
     return next();
   }
   

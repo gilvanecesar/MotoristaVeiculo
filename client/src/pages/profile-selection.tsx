@@ -12,7 +12,7 @@ import { Building, Truck, Factory, CheckCircle, AlertCircle, Loader2 } from "luc
 /**
  * Página de seleção de tipo de perfil após o registro
  * Esta página será exibida após o registro, permitindo que o usuário selecione
- * que tipo de perfil deseja criar (embarcador, motorista ou transportadora)
+ * que tipo de perfil deseja criar (embarcador, motorista ou agente)
  */
 export default function ProfileSelectionPage() {
   const { user } = useAuth();
@@ -212,7 +212,7 @@ export default function ProfileSelectionPage() {
                   <Factory className="h-8 w-8 text-orange-600" />
                 </div>
               </div>
-              <CardTitle className="text-center">Transportadora</CardTitle>
+              <CardTitle className="text-center">Agente</CardTitle>
               <CardDescription className="text-center">
                 Administro uma frota de veículos
               </CardDescription>
