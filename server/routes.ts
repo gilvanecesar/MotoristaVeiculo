@@ -1534,6 +1534,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
         )
         .reduce((sum, invoice) => sum + parseFloat(invoice.amount), 0);
       
+      // Calcular taxa de cancelamento (churn rate)
+      const canceledSubscriptions = subscriptions.filter(s => s.status === 'canceled').length;
+      const churnRate = totalSubscriptions > 0 
+        ? (canceledSubscriptions / totalSubscriptions) * 100 
+        : 0;
+      
+      // Gerar dados para o gráfico de receita mensal
+      const currentYear = today.getFullYear();
+      const monthNames = [
+        'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 
+        'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
+      ];
+      
+      // Inicializar array de dados mensais
+      const monthlyData = monthNames.map((month, index) => ({
+        month,
+        revenue: 0
+      }));
+      
+      // Calcular receita por mês
+      for (const invoice of invoices) {
+        if (invoice.status === 'paid' && invoice.createdAt) {
+          const invoiceDate = new Date(invoice.createdAt);
+          // Verificar se é do ano atual
+          if (invoiceDate.getFullYear() === currentYear) {
+            const monthIndex = invoiceDate.getMonth();
+            monthlyData[monthIndex].revenue += parseFloat(invoice.amount);
+          }
+        }
+      }
+      
+      // Dados para o gráfico de assinaturas por status
+      const statusCounts = {
+        active: activeSubscriptions,
+        canceled: canceledSubscriptions,
+        past_due: subscriptions.filter(s => s.status === 'past_due').length,
+        trialing: subscriptions.filter(s => s.status === 'trialing').length
+      };
+      
+      const subscriptionsByStatus = Object.entries(statusCounts).map(([status, count]) => ({
+        status,
+        count
+      }));
+      
       // Formatar estatísticas para retorno
       res.json({
         totalSubscriptions,
@@ -1545,6 +1589,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         failedInvoices,
         monthlyRevenue,
         currency: 'BRL',
+        churnRate,
+        monthlyData,
+        subscriptionsByStatus
       });
     } catch (error) {
       console.error("Erro ao obter estatísticas financeiras:", error);
