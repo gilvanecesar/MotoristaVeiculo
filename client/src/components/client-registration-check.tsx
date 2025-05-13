@@ -29,21 +29,24 @@ export function ClientRegistrationCheck() {
     // Ignore for admin users or if no user logged in
     if (!user || user.profileType === 'admin' || user.profileType === 'administrador') return;
     
-    // Se o usuário não tem assinatura ativa, redireciona imediatamente para a página fixa no site principal
+    // Se o usuário não tem assinatura ativa, redireciona para a página interna de gerenciamento
     if (!user.subscriptionActive) {
       // Ignore se já estiver em páginas específicas
       const ignorePaths = [
         '/auth', 
         '/reset-password',
         '/payment-success',
-        '/payment-cancel'
+        '/payment-cancel',
+        '/subscribe',
+        '/subscribe/fixed',
+        '/subscribe/plans'
       ];
       
       const currentPath = window.location.pathname;
       if (ignorePaths.some(path => currentPath.startsWith(path))) return;
       
-      // Redireciona para o site externo
-      window.location.href = "https://querofretes.com.br/subscribe/fixed";
+      // Redireciona para a página interna de gerenciamento de assinatura
+      setLocation("/subscribe");
       return;
     }
     

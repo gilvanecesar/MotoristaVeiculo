@@ -68,28 +68,31 @@ export function ProtectedRoute({
   
   // Verifica se o usuário tem uma assinatura ativa
   if (user.subscriptionActive === false) {
-    console.log("Usuário sem assinatura ativa, redirecionando para o site externo");
+    console.log("Usuário sem assinatura ativa, redirecionando para página interna de assinatura");
     
     // Lista de páginas que podem ser acessadas sem assinatura ativa
-    // Reduzida para apenas as páginas essenciais conforme solicitado
-    const allowedPaths = ["/auth", "/reset-password", "/payment-success", "/payment-cancel"];
+    const allowedPaths = [
+      "/auth", 
+      "/reset-password", 
+      "/payment-success", 
+      "/payment-cancel", 
+      "/subscribe", 
+      "/subscribe/fixed",
+      "/subscribe/plans"
+    ];
     
     if (allowedPaths.includes(path)) {
       console.log(`Permitindo acesso à rota permitida: ${path}`);
       return <Route path={path} component={Component} />;
     }
     
-    // Redirecionar para o site externo de assinatura
-    console.log("Redirecionando para o site externo de assinatura");
-    window.location.href = "https://querofretes.com.br/subscribe/fixed";
+    // Redirecionar para a página interna de gerenciamento de assinatura
+    console.log("Redirecionando para página interna de gerenciamento de assinatura");
     
-    // Retornamos uma tela de carregamento enquanto o redirecionamento acontece
+    // Usar Redirect para manter a navegação interna
     return (
       <Route path={path}>
-        <div className="flex flex-col items-center justify-center min-h-screen">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-          <p className="text-lg">Redirecionando para o plano de assinatura...</p>
-        </div>
+        <Redirect to="/subscribe" />
       </Route>
     );
   }
@@ -110,25 +113,29 @@ export function ProtectedRoute({
     if (subscriptionEndDate < currentDate) {
       console.log("Assinatura expirada, verificando se tem stripe customer ID");
       
-      // Reduzimos para apenas páginas essenciais
-      const allowedPaths = ["/auth", "/reset-password", "/payment-success", "/payment-cancel"];
+      // Lista de páginas que podem ser acessadas mesmo com assinatura expirada
+      const allowedPaths = [
+        "/auth", 
+        "/reset-password", 
+        "/payment-success", 
+        "/payment-cancel", 
+        "/subscribe", 
+        "/subscribe/fixed",
+        "/subscribe/plans"
+      ];
+      
       if (allowedPaths.includes(path)) {
         console.log(`Permitindo acesso à rota permitida: ${path}`);
         return <Route path={path} component={Component} />;
       }
       
-      // Redirecionar para o site externo de assinatura
-      console.log("Assinatura expirada, redirecionando para o site externo de assinatura");
-      window.location.href = "https://querofretes.com.br/subscribe/fixed";
+      // Redirecionar para a página interna de gerenciamento de assinatura
+      console.log("Assinatura expirada, redirecionando para página interna de gerenciamento");
       
-      // Retornamos uma tela de carregamento enquanto o redirecionamento acontece
+      // Usar Redirect para manter a navegação interna
       return (
         <Route path={path}>
-          <div className="flex flex-col items-center justify-center min-h-screen">
-            <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-            <p className="text-lg">Sua assinatura expirou</p>
-            <p className="mb-4">Redirecionando para a renovação...</p>
-          </div>
+          <Redirect to="/subscribe" />
         </Route>
       );
     }
