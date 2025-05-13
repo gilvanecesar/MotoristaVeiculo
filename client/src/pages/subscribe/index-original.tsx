@@ -1,8 +1,10 @@
 import React from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { useLocation } from 'wouter';
+import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
+import { useLocation } from 'wouter';
 import { 
   Card, 
   CardContent, 
@@ -13,30 +15,46 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, CheckCircle, CreditCard, Clock } from 'lucide-react';
+import { AlertTriangle, CheckCircle } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import SubscriptionDetails from '@/components/ui/subscription-details';
 
 export default function SubscribePage() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = React.useState('details');
   const [location, navigate] = useLocation();
   
-  // Dados da assinatura diretamente do objeto de usuário 
-  // Não dependemos mais da API de assinatura
-  const subscriptionData = {
-    active: user?.subscriptionActive || false,
-    isTrial: user?.subscriptionType === 'trial',
-    trialUsed: Boolean(user?.subscriptionExpiresAt),
-    planType: user?.subscriptionType || null,
-    expiresAt: user?.subscriptionExpiresAt ? String(user.subscriptionExpiresAt) : null,
-    formattedExpirationDate: user?.subscriptionExpiresAt ? 
-      format(new Date(user.subscriptionExpiresAt), 'dd/MM/yyyy', { locale: pt }) : null,
-    paymentMethod: user?.stripeCustomerId ? 'stripe' : null
-  };
+  // Buscar informações da assinatura apenas como um extra, não vamos depender disso para renderizar
+  // Esta é uma mudança crítica para resolver o problema - não mais depender da API para mostrar a UI
+  const { 
+    data: subscriptionData, 
+    isLoading,
+    error 
+  } = useQuery({
+    queryKey: ['/api/user/subscription-info'],
+    queryFn: async () => {
+      try {
+        // Fazemos a requisição, mas a UI não depende dela agora
+        const res = await apiRequest('GET', '/api/user/subscription-info');
+        if (!res.ok) {
+          console.warn(`API de assinatura retornou ${res.status}`);
+          return null;
+        }
+        return await res.json();
+      } catch (err) {
+        console.error("Erro ao buscar informações de assinatura:", err);
+        return null;
+      }
+    },
+    retry: 0, // Sem retry
+    refetchOnWindowFocus: false // Sem refetch automático
+  });
   
   // Verificar parâmetros de URL para exibir mensagens de status
   const urlParams = new URLSearchParams(window.location.search);
   const status = urlParams.get('status');
+  const type = urlParams.get('type');
   
   // Renderizar mensagens de status com base na URL
   const renderStatusMessage = () => {
@@ -46,7 +64,11 @@ export default function SubscribePage() {
           <CheckCircle className="h-4 w-4" />
           <AlertTitle>Pagamento realizado com sucesso!</AlertTitle>
           <AlertDescription>
-            Sua assinatura foi ativada com sucesso.
+            {type === 'monthly' 
+              ? 'Sua assinatura mensal foi ativada com sucesso.' 
+              : type === 'annual' 
+              ? 'Sua assinatura anual foi ativada com sucesso.' 
+              : 'Sua assinatura foi ativada com sucesso.'}
           </AlertDescription>
         </Alert>
       );
@@ -86,6 +108,40 @@ export default function SubscribePage() {
     }
   }, [status, navigate]);
   
+  if (error) {
+    return (
+      <div className="container mx-auto py-6 px-4">
+        <Alert variant="destructive" className="mb-6">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Erro ao carregar informações</AlertTitle>
+          <AlertDescription>
+            Não foi possível carregar os dados da sua assinatura. Tente novamente mais tarde.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+  
+  // Não vamos mais usar o estado de carregamento, vamos mostrar diretamente os planos
+  // Se houver dados de assinatura, usamos. Caso contrário, mostramos a interface padrão
+  // Desta forma o usuário não fica travado em "Preparando ambiente"
+  
+  // Se não houver dados, fornecemos um objeto vazio mas com estrutura válida
+  const safeSubscriptionData = {
+    active: user?.subscriptionActive || false,
+    isTrial: user?.subscriptionType === 'trial' || false,
+    trialUsed: Boolean(user?.subscriptionExpiresAt) || false,
+    planType: user?.subscriptionType || null,
+    expiresAt: user?.subscriptionExpiresAt ? String(user.subscriptionExpiresAt) : null,
+    formattedExpirationDate: user?.subscriptionExpiresAt ? 
+      format(new Date(user.subscriptionExpiresAt), 'dd/MM/yyyy', { locale: pt }) : null,
+    paymentMethod: null,
+    lastPaymentDate: null,
+    nextPaymentDate: null,
+    paymentRequired: false,
+    subscription: null
+  };
+  
   return (
     <div className="container mx-auto py-6 px-4">
       <div className="mb-6">
@@ -108,7 +164,23 @@ export default function SubscribePage() {
         </TabsList>
         
         <TabsContent value="details" className="space-y-6">
-          {/* Detalhes da assinatura - sempre mostrados */}
+          {/* Detalhes da assinatura - mostramos SEMPRE a interface, sem esperar carregamento */}
+          {/* Se temos dados, usamos, senão usamos dados básicos do usuário */}
+          {subscriptionData ? (
+            <SubscriptionDetails 
+              subscriptionData={subscriptionData} 
+              isLoading={false} 
+            />
+          ) : (
+            <SubscriptionDetails 
+              subscriptionData={safeSubscriptionData}
+              isLoading={false} 
+            />
+          )}
+        </TabsContent>
+        
+        <TabsContent value="plans" className="space-y-6">
+          {/* Os planos sempre são mostrados, independente do estado da assinatura */}
           <Card>
             <CardHeader>
               <CardTitle>Status da Assinatura</CardTitle>
@@ -118,104 +190,89 @@ export default function SubscribePage() {
               <div className="flex flex-col sm:flex-row gap-6">
                 <div className="flex-1">
                   <div className="mb-6 flex items-center gap-4">
-                    {subscriptionData.active ? (
-                      subscriptionData.isTrial ? (
-                        <>
-                          <Clock className="h-8 w-8 text-blue-500" />
-                          <div>
-                            <h3 className="text-lg font-medium">Período de Teste Ativo</h3>
-                            <p className="text-sm text-muted-foreground">
-                              Seu período de teste gratuito está ativo até {subscriptionData.formattedExpirationDate || '7 dias a partir da ativação'}.
-                            </p>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle className="h-8 w-8 text-green-500" />
-                          <div>
-                            <h3 className="text-lg font-medium">Assinatura Ativa</h3>
-                            <p className="text-sm text-muted-foreground">
-                              Sua assinatura está ativa até {subscriptionData.formattedExpirationDate || 'data não disponível'}.
-                            </p>
-                          </div>
-                        </>
-                      )
-                    ) : (
-                      <>
-                        <AlertTriangle className="h-8 w-8 text-amber-500" />
-                        <div>
-                          <h3 className="text-lg font-medium">Sem Assinatura Ativa</h3>
-                          <p className="text-sm text-muted-foreground">
-                            Você ainda não possui uma assinatura ativa. Escolha um plano para começar.
-                          </p>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                  
-                  {/* Detalhes do plano */}
-                  <div className="space-y-4">
-                    {subscriptionData.planType && (
-                      <div className="grid grid-cols-2">
-                        <div className="text-sm font-medium">Plano:</div>
-                        <div className="text-sm">
-                          {subscriptionData.planType === 'monthly' ? 'Mensal (R$ 99,90)' : 
-                           subscriptionData.planType === 'annual' ? 'Anual (R$ 960,00)' : 
-                           subscriptionData.planType === 'trial' ? 'Teste Gratuito (7 dias)' : 
-                           subscriptionData.planType}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {subscriptionData.expiresAt && (
-                      <div className="grid grid-cols-2">
-                        <div className="text-sm font-medium">Expira em:</div>
-                        <div className="text-sm">{subscriptionData.formattedExpirationDate}</div>
-                      </div>
-                    )}
-                    
-                    {subscriptionData.paymentMethod && (
-                      <div className="grid grid-cols-2">
-                        <div className="text-sm font-medium">Forma de pagamento:</div>
-                        <div className="text-sm">
-                          {subscriptionData.paymentMethod === 'mercadopago' 
-                            ? 'Mercado Pago' 
-                            : subscriptionData.paymentMethod === 'stripe' 
-                            ? 'Cartão de crédito' 
-                            : subscriptionData.paymentMethod}
-                        </div>
-                      </div>
-                    )}
+                    <AlertTriangle className="h-8 w-8 text-amber-500" />
+                    <div>
+                      <h3 className="text-lg font-medium">Sem Assinatura Ativa</h3>
+                      <p className="text-sm text-muted-foreground">Você ainda não possui uma assinatura ativa. Escolha um plano para começar.</p>
+                    </div>
                   </div>
                 </div>
                 
                 <div className="flex-1 flex flex-col justify-center">
                   <div className="space-y-3">
-                    {subscriptionData.active ? (
-                      <Button 
-                        variant="outline" 
-                        className="w-full" 
-                        onClick={() => navigate('/invoices')}
-                      >
-                        Ver Histórico de Pagamentos
-                      </Button>
-                    ) : (
-                      <Button 
-                        variant="outline" 
-                        className="w-full" 
-                        onClick={() => setActiveTab('plans')}
-                      >
-                        Ver Planos Disponíveis
-                      </Button>
-                    )}
-                    
                     <Button 
                       variant="outline" 
                       className="w-full" 
-                      onClick={() => navigate('/home')}
+                      onClick={() => setActiveTab('plans')}
                     >
-                      Voltar para o Dashboard
+                      Ver Planos Disponíveis
                     </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Informações adicionais */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Sobre o Sistema QUERO FRETES</CardTitle>
+              <CardDescription>Conheça as vantagens da nossa plataforma</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-lg font-medium mb-3">Benefícios da assinatura</h3>
+                  <ul className="space-y-2">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                      <span>Acesso a todas as funcionalidades do sistema</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                      <span>Gerenciamento completo de motoristas e veículos</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                      <span>Controle de fretes e monitoramento em tempo real</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                      <span>Suporte prioritário via e-mail e WhatsApp</span>
+                    </li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-medium mb-3">Formas de pagamento</h3>
+                  <p className="mb-4 text-muted-foreground">
+                    Aceitamos diversas formas de pagamento através do Mercado Pago, incluindo:
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span className="text-blue-700 font-bold text-xs">CC</span>
+                      </div>
+                      <span>Cartão de crédito</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                        <span className="text-green-700 font-bold text-xs">DC</span>
+                      </div>
+                      <span>Cartão de débito</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center">
+                        <span className="text-amber-700 font-bold text-xs">Pix</span>
+                      </div>
+                      <span>Pagamento via Pix</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                        <span className="text-purple-700 font-bold text-xs">TB</span>
+                      </div>
+                      <span>Transferência bancária</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -224,9 +281,10 @@ export default function SubscribePage() {
         </TabsContent>
         
         <TabsContent value="plans" className="space-y-6">
-          {/* Planos disponíveis - sempre visíveis */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <Card className="flex flex-col">
+          {/* Planos disponíveis */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Plano Mensal */}
+            <Card>
               <CardHeader>
                 <CardTitle>Plano Mensal</CardTitle>
                 <CardDescription>Acesso completo por 30 dias</CardDescription>
@@ -250,13 +308,17 @@ export default function SubscribePage() {
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
-                    <span>Suporte por email e WhatsApp</span>
+                    <span>Suporte prioritário</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                    <span>Cancele quando quiser</span>
                   </li>
                 </ul>
               </CardContent>
-              <CardFooter className="mt-auto">
+              <CardFooter>
                 <Button 
-                  className="w-full"
+                  className="w-full" 
                   asChild
                 >
                   <a href="/subscribe/plans?plan=monthly">
@@ -266,15 +328,16 @@ export default function SubscribePage() {
               </CardFooter>
             </Card>
             
-            <Card className="flex flex-col border-primary">
+            {/* Plano Anual */}
+            <Card className="border-primary/20 bg-primary/5">
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <div>
                     <CardTitle>Plano Anual</CardTitle>
-                    <CardDescription>Acesso completo por 12 meses</CardDescription>
+                    <CardDescription>Economia de 20% no valor mensal</CardDescription>
                   </div>
                   <div className="bg-primary text-primary-foreground text-xs font-bold py-1 px-3 rounded-full">
-                    Melhor Valor
+                    Mais Vantajoso
                   </div>
                 </div>
               </CardHeader>
@@ -341,66 +404,11 @@ export default function SubscribePage() {
               <Button 
                 variant="outline" 
                 className="w-full"
-                onClick={() => navigate('/subscribe/trial')}
+                onClick={() => setActiveTab('details')}
               >
-                Iniciar Teste Gratuito
+                Ver Detalhes da Assinatura
               </Button>
             </CardFooter>
-          </Card>
-          
-          {/* Informações adicionais */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Sobre o Sistema QUERO FRETES</CardTitle>
-              <CardDescription>Conheça as vantagens da nossa plataforma</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-lg font-medium mb-3">Benefícios da assinatura</h3>
-                  <ul className="space-y-2">
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
-                      <span>Acesso a todas as funcionalidades do sistema</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
-                      <span>Gerenciamento completo de motoristas e veículos</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
-                      <span>Controle de fretes e cargas</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
-                      <span>Integração com WhatsApp para comunicação</span>
-                    </li>
-                  </ul>
-                </div>
-                
-                <div>
-                  <h3 className="text-lg font-medium mb-3">Formas de pagamento</h3>
-                  <ul className="space-y-2">
-                    <li className="flex items-start gap-2">
-                      <CreditCard className="h-5 w-5 text-muted-foreground mt-0.5" />
-                      <span>Cartão de crédito - pagamento recorrente automático</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CreditCard className="h-5 w-5 text-muted-foreground mt-0.5" />
-                      <span>Cartão de débito via Mercado Pago</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CreditCard className="h-5 w-5 text-muted-foreground mt-0.5" />
-                      <span>PIX - para pagamentos imediatos</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CreditCard className="h-5 w-5 text-muted-foreground mt-0.5" />
-                      <span>Boleto bancário (compensação em até 3 dias úteis)</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
