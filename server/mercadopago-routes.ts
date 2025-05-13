@@ -60,7 +60,11 @@ export function setupMercadoPagoRoutes(app: Express) {
       await storage.createSubscriptionEvent({
         userId,
         eventType: 'subscription_activated',
-        description: `Assinatura ${planType} ativada via simulação de pagamento`
+        description: `Assinatura ${planType} ativada via simulação de pagamento`,
+        metadata: {
+          planType,
+          mode: 'simulation'
+        }
       });
       
       return res.json({

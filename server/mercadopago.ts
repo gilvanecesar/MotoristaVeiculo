@@ -109,12 +109,12 @@ export async function createPaymentPreference(req: Request, res: Response) {
         name: user.name,
       },
       back_urls: {
-        success: `${req.headers.origin || 'https://querofretes.com.br'}/payment-success`,
-        failure: `${req.headers.origin || 'https://querofretes.com.br'}/payment-failure`,
-        pending: `${req.headers.origin || 'https://querofretes.com.br'}/payment-pending`,
+        success: `${process.env.NODE_ENV === 'production' ? 'https://querofretes.com.br' : 'https://25d0c31e-3b27-44fa-9254-e6c7cf4b7204.id.repl.co'}/payment-success`,
+        failure: `${process.env.NODE_ENV === 'production' ? 'https://querofretes.com.br' : 'https://25d0c31e-3b27-44fa-9254-e6c7cf4b7204.id.repl.co'}/payment-failure`,
+        pending: `${process.env.NODE_ENV === 'production' ? 'https://querofretes.com.br' : 'https://25d0c31e-3b27-44fa-9254-e6c7cf4b7204.id.repl.co'}/payment-pending`,
       },
-      auto_return: 'approved',
-      notification_url: `${req.headers.origin || 'https://querofretes.com.br'}/api/webhooks/mercadopago`,
+      auto_return: 'all',
+      notification_url: `${process.env.NODE_ENV === 'production' ? 'https://querofretes.com.br' : 'https://25d0c31e-3b27-44fa-9254-e6c7cf4b7204.id.repl.co'}/api/webhooks/mercadopago`,
       external_reference: JSON.stringify({
         userId: user.id,
         planType: planType,
