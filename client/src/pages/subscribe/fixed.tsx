@@ -10,6 +10,7 @@ import { apiRequest } from '@/lib/queryClient';
 
 export default function SubscribeFixed() {
   const [isActivatingTrial, setIsActivatingTrial] = useState(false);
+  const [isCancellingSubscription, setIsCancellingSubscription] = useState(false);
   const { toast } = useToast();
 
   const handleActivateTrial = async () => {
