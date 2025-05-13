@@ -15,6 +15,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { USER_TYPES } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { CheckCircle } from "lucide-react";
 
 // Google Icon Component
 const GoogleIcon = () => (
@@ -107,12 +108,22 @@ export default function AuthPage() {
 
   const onLoginSubmit = (data: LoginFormValues) => {
     loginMutation.mutate(data, {
-      onSuccess: () => {
+      onSuccess: (userData) => {
         toast({
           title: "Login realizado com sucesso",
           description: "Bem-vindo à plataforma Quero Fretes",
         });
-        navigate("/dashboard");
+        
+        // Se o usuário não tem assinatura ativa, redireciona para a página de seleção de planos
+        if (!userData.subscriptionActive) {
+          navigate("/subscribe/fixed");
+        } else if (!userData.clientId) {
+          // Se tem assinatura mas não tem cliente associado, redireciona para página de cadastro de cliente
+          navigate("/clients/new");
+        } else {
+          // Se já tem assinatura e cliente, vai para o dashboard
+          navigate("/dashboard");
+        }
       },
     });
   };
@@ -185,57 +196,22 @@ export default function AuthPage() {
       return;
     }
     
-    // Adiciona o profileType selecionado e o tipo de assinatura
+    // Adiciona o profileType selecionado
     const registerData = {
       ...data,
       password: data.password, // Garantir que password está definido
       profileType: selectedRole,
-      subscriptionType: subscriptionType, // Inclui o tipo de assinatura no registro
     };
 
     registerMutation.mutate(registerData, {
       onSuccess: () => {
         toast({
           title: "Conta criada com sucesso",
-          description: subscriptionType === "trial" 
-            ? "Seu período de teste de 7 dias foi iniciado" 
-            : "Para continuar, finalize o pagamento do plano selecionado",
+          description: "Para continuar, selecione um plano de assinatura",
         });
         
-        // Redireciona com base no tipo de assinatura
-        if (subscriptionType === "trial") {
-          // Se for teste gratuito, ativa o trial via API
-          apiRequest("POST", "/api/activate-trial")
-            .then(response => {
-              if (!response.ok) {
-                throw new Error("Erro ao ativar período de teste");
-              }
-              return response.json();
-            })
-            .then(data => {
-              toast({
-                title: "Período de teste ativado",
-                description: `Seu período de teste foi ativado até ${new Date(data.expiresAt).toLocaleDateString()}`,
-              });
-              // Redireciona para a página inicial após ativar o trial
-              setTimeout(() => {
-                window.location.href = '/home';
-              }, 2000);
-            })
-            .catch(error => {
-              console.error("Erro ao ativar período de teste:", error);
-              window.location.href = '/home'; // Redireciona mesmo assim
-            });
-        } else {
-          // Links diretos para os planos do Mercado Pago
-          const mercadoPagoLinks = {
-            monthly: "https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=2c93808496c606170196c6d5ebde0047",
-            annual: "https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=2c93808496c606170196c9eaef0c0171"
-          };
-          
-          // Para assinaturas pagas, redireciona diretamente para o Mercado Pago
-          window.location.href = mercadoPagoLinks[subscriptionType as keyof typeof mercadoPagoLinks] || mercadoPagoLinks.monthly;
-        }
+        // Redireciona para a página de seleção de planos
+        navigate("/subscribe/fixed");
       },
     });
   };
@@ -330,49 +306,29 @@ export default function AuthPage() {
             </div>
           ) : (
             <>
-              {/* Planos de assinatura exibidos antes do login */}
+              {/* Mensagem informativa sobre a plataforma */}
               <div className="mb-10">
-                <h2 className="text-2xl font-bold text-center mb-4">Planos Disponíveis</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* Plano de Teste */}
-                  <Card className="cursor-pointer transition-all hover:shadow-md">
-                    <CardHeader className="pb-3">
-                      <CardTitle>Teste Grátis</CardTitle>
-                      <CardDescription>Teste por 7 dias</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold mb-2">Grátis</div>
-                      <p className="text-sm text-muted-foreground">Acesso completo por 7 dias</p>
-                    </CardContent>
-                  </Card>
-                  
-                  {/* Plano Mensal */}
-                  <Card className="cursor-pointer transition-all hover:shadow-md">
-                    <CardHeader className="pb-3">
-                      <CardTitle>Mensal</CardTitle>
-                      <CardDescription>Acesso por 30 dias</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold mb-2">R$ 99,90</div>
-                      <p className="text-sm text-muted-foreground">Cobrado a cada mês</p>
-                    </CardContent>
-                  </Card>
-                  
-                  {/* Plano Anual */}
-                  <Card className="cursor-pointer transition-all hover:shadow-md">
-                    <CardHeader className="pb-3">
-                      <CardTitle>Anual</CardTitle>
-                      <CardDescription>Acesso por 1 ano completo</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold mb-2">R$ 1.198,80</div>
-                      <p className="text-sm text-muted-foreground">Apenas R$ 99,90/mês</p>
-                    </CardContent>
-                  </Card>
+                <h2 className="text-2xl font-bold text-center mb-4">QUERO FRETES</h2>
+                <p className="text-center text-muted-foreground mb-4">
+                  A plataforma completa para gerenciamento de fretes e transportes
+                </p>
+                <div className="flex flex-col space-y-2 items-center">
+                  <div className="flex items-center">
+                    <CheckCircle className="h-5 w-5 text-primary mr-2" />
+                    <span>Gerencie fretes, motoristas e veículos</span>
+                  </div>
+                  <div className="flex items-center">
+                    <CheckCircle className="h-5 w-5 text-primary mr-2" />
+                    <span>Acompanhe suas operações em tempo real</span>
+                  </div>
+                  <div className="flex items-center">
+                    <CheckCircle className="h-5 w-5 text-primary mr-2" />
+                    <span>Escolha seu plano após o cadastro</span>
+                  </div>
                 </div>
                 
-                <p className="text-center text-muted-foreground mt-4">
-                  Faça login ou registre-se para assinar um de nossos planos
+                <p className="text-center text-muted-foreground mt-6">
+                  Faça login ou registre-se para acessar a plataforma
                 </p>
               </div>
               

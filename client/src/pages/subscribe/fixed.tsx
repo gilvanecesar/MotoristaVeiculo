@@ -25,9 +25,9 @@ export default function SubscribeFixed() {
           description: `Seu período de teste foi ativado até ${new Date(data.expiresAt).toLocaleDateString()}`,
         });
         
-        // Redirecionar para a página inicial após ativar o trial
+        // Redirecionar para a página de cadastro de cliente após ativar o trial
         setTimeout(() => {
-          window.location.href = '/home';
+          window.location.href = '/clients/new';
         }, 2000);
       } else {
         const error = await response.json();
@@ -60,7 +60,7 @@ export default function SubscribeFixed() {
           description: 'Sua assinatura foi cancelada com sucesso. Você ainda terá acesso até o final do período já pago.',
         });
         
-        // Redirecionar para a página inicial após cancelar
+        // Continuar na página inicial após cancelar
         setTimeout(() => {
           window.location.href = '/home';
         }, 2000);
