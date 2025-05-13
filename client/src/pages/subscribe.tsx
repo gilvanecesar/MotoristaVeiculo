@@ -1,96 +1,23 @@
-import { useStripe, Elements, PaymentElement, useElements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
 import { useEffect, useState } from 'react';
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
-
-// Make sure to call `loadStripe` outside of a component's render to avoid
-// recreating the `Stripe` object on every render.
-if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
-  throw new Error('Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY');
-}
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
-
-const SubscribeForm = () => {
-  const stripe = useStripe();
-  const elements = useElements();
-  const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!stripe || !elements) {
-      toast({
-        title: "Erro no processamento",
-        description: "Não foi possível conectar ao Stripe. Tente novamente mais tarde.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const { error } = await stripe.confirmPayment({
-        elements,
-        confirmParams: {
-          return_url: window.location.origin + "/payment-success",
-        },
-      });
-
-      if (error) {
-        toast({
-          title: "Falha na Assinatura",
-          description: error.message,
-          variant: "destructive",
-        });
-      }
-    } catch (err) {
-      toast({
-        title: "Erro no Processamento",
-        description: "Ocorreu um erro durante o pagamento da assinatura. Tente novamente.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <PaymentElement />
-      <Button 
-        type="submit" 
-        className="w-full" 
-        disabled={!stripe || isLoading}
-      >
-        {isLoading ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Processando...
-          </>
-        ) : (
-          "Assinar Agora"
-        )}
-      </Button>
-    </form>
-  );
-};
+import { Loader2, CreditCard, CheckCircle2, Clock, ArrowRight } from "lucide-react";
+import { useLocation } from 'wouter';
 
 export default function Subscribe() {
-  const [clientSecret, setClientSecret] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const [_, navigate] = useLocation();
+  const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState("annual");
 
   useEffect(() => {
-    // Create subscription
+    // Create subscription link to Mercado Pago as soon as the page loads
     setIsLoading(true);
-    apiRequest("POST", "/api/get-or-create-subscription")
+    apiRequest("POST", "/api/get-or-create-subscription", { planType: selectedPlan })
       .then((res) => {
         if (!res.ok) {
           throw new Error("Falha ao conectar com o servidor de assinatura");
@@ -98,11 +25,15 @@ export default function Subscribe() {
         return res.json();
       })
       .then((data) => {
-        setClientSecret(data.clientSecret);
+        if (data.url) {
+          setRedirectUrl(data.url);
+        } else {
+          throw new Error("URL de assinatura não encontrada");
+        }
         setIsLoading(false);
       })
       .catch((err) => {
-        console.error("Erro ao criar assinatura:", err);
+        console.error("Erro ao criar link de assinatura:", err);
         setError(err.message);
         setIsLoading(false);
         toast({
@@ -111,7 +42,19 @@ export default function Subscribe() {
           variant: "destructive",
         });
       });
-  }, [toast]);
+  }, [toast, selectedPlan]);
+
+  const handleContinueToSubscription = () => {
+    if (redirectUrl) {
+      // Redirecionar para o Mercado Pago
+      window.location.href = redirectUrl;
+    }
+  };
+
+  const handlePlanChange = (plan: string) => {
+    setSelectedPlan(plan);
+    setIsLoading(true);
+  };
 
   if (isLoading) {
     return (
@@ -136,7 +79,7 @@ export default function Subscribe() {
             <p className="text-sm text-muted-foreground">{error}</p>
           </CardContent>
           <CardFooter>
-            <Button variant="outline" onClick={() => window.history.back()} className="w-full">
+            <Button variant="outline" onClick={() => navigate("/subscribe/plans")} className="w-full">
               Voltar
             </Button>
           </CardFooter>
@@ -145,7 +88,7 @@ export default function Subscribe() {
     );
   }
 
-  if (!clientSecret) {
+  if (!redirectUrl) {
     return (
       <div className="h-screen flex items-center justify-center">
         <Card className="w-full max-w-md">
@@ -155,11 +98,11 @@ export default function Subscribe() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Verifique se as chaves do Stripe estão configuradas corretamente.
+              Não foi possível conectar ao serviço de pagamento. Tente novamente mais tarde.
             </p>
           </CardContent>
           <CardFooter>
-            <Button variant="outline" onClick={() => window.history.back()} className="w-full">
+            <Button variant="outline" onClick={() => navigate("/subscribe/plans")} className="w-full">
               Voltar
             </Button>
           </CardFooter>
@@ -174,21 +117,71 @@ export default function Subscribe() {
         <CardHeader>
           <CardTitle>Assinar QUERO FRETES</CardTitle>
           <CardDescription>
-            Assinatura anual - R$ 99,90/mês com cobrança anual de R$ 1.198,80
+            {selectedPlan === "monthly" 
+              ? "Assinatura mensal - R$ 99,90/mês" 
+              : "Assinatura anual - R$ 99,90/mês com cobrança anual de R$ 1.198,80"}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Elements stripe={stripePromise} options={{ clientSecret }}>
-            <SubscribeForm />
-          </Elements>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-2">
+              <Button 
+                variant={selectedPlan === "monthly" ? "default" : "outline"}
+                className="flex-col h-auto py-4"
+                onClick={() => handlePlanChange("monthly")}
+              >
+                <Clock className="h-6 w-6 mb-2" />
+                <span className="font-medium">Mensal</span>
+                <span className="text-xs mt-1">R$ 99,90/mês</span>
+              </Button>
+              <Button 
+                variant={selectedPlan === "annual" ? "default" : "outline"} 
+                className="flex-col h-auto py-4 relative"
+                onClick={() => handlePlanChange("annual")}
+              >
+                <CreditCard className="h-6 w-6 mb-2" />
+                <span className="font-medium">Anual</span>
+                <span className="text-xs mt-1">R$ 1.198,80/ano</span>
+                {selectedPlan === "annual" && (
+                  <span className="absolute -top-2 -right-2 bg-green-600 text-white text-[10px] px-2 py-0.5 rounded-full">
+                    Melhor oferta
+                  </span>
+                )}
+              </Button>
+            </div>
+            
+            <div className="bg-muted p-4 rounded-lg mt-6">
+              <h3 className="font-medium mb-3">Inclui todos os recursos:</h3>
+              <ul className="space-y-2">
+                <li className="flex items-start">
+                  <CheckCircle2 className="h-5 w-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm">Gerenciamento de motoristas e veículos</span>
+                </li>
+                <li className="flex items-start">
+                  <CheckCircle2 className="h-5 w-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm">Gerenciamento de fretes e controle de destinos</span>
+                </li>
+                <li className="flex items-start">
+                  <CheckCircle2 className="h-5 w-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm">Monitoramento de documentação</span>
+                </li>
+                <li className="flex items-start">
+                  <CheckCircle2 className="h-5 w-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm">Suporte técnico em horário comercial</span>
+                </li>
+              </ul>
+            </div>
+          </div>
         </CardContent>
-        <CardFooter className="flex-col space-y-2">
-          <p className="text-xs text-muted-foreground text-center w-full">
-            Ao assinar, você terá acesso a todas as funcionalidades do sistema QUERO FRETES.
-          </p>
-          <p className="text-xs text-muted-foreground text-center w-full">
-            A assinatura será renovada automaticamente a cada ano, a menos que seja cancelada.
-          </p>
+        <CardFooter className="flex-col space-y-4">
+          <Button 
+            onClick={handleContinueToSubscription}
+            className="w-full"
+            size="lg"
+          >
+            Continuar para Pagamento
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
           <p className="text-xs text-muted-foreground text-center w-full">
             Ao finalizar, você concorda com os termos de serviço e política de privacidade.
           </p>

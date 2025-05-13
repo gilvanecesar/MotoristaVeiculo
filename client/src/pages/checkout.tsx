@@ -1,91 +1,17 @@
-import { useStripe, Elements, PaymentElement, useElements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
 import { useEffect, useState } from 'react';
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
-
-// Make sure to call `loadStripe` outside of a component's render to avoid
-// recreating the `Stripe` object on every render.
-if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
-  throw new Error('Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY');
-}
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
-
-const CheckoutForm = () => {
-  const stripe = useStripe();
-  const elements = useElements();
-  const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!stripe || !elements) {
-      toast({
-        title: "Erro no processamento",
-        description: "Não foi possível conectar ao Stripe. Tente novamente mais tarde.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const { error } = await stripe.confirmPayment({
-        elements,
-        confirmParams: {
-          return_url: window.location.origin + "/payment-success",
-        },
-      });
-
-      if (error) {
-        toast({
-          title: "Falha no Pagamento",
-          description: error.message,
-          variant: "destructive",
-        });
-      }
-    } catch (err) {
-      toast({
-        title: "Erro no Processamento",
-        description: "Ocorreu um erro durante o pagamento. Tente novamente.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <PaymentElement />
-      <Button 
-        type="submit" 
-        className="w-full" 
-        disabled={!stripe || isLoading}
-      >
-        {isLoading ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Processando...
-          </>
-        ) : (
-          "Finalizar Pagamento"
-        )}
-      </Button>
-    </form>
-  );
-};
+import { Loader2, CreditCard, Calendar, Check, AlertCircle } from "lucide-react";
+import { useLocation } from 'wouter';
 
 export default function Checkout() {
-  const [clientSecret, setClientSecret] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const [_, navigate] = useLocation();
+  const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
   
   // Get the plan from URL query parameter
   const [searchParams] = useState<URLSearchParams>(() => new URLSearchParams(window.location.search));
@@ -95,12 +21,11 @@ export default function Checkout() {
   });
 
   useEffect(() => {
-    // Create PaymentIntent as soon as the page loads
+    // Create payment link to Mercado Pago as soon as the page loads
     setIsLoading(true);
     apiRequest("POST", "/api/create-payment-intent", { 
-      amount: selectedPlan === "monthly" ? 99.90 : 960.00, 
-      plan: selectedPlan || "annual" 
-    }) // R$ 99,90 mensal ou R$ 960,00 anual
+      planType: selectedPlan || "monthly"
+    })
       .then((res) => {
         if (!res.ok) {
           throw new Error("Falha ao conectar com o servidor de pagamento");
@@ -108,11 +33,15 @@ export default function Checkout() {
         return res.json();
       })
       .then((data) => {
-        setClientSecret(data.clientSecret);
+        if (data.url) {
+          setRedirectUrl(data.url);
+        } else {
+          throw new Error("URL de pagamento não encontrada");
+        }
         setIsLoading(false);
       })
       .catch((err) => {
-        console.error("Erro ao criar intent de pagamento:", err);
+        console.error("Erro ao criar link de pagamento:", err);
         setError(err.message);
         setIsLoading(false);
         toast({
@@ -122,6 +51,13 @@ export default function Checkout() {
         });
       });
   }, [toast, selectedPlan]);
+
+  const handleContinueToPayment = () => {
+    if (redirectUrl) {
+      // Redirecionar para o Mercado Pago
+      window.location.href = redirectUrl;
+    }
+  };
 
   if (isLoading) {
     return (
@@ -139,14 +75,17 @@ export default function Checkout() {
       <div className="h-screen flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle className="text-destructive">Erro no Pagamento</CardTitle>
+            <CardTitle className="text-destructive flex items-center">
+              <AlertCircle className="w-5 h-5 mr-2" />
+              Erro no Pagamento
+            </CardTitle>
             <CardDescription>Não foi possível iniciar o processo de pagamento</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">{error}</p>
           </CardContent>
           <CardFooter>
-            <Button variant="outline" onClick={() => window.history.back()} className="w-full">
+            <Button variant="outline" onClick={() => navigate("/subscribe/plans")} className="w-full">
               Voltar
             </Button>
           </CardFooter>
@@ -155,7 +94,7 @@ export default function Checkout() {
     );
   }
 
-  if (!clientSecret) {
+  if (!redirectUrl) {
     return (
       <div className="h-screen flex items-center justify-center">
         <Card className="w-full max-w-md">
@@ -165,11 +104,11 @@ export default function Checkout() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Verifique se as chaves do Stripe estão configuradas corretamente.
+              Não foi possível conectar ao serviço de pagamento. Tente novamente mais tarde.
             </p>
           </CardContent>
           <CardFooter>
-            <Button variant="outline" onClick={() => window.history.back()} className="w-full">
+            <Button variant="outline" onClick={() => navigate("/subscribe/plans")} className="w-full">
               Voltar
             </Button>
           </CardFooter>
@@ -178,12 +117,11 @@ export default function Checkout() {
     );
   }
 
-  // Make SURE to wrap the form in <Elements> which provides the stripe context.
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-muted/20">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Finalizar Assinatura</CardTitle>
+          <CardTitle>Resumo da Assinatura</CardTitle>
           <CardDescription>
             {selectedPlan === "monthly" 
               ? "Assinatura mensal do QUERO FRETES - R$ 99,90/mês" 
@@ -191,16 +129,46 @@ export default function Checkout() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Elements stripe={stripePromise} options={{ clientSecret }}>
-            <CheckoutForm />
-          </Elements>
+          <div className="space-y-4">
+            <div className="bg-muted p-4 rounded-lg">
+              <h3 className="font-medium mb-2 flex items-center">
+                <CreditCard className="w-4 h-4 mr-2" />
+                Detalhes do Plano
+              </h3>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="text-muted-foreground">Plano:</div>
+                <div className="font-medium">{selectedPlan === "monthly" ? "Mensal" : "Anual"}</div>
+                <div className="text-muted-foreground">Valor:</div>
+                <div className="font-medium">
+                  {selectedPlan === "monthly" ? "R$ 99,90/mês" : "R$ 960,00/ano"}
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <h3 className="font-medium flex items-center">
+                <Check className="w-4 h-4 mr-2 text-green-600" />
+                O que está incluído:
+              </h3>
+              <ul className="list-disc list-inside text-sm space-y-1 text-muted-foreground">
+                <li>Acesso completo à plataforma QUERO FRETES</li>
+                <li>Gerenciamento de motoristas e veículos</li>
+                <li>Gerenciamento de fretes e destinos</li>
+                <li>Monitoramento de documentação</li>
+                <li>Relatórios e estatísticas</li>
+                <li>Suporte técnico durante horário comercial</li>
+              </ul>
+            </div>
+          </div>
         </CardContent>
-        <CardFooter className="flex-col space-y-2">
-          <p className="text-xs text-muted-foreground text-center w-full">
-            {selectedPlan === "monthly" 
-              ? "Cobrança mensal de R$ 99,90"
-              : "Cobrança anual de R$ 960,00 (equivalente a R$ 80,00 por mês)"}
-          </p>
+        <CardFooter className="flex-col space-y-4">
+          <Button 
+            onClick={handleContinueToPayment}
+            className="w-full"
+            size="lg"
+          >
+            Continuar para Pagamento
+          </Button>
           <p className="text-xs text-muted-foreground text-center w-full">
             Ao finalizar, você concorda com os termos de serviço e política de privacidade.
           </p>
