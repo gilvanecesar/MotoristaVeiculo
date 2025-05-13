@@ -78,15 +78,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Verifica se o cliente atual está autorizado a editar/excluir um frete
   const isClientAuthorized = (clientId: number | null): boolean => {
-    // Verifica se o usuário é admin usando o contexto de autenticação
-    if (user && user.profileType && user.profileType.toLowerCase() === 'admin') {
-      console.log("Usuário é admin, autorizando acesso");
+    // Verifica se o usuário é administrador usando o contexto de autenticação
+    if (user && user.profileType && user.profileType.toLowerCase() === 'administrador') {
+      console.log("Usuário é administrador, autorizando acesso");
       return true;
     }
     
     // Permite acesso a motoristas para visualização (mas não para edição/exclusão)
     // Os botões de edição/exclusão são condicionalmente renderizados na UI
-    if (user && user.profileType && user.profileType.toLowerCase() === 'driver') {
+    if (user && user.profileType && user.profileType.toLowerCase() === 'motorista') {
       console.log("Usuário é motorista, permitindo visualização");
       // Motoristas só podem ver, não editar/excluir, então retornamos false
       // mas isso não impede a visualização na lista

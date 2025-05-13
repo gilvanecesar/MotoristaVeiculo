@@ -93,11 +93,11 @@ export default function Navigation() {
     }
   };
   
-  // Verificar se o usuário é administrador
-  const isAdmin = user?.profileType === "admin";
-  const isDriver = user?.profileType === "driver";
-  const isShipper = user?.profileType === "shipper";
-  const isAgent = user?.profileType === "agent";
+  // Verificar o tipo de perfil do usuário
+  const isAdmin = user?.profileType === "administrador";
+  const isDriver = user?.profileType === "motorista";
+  const isShipper = user?.profileType === "embarcador";
+  const isAgent = user?.profileType === "agente";
   
   // Menus administrativos (apenas para administradores)
   const financeMenuItem = {
@@ -292,7 +292,9 @@ export default function Navigation() {
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium">{user?.name}</p>
-                    <p className="text-xs text-muted-foreground">Usuário: {user?.profileType}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Perfil: {user?.profileType ? user.profileType.charAt(0).toUpperCase() + user.profileType.slice(1) : ''}
+                    </p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
