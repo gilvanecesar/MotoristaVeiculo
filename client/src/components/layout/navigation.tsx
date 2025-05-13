@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { ClientSelector } from "@/components/client-selector";
 import { PaymentBanner } from "@/components/payment-banner";
 import { SubscriptionStatusBanner } from "@/components/ui/subscription-status-banner";
+import { useToast } from "@/hooks/use-toast";
 import logoImage from "../../assets/logo.png";
 import { 
   DropdownMenu,
@@ -68,6 +69,7 @@ export default function Navigation() {
   const isMobile = useIsMobile();
   const { theme, toggleTheme } = useTheme();
   const { user, logoutMutation } = useAuth();
+  const { toast } = useToast();
   
   // Função para fazer logout
   const [_, navigate] = useLocation();
@@ -302,14 +304,18 @@ export default function Navigation() {
                       ASSINATURA
                     </DropdownMenuLabel>
                     
-                    {/* Status da Assinatura - Versão Fixa */}
-                    <DropdownMenuItem asChild>
-                      <Link href="/subscribe/fixed">
-                        <div className="flex items-center gap-2 w-full">
-                          <CreditCard className="h-4 w-4" />
-                          <span>Gerenciar Assinatura</span>
-                        </div>
-                      </Link>
+                    {/* Status da Assinatura - Link desativado temporariamente */}
+                    <DropdownMenuItem onClick={() => {
+                      toast({
+                        title: "Funcionalidade em manutenção",
+                        description: "O gerenciamento de assinatura está em manutenção e será disponibilizado em breve.",
+                        variant: "default"
+                      });
+                    }}>
+                      <div className="flex items-center gap-2 w-full">
+                        <CreditCard className="h-4 w-4" />
+                        <span>Gerenciar Assinatura</span>
+                      </div>
                     </DropdownMenuItem>
                     
                     {/* Faturas e Pagamentos - Versão Fixa */}
