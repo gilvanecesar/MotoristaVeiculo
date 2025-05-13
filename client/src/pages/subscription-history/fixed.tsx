@@ -15,14 +15,6 @@ const currencyFormatter = new Intl.NumberFormat('pt-BR', {
 // Dados demo para o histórico de assinaturas
 const demoSubscriptionHistory = [
   {
-    id: "SUB-2025-001",
-    startDate: new Date(2025, 4, 1),
-    endDate: new Date(2025, 5, 1),
-    planType: "Mensal",
-    amount: 99.90,
-    status: "active"
-  },
-  {
     id: "SUB-2025-002",
     startDate: new Date(2025, 3, 1),
     endDate: new Date(2025, 4, 1),
@@ -150,7 +142,7 @@ export default function SubscriptionHistoryPageFixed() {
                   </span>
                   <div className="flex items-center gap-1 text-sm px-2 py-1 bg-green-100 text-green-800 rounded-full">
                     <CheckCircle className="h-3 w-3" />
-                    <span>Ativo</span>
+                    <span>Ativo até 12/06/2025</span>
                   </div>
                 </div>
               </div>
