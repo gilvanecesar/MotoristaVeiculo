@@ -13,6 +13,7 @@ export function setupMercadoPagoRoutes(app: Express) {
   
   // Rotas para criação e gerenciamento de pagamentos
   app.post('/api/subscription/create-payment', isAuthenticated, isActive, createPaymentPreference);
+  app.post('/api/mercadopago/create-payment', isAuthenticated, isActive, createPaymentPreference); // Rota adicional para compatibilidade
   app.post('/api/webhooks/mercadopago', processWebhook);
   app.get('/api/webhooks/mercadopago', processWebhook); // Alguns webhooks do MP são enviados como GET
   

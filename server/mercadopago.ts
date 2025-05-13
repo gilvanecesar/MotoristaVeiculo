@@ -114,7 +114,7 @@ export async function createPaymentPreference(req: Request, res: Response) {
         pending: `${req.headers.origin || 'https://querofretes.com.br'}/payment-pending`,
       },
       auto_return: 'approved',
-      notification_url: `${req.headers.origin || 'https://querofretes.com.br'}/api/mercadopago-webhook`,
+      notification_url: `${req.headers.origin || 'https://querofretes.com.br'}/api/webhooks/mercadopago`,
       external_reference: JSON.stringify({
         userId: user.id,
         planType: planType,
