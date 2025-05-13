@@ -11,26 +11,35 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const [theme, setTheme] = useState<Theme>(() => {
-    // Tenta ler o tema do localStorage primeiramente
-    const savedTheme = localStorage.getItem('theme') as Theme;
-    // Caso contrário, verifica a preferência do sistema
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    // Verificar se está rodando no navegador (cliente)
+    if (typeof window !== 'undefined') {
+      // Tenta ler o tema do localStorage primeiramente
+      const savedTheme = localStorage.getItem('theme') as Theme;
+      // Caso contrário, verifica a preferência do sistema
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      
+      return savedTheme || (prefersDark ? 'dark' : 'light');
+    }
     
-    return savedTheme || (prefersDark ? 'dark' : 'light');
+    // Valor padrão para renderização no servidor
+    return 'light';
   });
 
   useEffect(() => {
-    // Aplica o tema ao elemento HTML
-    const html = document.documentElement;
-    
-    if (theme === 'dark') {
-      html.classList.add('dark');
-    } else {
-      html.classList.remove('dark');
+    // Verificar se está rodando no navegador (cliente)
+    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+      // Aplica o tema ao elemento HTML
+      const html = document.documentElement;
+      
+      if (theme === 'dark') {
+        html.classList.add('dark');
+      } else {
+        html.classList.remove('dark');
+      }
+      
+      // Salva a preferência no localStorage
+      localStorage.setItem('theme', theme);
     }
-    
-    // Salva a preferência no localStorage
-    localStorage.setItem('theme', theme);
   }, [theme]);
 
   const toggleTheme = () => {
