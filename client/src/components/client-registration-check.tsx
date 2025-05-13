@@ -46,13 +46,19 @@ export function ClientRegistrationCheck() {
       const currentPath = window.location.pathname;
       if (ignorePaths.some(path => currentPath.startsWith(path))) return;
       
-      // If user has active subscription but no client, force redirect to client form
-      if (user.subscriptionActive) {
+      // Se o usuário não tem assinatura ativa, redireciona para a página fixa no site principal
+      if (!user.subscriptionActive) {
+        window.location.href = "https://querofretes.com.br/subscribe/fixed";
+        return;
+      }
+      
+      // Se tem assinatura mas não tem cliente, redireciona para o formulário de cliente
+      if (user.subscriptionActive && !user.clientId) {
         setLocation("/clients/new");
         return;
       }
       
-      // For users without subscription, show dialog to complete registration
+      // Mostra o diálogo somente em casos específicos (comportamento de fallback)
       const hasShownDialog = sessionStorage.getItem('clientDialogShown');
       if (!hasShownDialog) {
         setShowDialog(true);
