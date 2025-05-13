@@ -115,9 +115,9 @@ export const vehicles = pgTable("vehicles", {
 
 // Tabela de clientes
 export const CLIENT_TYPES = {
-  SHIPPER: "shipper",     // Embarcador
-  CARRIER: "carrier",     // Transportador
-  AGENT: "agent"          // Agente
+  SHIPPER: "embarcador",  // Antigo shipper
+  CARRIER: "transportador", // Antigo carrier
+  AGENT: "agente"         // Antigo agent
 } as const;
 
 export const clients = pgTable("clients", {
@@ -346,11 +346,11 @@ export type InsertFreightDestination = z.infer<typeof insertFreightDestinationSc
 // Types for forms
 // User profile types
 export const USER_TYPES = {
-  DRIVER: "driver",
-  AGENT: "agent",
-  SHIPPER: "shipper",
-  ADMIN: "admin",
-  CARRIER: "carrier"
+  DRIVER: "motorista",   // Antigo driver
+  AGENT: "agente",       // Antigo agent
+  SHIPPER: "embarcador", // Antigo shipper
+  ADMIN: "administrador", // Antigo admin
+  CARRIER: "transportador" // Antigo carrier
 } as const;
 
 // Authentication providers
