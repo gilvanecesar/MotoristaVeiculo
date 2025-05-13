@@ -302,44 +302,44 @@ export default function Navigation() {
                       ASSINATURA
                     </DropdownMenuLabel>
                     
-                    {/* Status da Assinatura - Versão Demo */}
-                    <DropdownMenuItem onClick={() => {
-                      alert('Versão de demonstração: Em produção, este item abriria a página de gerenciamento de assinatura.');
-                    }}>
-                      <div className="flex items-center gap-2 w-full">
-                        <CreditCard className="h-4 w-4" />
-                        <span>Gerenciar Assinatura</span>
-                      </div>
+                    {/* Status da Assinatura - Versão Fixa */}
+                    <DropdownMenuItem asChild>
+                      <Link href="/subscribe/fixed">
+                        <div className="flex items-center gap-2 w-full">
+                          <CreditCard className="h-4 w-4" />
+                          <span>Gerenciar Assinatura</span>
+                        </div>
+                      </Link>
                     </DropdownMenuItem>
                     
-                    {/* Faturas e Pagamentos - Versão Demo */}
-                    <DropdownMenuItem onClick={() => {
-                      alert('Versão de demonstração: Em produção, este item abriria a página de faturas e pagamentos.');
-                    }}>
-                      <div className="flex items-center gap-2 w-full">
-                        <Receipt className="h-4 w-4" />
-                        <span>Faturas e Pagamentos</span>
-                      </div>
+                    {/* Faturas e Pagamentos */}
+                    <DropdownMenuItem asChild>
+                      <Link href="/invoices">
+                        <div className="flex items-center gap-2 w-full">
+                          <Receipt className="h-4 w-4" />
+                          <span>Faturas e Pagamentos</span>
+                        </div>
+                      </Link>
                     </DropdownMenuItem>
                     
-                    {/* Histórico de Assinatura - Versão Demo */}
-                    <DropdownMenuItem onClick={() => {
-                      alert('Versão de demonstração: Em produção, este item abriria a página de histórico de assinatura.');
-                    }}>
-                      <div className="flex items-center gap-2 w-full">
-                        <CalendarClock className="h-4 w-4" />
-                        <span>Histórico de Assinatura</span>
-                      </div>
+                    {/* Histórico de Assinatura */}
+                    <DropdownMenuItem asChild>
+                      <Link href="/subscription-history">
+                        <div className="flex items-center gap-2 w-full">
+                          <CalendarClock className="h-4 w-4" />
+                          <span>Histórico de Assinatura</span>
+                        </div>
+                      </Link>
                     </DropdownMenuItem>
                     
-                    {/* Reportar Problema - Versão Demo */}
-                    <DropdownMenuItem onClick={() => {
-                      alert('Versão de demonstração: Em produção, este item abriria um formulário para reportar problemas.');
-                    }}>
-                      <div className="flex items-center gap-2 w-full">
-                        <AlertCircle className="h-4 w-4" />
-                        <span>Reportar Problema</span>
-                      </div>
+                    {/* Reportar Problema */}
+                    <DropdownMenuItem asChild>
+                      <Link href="/report-payment-issue">
+                        <div className="flex items-center gap-2 w-full">
+                          <AlertCircle className="h-4 w-4" />
+                          <span>Reportar Problema</span>
+                        </div>
+                      </Link>
                     </DropdownMenuItem>
                     
                     <DropdownMenuSeparator />
