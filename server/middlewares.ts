@@ -45,6 +45,41 @@ export function hasActiveSubscription(req: Request, res: Response, next: NextFun
   
   // Verificar se a assinatura está marcada como ativa
   if (user.subscriptionActive !== true) {
+    // Verificamos todos os perfis que precisam de assinatura após 7 dias (agente, embarcador, transportador)
+    const needsSubscriptionProfiles = ["agente", "agent", "embarcador", "shipper", "transportador", "carrier"];
+    
+    if (needsSubscriptionProfiles.includes(user.profileType?.toLowerCase())) {
+      // Verificar se passou dos 7 dias de cadastro
+      const createdAt = new Date(user.createdAt);
+      const currentDate = new Date();
+      const trialDays = 7; // Período de teste de 7 dias
+      
+      // Calcula a data de expiração baseada na data de criação + 7 dias
+      const calculatedExpirationDate = new Date(createdAt);
+      calculatedExpirationDate.setDate(calculatedExpirationDate.getDate() + trialDays);
+      
+      console.log(`[hasActiveSubscription] Verificando acesso 7 dias: User ID ${user.id}, Profile: ${user.profileType}, Criado em: ${createdAt.toISOString()}, Calculada expiração: ${calculatedExpirationDate.toISOString()}`);
+      
+      // Se a data atual for maior que a data calculada de expiração
+      if (currentDate > calculatedExpirationDate) {
+        console.log(`[hasActiveSubscription] Usuário ID ${user.id} com perfil ${user.profileType} passou dos 7 dias sem assinatura ativa`);
+        
+        // Atualiza o usuário para marcar que precisa de pagamento
+        storage.updateUser(user.id, { 
+          paymentRequired: true
+        })
+          .then(() => {
+            console.log(`[hasActiveSubscription] Usuário ID ${user.id} marcado como paymentRequired no banco de dados`);
+          })
+          .catch(err => console.error("Erro ao marcar usuário como paymentRequired:", err));
+        
+        return res.status(402).json({ 
+          code: "subscription_required",
+          message: "Período de acesso gratuito encerrado. Por favor, adquira um plano para continuar."
+        });
+      }
+    }
+    
     return res.status(402).json({ 
       code: "subscription_required",
       message: "Assinatura necessária. Por favor, adquira um plano para continuar."
