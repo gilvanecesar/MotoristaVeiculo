@@ -585,28 +585,43 @@ export default function FinancePage() {
                 </TableHeader>
                 <TableBody>
                   {subscriptions && subscriptions.length > 0 ? (
-                    subscriptions.map((subscription) => (
-                      <TableRow key={subscription.id}>
-                        <TableCell className="font-medium">
-                          <div>{subscription.clientName}</div>
-                          <div className="text-xs text-muted-foreground">{subscription.email}</div>
-                        </TableCell>
-                        <TableCell>{subscription.plan}</TableCell>
-                        <TableCell>{formatCurrency(subscription.amount)}</TableCell>
-                        <TableCell>
-                          <Badge variant={getSubscriptionBadgeVariant(subscription.status)}>
-                            {subscriptionStatusMap[subscription.status] || subscription.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{new Date(subscription.startDate).toLocaleDateString('pt-BR')}</TableCell>
-                        <TableCell>{new Date(subscription.endDate).toLocaleDateString('pt-BR')}</TableCell>
-                        <TableCell className="text-right">
-                          <Button variant="ghost" size="sm">
-                            Detalhes
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
+                    subscriptions
+                      // Filtrar apenas assinaturas com valor numérico válido maior que zero
+                      .filter((subscription) => {
+                        // Verificar se o valor é um número válido
+                        let numAmount: number;
+                        if (typeof subscription.amount === 'string') {
+                          numAmount = parseFloat(subscription.amount.replace(/[^\d.,]/g, '').replace(',', '.'));
+                        } else if (typeof subscription.amount === 'number') {
+                          numAmount = subscription.amount;
+                        } else {
+                          numAmount = 0;
+                        }
+                          
+                        return !isNaN(Number(amount)) && Number(amount) > 0;
+                      })
+                      .map((subscription) => (
+                        <TableRow key={subscription.id}>
+                          <TableCell className="font-medium">
+                            <div>{subscription.clientName}</div>
+                            <div className="text-xs text-muted-foreground">{subscription.email}</div>
+                          </TableCell>
+                          <TableCell>{subscription.plan}</TableCell>
+                          <TableCell>{formatCurrency(subscription.amount)}</TableCell>
+                          <TableCell>
+                            <Badge variant={getSubscriptionBadgeVariant(subscription.status)}>
+                              {subscriptionStatusMap[subscription.status] || subscription.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{new Date(subscription.startDate).toLocaleDateString('pt-BR')}</TableCell>
+                          <TableCell>{new Date(subscription.endDate).toLocaleDateString('pt-BR')}</TableCell>
+                          <TableCell className="text-right">
+                            <Button variant="ghost" size="sm">
+                              Detalhes
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
                   ) : (
                     <TableRow>
                       <TableCell colSpan={7} className="h-32 text-center">
@@ -658,21 +673,31 @@ export default function FinancePage() {
                 </TableHeader>
                 <TableBody>
                   {invoices && invoices.length > 0 ? (
-                    invoices.map((invoice) => (
-                      <TableRow key={invoice.id}>
-                        <TableCell className="font-medium">{invoice.id}</TableCell>
-                        <TableCell>
-                          <div>{invoice.clientName}</div>
-                          <div className="text-xs text-muted-foreground">{invoice.email}</div>
-                        </TableCell>
-                        <TableCell>{formatCurrency(invoice.amount)}</TableCell>
-                        <TableCell>
-                          <Badge variant={getInvoiceBadgeVariant(invoice.status)}>
-                            {invoiceStatusMap[invoice.status] || invoice.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{new Date(invoice.date).toLocaleDateString('pt-BR')}</TableCell>
-                        <TableCell className="text-right">
+                    invoices
+                      // Filtrar apenas faturas com valor numérico válido maior que zero
+                      .filter((invoice) => {
+                        // Verificar se o valor é um número válido
+                        const amount = typeof invoice.amount === 'string' 
+                          ? parseFloat(invoice.amount.replace(/[^\d.,]/g, '').replace(',', '.'))
+                          : invoice.amount;
+                          
+                        return !isNaN(Number(amount)) && Number(amount) > 0;
+                      })
+                      .map((invoice) => (
+                        <TableRow key={invoice.id}>
+                          <TableCell className="font-medium">{invoice.id}</TableCell>
+                          <TableCell>
+                            <div>{invoice.clientName}</div>
+                            <div className="text-xs text-muted-foreground">{invoice.email}</div>
+                          </TableCell>
+                          <TableCell>{formatCurrency(invoice.amount)}</TableCell>
+                          <TableCell>
+                            <Badge variant={getInvoiceBadgeVariant(invoice.status)}>
+                              {invoiceStatusMap[invoice.status] || invoice.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{new Date(invoice.date).toLocaleDateString('pt-BR')}</TableCell>
+                          <TableCell className="text-right">
                           <Button variant="ghost" size="sm">
                             Baixar
                           </Button>
