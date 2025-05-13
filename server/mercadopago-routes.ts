@@ -2,7 +2,7 @@ import { Express, Request, Response } from 'express';
 import { isAuthenticated, isActive, isAdmin } from './middlewares';
 import { storage } from './storage';
 import { format } from 'date-fns';
-import { createPaymentPreference, processWebhook, createTestPayment } from './mercadopago';
+import { createPaymentPreference, processWebhook, createTestPayment, getUserPayments } from './mercadopago';
 
 /**
  * Configura todas as rotas relacionadas a assinaturas e pagamentos via Mercado Pago
@@ -82,7 +82,6 @@ export function setupMercadoPagoRoutes(app: Express) {
       const userId = req.user.id;
       
       // Buscar pagamentos do Mercado Pago para o usuário
-      const { getUserPayments } = require('./mercadopago');
       const payments = await getUserPayments(userId);
       
       return res.json(payments);
