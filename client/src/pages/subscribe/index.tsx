@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
-import { useAuth } from "@/hooks/use-auth";
-import { useToast } from "@/hooks/use-toast";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import React from 'react';
+import { useAuth } from '@/hooks/use-auth';
+import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { format } from 'date-fns';
+import { pt } from 'date-fns/locale';
+import { useLocation } from 'wouter';
 import { 
   Card, 
   CardContent, 
@@ -10,177 +12,88 @@ import {
   CardFooter, 
   CardHeader, 
   CardTitle 
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { 
-  CreditCard, 
-  Check, 
-  X, 
-  Calendar, 
-  ArrowRight,
-  AlertTriangle,
-  CheckCircle2,
-  Clock
-} from "lucide-react";
-import { format } from "date-fns";
-import { pt } from "date-fns/locale";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import MercadoPagoButton from "@/components/MercadoPagoButton";
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { AlertTriangle, CheckCircle } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import SubscriptionDetails from '@/components/ui/subscription-details';
 
 export default function SubscribePage() {
   const { user } = useAuth();
-  const { toast } = useToast();
-  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = React.useState('details');
+  const [location, navigate] = useLocation();
   
   // Buscar informações da assinatura
   const { 
-    data: subscriptionInfo, 
+    data: subscriptionData, 
     isLoading,
     error 
   } = useQuery({
     queryKey: ['/api/user/subscription-info'],
     queryFn: async () => {
       const res = await apiRequest('GET', '/api/user/subscription-info');
-      const data = await res.json();
-      return data;
+      return await res.json();
     }
   });
   
-  // Mutation para criar sessão do portal Stripe
-  const createPortalSessionMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest('POST', '/api/create-portal-session');
-      const data = await res.json();
-      return data;
-    },
-    onSuccess: (data) => {
-      // Redirecionar para o portal do Stripe
-      window.location.href = data.url;
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Erro ao acessar portal de pagamento",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  });
+  // Verificar parâmetros de URL para exibir mensagens de status
+  const urlParams = new URLSearchParams(window.location.search);
+  const status = urlParams.get('status');
+  const type = urlParams.get('type');
   
-  // Mutation para cancelar assinatura
-  const cancelSubscriptionMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest('POST', '/api/cancel-subscription');
-      const data = await res.json();
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/user/subscription-info'] });
-      setCancelDialogOpen(false);
-      toast({
-        title: "Assinatura cancelada",
-        description: "Sua assinatura foi cancelada com sucesso. O acesso continua disponível até o final do período atual.",
-        variant: "default"
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Erro ao cancelar assinatura",
-        description: error.message,
-        variant: "destructive"
-      });
+  // Renderizar mensagens de status com base na URL
+  const renderStatusMessage = () => {
+    if (status === 'success') {
+      return (
+        <Alert className="mb-6">
+          <CheckCircle className="h-4 w-4" />
+          <AlertTitle>Pagamento realizado com sucesso!</AlertTitle>
+          <AlertDescription>
+            {type === 'monthly' 
+              ? 'Sua assinatura mensal foi ativada com sucesso.' 
+              : type === 'annual' 
+              ? 'Sua assinatura anual foi ativada com sucesso.' 
+              : 'Sua assinatura foi ativada com sucesso.'}
+          </AlertDescription>
+        </Alert>
+      );
+    } else if (status === 'cancelled') {
+      return (
+        <Alert variant="destructive" className="mb-6">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Pagamento cancelado</AlertTitle>
+          <AlertDescription>
+            O processo de pagamento foi cancelado. Você pode tentar novamente quando desejar.
+          </AlertDescription>
+        </Alert>
+      );
+    } else if (status === 'pending') {
+      return (
+        <Alert variant="default" className="mb-6 bg-amber-50 text-amber-800 border-amber-200">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Pagamento pendente</AlertTitle>
+          <AlertDescription>
+            Seu pagamento está pendente de confirmação. Assim que for processado, sua assinatura será ativada automaticamente.
+          </AlertDescription>
+        </Alert>
+      );
     }
-  });
-  
-  // Mutation para iniciar uma nova assinatura
-  const createCheckoutSessionMutation = useMutation({
-    mutationFn: async (planType: string) => {
-      try {
-        // Método principal: usar Mercado Pago
-        const res = await apiRequest('POST', '/api/mercadopago/create-payment', { 
-          planType,
-          description: planType === "monthly" ? "Assinatura Mensal QUERO FRETES" : "Assinatura Anual QUERO FRETES",
-          amount: planType === "monthly" ? 99.90 : 960.00,
-          isSubscription: true
-        });
-        const data = await res.json();
-        
-        console.log("Resposta Mercado Pago:", data);
-        
-        if (data.init_point || data.url) {
-          return {
-            url: data.init_point || data.url,
-            isMercadoPago: true
-          };
-        } else {
-          throw new Error("URL de pagamento Mercado Pago não disponível");
-        }
-      } catch (error) {
-        console.error("Erro ao criar pagamento Mercado Pago:", error);
-        throw error;
-      }
-    },
-    onSuccess: (data) => {
-      // Verificar se temos uma URL do Mercado Pago
-      if (data.url) {
-        console.log("Redirecionando para URL do Mercado Pago:", data.url);
-        // Redirecionar para o Mercado Pago
-        window.location.href = data.url;
-      } else {
-        // Exibir mensagem de erro se não tiver URL
-        toast({
-          title: "Erro no processamento",
-          description: "Não foi possível obter o link de pagamento. Tente novamente mais tarde.",
-          variant: "destructive"
-        });
-      }
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Erro ao iniciar pagamento",
-        description: "Não foi possível criar a assinatura. Por favor, tente novamente mais tarde.",
-        variant: "destructive"
-      });
-      console.error("Erro detalhado:", error);
-    }
-  });
-  
-  // Mutation para ativar período de teste
-  const activateTrialMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest('POST', '/api/activate-trial');
-      const data = await res.json();
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/user/subscription-info'] });
-      toast({
-        title: "Período de teste ativado",
-        description: "Seu período de teste de 7 dias foi ativado com sucesso.",
-        variant: "default"
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Erro ao ativar período de teste",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  });
-  
-  // Formatar data para exibição
-  const formatDate = (dateStr: string) => {
-    if (!dateStr) return "Não disponível";
-    try {
-      const date = new Date(dateStr);
-      return format(date, "dd 'de' MMMM 'de' yyyy", { locale: pt });
-    } catch (err) {
-      return "Data inválida";
-    }
+    
+    return null;
   };
+  
+  // Limpar parâmetros de URL após exibir mensagem
+  React.useEffect(() => {
+    if (status) {
+      const timer = setTimeout(() => {
+        navigate('/subscribe', { replace: true });
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [status, navigate]);
   
   if (error) {
     return (
@@ -196,21 +109,6 @@ export default function SubscribePage() {
     );
   }
   
-  if (isLoading) {
-    return (
-      <div className="container mx-auto py-6 px-4">
-        <div className="mb-6">
-          <Skeleton className="h-10 w-1/3 mb-2" />
-          <Skeleton className="h-4 w-1/2 mb-6" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Skeleton className="h-64" />
-          <Skeleton className="h-64" />
-        </div>
-      </div>
-    );
-  }
-  
   return (
     <div className="container mx-auto py-6 px-4">
       <div className="mb-6">
@@ -218,321 +116,226 @@ export default function SubscribePage() {
         <p className="text-muted-foreground">Gerencie sua assinatura e métodos de pagamento para o QUERO FRETES</p>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        {/* Status da Assinatura Atual */}
-        <Card className="shadow-sm">
-          <CardHeader>
-            <CardTitle>Status da Assinatura</CardTitle>
-            <CardDescription>Veja os detalhes da sua assinatura atual</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {/* Status */}
-              <div className="flex items-start gap-3">
-                {subscriptionInfo?.active ? (
-                  <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5" />
-                ) : subscriptionInfo?.isTrial ? (
-                  <Clock className="h-5 w-5 text-blue-500 mt-0.5" />
-                ) : (
-                  <X className="h-5 w-5 text-red-500 mt-0.5" />
-                )}
-                <div>
-                  <p className="font-medium">Status</p>
-                  <div className="flex items-center gap-2">
-                    {subscriptionInfo?.active ? (
-                      <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-50">Ativa</Badge>
-                    ) : subscriptionInfo?.isTrial ? (
-                      <Badge variant="outline" className="bg-blue-50 text-blue-700 hover:bg-blue-50">Período de Teste</Badge>
-                    ) : (
-                      <Badge variant="outline" className="bg-red-50 text-red-700 hover:bg-red-50">Inativa</Badge>
-                    )}
-                  </div>
-                </div>
-              </div>
-              
-              {/* Tipo de Plano */}
-              {(subscriptionInfo?.active || subscriptionInfo?.isTrial) && (
-                <div className="flex items-start gap-3">
-                  <CreditCard className="h-5 w-5 text-slate-400 mt-0.5" />
-                  <div>
-                    <p className="font-medium">Plano</p>
-                    <p className="text-sm text-slate-600">
-                      {subscriptionInfo?.isTrial
-                        ? "Período de Teste (7 dias)"
-                        : subscriptionInfo?.planType === "monthly"
-                          ? "Mensal - R$ 99,90/mês"
-                          : "Anual - R$ 960,00/ano"}
-                    </p>
-                  </div>
-                </div>
-              )}
-              
-              {/* Data de Expiração */}
-              {(subscriptionInfo?.active || subscriptionInfo?.isTrial) && (
-                <div className="flex items-start gap-3">
-                  <Calendar className="h-5 w-5 text-slate-400 mt-0.5" />
-                  <div>
-                    <p className="font-medium">{subscriptionInfo?.isTrial ? "Término do Teste" : "Próxima Cobrança"}</p>
-                    <p className="text-sm text-slate-600">
-                      {formatDate(subscriptionInfo?.expiresAt)}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-wrap gap-3">
-            {/* Ações para Assinatura Ativa */}
-            {subscriptionInfo?.active && !subscriptionInfo?.isTrial && (
-              <>
-                <Button 
-                  variant="outline" 
-                  onClick={() => toast({
-                    title: "Portal não disponível",
-                    description: "O portal de gerenciamento de pagamentos está sendo configurado e estará disponível em breve.",
-                    variant: "default"
-                  })}
-                >
-                  Gerenciar Pagamentos
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="text-red-600 hover:bg-red-50 hover:text-red-700"
-                  onClick={() => setCancelDialogOpen(true)}
-                  disabled={cancelSubscriptionMutation.isPending}
-                >
-                  {cancelSubscriptionMutation.isPending ? "Processando..." : "Cancelar Assinatura"}
-                </Button>
-              </>
-            )}
-            
-            {/* Ações para Teste */}
-            {subscriptionInfo?.isTrial && (
-              <Button 
-                onClick={() => createCheckoutSessionMutation.mutate(
-                  // Oferece a assinatura mensal por padrão após o período de teste
-                  "monthly"
-                )}
-                disabled={createCheckoutSessionMutation.isPending}
-              >
-                {createCheckoutSessionMutation.isPending ? "Carregando..." : "Assinar Agora"}
-              </Button>
-            )}
-            
-            {/* Ações para Assinatura Inativa */}
-            {!subscriptionInfo?.active && !subscriptionInfo?.isTrial && (
-              <div className="flex flex-col gap-3 w-full">
-                <Button 
-                  onClick={() => createCheckoutSessionMutation.mutate("monthly")}
-                  disabled={createCheckoutSessionMutation.isPending}
-                  className="w-full"
-                >
-                  {createCheckoutSessionMutation.isPending ? "Carregando..." : "Assinar Agora"}
-                </Button>
-                
-                {!subscriptionInfo?.trialUsed && (
-                  <Button 
-                    variant="outline" 
-                    onClick={() => activateTrialMutation.mutate()}
-                    disabled={activateTrialMutation.isPending}
-                    className="w-full"
-                  >
-                    {activateTrialMutation.isPending ? "Ativando..." : "Iniciar Teste Gratuito"}
-                  </Button>
-                )}
-              </div>
-            )}
-          </CardFooter>
-        </Card>
-        
-        {/* Planos de Assinatura */}
-        <Card className="shadow-sm">
-          <CardHeader>
-            <CardTitle>Planos Disponíveis</CardTitle>
-            <CardDescription>Escolha o plano ideal para o seu negócio</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              {/* Plano Mensal */}
-              <div className="flex flex-col p-4 border rounded-lg hover:border-primary/50 hover:bg-slate-50 transition-colors">
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <h3 className="font-semibold text-lg">Plano Mensal</h3>
-                    <p className="text-muted-foreground text-sm">Faturamento mensal</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xl font-bold">R$ 99,90<span className="text-sm font-normal text-muted-foreground">/mês</span></p>
-                  </div>
-                </div>
-                
-                <ul className="space-y-2 mb-4">
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
-                    <span className="text-sm">Acesso completo ao sistema</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
-                    <span className="text-sm">Gerenciamento de fretes ilimitado</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
-                    <span className="text-sm">Cadastro de motoristas e veículos</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
-                    <span className="text-sm">Suporte prioritário</span>
-                  </li>
-                </ul>
-                
-                <div className="flex flex-col space-y-2 mt-auto">
-                  <MercadoPagoButton 
-                    planType="monthly"
-                    className="w-full"
-                  />
-                  
-                  <Button 
-                    onClick={() => createCheckoutSessionMutation.mutate("monthly")} 
-                    disabled={createCheckoutSessionMutation.isPending}
-                    variant="outline"
-                    className="mt-2"
-                  >
-                    {createCheckoutSessionMutation.isPending ? "Carregando..." : "Pagar com Stripe"}
-                  </Button>
-                </div>
-              </div>
-              
-              {/* Plano Anual */}
-              <div className="flex flex-col p-4 border rounded-lg border-primary/50 bg-primary/5 hover:bg-primary/10 transition-colors relative overflow-hidden">
-                <div className="absolute top-0 right-0">
-                  <Badge className="rounded-none rounded-bl-md">Melhor Custo-Benefício</Badge>
-                </div>
-                
-                <div className="flex justify-between items-start mb-3 mt-2">
-                  <div>
-                    <h3 className="font-semibold text-lg">Plano Anual</h3>
-                    <p className="text-muted-foreground text-sm">Faturamento anual</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xl font-bold">R$ 960,00<span className="text-sm font-normal text-muted-foreground">/ano</span></p>
-                    <p className="text-sm text-green-600 font-medium">Economize R$ 238,80</p>
-                  </div>
-                </div>
-                
-                <ul className="space-y-2 mb-4">
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
-                    <span className="text-sm">Acesso completo ao sistema</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
-                    <span className="text-sm">Gerenciamento de fretes ilimitado</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
-                    <span className="text-sm">Cadastro de motoristas e veículos</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
-                    <span className="text-sm">Suporte prioritário</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
-                    <span className="text-sm font-medium">2 meses grátis</span>
-                  </li>
-                </ul>
-                
-                <div className="flex flex-col space-y-2 mt-auto">
-                  <MercadoPagoButton 
-                    planType="yearly"
-                    className="w-full"
-                  />
-                  
-                  <Button 
-                    onClick={() => createCheckoutSessionMutation.mutate("annual")} 
-                    disabled={createCheckoutSessionMutation.isPending}
-                    variant="outline"
-                    className="mt-2"
-                  >
-                    {createCheckoutSessionMutation.isPending ? "Carregando..." : "Pagar com Stripe"}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Exibir mensagens de status */}
+      {renderStatusMessage()}
       
-      {/* Informações Adicionais */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Formas de Pagamento</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Aceitamos cartões de crédito, PIX e boleto bancário. Os pagamentos são processados com segurança pelo Mercado Pago ou Stripe.
-            </p>
-          </CardContent>
-        </Card>
+      {/* Abas de navegação */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="w-full sm:w-auto">
+          <TabsTrigger value="details" className="flex-1 sm:flex-initial">
+            Detalhes da Assinatura
+          </TabsTrigger>
+          <TabsTrigger value="plans" className="flex-1 sm:flex-initial">
+            Planos Disponíveis
+          </TabsTrigger>
+        </TabsList>
         
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Período de Teste</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Experimente gratuitamente por 7 dias. Após este período, a cobrança será feita automaticamente se você não cancelar.
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Política de Reembolso</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Se não estiver satisfeito, solicite reembolso em até 7 dias após a assinatura entrando em contato com nossa equipe.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-      
-      {/* Diálogo de Confirmação para Cancelamento */}
-      <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Cancelar Assinatura</DialogTitle>
-            <DialogDescription>
-              Tem certeza que deseja cancelar sua assinatura? Você perderá acesso às funcionalidades premium após o término do período atual.
-            </DialogDescription>
-          </DialogHeader>
+        <TabsContent value="details" className="space-y-6">
+          {/* Detalhes da assinatura */}
+          <SubscriptionDetails 
+            subscriptionData={subscriptionData || {}} 
+            isLoading={isLoading} 
+          />
           
-          <div className="bg-amber-50 border border-amber-200 rounded-md p-3 text-amber-800 text-sm flex items-start gap-2 my-2">
-            <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0" />
-            <p>
-              Seu acesso continuará disponível até {formatDate(subscriptionInfo?.expiresAt)}. Após esta data, 
-              você precisará renovar a assinatura para continuar utilizando todos os recursos.
-            </p>
+          {/* Informações adicionais */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Sobre o Sistema QUERO FRETES</CardTitle>
+              <CardDescription>Conheça as vantagens da nossa plataforma</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-lg font-medium mb-3">Benefícios da assinatura</h3>
+                  <ul className="space-y-2">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                      <span>Acesso a todas as funcionalidades do sistema</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                      <span>Gerenciamento completo de motoristas e veículos</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                      <span>Controle de fretes e monitoramento em tempo real</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                      <span>Suporte prioritário via e-mail e WhatsApp</span>
+                    </li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-medium mb-3">Formas de pagamento</h3>
+                  <p className="mb-4 text-muted-foreground">
+                    Aceitamos diversas formas de pagamento através do Mercado Pago, incluindo:
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span className="text-blue-700 font-bold text-xs">CC</span>
+                      </div>
+                      <span>Cartão de crédito</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                        <span className="text-green-700 font-bold text-xs">DC</span>
+                      </div>
+                      <span>Cartão de débito</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center">
+                        <span className="text-amber-700 font-bold text-xs">Pix</span>
+                      </div>
+                      <span>Pagamento via Pix</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                        <span className="text-purple-700 font-bold text-xs">TB</span>
+                      </div>
+                      <span>Transferência bancária</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="plans" className="space-y-6">
+          {/* Planos disponíveis */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Plano Mensal */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Plano Mensal</CardTitle>
+                <CardDescription>Acesso completo por 30 dias</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-6">
+                  <p className="text-3xl font-bold">
+                    R$ 99,90<span className="text-sm font-normal text-muted-foreground">/mês</span>
+                  </p>
+                  <p className="text-muted-foreground text-sm mt-1">Pagamento mensal</p>
+                </div>
+                
+                <ul className="space-y-2 mb-6">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                    <span>Acesso a todas as funcionalidades</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                    <span>Gerenciamento de fretes ilimitado</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                    <span>Suporte prioritário</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                    <span>Cancele quando quiser</span>
+                  </li>
+                </ul>
+              </CardContent>
+              <CardFooter>
+                <Button 
+                  className="w-full" 
+                  asChild
+                >
+                  <a href="/subscribe/plans?plan=monthly">
+                    Assinar Plano Mensal
+                  </a>
+                </Button>
+              </CardFooter>
+            </Card>
+            
+            {/* Plano Anual */}
+            <Card className="border-primary/20 bg-primary/5">
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>Plano Anual</CardTitle>
+                    <CardDescription>Economia de 20% no valor mensal</CardDescription>
+                  </div>
+                  <div className="bg-primary text-primary-foreground text-xs font-bold py-1 px-3 rounded-full">
+                    Mais Vantajoso
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-6">
+                  <p className="text-3xl font-bold">
+                    R$ 960,00<span className="text-sm font-normal text-muted-foreground">/ano</span>
+                  </p>
+                  <p className="text-muted-foreground text-sm mt-1">Equivalente a R$ 80,00/mês</p>
+                </div>
+                
+                <ul className="space-y-2 mb-6">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                    <span>Acesso a todas as funcionalidades</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                    <span>Gerenciamento de fretes ilimitado</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                    <span>Suporte prioritário</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                    <span><strong>Economia de R$ 238,80 por ano</strong></span>
+                  </li>
+                </ul>
+              </CardContent>
+              <CardFooter>
+                <Button 
+                  className="w-full" 
+                  asChild
+                >
+                  <a href="/subscribe/plans?plan=annual">
+                    Assinar Plano Anual
+                  </a>
+                </Button>
+              </CardFooter>
+            </Card>
           </div>
           
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button
-              variant="outline"
-              onClick={() => setCancelDialogOpen(false)}
-            >
-              Voltar
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => cancelSubscriptionMutation.mutate()}
-              disabled={cancelSubscriptionMutation.isPending}
-            >
-              {cancelSubscriptionMutation.isPending ? "Cancelando..." : "Confirmar Cancelamento"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          {/* Período de teste */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Teste Gratuito</CardTitle>
+              <CardDescription>Experimente o sistema por 7 dias sem compromisso</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="mb-4">
+                Inicie um período de teste gratuito de 7 dias para explorar todas as funcionalidades do sistema QUERO FRETES.
+                Não é necessário cartão de crédito para começar.
+              </p>
+              <Alert variant="default" className="bg-blue-50 text-blue-700 border-blue-200">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Importante</AlertTitle>
+                <AlertDescription>
+                  Após o período de teste, você precisará escolher um plano para continuar utilizando o sistema.
+                </AlertDescription>
+              </Alert>
+            </CardContent>
+            <CardFooter>
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => setActiveTab('details')}
+              >
+                Ver Detalhes da Assinatura
+              </Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
