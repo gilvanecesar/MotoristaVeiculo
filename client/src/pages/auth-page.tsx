@@ -73,6 +73,17 @@ export default function AuthPage() {
       setSubscriptionRequired(true);
     }
   }, [params]);
+  
+  // Redireciona automaticamente quando showPlansOnly for true
+  useEffect(() => {
+    if (showPlansOnly) {
+      const timer = setTimeout(() => {
+        window.location.href = "https://querofretes.com.br/subscribe/fixed";
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [showPlansOnly]);
 
   // Redirecionamento se o usuário já estiver logado
   if (user) {
@@ -239,70 +250,25 @@ export default function AuthPage() {
           {/* Exibe apenas os planos se o usuário estiver logado e sem assinatura */}
           {showPlansOnly ? (
             <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-center">Escolha seu plano</h2>
+              <h2 className="text-2xl font-bold text-center">Planos QUERO FRETES</h2>
               <p className="text-center text-muted-foreground">
-                Para acessar a plataforma QUERO FRETES, escolha um dos planos abaixo:
+                Você será redirecionado para o site oficial para escolher seu plano
               </p>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Plano de Teste */}
-                <Card className={`cursor-pointer transition-all hover:shadow-md ${subscriptionType === "trial" ? 'border-primary ring-2 ring-primary' : ''}`}
-                      onClick={() => setSubscriptionType("trial")}>
-                  <CardHeader className="pb-3">
-                    <CardTitle>Teste Grátis</CardTitle>
-                    <CardDescription>Teste por 7 dias</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold mb-2">Grátis</div>
-                    <p className="text-sm text-muted-foreground">Acesso completo por 7 dias</p>
-                  </CardContent>
-                </Card>
-                
-                {/* Plano Mensal */}
-                <Card className={`cursor-pointer transition-all hover:shadow-md ${subscriptionType === "monthly" ? 'border-primary ring-2 ring-primary' : ''}`}
-                      onClick={() => setSubscriptionType("monthly")}>
-                  <CardHeader className="pb-3">
-                    <CardTitle>Mensal</CardTitle>
-                    <CardDescription>Acesso por 30 dias</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold mb-2">R$ 99,90</div>
-                    <p className="text-sm text-muted-foreground">Cobrado a cada mês</p>
-                  </CardContent>
-                </Card>
-                
-                {/* Plano Anual */}
-                <Card className={`cursor-pointer transition-all hover:shadow-md ${subscriptionType === "annual" ? 'border-primary ring-2 ring-primary' : ''}`}
-                      onClick={() => setSubscriptionType("annual")}>
-                  <CardHeader className="pb-3">
-                    <CardTitle>Anual</CardTitle>
-                    <CardDescription>Acesso por 1 ano completo</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold mb-2">R$ 1.198,80</div>
-                    <p className="text-sm text-muted-foreground">Apenas R$ 99,90/mês</p>
-                  </CardContent>
-                </Card>
+              <div className="mt-8 mb-8 flex justify-center">
+                <Icons.spinner className="h-12 w-12 animate-spin text-primary" />
               </div>
+              
+              <p className="text-center">
+                Redirecionando para <strong>querofretes.com.br</strong>...
+              </p>
               
               <Button 
                 className="w-full mt-6" 
-                onClick={() => initiateCheckout(subscriptionType)}
-                disabled={isLoadingCheckout}
+                onClick={() => window.location.href = "https://querofretes.com.br/subscribe/fixed"}
               >
-                {isLoadingCheckout ? (
-                  <>
-                    <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-                    Processando...
-                  </>
-                ) : (
-                  "Continuar para pagamento"
-                )}
+                Continuar para o site oficial
               </Button>
-              
-              <p className="text-xs text-center text-muted-foreground mt-4">
-                Você será redirecionado para a plataforma segura do Mercado Pago para finalizar seu pagamento.
-              </p>
             </div>
           ) : (
             <>
