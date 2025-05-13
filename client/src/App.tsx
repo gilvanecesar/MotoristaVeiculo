@@ -38,6 +38,7 @@ import SubscribePlansPage from "@/pages/subscribe/plans";
 import SubscribeFixedPage from "@/pages/subscribe/fixed";
 import InvoicesPage from "@/pages/invoices";
 import InvoicesFixedPage from "@/pages/invoices/fixed";
+import SubscriptionHistoryFixedPage from "@/pages/subscription-history/fixed";
 import PaymentHistoryPage from "@/pages/user/payment-history";
 import ProfileSelectionPage from "@/pages/profile-selection";
 import ResetPasswordPage from "@/pages/reset-password";
@@ -57,6 +58,7 @@ function Router() {
       <ProtectedRoute path="/subscribe/fixed" component={SubscribeFixedPage} />
       <ProtectedRoute path="/invoices" component={InvoicesPage} />
       <ProtectedRoute path="/invoices/fixed" component={InvoicesFixedPage} />
+      <ProtectedRoute path="/subscription-history/fixed" component={SubscriptionHistoryFixedPage} />
       <ProtectedRoute path="/user/payment-history" component={PaymentHistoryPage} />
       <ProtectedRoute path="/profile-selection" component={ProfileSelectionPage} />
       <ProtectedRoute path="/dashboard" component={Dashboard} />
