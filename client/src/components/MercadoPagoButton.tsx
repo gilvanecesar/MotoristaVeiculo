@@ -4,7 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 
 interface MercadoPagoButtonProps {
-  planType: 'monthly' | 'annual';
+  planType: 'monthly' | 'yearly' | 'annual';
   onSuccess?: () => void;
   className?: string;
   variant?: 'default' | 'outline' | 'secondary' | 'destructive' | 'ghost' | 'link';
@@ -23,15 +23,18 @@ export function MercadoPagoButton({
     try {
       setIsLoading(true);
       
+      // Converter 'annual' para 'yearly' para compatibilidade com o backend
+      const normalizedPlanType = planType === 'annual' ? 'yearly' : planType;
+      
       // Valores baseados no plano
-      const amount = planType === 'monthly' ? '99.90' : '960.00';
-      const title = planType === 'monthly' ? 'Assinatura Mensal - QueroFretes' : 'Assinatura Anual - QueroFretes';
-      const description = planType === 'monthly' 
+      const amount = normalizedPlanType === 'monthly' ? '99.90' : '960.00';
+      const title = normalizedPlanType === 'monthly' ? 'Assinatura Mensal - QueroFretes' : 'Assinatura Anual - QueroFretes';
+      const description = normalizedPlanType === 'monthly' 
         ? 'Assinatura mensal da plataforma QueroFretes' 
         : 'Assinatura anual da plataforma QueroFretes';
       
       const response = await apiRequest('POST', '/api/mercadopago/create-payment', {
-        planType,
+        planType: normalizedPlanType,
         title,
         amount,
         description
