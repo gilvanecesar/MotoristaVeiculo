@@ -27,14 +27,32 @@ export function ClientRegistrationCheck() {
 
   useEffect(() => {
     // Ignore for admin users or if no user logged in
-    if (!user || user.profileType === 'admin') return;
+    if (!user || user.profileType === 'admin' || user.profileType === 'administrador') return;
     
-    // If user has no clientId associated, show dialog
+    // If user has no clientId associated, show dialog or redirect directly
     if (!user.clientId) {
-      // Ignore if already on the client/new page or auth page
-      if (window.location.pathname === '/clients/new' || window.location.pathname === '/auth') return;
+      // Ignore if already on the client/new page, auth page, or subscription pages
+      const ignorePaths = [
+        '/clients/new', 
+        '/auth', 
+        '/subscribe', 
+        '/subscribe/fixed', 
+        '/subscribe/plans',
+        '/payment-success',
+        '/payment-cancel',
+        '/profile-selection'
+      ];
       
-      // Show dialog only once per session
+      const currentPath = window.location.pathname;
+      if (ignorePaths.some(path => currentPath.startsWith(path))) return;
+      
+      // If user has active subscription but no client, force redirect to client form
+      if (user.subscriptionActive) {
+        setLocation("/clients/new");
+        return;
+      }
+      
+      // For users without subscription, show dialog to complete registration
       const hasShownDialog = sessionStorage.getItem('clientDialogShown');
       if (!hasShownDialog) {
         setShowDialog(true);
@@ -61,7 +79,9 @@ export function ClientRegistrationCheck() {
             Cadastro de cliente obrigatório
           </AlertDialogTitle>
           <AlertDialogDescription>
-            Para utilizar todas as funcionalidades do sistema, é necessário preencher o cadastro do seu cliente na aba CLIENTE.
+            <strong className="text-primary">Atenção:</strong> Para utilizar a plataforma QUERO FRETES é necessário preencher o cadastro completo do cliente.
+            <br/><br/>
+            Sem este cadastro você não poderá acessar as funcionalidades do sistema.
             <br/><br/>
             Deseja ir para a página de cadastro agora?
           </AlertDialogDescription>

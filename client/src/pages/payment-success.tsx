@@ -104,12 +104,12 @@ export default function PaymentSuccessPage() {
             </p>
           </div>
           <p>
-            Agora você tem acesso completo à plataforma QUERO FRETES.
+            Sua assinatura foi ativada com sucesso! Para completar seu cadastro e começar a usar a plataforma, precisamos que você preencha o cadastro do cliente.
           </p>
         </CardContent>
         <CardFooter className="flex justify-center pb-6">
-          <Button onClick={() => navigate("/dashboard")} className="w-full">
-            Acessar a plataforma
+          <Button onClick={() => navigate("/clients/new")} className="w-full">
+            Continuar para cadastro de cliente
           </Button>
         </CardFooter>
       </Card>
