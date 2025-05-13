@@ -34,12 +34,12 @@ export function hasActiveSubscription(req: Request, res: Response, next: NextFun
   const user = req.user;
   
   // Se for administrador, sempre tem acesso
-  if (user.profileType === "administrador") {
+  if (user.profileType === "administrador" || user.profileType === "admin") {
     return next();
   }
   
   // Se for motorista com acesso gratuito, permitir acesso
-  if (user.profileType === "motorista" && user.subscriptionType === "driver_free") {
+  if ((user.profileType === "motorista" || user.profileType === "driver") && user.subscriptionType === "driver_free") {
     return next();
   }
   
@@ -169,7 +169,7 @@ export function hasDriverAccess(req: Request, res: Response, next: NextFunction)
 
   const driverId = parseInt(req.params.id, 10);
   
-  if (req.user?.profileType?.toLowerCase() === "administrador" || req.user?.driverId === driverId) {
+  if (req.user?.profileType?.toLowerCase() === "administrador" || req.user?.profileType?.toLowerCase() === "admin" || req.user?.driverId === driverId) {
     return next();
   }
   
@@ -183,7 +183,7 @@ export async function hasFreightAccess(req: Request, res: Response, next: NextFu
   }
 
   // Administrador sempre tem acesso
-  if (req.user?.profileType?.toLowerCase() === "administrador") {
+  if (req.user?.profileType?.toLowerCase() === "administrador" || req.user?.profileType?.toLowerCase() === "admin") {
     console.log(`[hasFreightAccess] Usuário administrador (${req.user.id}) com acesso autorizado`);
     return next();
   }
