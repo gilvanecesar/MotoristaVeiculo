@@ -25,7 +25,7 @@ export default function SubscribePage() {
   const [activeTab, setActiveTab] = React.useState('details');
   const [location, navigate] = useLocation();
   
-  // Buscar informações da assinatura
+  // Buscar informações da assinatura com tratamento de erro aprimorado
   const { 
     data: subscriptionData, 
     isLoading,
@@ -33,9 +33,30 @@ export default function SubscribePage() {
   } = useQuery({
     queryKey: ['/api/user/subscription-info'],
     queryFn: async () => {
-      const res = await apiRequest('GET', '/api/user/subscription-info');
-      return await res.json();
-    }
+      try {
+        const res = await apiRequest('GET', '/api/user/subscription-info');
+        if (!res.ok) {
+          throw new Error(`API retornou status ${res.status}`);
+        }
+        const data = await res.json();
+        return data;
+      } catch (err) {
+        console.error("Erro ao buscar informações de assinatura:", err);
+        // Retornar um objeto vazio mas válido em caso de erro
+        return {
+          active: false,
+          isTrial: false,
+          trialUsed: false,
+          planType: null,
+          expiresAt: null,
+          formattedExpirationDate: null,
+          paymentMethod: null,
+          paymentRequired: true
+        };
+      }
+    },
+    retry: 1, // Limitar a 1 tentativa para evitar requisições infinitas
+    refetchOnWindowFocus: false // Evitar refetch quando o usuário volta à janela
   });
   
   // Verificar parâmetros de URL para exibir mensagens de status

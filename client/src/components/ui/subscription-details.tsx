@@ -55,12 +55,34 @@ export default function SubscriptionDetails({
   isLoading 
 }: SubscriptionDetailsProps) {
   const { toast } = useToast();
+
+  // Verificar se os dados de assinatura estão presentes e válidos
+  // Se não houver dados, transformar em um objeto válido mas vazio para evitar erros
+  const safeSubscriptionData = subscriptionData || {
+    active: false,
+    isTrial: false,
+    trialUsed: false,
+    planType: null,
+    expiresAt: null,
+    formattedExpirationDate: null,
+    paymentMethod: null,
+    paymentRequired: true
+  };
   
   // Mutation para cancelar assinatura
   const cancelSubscriptionMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest('POST', '/api/cancel-subscription');
-      return await res.json();
+      try {
+        const res = await apiRequest('POST', '/api/cancel-subscription');
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(`Erro ao cancelar assinatura: ${errorText}`);
+        }
+        return await res.json();
+      } catch (err) {
+        console.error("Erro ao cancelar assinatura:", err);
+        throw err;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/user/subscription-info'] });
@@ -82,14 +104,24 @@ export default function SubscriptionDetails({
   // Mutation para ativar período de teste
   const activateTrialMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest('POST', '/api/activate-trial');
-      return await res.json();
+      try {
+        // Usar o novo endpoint da API de assinatura via Mercado Pago
+        const res = await apiRequest('POST', '/api/subscription/activate-trial');
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(`Erro ao ativar período de teste: ${errorText}`);
+        }
+        return await res.json();
+      } catch (err) {
+        console.error("Erro ao ativar período de teste:", err);
+        throw err;
+      }
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/user/subscription-info'] });
       toast({
         title: "Período de teste ativado",
-        description: `Seu acesso gratuito de 7 dias foi ativado até ${data.formattedExpirationDate}.`,
+        description: `Seu acesso gratuito de 7 dias foi ativado até ${data.formattedExpirationDate || '7 dias a partir de hoje'}.`,
         variant: "default"
       });
     },
@@ -119,13 +151,13 @@ export default function SubscriptionDetails({
     );
   }
 
-  // Constantes para renderização
-  const isActive = subscriptionData.active;
-  const isExpired = !isActive && subscriptionData.expiresAt && new Date(subscriptionData.expiresAt) < new Date();
-  const isTrial = subscriptionData.isTrial;
-  const isTrialUsed = subscriptionData.trialUsed;
-  const needsPayment = subscriptionData.paymentRequired;
-  const planType = subscriptionData.planType;
+  // Constantes para renderização - usando os dados seguros para evitar erros
+  const isActive = safeSubscriptionData.active;
+  const isExpired = !isActive && safeSubscriptionData.expiresAt && new Date(safeSubscriptionData.expiresAt) < new Date();
+  const isTrial = safeSubscriptionData.isTrial;
+  const isTrialUsed = safeSubscriptionData.trialUsed;
+  const needsPayment = safeSubscriptionData.paymentRequired;
+  const planType = safeSubscriptionData.planType;
   
   // Determinar o título e ícone da assinatura com base no status
   let statusTitle = "";
@@ -136,12 +168,12 @@ export default function SubscriptionDetails({
   if (isActive) {
     if (isTrial) {
       statusTitle = "Período de Teste Ativo";
-      statusDescription = `Você está no período de teste gratuito que expira em ${subscriptionData.formattedExpirationDate || 'data não disponível'}`;
+      statusDescription = `Você está no período de teste gratuito que expira em ${safeSubscriptionData.formattedExpirationDate || 'data não disponível'}`;
       statusIcon = <Clock className="h-8 w-8 text-blue-500" />;
       statusColor = "bg-blue-50 text-blue-700 hover:bg-blue-50";
     } else {
       statusTitle = "Assinatura Ativa";
-      statusDescription = `Sua assinatura ${planType === 'monthly' ? 'mensal' : 'anual'} está ativa até ${subscriptionData.formattedExpirationDate || 'data não disponível'}`;
+      statusDescription = `Sua assinatura ${planType === 'monthly' ? 'mensal' : 'anual'} está ativa até ${safeSubscriptionData.formattedExpirationDate || 'data não disponível'}`;
       statusIcon = <CheckCircle className="h-8 w-8 text-green-500" />;
       statusColor = "bg-green-50 text-green-700 hover:bg-green-50";
     }
@@ -201,22 +233,22 @@ export default function SubscriptionDetails({
                 </div>
               )}
               
-              {subscriptionData.expiresAt && (
+              {safeSubscriptionData.expiresAt && (
                 <div className="grid grid-cols-2">
                   <div className="text-sm font-medium">Expira em:</div>
-                  <div className="text-sm">{subscriptionData.formattedExpirationDate}</div>
+                  <div className="text-sm">{safeSubscriptionData.formattedExpirationDate}</div>
                 </div>
               )}
               
-              {subscriptionData.paymentMethod && (
+              {safeSubscriptionData.paymentMethod && (
                 <div className="grid grid-cols-2">
                   <div className="text-sm font-medium">Forma de pagamento:</div>
                   <div className="text-sm">
-                    {subscriptionData.paymentMethod === 'mercadopago' 
+                    {safeSubscriptionData.paymentMethod === 'mercadopago' 
                       ? 'Mercado Pago' 
-                      : subscriptionData.paymentMethod === 'stripe' 
+                      : safeSubscriptionData.paymentMethod === 'stripe' 
                       ? 'Cartão de crédito' 
-                      : subscriptionData.paymentMethod}
+                      : safeSubscriptionData.paymentMethod}
                   </div>
                 </div>
               )}
