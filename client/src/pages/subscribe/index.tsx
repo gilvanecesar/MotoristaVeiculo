@@ -257,11 +257,9 @@ export default function SubscribePage() {
               <CardFooter className="mt-auto">
                 <Button 
                   className="w-full"
-                  asChild
+                  onClick={() => window.location.href = '/api/subscription/create-payment?planType=monthly'}
                 >
-                  <a href="/subscribe/plans?plan=monthly">
-                    Assinar Plano Mensal
-                  </a>
+                  Assinar Plano Mensal
                 </Button>
               </CardFooter>
             </Card>
@@ -307,12 +305,10 @@ export default function SubscribePage() {
               </CardContent>
               <CardFooter>
                 <Button 
-                  className="w-full" 
-                  asChild
+                  className="w-full"
+                  onClick={() => window.location.href = '/api/subscription/create-payment?planType=annual'}
                 >
-                  <a href="/subscribe/plans?plan=annual">
-                    Assinar Plano Anual
-                  </a>
+                  Assinar Plano Anual
                 </Button>
               </CardFooter>
             </Card>
@@ -341,7 +337,7 @@ export default function SubscribePage() {
               <Button 
                 variant="outline" 
                 className="w-full"
-                onClick={() => navigate('/subscribe/trial')}
+                onClick={() => window.location.href = '/api/subscription/create-payment?planType=trial'}
               >
                 Iniciar Teste Gratuito
               </Button>
