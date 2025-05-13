@@ -1,195 +1,195 @@
-import { useState, useEffect } from "react";
-import { useAuth } from "@/hooks/use-auth";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Check, Download, Loader2, X } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { format } from 'date-fns';
 
-// Formata valores monetários
-const currencyFormatter = new Intl.NumberFormat('pt-BR', {
-  style: 'currency',
-  currency: 'BRL',
-});
+// Tipos
+interface Payment {
+  id: string;
+  status: string;
+  date: string;
+  amount: string;
+  description: string;
+  paymentMethod: string;
+  receiptUrl?: string;
+}
 
-// Dados demo para faturas
-const demoInvoices = [
-  {
-    id: "INV-2025-001",
-    date: new Date(2025, 4, 1),
-    amount: 99.90,
-    status: "paid",
-    paymentMethod: "Cartão de Crédito",
-    downloadUrl: "#"
-  },
-  {
-    id: "INV-2025-002",
-    date: new Date(2025, 3, 1),
-    amount: 99.90,
-    status: "paid",
-    paymentMethod: "Cartão de Crédito",
-    downloadUrl: "#"
-  },
-  {
-    id: "INV-2025-003",
-    date: new Date(2025, 2, 1),
-    amount: 99.90,
-    status: "paid",
-    paymentMethod: "Cartão de Crédito",
-    downloadUrl: "#"
-  }
-];
-
-export default function InvoicesPageFixed() {
-  const { user } = useAuth();
-  const { toast } = useToast();
+export default function InvoicesFixed() {
+  const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [invoices, setInvoices] = useState(demoInvoices);
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Simula o carregamento das faturas
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-  }, []);
+    async function fetchPayments() {
+      try {
+        setIsLoading(true);
+        const response = await apiRequest('GET', '/api/invoices');
+        
+        if (response.ok) {
+          const data = await response.json();
+          setPayments(data || []);
+        } else {
+          throw new Error('Erro ao carregar histórico de pagamentos');
+        }
+      } catch (error) {
+        console.error('Erro ao buscar pagamentos:', error);
+        toast({
+          title: 'Erro',
+          description: 'Não foi possível carregar o histórico de pagamentos',
+          variant: 'destructive',
+        });
+        // Fornecer alguns dados de amostra para exibição
+        setPayments([]);
+      } finally {
+        setIsLoading(false);
+      }
+    }
 
-  const handleDownload = (invoiceId: string) => {
-    toast({
-      title: "Download iniciado",
-      description: `Download da fatura ${invoiceId} em andamento...`,
-    });
-    
-    // Simula o download
-    setTimeout(() => {
-      toast({
-        title: "Download concluído",
-        description: "Esta é uma versão de demonstração. O download real de faturas está desabilitado.",
-      });
-    }, 2000);
+    fetchPayments();
+  }, [toast]);
+
+  // Função para obter o status traduzido e a classe CSS
+  const getStatusInfo = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'approved':
+      case 'paid':
+        return { label: 'Pago', className: 'bg-green-100 text-green-800' };
+      case 'pending':
+        return { label: 'Pendente', className: 'bg-yellow-100 text-yellow-800' };
+      case 'rejected':
+      case 'cancelled':
+      case 'failed':
+        return { label: 'Falhou', className: 'bg-red-100 text-red-800' };
+      default:
+        return { label: status, className: 'bg-gray-100 text-gray-800' };
+    }
   };
-  
-  return (
-    <div>
-      <div className="container py-6 space-y-6">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold tracking-tight">Faturas e Pagamentos</h1>
-          <p className="text-muted-foreground">
-            Visualize e gerencie suas faturas e pagamentos
-          </p>
-        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Histórico de Pagamentos</CardTitle>
-            <CardDescription>
-              Todas as suas faturas e pagamentos
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex justify-center items-center p-12">
-                <Loader2 className="h-12 w-12 animate-spin text-primary" />
-              </div>
-            ) : invoices.length === 0 ? (
-              <div className="text-center p-6">
-                <p className="text-muted-foreground">Nenhuma fatura encontrada</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Fatura</TableHead>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Valor</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Método de Pagamento</TableHead>
-                      <TableHead className="text-right">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {invoices.map((invoice) => (
-                      <TableRow key={invoice.id}>
-                        <TableCell className="font-medium">{invoice.id}</TableCell>
-                        <TableCell>{invoice.date.toLocaleDateString('pt-BR')}</TableCell>
-                        <TableCell>{currencyFormatter.format(invoice.amount)}</TableCell>
-                        <TableCell>
-                          {invoice.status === 'paid' ? (
-                            <div className="flex items-center">
-                              <Check className="h-4 w-4 text-green-500 mr-1" />
-                              <span className="text-green-500">Pago</span>
-                            </div>
-                          ) : invoice.status === 'pending' ? (
-                            <div className="flex items-center">
-                              <Loader2 className="h-4 w-4 text-yellow-500 mr-1 animate-spin" />
-                              <span className="text-yellow-500">Pendente</span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center">
-                              <X className="h-4 w-4 text-red-500 mr-1" />
-                              <span className="text-red-500">Cancelado</span>
-                            </div>
-                          )}
-                        </TableCell>
-                        <TableCell>{invoice.paymentMethod}</TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDownload(invoice.id)}
-                          >
-                            <Download className="h-4 w-4 mr-1" />
-                            <span className="hidden sm:inline">Download</span>
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+  const formatDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), 'dd/MM/yyyy');
+    } catch (e) {
+      return 'Data inválida';
+    }
+  };
+
+  const formatCurrency = (amount: string) => {
+    try {
+      return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+      }).format(parseFloat(amount));
+    } catch (e) {
+      return amount;
+    }
+  };
+
+  const PaymentCard = ({ payment }: { payment: Payment }) => {
+    const statusInfo = getStatusInfo(payment.status);
+    
+    return (
+      <Card className="mb-4">
+        <CardHeader className="pb-2">
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle className="text-lg">{payment.description || 'Assinatura QueroFretes'}</CardTitle>
+              <CardDescription>{formatDate(payment.date)}</CardDescription>
+            </div>
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusInfo.className}`}>
+              {statusInfo.label}
+            </span>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="font-medium">{formatCurrency(payment.amount)}</p>
+              <p className="text-sm text-muted-foreground">
+                {payment.paymentMethod === 'mercadopago' ? 'Mercado Pago' : payment.paymentMethod}
+              </p>
+            </div>
+            {payment.receiptUrl && (
+              <Button variant="outline" size="sm" onClick={() => window.open(payment.receiptUrl, '_blank')}>
+                Ver recibo
+              </Button>
             )}
-          </CardContent>
-          <CardFooter className="flex justify-between">
-            <div className="text-sm text-muted-foreground">
-              Mostrando {invoices.length} faturas
-            </div>
-          </CardFooter>
-        </Card>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Informações de Pagamento</CardTitle>
-            <CardDescription>
-              Seus métodos de pagamento cadastrados
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="border rounded-md p-4">
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <div className="bg-primary/10 p-2 rounded-md">
-                      <Check className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium">Cartão de Crédito</p>
-                      <p className="text-sm text-muted-foreground">**** **** **** 1234</p>
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="sm">
-                    Remover
-                  </Button>
-                </div>
-              </div>
+  return (
+    <div className="container max-w-4xl py-10">
+      <h1 className="text-2xl font-bold mb-6">Faturas e Pagamentos</h1>
+      
+      <Tabs defaultValue="all" className="w-full">
+        <TabsList className="mb-6">
+          <TabsTrigger value="all">Todos</TabsTrigger>
+          <TabsTrigger value="paid">Pagos</TabsTrigger>
+          <TabsTrigger value="pending">Pendentes</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="all">
+          {isLoading ? (
+            <div className="flex justify-center py-10">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
-          </CardContent>
-          <CardFooter>
-            <Button variant="outline" size="sm">
-              Adicionar Novo Método de Pagamento
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
+          ) : payments.length > 0 ? (
+            payments.map((payment) => (
+              <PaymentCard key={payment.id} payment={payment} />
+            ))
+          ) : (
+            <div className="text-center py-10">
+              <p className="text-muted-foreground">Nenhum pagamento encontrado</p>
+            </div>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="paid">
+          {isLoading ? (
+            <div className="flex justify-center py-10">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : payments.filter(p => 
+              ['approved', 'paid'].includes(p.status.toLowerCase())
+            ).length > 0 ? (
+            payments
+              .filter(p => ['approved', 'paid'].includes(p.status.toLowerCase()))
+              .map((payment) => (
+                <PaymentCard key={payment.id} payment={payment} />
+              ))
+          ) : (
+            <div className="text-center py-10">
+              <p className="text-muted-foreground">Nenhum pagamento pago encontrado</p>
+            </div>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="pending">
+          {isLoading ? (
+            <div className="flex justify-center py-10">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : payments.filter(p => 
+              p.status.toLowerCase() === 'pending'
+            ).length > 0 ? (
+            payments
+              .filter(p => p.status.toLowerCase() === 'pending')
+              .map((payment) => (
+                <PaymentCard key={payment.id} payment={payment} />
+              ))
+          ) : (
+            <div className="text-center py-10">
+              <p className="text-muted-foreground">Nenhum pagamento pendente encontrado</p>
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

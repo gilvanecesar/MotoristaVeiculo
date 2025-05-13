@@ -304,18 +304,14 @@ export default function Navigation() {
                       ASSINATURA
                     </DropdownMenuLabel>
                     
-                    {/* Status da Assinatura - Link desativado temporariamente */}
-                    <DropdownMenuItem onClick={() => {
-                      toast({
-                        title: "Funcionalidade em manutenção",
-                        description: "O gerenciamento de assinatura está em manutenção e será disponibilizado em breve.",
-                        variant: "default"
-                      });
-                    }}>
-                      <div className="flex items-center gap-2 w-full">
-                        <CreditCard className="h-4 w-4" />
-                        <span>Gerenciar Assinatura</span>
-                      </div>
+                    {/* Status da Assinatura - Versão fixa */}
+                    <DropdownMenuItem asChild>
+                      <Link href="/subscribe/fixed">
+                        <div className="flex items-center gap-2 w-full">
+                          <CreditCard className="h-4 w-4" />
+                          <span>Gerenciar Assinatura</span>
+                        </div>
+                      </Link>
                     </DropdownMenuItem>
                     
                     {/* Faturas e Pagamentos - Versão Fixa */}

@@ -13,48 +13,23 @@ import {
   hasFreightAccess, 
   hasVehicleAccess 
 } from "./middlewares";
-import { setupSubscriptionRoutes } from "./subscription-routes";
-import { setupMercadoPagoSubscriptionRoutes } from "./subscription/subscription-routes";
 import { 
   Driver, 
   InsertDriver, 
   FreightDestination, 
-  FreightWithClient,
   Vehicle
 } from "@shared/schema";
 import { eq } from "drizzle-orm";
-import Stripe from "stripe";
 import { sendSubscriptionEmail, sendPaymentReminderEmail } from "./email-service";
-import { stripe } from "./stripe";
 import { format } from "date-fns";
-import { registerUserSubscriptionRoutes } from "./routes/user-subscription.fixed";
-import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./paypal";
-import { setupInvoicesAPI } from "./routes/invoices-api";
-
-import { createPaymentPreference, processWebhook, createTestPayment } from "./mercadopago";
+import { setupMercadoPagoRoutes } from "./mercadopago-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configurar autenticação
   setupAuth(app);
   
-  // Configurar rotas PayPal
-  app.get("/api/paypal/setup", loadPaypalDefault);
-  app.post("/api/paypal/order", createPaypalOrder);
-  app.post("/api/paypal/order/:orderID/capture", capturePaypalOrder);
-  
-  // Configurar rotas Mercado Pago
-  app.post("/api/mercadopago/create-payment", isAuthenticated, createPaymentPreference);
-  app.post("/api/mercadopago-webhook", processWebhook);
-  app.get("/api/mercadopago/test-payment", isAdmin, createTestPayment);
-  
-  // Registrar rotas de gerenciamento de assinatura
-  registerUserSubscriptionRoutes(app);
-  
-  // Configurar rotas de assinatura com Mercado Pago
-  setupSubscriptionRoutes(app);
-  
-  // Configurar rotas de faturas e histórico de pagamentos
-  setupInvoicesAPI(app);
+  // Configurar rotas do Mercado Pago
+  setupMercadoPagoRoutes(app);
   
   // Rota para solicitar redefinição de senha
   app.post("/api/forgot-password", async (req: Request, res: Response) => {
@@ -1807,8 +1782,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Configurar as novas rotas do sistema de assinatura do Mercado Pago
-  setupMercadoPagoSubscriptionRoutes(app);
+  // As rotas do Mercado Pago já foram configuradas no início do arquivo
 
   const httpServer = createServer(app);
 
