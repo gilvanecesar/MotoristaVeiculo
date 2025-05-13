@@ -1,8 +1,8 @@
-import { MercadoPagoConfig, Payment, Preference, Customer, Plan, Subscription } from 'mercadopago';
+import { MercadoPagoConfig, Payment, Preference, Customer } from 'mercadopago';
 import { Request, Response } from 'express';
 import { storage } from '../storage';
 import { format, addMonths, addDays } from 'date-fns';
-import { jwtSign, jwtVerify } from '../utils/jwt';
+import { generateToken, verifyToken } from '../utils/jwt';
 
 // Configurar o Mercado Pago com a chave de acesso
 if (!process.env.MERCADOPAGO_ACCESS_TOKEN) {

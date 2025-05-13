@@ -1,235 +1,362 @@
-import { db } from "../db";
+import { DatabaseStorage } from '../storage';
+import { eq, desc, and } from 'drizzle-orm';
 import { 
-  mercadoPagoPayments, 
-  subscriptionAttempts, 
-  trialUsages,
   users, 
-  subscriptions,
-  type MercadoPagoPayment,
-  type InsertMercadoPagoPayment,
-  type SubscriptionAttempt,
-  type InsertSubscriptionAttempt,
-  type TrialUsage,
-  type InsertTrialUsage,
-  type Subscription,
-  type InsertSubscription
-} from "@shared/schema";
-import { eq, desc, and, lt, gt, isNull } from "drizzle-orm";
+  subscriptions, 
+  invoices,
+  payments
+} from '@shared/schema';
+import { 
+  subscriptionAttempts,
+  mercadoPagoPayments
+} from '@shared/mercadopago-schema';
 
 /**
- * Extensão para o storage com suporte para Mercado Pago
+ * Extensão do DatabaseStorage para funções específicas de assinatura
  */
-export class MercadoPagoStorageExtension {
+
+// Funções de atualização de usuário
+export async function updateUserMercadoPagoInfo(
+  this: DatabaseStorage, 
+  userId: number, 
+  data: { mercadopagoCustomerId?: string }
+) {
+  const [updatedUser] = await this.db
+    .update(users)
+    .set(data)
+    .where(eq(users.id, userId))
+    .returning();
   
-  /**
-   * Cria um novo pagamento do Mercado Pago
-   */
-  async createMercadoPagoPayment(data: InsertMercadoPagoPayment): Promise<MercadoPagoPayment> {
-    const [payment] = await db.insert(mercadoPagoPayments).values(data).returning();
-    return payment;
+  return updatedUser;
+}
+
+// Funções de gerenciamento de eventos de assinatura
+export async function createSubscriptionEvent(
+  this: DatabaseStorage,
+  data: {
+    userId: number;
+    eventType: string;
+    metadata?: any;
   }
+) {
+  const [event] = await this.db
+    .insert(subscriptionEvents)
+    .values({
+      userId: data.userId,
+      eventType: data.eventType,
+      createdAt: new Date(),
+    })
+    .returning();
   
-  /**
-   * Obtém um pagamento do Mercado Pago pelo ID
-   */
-  async getMercadoPagoPayment(id: number): Promise<MercadoPagoPayment | undefined> {
-    const [payment] = await db.select().from(mercadoPagoPayments).where(eq(mercadoPagoPayments.id, id));
-    return payment;
+  return event;
+}
+
+export async function getSubscriptionEvents(
+  this: DatabaseStorage, 
+  userId: number, 
+  limit = 20
+) {
+  const events = await this.db
+    .select()
+    .from(subscriptionEvents)
+    .where(eq(subscriptionEvents.userId, userId))
+    .orderBy(desc(subscriptionEvents.createdAt))
+    .limit(limit);
+  
+  return events;
+}
+
+// Funções de gerenciamento de assinaturas
+export async function getSubscription(
+  this: DatabaseStorage, 
+  userId: number
+) {
+  const [subscription] = await this.db
+    .select()
+    .from(subscriptions)
+    .where(and(
+      eq(subscriptions.userId, userId),
+      eq(subscriptions.status, 'active')
+    ));
+  
+  return subscription;
+}
+
+export async function getSubscriptionById(
+  this: DatabaseStorage, 
+  subscriptionId: number
+) {
+  const [subscription] = await this.db
+    .select()
+    .from(subscriptions)
+    .where(eq(subscriptions.id, subscriptionId));
+  
+  return subscription;
+}
+
+export async function getSubscriptionsByUser(
+  this: DatabaseStorage, 
+  userId: number
+) {
+  const userSubscriptions = await this.db
+    .select()
+    .from(subscriptions)
+    .where(eq(subscriptions.userId, userId))
+    .orderBy(desc(subscriptions.createdAt));
+  
+  return userSubscriptions;
+}
+
+export async function createSubscription(
+  this: DatabaseStorage, 
+  data: {
+    userId: number;
+    status: string;
+    planType: string;
+    startDate: Date;
+    currentPeriodStart: Date;
+    currentPeriodEnd: Date;
+    metadata?: any;
   }
+) {
+  const [subscription] = await this.db
+    .insert(subscriptions)
+    .values({
+      userId: data.userId,
+      status: data.status,
+      planType: data.planType,
+      currentPeriodStart: data.currentPeriodStart,
+      currentPeriodEnd: data.currentPeriodEnd,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      metadata: data.metadata || {},
+    })
+    .returning();
   
-  /**
-   * Obtém um pagamento do Mercado Pago pelo ID externo
-   */
-  async getMercadoPagoPaymentByExternalId(mercadopagoId: string): Promise<MercadoPagoPayment | undefined> {
-    const [payment] = await db
-      .select()
-      .from(mercadoPagoPayments)
-      .where(eq(mercadoPagoPayments.mercadopagoId, mercadopagoId));
-    return payment;
+  return subscription;
+}
+
+export async function updateSubscription(
+  this: DatabaseStorage, 
+  subscriptionId: number, 
+  data: Partial<{
+    status: string;
+    planType: string;
+    currentPeriodStart: Date;
+    currentPeriodEnd: Date;
+    canceledAt: Date;
+    metadata: any;
+  }>
+) {
+  const [subscription] = await this.db
+    .update(subscriptions)
+    .set({
+      ...data,
+      updatedAt: new Date()
+    })
+    .where(eq(subscriptions.id, subscriptionId))
+    .returning();
+  
+  return subscription;
+}
+
+export async function createOrUpdateSubscription(
+  this: DatabaseStorage, 
+  data: {
+    userId: number;
+    status: string;
+    planType: string;
+    startDate?: Date;
+    currentPeriodStart: Date;
+    currentPeriodEnd: Date;
+    metadata?: any;
   }
+) {
+  // Verificar se existe assinatura ativa
+  const existingSubscription = await this.getSubscription(data.userId);
   
-  /**
-   * Obtém todos os pagamentos do Mercado Pago de um usuário
-   */
-  async getMercadoPagoPaymentsByUser(userId: number): Promise<MercadoPagoPayment[]> {
-    return db
-      .select()
-      .from(mercadoPagoPayments)
-      .where(eq(mercadoPagoPayments.userId, userId))
-      .orderBy(desc(mercadoPagoPayments.dateCreated));
+  if (existingSubscription) {
+    // Atualizar assinatura existente
+    return this.updateSubscription(existingSubscription.id, {
+      status: data.status,
+      planType: data.planType,
+      currentPeriodStart: data.currentPeriodStart,
+      currentPeriodEnd: data.currentPeriodEnd,
+      metadata: data.metadata
+    });
+  } else {
+    // Criar nova assinatura
+    return this.createSubscription({
+      userId: data.userId,
+      status: data.status,
+      planType: data.planType,
+      startDate: data.startDate || new Date(),
+      currentPeriodStart: data.currentPeriodStart,
+      currentPeriodEnd: data.currentPeriodEnd,
+      metadata: data.metadata
+    });
   }
-  
-  /**
-   * Atualiza um pagamento do Mercado Pago
-   */
-  async updateMercadoPagoPayment(
-    id: number, 
-    data: Partial<InsertMercadoPagoPayment>
-  ): Promise<MercadoPagoPayment | undefined> {
-    const [payment] = await db
-      .update(mercadoPagoPayments)
-      .set(data)
-      .where(eq(mercadoPagoPayments.id, id))
-      .returning();
-    return payment;
+}
+
+// Funções para pagamentos do Mercado Pago
+export async function createMercadoPagoPayment(
+  this: DatabaseStorage, 
+  data: {
+    userId: number;
+    status: string;
+    statusDetail: string;
+    amount: string;
+    paymentMethod: string;
+    paymentMethodId: string;
+    paymentTypeId: string;
+    description: string;
+    dateCreated: Date;
+    dateApproved: Date | null;
+    mercadopagoId: string;
+    externalReference?: string;
+    metadata?: any;
   }
+) {
+  const [payment] = await this.db
+    .insert(invoices)
+    .values({
+      userId: data.userId,
+      status: data.status,
+      amount: data.amount,
+      description: data.description,
+      createdAt: data.dateCreated,
+      updatedAt: new Date(),
+      paidAt: data.dateApproved,
+      metadata: {
+        ...data.metadata,
+        mercadopagoId: data.mercadopagoId,
+        statusDetail: data.statusDetail,
+        paymentMethod: data.paymentMethod,
+        paymentMethodId: data.paymentMethodId,
+        paymentTypeId: data.paymentTypeId,
+        externalReference: data.externalReference
+      },
+    })
+    .returning();
   
-  /**
-   * Cria uma tentativa de assinatura
-   */
-  async createSubscriptionAttempt(data: InsertSubscriptionAttempt): Promise<SubscriptionAttempt> {
-    const [attempt] = await db.insert(subscriptionAttempts).values(data).returning();
-    return attempt;
-  }
+  return payment;
+}
+
+export async function getMercadoPagoPaymentsByUser(
+  this: DatabaseStorage, 
+  userId: number
+) {
+  const payments = await this.db
+    .select()
+    .from(invoices)
+    .where(eq(invoices.userId, userId))
+    .orderBy(desc(invoices.createdAt));
   
-  /**
-   * Obtém uma tentativa de assinatura pelo ID
-   */
-  async getSubscriptionAttempt(id: number): Promise<SubscriptionAttempt | undefined> {
-    const [attempt] = await db.select().from(subscriptionAttempts).where(eq(subscriptionAttempts.id, id));
-    return attempt;
-  }
-  
-  /**
-   * Obtém uma tentativa de assinatura pela referência externa
-   */
-  async getSubscriptionAttemptByReference(reference: string): Promise<SubscriptionAttempt | undefined> {
-    const [attempt] = await db
-      .select()
-      .from(subscriptionAttempts)
-      .where(eq(subscriptionAttempts.externalReference, reference));
-    return attempt;
-  }
-  
-  /**
-   * Atualiza uma tentativa de assinatura
-   */
-  async updateSubscriptionAttempt(
-    id: number, 
-    data: Partial<InsertSubscriptionAttempt>
-  ): Promise<SubscriptionAttempt | undefined> {
-    const [attempt] = await db
-      .update(subscriptionAttempts)
-      .set(data)
-      .where(eq(subscriptionAttempts.id, id))
-      .returning();
-    return attempt;
-  }
-  
-  /**
-   * Cria ou atualiza uma assinatura para um usuário
-   */
-  async createOrUpdateSubscription(
-    data: Partial<InsertSubscription> & { userId: number }
-  ): Promise<Subscription> {
-    // Verificar se já existe uma assinatura ativa para o usuário
-    const existingSubscription = await this.getActiveSubscription(data.userId);
+  // Formatar para compatibilidade com a API
+  return payments.map(payment => {
+    const metadata = payment.metadata as any || {};
     
-    if (existingSubscription) {
-      // Atualizar assinatura existente
-      const [updated] = await db
-        .update(subscriptions)
-        .set({
-          ...data,
-          updatedAt: new Date()
-        })
-        .where(eq(subscriptions.id, existingSubscription.id))
-        .returning();
-      
-      return updated;
-    } else {
-      // Criar nova assinatura
-      const [subscription] = await db
-        .insert(subscriptions)
-        .values({
-          ...data,
-          status: data.status || 'active',
-          planType: data.planType || 'monthly',
-          currentPeriodStart: data.currentPeriodStart || new Date(),
-          currentPeriodEnd: data.currentPeriodEnd || new Date(),
-          createdAt: new Date(),
-          updatedAt: new Date()
-        })
-        .returning();
-      
-      return subscription;
+    return {
+      id: payment.id,
+      status: payment.status,
+      statusDetail: metadata.statusDetail || 'unknown',
+      amount: payment.amount,
+      description: payment.description,
+      paymentMethod: metadata.paymentMethod || null,
+      paymentMethodId: metadata.paymentMethodId || null,
+      paymentTypeId: metadata.paymentTypeId || null,
+      dateCreated: payment.createdAt,
+      dateApproved: payment.paidAt,
+      mercadopagoId: metadata.mercadopagoId || null,
+      externalReference: metadata.externalReference || null
+    };
+  });
+}
+
+// Funções para gerenciamento de período de teste
+export async function hasUserUsedTrial(
+  this: DatabaseStorage, 
+  userId: number
+) {
+  const subscriptionWithTrial = await this.db
+    .select()
+    .from(subscriptions)
+    .where(and(
+      eq(subscriptions.userId, userId),
+      eq(subscriptions.planType, 'trial')
+    ))
+    .limit(1);
+  
+  return subscriptionWithTrial.length > 0;
+}
+
+export async function createTrialUsage(
+  this: DatabaseStorage, 
+  data: {
+    userId: number;
+    startDate: Date;
+    endDate: Date;
+  }
+) {
+  // Criamos um registro de evento para marcar o uso do trial
+  return this.createSubscriptionEvent({
+    userId: data.userId,
+    eventType: 'trial_usage',
+    metadata: {
+      startDate: data.startDate,
+      endDate: data.endDate
     }
+  });
+}
+
+// Função para registrar métodos de pagamento
+export async function registerMercadoPagoPaymentMethod(
+  this: DatabaseStorage, 
+  data: {
+    userId: number;
+    paymentMethod: string;
+    lastFour: string;
+    cardBrand?: string;
+    cardExpirationMonth?: string;
+    cardExpirationYear?: string;
+    mercadopagoId: string;
   }
+) {
+  const [paymentMethod] = await this.db
+    .insert(paymentMethods)
+    .values({
+      userId: data.userId,
+      paymentMethod: data.paymentMethod,
+      last4: data.lastFour,
+      cardBrand: data.cardBrand || null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      status: 'active',
+      metadata: {
+        mercadopagoId: data.mercadopagoId,
+        expirationMonth: data.cardExpirationMonth,
+        expirationYear: data.cardExpirationYear
+      }
+    })
+    .returning();
   
-  /**
-   * Obtém a assinatura ativa de um usuário
-   */
-  async getActiveSubscription(userId: number): Promise<Subscription | undefined> {
-    const [subscription] = await db
-      .select()
-      .from(subscriptions)
-      .where(
-        and(
-          eq(subscriptions.userId, userId),
-          eq(subscriptions.status, 'active')
-        )
-      )
-      .orderBy(desc(subscriptions.createdAt));
-    
-    return subscription;
-  }
-  
-  /**
-   * Atualiza uma assinatura
-   */
-  async updateSubscription(
-    id: number, 
-    data: Partial<InsertSubscription>
-  ): Promise<Subscription | undefined> {
-    const [subscription] = await db
-      .update(subscriptions)
-      .set({
-        ...data,
-        updatedAt: new Date()
-      })
-      .where(eq(subscriptions.id, id))
-      .returning();
-    
-    return subscription;
-  }
-  
-  /**
-   * Verifica se um usuário já utilizou o período de teste
-   */
-  async hasUserUsedTrial(userId: number): Promise<boolean> {
-    const [usage] = await db
-      .select()
-      .from(trialUsages)
-      .where(eq(trialUsages.userId, userId));
-    
-    return !!usage;
-  }
-  
-  /**
-   * Registra utilização do período de teste
-   */
-  async createTrialUsage(data: InsertTrialUsage): Promise<TrialUsage> {
-    const [usage] = await db.insert(trialUsages).values(data).returning();
-    return usage;
-  }
-  
-  /**
-   * Obtém todas as assinaturas ativas
-   */
-  async getActiveSubscriptions(): Promise<Subscription[]> {
-    return db
-      .select()
-      .from(subscriptions)
-      .where(eq(subscriptions.status, 'active'));
-  }
-  
-  /**
-   * Atualiza o mercadopagoCustomerId do usuário
-   */
-  async updateMercadoPagoCustomerId(userId: number, customerId: string): Promise<void> {
-    await db
-      .update(users)
-      .set({ mercadopagoCustomerId: customerId })
-      .where(eq(users.id, userId));
-  }
+  return paymentMethod;
+}
+
+// Registrar estas funções na classe DatabaseStorage
+export function registerSubscriptionExtensions(storage: DatabaseStorage) {
+  storage.updateUserMercadoPagoInfo = updateUserMercadoPagoInfo.bind(storage);
+  storage.createSubscriptionEvent = createSubscriptionEvent.bind(storage);
+  storage.getSubscriptionEvents = getSubscriptionEvents.bind(storage);
+  storage.getSubscription = getSubscription.bind(storage);
+  storage.getSubscriptionById = getSubscriptionById.bind(storage);
+  storage.getSubscriptionsByUser = getSubscriptionsByUser.bind(storage);
+  storage.createSubscription = createSubscription.bind(storage);
+  storage.updateSubscription = updateSubscription.bind(storage);
+  storage.createOrUpdateSubscription = createOrUpdateSubscription.bind(storage);
+  storage.createMercadoPagoPayment = createMercadoPagoPayment.bind(storage);
+  storage.getMercadoPagoPaymentsByUser = getMercadoPagoPaymentsByUser.bind(storage);
+  storage.hasUserUsedTrial = hasUserUsedTrial.bind(storage);
+  storage.createTrialUsage = createTrialUsage.bind(storage);
+  storage.registerMercadoPagoPaymentMethod = registerMercadoPagoPaymentMethod.bind(storage);
 }

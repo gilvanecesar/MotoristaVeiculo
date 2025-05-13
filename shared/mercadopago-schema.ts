@@ -1,7 +1,15 @@
 import { pgTable, text, serial, integer, boolean, timestamp, date, decimal, json } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-import { users, subscriptions } from "./schema";
+import { users } from "./schema";
+
+// Tabela de eventos de assinatura
+export const subscriptionEvents = pgTable("subscription_events", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  eventType: text("event_type").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
 
 // Status de pagamento do Mercado Pago
 export const MERCADOPAGO_PAYMENT_STATUS = {
@@ -20,7 +28,6 @@ export const MERCADOPAGO_PAYMENT_STATUS = {
 export const mercadoPagoPayments = pgTable("mercadopago_payments", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
-  subscriptionId: integer("subscription_id").references(() => subscriptions.id),
   
   // Dados do Mercado Pago
   mercadopagoId: text("mercadopago_id").notNull().unique(),
@@ -76,6 +83,9 @@ export const trialUsages = pgTable("trial_usages", {
 });
 
 // Insert schemas
+export const insertSubscriptionEventSchema = createInsertSchema(subscriptionEvents)
+  .omit({ id: true, createdAt: true });
+
 export const insertMercadoPagoPaymentSchema = createInsertSchema(mercadoPagoPayments)
   .omit({ id: true });
 
@@ -86,6 +96,11 @@ export const insertTrialUsageSchema = createInsertSchema(trialUsages)
   .omit({ id: true, createdAt: true });
 
 // Validators
+export const subscriptionEventValidator = insertSubscriptionEventSchema.extend({
+  eventType: z.string().min(1),
+  createdAt: z.coerce.date().optional()
+});
+
 export const mercadoPagoPaymentValidator = insertMercadoPagoPaymentSchema.extend({
   amount: z.coerce.number().positive(),
   status: z.enum([
@@ -119,6 +134,9 @@ export const trialUsageValidator = insertTrialUsageSchema.extend({
 });
 
 // Types
+export type SubscriptionEvent = typeof subscriptionEvents.$inferSelect;
+export type InsertSubscriptionEvent = z.infer<typeof insertSubscriptionEventSchema>;
+
 export type MercadoPagoPayment = typeof mercadoPagoPayments.$inferSelect;
 export type InsertMercadoPagoPayment = z.infer<typeof insertMercadoPagoPaymentSchema>;
 

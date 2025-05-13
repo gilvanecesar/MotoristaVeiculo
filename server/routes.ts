@@ -14,6 +14,7 @@ import {
   hasVehicleAccess 
 } from "./middlewares";
 import { setupSubscriptionRoutes } from "./subscription-routes";
+import { setupMercadoPagoSubscriptionRoutes } from "./subscription/subscription-routes";
 import { 
   Driver, 
   InsertDriver, 
@@ -1801,6 +1802,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch public statistics" });
     }
   });
+  
+  // Configurar as novas rotas do sistema de assinatura do Mercado Pago
+  setupMercadoPagoSubscriptionRoutes(app);
 
   const httpServer = createServer(app);
 
