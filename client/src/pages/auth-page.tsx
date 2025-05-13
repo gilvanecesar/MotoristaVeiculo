@@ -48,6 +48,9 @@ const registerSchema = userValidator.pick({
 type LoginFormValues = z.infer<typeof loginSchema>;
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
+// Import RegisterData type from auth context
+import { RegisterData } from "@/hooks/use-auth";
+
 export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<string>("login");
   const [selectedRole, setSelectedRole] = useState<string>(USER_TYPES.SHIPPER);
@@ -114,22 +117,52 @@ export default function AuthPage() {
     });
   };
 
-  // Função para iniciar o processo de pagamento
-  const initiateCheckout = async (type: string = "monthly") => {
+  // Função para iniciar o processo de pagamento com Mercado Pago
+  const initiateCheckout = (type: string = "monthly") => {
     setIsLoadingCheckout(true);
     try {
-      const response = await apiRequest("POST", "/api/create-checkout-session", {
-        subscriptionType: type
-      });
+      // Links diretos para os planos do Mercado Pago
+      const mercadoPagoLinks = {
+        monthly: "https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=2c93808496c606170196c6d5ebde0047",
+        annual: "https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=2c93808496c606170196c9eaef0c0171",
+        trial: "/api/activate-trial" // Este link ativa diretamente o período de teste
+      };
       
-      if (!response.ok) {
-        throw new Error("Erro ao iniciar o processo de pagamento");
+      // Se for plano de teste, primeiro faz uma chamada API para ativar
+      if (type === "trial") {
+        apiRequest("POST", mercadoPagoLinks.trial)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error("Erro ao ativar período de teste");
+            }
+            return response.json();
+          })
+          .then(data => {
+            toast({
+              title: "Período de teste ativado",
+              description: `Seu período de teste foi ativado até ${new Date(data.expiresAt).toLocaleDateString()}`,
+            });
+            // Redireciona para a página inicial após ativar o trial
+            setTimeout(() => {
+              window.location.href = '/home';
+            }, 2000);
+          })
+          .catch(error => {
+            console.error("Erro ao ativar período de teste:", error);
+            toast({
+              title: "Erro ao ativar período de teste",
+              description: "Ocorreu um erro ao ativar seu período de teste. Tente novamente.",
+              variant: "destructive",
+            });
+          })
+          .finally(() => {
+            setIsLoadingCheckout(false);
+          });
+      } else {
+        // Para assinaturas pagas, redireciona diretamente para o Mercado Pago
+        window.location.href = mercadoPagoLinks[type as keyof typeof mercadoPagoLinks] || mercadoPagoLinks.monthly;
+        // O setIsLoadingCheckout(false) não é chamado neste caso porque estamos redirecionando o usuário
       }
-      
-      const data = await response.json();
-      
-      // Redireciona para a página de checkout do Stripe
-      window.location.href = data.url;
     } catch (error) {
       console.error("Erro ao iniciar checkout:", error);
       toast({
@@ -137,15 +170,25 @@ export default function AuthPage() {
         description: "Ocorreu um erro ao iniciar o processo de pagamento. Tente novamente.",
         variant: "destructive",
       });
-    } finally {
       setIsLoadingCheckout(false);
     }
   };
 
   const onRegisterSubmit = (data: RegisterFormValues) => {
+    // Garantir que a senha está definida
+    if (!data.password) {
+      toast({
+        title: "Erro ao criar conta",
+        description: "A senha é obrigatória",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     // Adiciona o profileType selecionado e o tipo de assinatura
     const registerData = {
       ...data,
+      password: data.password, // Garantir que password está definido
       profileType: selectedRole,
       subscriptionType: subscriptionType, // Inclui o tipo de assinatura no registro
     };
@@ -256,7 +299,7 @@ export default function AuthPage() {
               </Button>
               
               <p className="text-xs text-center text-muted-foreground mt-4">
-                Você será redirecionado para a plataforma segura do Stripe para finalizar seu pagamento.
+                Você será redirecionado para a plataforma segura do Mercado Pago para finalizar seu pagamento.
               </p>
             </div>
           ) : (
