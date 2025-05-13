@@ -130,6 +130,18 @@ export default function SubscribePage() {
     );
   }
   
+  // Mostrar o indicador de carregamento por no máximo 3 segundos 
+  // Assim evitamos que o usuário fique preso em um estado de carregamento infinito
+  const [showLoadingIndicator, setShowLoadingIndicator] = React.useState(true);
+  
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowLoadingIndicator(false);
+    }, 3000); // 3 segundos
+    
+    return () => clearTimeout(timer);
+  }, []);
+  
   return (
     <div className="container mx-auto py-6 px-4">
       <div className="mb-6">
@@ -152,8 +164,8 @@ export default function SubscribePage() {
         </TabsList>
         
         <TabsContent value="details" className="space-y-6">
-          {/* Detalhes da assinatura */}
-          {isLoading ? (
+          {/* Detalhes da assinatura - com limite de tempo para o estado de carregamento */}
+          {isLoading && showLoadingIndicator ? (
             <Card>
               <CardHeader>
                 <Skeleton className="h-8 w-1/3 mb-2" />
@@ -168,7 +180,7 @@ export default function SubscribePage() {
             </Card>
           ) : subscriptionData ? (
             <SubscriptionDetails 
-              subscriptionData={subscriptionData || {}} 
+              subscriptionData={subscriptionData} 
               isLoading={false} 
             />
           ) : (
