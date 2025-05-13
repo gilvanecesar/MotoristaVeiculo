@@ -72,9 +72,9 @@ export default function AuthPage() {
 
   // Redirecionamento se o usuário já estiver logado
   if (user) {
-    // Se o usuário tem assinatura ativa, redireciona para o dashboard
+    // Se o usuário tem assinatura ativa, redireciona para a página HOME
     if (user.subscriptionActive) {
-      navigate("/dashboard");
+      navigate("/home");
       return null;
     }
     

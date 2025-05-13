@@ -78,12 +78,12 @@ export function ProtectedRoute({
       return <Route path={path} component={Component} />;
     }
     
-    // Se a assinatura está desativada porque pagou, direciona para o dashboard em vez da landing page
+    // Se a assinatura está desativada porque pagou, direciona para a página HOME em vez da landing page
     if (user.stripeCustomerId || user.stripeSubscriptionId) {
-      console.log("Usuário tem info de pagamento, direcionando para o dashboard");
+      console.log("Usuário tem info de pagamento, direcionando para a página HOME");
       return (
         <Route path={path}>
-          <Redirect to="/dashboard" />
+          <Redirect to="/home" />
         </Route>
       );
     }

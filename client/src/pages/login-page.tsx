@@ -93,8 +93,8 @@ export default function LoginPage() {
         if (selectedPlan !== "trial") {
           window.location.href = `/checkout?plan=${selectedPlan}`;
         } else {
-          // Caso contrário, redireciona para a página de dashboard
-          window.location.href = "/dashboard";
+          // Caso contrário, redireciona para a página HOME
+          window.location.href = "/home";
         }
       },
     });
@@ -117,8 +117,8 @@ export default function LoginPage() {
         });
         
         if (selectedPlan === "trial") {
-          // Forçar o redirecionamento para a página do dashboard
-          window.location.href = "/dashboard";
+          // Forçar o redirecionamento para a página HOME
+          window.location.href = "/home";
         } else if (selectedPlan === "monthly") {
           window.location.href = "/checkout?plan=monthly";
         } else {
