@@ -41,15 +41,26 @@ export default function SubscriptionPlansPage() {
     planParam === 'monthly' || planParam === 'annual' ? planParam : 'monthly'
   );
   
-  // Mutation para criar preferência de pagamento
+  // Mutation para criar preferência de pagamento com melhor tratamento de erro
   const createPaymentMutation = useMutation({
     mutationFn: async (planType: string) => {
-      const res = await apiRequest('POST', '/api/create-payment-preference', { planType });
-      const data = await res.json();
-      return data;
+      try {
+        // Usar a nova rota dedicada para criar pagamento
+        const res = await apiRequest('POST', '/api/subscription/create-payment', { planType });
+        if (!res.ok) {
+          const errorData = await res.text();
+          console.error("Erro na API:", errorData);
+          throw new Error(`Falha ao criar pagamento: ${res.status} ${res.statusText}`);
+        }
+        return await res.json();
+      } catch (err) {
+        console.error("Erro ao criar assinatura:", err);
+        // Propagar o erro para ser tratado no onError
+        throw err;
+      }
     },
     onSuccess: (data) => {
-      if (data.redirectUrl) {
+      if (data && data.redirectUrl) {
         // Redirecionar para o Mercado Pago
         window.location.href = data.redirectUrl;
       } else {
@@ -58,6 +69,10 @@ export default function SubscriptionPlansPage() {
           description: "Não foi possível gerar o link de pagamento. Tente novamente mais tarde.",
           variant: "destructive"
         });
+        // Voltar para a página de assinatura principal após falha
+        setTimeout(() => {
+          window.location.href = '/subscribe';
+        }, 3000);
       }
     },
     onError: (error: Error) => {
@@ -67,6 +82,10 @@ export default function SubscriptionPlansPage() {
         variant: "destructive"
       });
       console.error("Erro ao criar pagamento:", error);
+      // Voltar para a página de assinatura principal após falha
+      setTimeout(() => {
+        window.location.href = '/subscribe';
+      }, 3000);
     }
   });
   
