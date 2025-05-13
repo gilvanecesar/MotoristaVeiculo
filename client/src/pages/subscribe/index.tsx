@@ -132,10 +132,57 @@ export default function SubscribePage() {
         
         <TabsContent value="details" className="space-y-6">
           {/* Detalhes da assinatura */}
-          <SubscriptionDetails 
-            subscriptionData={subscriptionData || {}} 
-            isLoading={isLoading} 
-          />
+          {isLoading ? (
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-8 w-1/3 mb-2" />
+                <Skeleton className="h-4 w-1/2" />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Skeleton className="h-24 w-full" />
+              </CardContent>
+              <CardFooter>
+                <Skeleton className="h-10 w-full" />
+              </CardFooter>
+            </Card>
+          ) : subscriptionData ? (
+            <SubscriptionDetails 
+              subscriptionData={subscriptionData || {}} 
+              isLoading={false} 
+            />
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>Status da Assinatura</CardTitle>
+                <CardDescription>Informações sobre sua assinatura atual</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col sm:flex-row gap-6">
+                  <div className="flex-1">
+                    <div className="mb-6 flex items-center gap-4">
+                      <AlertTriangle className="h-8 w-8 text-amber-500" />
+                      <div>
+                        <h3 className="text-lg font-medium">Sem Assinatura Ativa</h3>
+                        <p className="text-sm text-muted-foreground">Você ainda não possui uma assinatura ativa. Escolha um plano para começar.</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1 flex flex-col justify-center">
+                    <div className="space-y-3">
+                      <Button 
+                        variant="outline" 
+                        className="w-full" 
+                        onClick={() => setActiveTab('plans')}
+                      >
+                        Ver Planos Disponíveis
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
           
           {/* Informações adicionais */}
           <Card>
