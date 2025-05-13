@@ -15,20 +15,12 @@ const currencyFormatter = new Intl.NumberFormat('pt-BR', {
 // Dados demo para o histórico de assinaturas
 const demoSubscriptionHistory = [
   {
-    id: "SUB-2025-002",
-    startDate: new Date(2025, 3, 1),
-    endDate: new Date(2025, 4, 1),
+    id: "SUB-2025-001",
+    startDate: new Date(2025, 4, 1),
+    endDate: new Date(2025, 5, 1),
     planType: "Mensal",
     amount: 99.90,
-    status: "completed"
-  },
-  {
-    id: "SUB-2025-003",
-    startDate: new Date(2025, 2, 1),
-    endDate: new Date(2025, 3, 1),
-    planType: "Mensal",
-    amount: 99.90,
-    status: "completed"
+    status: "active"
   }
 ];
 
