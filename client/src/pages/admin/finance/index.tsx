@@ -129,9 +129,9 @@ interface SubscriptionData {
   email: string;
   plan: string;
   status: "active" | "canceled" | "past_due" | "trialing";
-  amount: number;
-  startDate: string;
-  endDate: string;
+  amount: number | string | null;  // Permitir diferentes tipos para robustez
+  startDate: string | Date | null; // Permitir diferentes tipos para robustez
+  endDate: string | Date | null;   // Permitir diferentes tipos para robustez
 }
 
 // Interface para dados de clientes
@@ -146,9 +146,9 @@ interface InvoiceData {
   id: string;
   clientName: string;
   email: string;
-  amount: number;
+  amount: number | string | null;  // Permitir diferentes tipos para robustez
   status: "paid" | "open" | "void" | "uncollectible";
-  date: string;
+  date: string | Date | null;      // Permitir diferentes tipos para robustez
 }
 
 interface FinanceStats {
@@ -642,7 +642,10 @@ export default function FinancePage() {
                           // Verificar se é uma string válida
                           if (subscription.amount) {
                             try {
-                              const cleanAmount = subscription.amount.toString().replace(/[^\d.,]/g, '').replace(',', '.');
+                              // Converter para string de maneira segura
+                              const amountStr = String(subscription.amount);
+                              // Limpar a string
+                              const cleanAmount = amountStr.replace(/[^\d.,]/g, '').replace(',', '.');
                               numAmount = parseFloat(cleanAmount);
                             } catch (e) {
                               console.warn('Erro ao processar string de valor:', e);
@@ -734,8 +737,18 @@ export default function FinancePage() {
                         let numAmount = 0;
                         
                         if (typeof invoice.amount === 'string') {
-                          const cleanAmount = invoice.amount.replace(/[^\d.,]/g, '').replace(',', '.');
-                          numAmount = parseFloat(cleanAmount);
+                          // Verificar se é uma string válida
+                          if (invoice.amount) {
+                            try {
+                              // Converter para string de maneira segura
+                              const amountStr = String(invoice.amount);
+                              // Limpar a string
+                              const cleanAmount = amountStr.replace(/[^\d.,]/g, '').replace(',', '.');
+                              numAmount = parseFloat(cleanAmount);
+                            } catch (e) {
+                              console.warn('Erro ao processar string de valor:', e);
+                            }
+                          }
                         } else if (typeof invoice.amount === 'number') {
                           numAmount = invoice.amount;
                         }
