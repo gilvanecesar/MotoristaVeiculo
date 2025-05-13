@@ -154,11 +154,20 @@ export function hasActiveSubscription(req: Request, res: Response, next: NextFun
 
 // Middleware para verificar se o usuário é administrador
 export function isAdmin(req: Request, res: Response, next: NextFunction) {
-  // Verifica se o profileType é "administrador"
+  // Verifica se o profileType é "administrador" ou "admin"
+  const profile = req.user?.profileType?.toLowerCase() || "";
   if (req.isAuthenticated() && 
-      (req.user?.profileType?.toLowerCase() === "administrador")) {
+      (profile === "administrador" || profile === "admin")) {
+    console.log("[isAdmin] Usuário verificado como administrador:", {
+      userId: req.user?.id,
+      profileType: req.user?.profileType
+    });
     return next();
   }
+  console.log("[isAdmin] Acesso negado:", {
+    userId: req.user?.id,
+    profileType: req.user?.profileType
+  });
   res.status(403).json({ message: "Acesso não autorizado" });
 }
 
