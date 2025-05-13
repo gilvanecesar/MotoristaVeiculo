@@ -2,28 +2,50 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-// Função para formatar valores monetários
+// Função para formatar valores monetários com tratamento robusto de erros
 function formatCurrency(value: number | string | null | undefined): string {
   // Garantir que temos um número válido
   if (value === null || value === undefined) {
     return 'R$ 0,00';
   }
   
-  // Se for string, tentar converter para número
-  if (typeof value === 'string') {
-    value = parseFloat(value.replace(/[^\d.,]/g, '').replace(',', '.'));
-  }
+  let numValue: number;
   
-  // Verificar se é um número válido
-  if (isNaN(Number(value))) {
-    console.warn('Valor inválido para formatação de moeda:', value);
+  try {
+    // Se for string, tentar converter para número
+    if (typeof value === 'string') {
+      // Remover caracteres não-numéricos exceto ponto e vírgula
+      const cleanValue = value.replace(/[^\d.,]/g, '');
+      
+      // Tratar string vazia
+      if (!cleanValue) {
+        return 'R$ 0,00';
+      }
+      
+      // Converter vírgula para ponto e parsear
+      numValue = parseFloat(cleanValue.replace(',', '.'));
+    } else {
+      numValue = Number(value);
+    }
+    
+    // Verificar se é um número válido
+    if (isNaN(numValue)) {
+      console.warn('Valor inválido para formatação de moeda:', value);
+      return 'R$ 0,00';
+    }
+    
+    // Garantir que não é um valor negativo (caso isso não seja desejável)
+    // Se valores negativos forem válidos, remova esta verificação
+    numValue = Math.max(0, numValue);
+    
+    return new Intl.NumberFormat('pt-BR', { 
+      style: 'currency', 
+      currency: 'BRL' 
+    }).format(numValue);
+  } catch (error) {
+    console.error('Erro ao formatar moeda:', error);
     return 'R$ 0,00';
   }
-  
-  return new Intl.NumberFormat('pt-BR', { 
-    style: 'currency', 
-    currency: 'BRL' 
-  }).format(Number(value));
 }
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -589,16 +611,16 @@ export default function FinancePage() {
                       // Filtrar apenas assinaturas com valor numérico válido maior que zero
                       .filter((subscription) => {
                         // Verificar se o valor é um número válido
-                        let numAmount: number;
+                        let numAmount = 0;
+                        
                         if (typeof subscription.amount === 'string') {
-                          numAmount = parseFloat(subscription.amount.replace(/[^\d.,]/g, '').replace(',', '.'));
+                          const cleanAmount = subscription.amount.replace(/[^\d.,]/g, '').replace(',', '.');
+                          numAmount = parseFloat(cleanAmount);
                         } else if (typeof subscription.amount === 'number') {
                           numAmount = subscription.amount;
-                        } else {
-                          numAmount = 0;
                         }
-                          
-                        return !isNaN(Number(amount)) && Number(amount) > 0;
+                        
+                        return !isNaN(numAmount) && numAmount > 0;
                       })
                       .map((subscription) => (
                         <TableRow key={subscription.id}>
@@ -677,11 +699,16 @@ export default function FinancePage() {
                       // Filtrar apenas faturas com valor numérico válido maior que zero
                       .filter((invoice) => {
                         // Verificar se o valor é um número válido
-                        const amount = typeof invoice.amount === 'string' 
-                          ? parseFloat(invoice.amount.replace(/[^\d.,]/g, '').replace(',', '.'))
-                          : invoice.amount;
-                          
-                        return !isNaN(Number(amount)) && Number(amount) > 0;
+                        let numAmount = 0;
+                        
+                        if (typeof invoice.amount === 'string') {
+                          const cleanAmount = invoice.amount.replace(/[^\d.,]/g, '').replace(',', '.');
+                          numAmount = parseFloat(cleanAmount);
+                        } else if (typeof invoice.amount === 'number') {
+                          numAmount = invoice.amount;
+                        }
+                        
+                        return !isNaN(numAmount) && numAmount > 0;
                       })
                       .map((invoice) => (
                         <TableRow key={invoice.id}>
