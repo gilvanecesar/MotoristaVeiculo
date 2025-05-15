@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useRoute, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import { useClientAuth } from "@/lib/auth-context";
+// Removida dependência circular do useClientAuth
 import { FreightWithDestinations, Client } from "@shared/schema";
 import { 
   getVehicleCategory, 
@@ -43,7 +43,19 @@ export default function FreightDetailPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
-  const { isClientAuthorized } = useClientAuth();
+  // Substituindo useClientAuth com uma verificação simplificada
+  const isClientAuthorized = (clientId: number | null) => {
+    // Motoristas não podem editar/excluir fretes
+    if (user?.profileType === 'motorista' || user?.profileType === 'driver') {
+      return false;
+    }
+    // Administradores têm acesso total
+    if (user?.profileType === 'admin' || user?.profileType === 'administrador') {
+      return true;
+    }
+    // Para outros perfis, verifica se o frete pertence ao cliente do usuário
+    return user?.clientId === clientId;
+  };
   const freightId = params?.id;
 
   // Buscar detalhes do frete
