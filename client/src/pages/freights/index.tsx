@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { useClientAuth } from "@/lib/auth-context";
+// import { useClientAuth } from "@/lib/auth-context";
 import { useAuth } from "@/hooks/use-auth";
 import { 
   getVehicleCategory, 
@@ -99,8 +99,21 @@ export default function FreightsPage() {
   const [expandedFreight, setExpandedFreight] = useState<number | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
-  const { currentClient, isClientAuthorized } = useClientAuth();
   const { user } = useAuth();
+  // Substituindo o useClientAuth com uma implementação simplificada para motoristas
+  const currentClient = null; // Motoristas não têm cliente associado
+  const isClientAuthorized = (clientId: number | null) => {
+    // Motoristas não podem editar/excluir fretes
+    if (user?.profileType === 'motorista' || user?.profileType === 'driver') {
+      return false;
+    }
+    // Administradores têm acesso total
+    if (user?.profileType === 'admin' || user?.profileType === 'administrador') {
+      return true;
+    }
+    // Para outros perfis, verifica se o frete pertence ao cliente do usuário
+    return user?.clientId === clientId;
+  };
   const [filters, setFilters] = useState({
     origin: "",
     destination: "",
@@ -175,13 +188,13 @@ export default function FreightsPage() {
   };
 
   // Buscar fretes
-  const { data: freights, isLoading } = useQuery({
+  const { data: freights = [], isLoading } = useQuery<FreightWithDestinations[]>({
     queryKey: ["/api/freights"],
     refetchOnWindowFocus: false,
   });
 
   // Buscar clientes para mapear os nomes dos clientes aos fretes
-  const { data: clients = [] } = useQuery({
+  const { data: clients = [] } = useQuery<Client[]>({
     queryKey: ["/api/clients"],
     refetchOnWindowFocus: false,
   });
