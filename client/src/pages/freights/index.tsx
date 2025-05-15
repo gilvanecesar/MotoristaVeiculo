@@ -379,20 +379,20 @@ export default function FreightsPage() {
     let filtered = filterFreights(freights);
     
     // Se for admin, mostrar todos
-    if (user?.profileType === 'admin') {
+    if (user?.profileType === 'admin' || user?.profileType === 'administrador') {
       return filtered;
     }
     
     // Se for motorista, mostrar todos os fretes (apenas visualização)
-    if (user?.profileType === 'driver') {
+    if (user?.profileType === 'driver' || user?.profileType === 'motorista') {
       console.log("Usuário é motorista, mostrando todos os fretes disponíveis");
       return filtered;
     }
     
-    // Para motoristas não filtramos por cliente (não tem cliente associado)
-    // Removemos esta seção para evitar erros de tipagem
-    // Outros perfis usariam o useClientAuth normalmente
-    
+    // Para outros perfis (embarcador, transportador, agente), 
+    // seria necessário filtrar somente os fretes do cliente vinculado ao usuário.
+    // Contudo, como removemos a lógica circular, retornamos todos os fretes por enquanto.
+    console.log("Outro tipo de usuário, retornando todos os fretes");
     return filtered;
   }, [freights, searchQuery, filterStatus, filters, user?.profileType]);
 
