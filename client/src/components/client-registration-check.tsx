@@ -29,8 +29,11 @@ export function ClientRegistrationCheck() {
     // Ignore for admin users or if no user logged in
     if (!user || user.profileType === 'admin' || user.profileType === 'administrador') return;
     
-    // Se o usuário não tem assinatura ativa, redireciona para a página interna de gerenciamento
-    if (!user.subscriptionActive) {
+    // Verifica se o usuário é motorista (pode acessar sem assinatura)
+    const isDriver = user.profileType === 'motorista' || user.profileType === 'driver';
+    
+    // Se o usuário não tem assinatura ativa e não é motorista, redireciona para a página interna de gerenciamento
+    if (!user.subscriptionActive && !isDriver) {
       // Ignore se já estiver em páginas específicas
       const ignorePaths = [
         '/auth', 

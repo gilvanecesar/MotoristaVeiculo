@@ -38,8 +38,8 @@ export function hasActiveSubscription(req: Request, res: Response, next: NextFun
     return next();
   }
   
-  // Se for motorista com acesso gratuito, permitir acesso
-  if ((user.profileType === "motorista" || user.profileType === "driver") && user.subscriptionType === "driver_free") {
+  // Se for motorista, permitir acesso (motoristas têm acesso livre ao sistema)
+  if (user.profileType === "motorista" || user.profileType === "driver") {
     return next();
   }
   

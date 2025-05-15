@@ -57,9 +57,9 @@ export function ProtectedRoute({
   // Essa verificação já foi feita acima
 
   // Verifica se o usuário é motorista (acesso gratuito)
-  if (user.profileType === "driver") {
+  if (user.profileType === "driver" || user.profileType === "motorista") {
     console.log(`Permitindo acesso ao motorista para a rota ${path}`);
-    // Permite acesso à rota para motoristas - removido as restrições para fins de teste
+    // Permite acesso à rota para motoristas - sem restrições
     return <Route path={path} component={Component} />;
   }
 
