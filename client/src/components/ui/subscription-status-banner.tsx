@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { cva } from "class-variance-authority";
 import { useAuth } from "@/hooks/use-auth";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const bannerVariants = cva(
@@ -57,7 +57,7 @@ export function SubscriptionStatusBanner() {
 
   // Determinar status da assinatura
   const isAdmin = user.profileType === "admin";
-  const isFreeDriver = user.profileType === "driver" && user.subscriptionType === "driver_free";
+  const isFreeDriver = user.profileType === "motorista" || user.profileType === "driver" || user.subscriptionType === "driver_free";
   const isSubscriptionActive = user.subscriptionActive === true;
   const isExpired = user.subscriptionExpiresAt && new Date(user.subscriptionExpiresAt) < new Date();
   const isTrial = user.subscriptionType === "trial";
@@ -83,8 +83,13 @@ export function SubscriptionStatusBanner() {
       icon = <Calendar className="h-6 w-6" />;
       
       // Calcular dias restantes do período de teste
-      const expiresAt = new Date(user.subscriptionExpiresAt || "");
-      const timeLeft = formatDistanceToNow(expiresAt, { locale: ptBR, addSuffix: true });
+      let timeLeft = "indefinidamente";
+      
+      // Verificar se existe uma data de expiração válida para o período de teste
+      if (user.subscriptionExpiresAt && isValid(new Date(user.subscriptionExpiresAt))) {
+        const expiresAt = new Date(user.subscriptionExpiresAt);
+        timeLeft = formatDistanceToNow(expiresAt, { locale: ptBR, addSuffix: true });
+      }
       
       title = "Período de Teste Ativo";
       description = `Seu período de teste expira ${timeLeft}.`;
@@ -93,8 +98,13 @@ export function SubscriptionStatusBanner() {
       icon = <CheckCircle className="h-6 w-6" />;
       
       // Calcular data de expiração da assinatura ativa
-      const expiresAt = new Date(user.subscriptionExpiresAt || "");
-      const validUntil = formatDistanceToNow(expiresAt, { locale: ptBR, addSuffix: true });
+      let validUntil = "indefinidamente";
+      
+      // Verificar se existe uma data de expiração válida
+      if (user.subscriptionExpiresAt && isValid(new Date(user.subscriptionExpiresAt))) {
+        const expiresAt = new Date(user.subscriptionExpiresAt);
+        validUntil = formatDistanceToNow(expiresAt, { locale: ptBR, addSuffix: true });
+      }
       
       title = "Assinatura Ativa";
       description = `Sua assinatura é válida ${validUntil}.`;
