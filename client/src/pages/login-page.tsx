@@ -83,14 +83,21 @@ export default function LoginPage() {
 
   const onLoginSubmit = async (data: LoginFormValues) => {
     loginMutation.mutate(data, {
-      onSuccess: () => {
+      onSuccess: (user) => {
         toast({
           title: "Login realizado com sucesso",
           description: "Bem-vindo à plataforma Quero Fretes",
         });
         
+        // Verifica o tipo de perfil do usuário
+        const isDriver = user.profileType === 'motorista' || user.profileType === 'driver';
+        
+        if (isDriver) {
+          // Se for motorista, redireciona para a página de fretes
+          window.location.href = "/freights";
+        } 
         // Se um plano não gratuito foi selecionado, redireciona para o checkout
-        if (selectedPlan !== "trial") {
+        else if (selectedPlan !== "trial") {
           window.location.href = `/checkout?plan=${selectedPlan}`;
         } else {
           // Caso contrário, redireciona para a página HOME
@@ -108,15 +115,23 @@ export default function LoginPage() {
     };
 
     registerMutation.mutate(registerData, {
-      onSuccess: () => {
+      onSuccess: (user) => {
+        // Verifica se o tipo de perfil é motorista
+        const isDriver = selectedRole === USER_TYPES.DRIVER;
+        
         toast({
           title: "Conta criada com sucesso",
-          description: selectedPlan === "trial" 
-            ? "Seu período de teste de 7 dias foi iniciado" 
-            : "Para continuar, finalize o pagamento do plano selecionado",
+          description: isDriver 
+            ? "Seu acesso gratuito como motorista foi ativado" 
+            : (selectedPlan === "trial" 
+                ? "Seu período de teste de 7 dias foi iniciado" 
+                : "Para continuar, finalize o pagamento do plano selecionado"),
         });
         
-        if (selectedPlan === "trial") {
+        if (isDriver) {
+          // Se for motorista, redireciona para a página de fretes
+          window.location.href = "/freights";
+        } else if (selectedPlan === "trial") {
           // Forçar o redirecionamento para a página HOME
           window.location.href = "/home";
         } else if (selectedPlan === "monthly") {

@@ -55,6 +55,18 @@ export function ClientRegistrationCheck() {
     
     // If user has no clientId associated, show dialog or redirect directly
     if (!user.clientId) {
+      // Se for motorista, redireciona para a lista de fretes
+      if (user.profileType === 'motorista' || user.profileType === 'driver') {
+        // Ignore se já estiver na página de fretes
+        const currentPath = window.location.pathname;
+        if (currentPath.startsWith('/freights')) return;
+        
+        // Redireciona para a lista de fretes
+        setLocation("/freights");
+        return;
+      }
+      
+      // Para outros perfis, redireciona para o formulário de cliente
       // Ignore if already on the client/new page
       const currentPath = window.location.pathname;
       if (currentPath.startsWith('/clients/new')) return;

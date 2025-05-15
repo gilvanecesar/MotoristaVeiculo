@@ -65,8 +65,8 @@ export default function ProfileSelectionPage() {
           description: "Seu acesso gratuito de motorista foi ativado!",
         });
 
-        // Redireciona para o cadastro de motorista
-        navigate("/drivers/create");
+        // Redireciona para a lista de fretes disponíveis
+        navigate("/freights");
       } 
       else if (selectedRole === USER_TYPES.SHIPPER) {
         toast({
