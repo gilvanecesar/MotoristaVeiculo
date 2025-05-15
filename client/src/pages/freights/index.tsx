@@ -133,13 +133,16 @@ export default function FreightsPage() {
       // Filtro por status
       if (filterStatus !== "todos") {
         const today = new Date();
+        const expirationDate = freight.expirationDate ? new Date(freight.expirationDate) : null;
         
-        if (filterStatus === "ativo" && new Date(freight.expirationDate) < today) {
-          return false;
-        }
-        
-        if (filterStatus === "expirado" && new Date(freight.expirationDate) >= today) {
-          return false;
+        if (expirationDate) {
+          if (filterStatus === "ativo" && expirationDate < today) {
+            return false;
+          }
+          
+          if (filterStatus === "expirado" && expirationDate >= today) {
+            return false;
+          }
         }
       }
       
@@ -280,11 +283,6 @@ export default function FreightsPage() {
     return Object.entries(VEHICLE_TYPES).find(([key]) => key === type)?.[1] || type;
   };
 
-  // Verifica se um frete está expirado
-  const isExpired = (expirationDate: Date) => {
-    return new Date(expirationDate) < new Date();
-  };
-
   // Função para compartilhar via WhatsApp
   const formatWhatsAppMessage = (freight: FreightWithDestinations) => {
     const clientFound = clients.find((client: Client) => client.id === freight.clientId);
@@ -304,7 +302,7 @@ export default function FreightsPage() {
 🚚 *Categoria:* ${getVehicleCategory(freight.vehicleType)}
 🚚 *Veículo:* ${formatMultipleVehicleTypes(freight)}
 🚐 *Carroceria:* ${formatMultipleBodyTypes(freight)}
-📦 *Tipo de Carga:* ${CARGO_TYPES[freight.cargoType] || freight.cargoType}
+📦 *Tipo de Carga:* ${freight.cargoType === 'completa' ? 'Completa' : 'Complemento'}
 ⚖️ *Peso:* ${freight.cargoWeight} Kg
 💰 *Pagamento:* ${freight.paymentMethod}
 💵 *Valor:* ${formatCurrency(freight.freightValue)}
@@ -325,7 +323,9 @@ export default function FreightsPage() {
 
   // Função para renderizar o badge de status
   const renderStatusBadge = (freight: FreightWithDestinations) => {
-    const expired = isExpired(freight.expirationDate);
+    // Verificamos se a data de expiração existe antes de chamar isExpired
+    const expirationDate = freight.expirationDate;
+    const expired = expirationDate ? isExpired(expirationDate) : false;
     
     return (
       <Badge variant={expired ? "destructive" : "default"}>
@@ -615,7 +615,7 @@ export default function FreightsPage() {
                             <TableCell>{getVehicleCategory(freight.vehicleType)}</TableCell>
                             <TableCell>{formatMultipleVehicleTypes(freight)}</TableCell>
                             <TableCell>{formatMultipleBodyTypes(freight)}</TableCell>
-                            <TableCell>{CARGO_TYPES[freight.cargoType] || freight.cargoType}</TableCell>
+                            <TableCell>{freight.cargoType === 'completa' ? 'Completa' : 'Complemento'}</TableCell>
                             <TableCell>{formatCurrency(freight.freightValue)}</TableCell>
                             <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                               {renderActionButtons(freight)}
