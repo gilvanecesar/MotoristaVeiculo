@@ -107,21 +107,8 @@ export default function FreightsPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const { user } = useAuth();
-  // Substituindo o useClientAuth com uma implementação simplificada para motoristas
-  // Definir o tipo explícito para currentClient para evitar o erro de tipagem
-  const currentClient: Client | null = null; // Motoristas não têm cliente associado
-  const isClientAuthorized = (clientId: number | null) => {
-    // Motoristas não podem editar/excluir fretes
-    if (user?.profileType === 'motorista' || user?.profileType === 'driver') {
-      return false;
-    }
-    // Administradores têm acesso total
-    if (user?.profileType === 'admin' || user?.profileType === 'administrador') {
-      return true;
-    }
-    // Para outros perfis, verifica se o frete pertence ao cliente do usuário
-    return user?.clientId === clientId;
-  };
+  // Para motoristas, não precisamos do currentClient ou do isClientAuthorized
+  // Isso simplifica a implementação e evita dependências circulares
   const [filters, setFilters] = useState({
     origin: "",
     destination: "",
@@ -212,7 +199,9 @@ export default function FreightsPage() {
 
   // Botões de ação para cada frete
   const renderActionButtons = (freight: FreightWithDestinations) => {
-    const canEditDelete = isClientAuthorized(freight.clientId);
+    // Para motoristas, simplificamos e mostramos apenas botões de visualização e contato
+    // Não mostramos botões de edição/exclusão
+    const isMotorista = user?.profileType === 'motorista' || user?.profileType === 'driver';
 
     return (
       <div className="flex space-x-1">
@@ -225,7 +214,8 @@ export default function FreightsPage() {
           <Eye className="h-4 w-4" />
         </Button>
         
-        {canEditDelete && (
+        {/* Botões para administradores ou usuários autorizados */}
+        {!isMotorista && (
           <>
             <Button
               variant="ghost"
@@ -249,6 +239,7 @@ export default function FreightsPage() {
           </>
         )}
         
+        {/* Botões disponíveis para todos os usuários incluindo motoristas */}
         <Button
           variant="ghost"
           size="icon"
@@ -750,7 +741,7 @@ export default function FreightsPage() {
                               <Eye className="h-4 w-4" />
                             </Button>
                             
-                            {isClientAuthorized(freight.clientId) && (
+                            {!((user?.profileType === 'motorista' || user?.profileType === 'driver')) && (
                               <>
                                 <Button
                                   variant="ghost"
@@ -1015,7 +1006,7 @@ export default function FreightsPage() {
                   <Eye className="h-4 w-4 mr-2" /> Ver Página
                 </Button>
                 
-                {isClientAuthorized(selectedFreight.clientId) && (
+                {!((user?.profileType === 'motorista' || user?.profileType === 'driver')) && (
                   <Button 
                     variant="outline"
                     onClick={() => navigate(`/freights/${selectedFreight.id}/edit`)}
