@@ -50,7 +50,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Plus, Trash, X } from "lucide-react";
 import { Truck } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { useClientAuth } from "@/lib/auth-context";
+// Removido useClientAuth para evitar dependências circulares
 import LocationInput from "@/components/location/location-input";
 import NumberInput from "@/components/ui/number-input";
 import StateSelect from "@/components/location/state-select";
@@ -123,7 +123,23 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
   };
 
   const { user } = useAuth();
-  const { currentClient, isClientAuthorized } = useClientAuth();
+  
+  // Simplificando a lógica sem useClientAuth para evitar dependências circulares
+  const currentClient = null; // Não precisamos do cliente atual para motoristas
+  
+  // Função simplificada para verificar autorização
+  const isClientAuthorized = (clientId: number | null) => {
+    // Motoristas não podem editar/excluir fretes
+    if (user?.profileType === 'motorista' || user?.profileType === 'driver') {
+      return false;
+    }
+    // Administradores têm acesso total
+    if (user?.profileType === 'admin' || user?.profileType === 'administrador') {
+      return true;
+    }
+    // Para outros perfis, verifica se o frete pertence ao cliente do usuário
+    return user?.clientId === clientId;
+  };
 
   const [isLoadingFreight, setIsLoadingFreight] = useState(isEditing);
   const [clients, setClients] = useState<any[]>([]);
