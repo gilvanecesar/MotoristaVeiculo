@@ -101,7 +101,8 @@ export default function FreightsPage() {
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const { user } = useAuth();
   // Substituindo o useClientAuth com uma implementação simplificada para motoristas
-  const currentClient = null; // Motoristas não têm cliente associado
+  // Definir o tipo explícito para currentClient para evitar o erro de tipagem
+  const currentClient: Client | null = null; // Motoristas não têm cliente associado
   const isClientAuthorized = (clientId: number | null) => {
     // Motoristas não podem editar/excluir fretes
     if (user?.profileType === 'motorista' || user?.profileType === 'driver') {
@@ -391,7 +392,8 @@ export default function FreightsPage() {
     }
     
     // Para outros perfis, filtrar com base no cliente associado
-    if (currentClient) {
+    // Como motoristas não têm cliente associado, esta condição não será executada para eles
+    if (currentClient && currentClient.id) {
       filtered = filtered.filter(freight => freight.clientId === currentClient.id);
     }
     
@@ -671,7 +673,7 @@ export default function FreightsPage() {
                             <Package className="h-4 w-4 text-slate-500 mt-0.5" />
                             <div className="flex-1">
                               <p className="text-xs text-slate-500">Carga:</p>
-                              <p className="text-sm">{CARGO_TYPES[freight.cargoType] || freight.cargoType}</p>
+                              <p className="text-sm">{freight.cargoType === 'completa' ? 'Completa' : 'Complemento'}</p>
                             </div>
                           </div>
                           
@@ -909,7 +911,7 @@ export default function FreightsPage() {
                   
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium text-slate-500">Tipo de Carga</h4>
-                    <p>{CARGO_TYPES[selectedFreight.cargoType] || selectedFreight.cargoType}</p>
+                    <p>{selectedFreight.cargoType === 'completa' ? 'Completa' : 'Complemento'}</p>
                   </div>
                   
                   <div className="space-y-2">
@@ -966,10 +968,10 @@ export default function FreightsPage() {
                 </div>
               </div>
               
-              {selectedFreight.notes && (
+              {selectedFreight.observations && (
                 <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg">
                   <h3 className="text-md font-semibold text-slate-900 dark:text-slate-100 mb-2">Observações</h3>
-                  <p className="text-sm">{selectedFreight.notes}</p>
+                  <p className="text-sm">{selectedFreight.observations}</p>
                 </div>
               )}
               
