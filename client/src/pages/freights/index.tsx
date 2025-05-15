@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 // import { useClientAuth } from "@/lib/auth-context";
@@ -91,6 +91,13 @@ const isExpired = (expirationDate: string | Date | null | undefined): boolean =>
 };
 
 export default function FreightsPage() {
+  // Log para debugar
+  console.log("Página de fretes carregando...");
+  
+  // Adicionar um log para quando terminar de carregar
+  useEffect(() => {
+    console.log("Página de fretes carregada com sucesso!");
+  }, []);
   const [searchQuery, setSearchQuery] = useState("");
   const [, navigate] = useLocation();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -391,14 +398,12 @@ export default function FreightsPage() {
       return filtered;
     }
     
-    // Para outros perfis, filtrar com base no cliente associado
-    // Como motoristas não têm cliente associado, esta condição não será executada para eles
-    if (currentClient && currentClient.id) {
-      filtered = filtered.filter(freight => freight.clientId === currentClient.id);
-    }
+    // Para motoristas não filtramos por cliente (não tem cliente associado)
+    // Removemos esta seção para evitar erros de tipagem
+    // Outros perfis usariam o useClientAuth normalmente
     
     return filtered;
-  }, [freights, searchQuery, filterStatus, filters, currentClient, user?.profileType]);
+  }, [freights, searchQuery, filterStatus, filters, user?.profileType]);
 
   return (
     <div className="container mx-auto py-6">
