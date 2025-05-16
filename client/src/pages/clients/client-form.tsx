@@ -37,6 +37,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/use-auth";
+import LocationInput from "@/components/location/location-input";
 
 // Brazilian states
 const BRAZILIAN_STATES = [
@@ -589,7 +590,23 @@ export default function ClientForm() {
                     <FormItem>
                       <FormLabel>Cidade</FormLabel>
                       <FormControl>
-                        <Input placeholder="Nome da cidade" {...field} />
+                        <LocationInput 
+                          value={field.value}
+                          onChange={(value) => {
+                            field.onChange(value);
+                            // Se o valor contiver um estado (formato: "Cidade - UF")
+                            if (value.includes(" - ")) {
+                              const state = value.split(" - ")[1];
+                              // Atualiza o campo de estado automaticamente
+                              form.setValue("state", state);
+                            }
+                          }}
+                          placeholder="Digite a cidade (ex: São Paulo - SP)"
+                          errorMessage={form.formState.errors.city?.message as string}
+                          onStateChange={(state) => {
+                            form.setValue("state", state);
+                          }}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
