@@ -2,6 +2,27 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
+    // Tenta extrair JSON da resposta
+    let errorData;
+    const contentType = res.headers.get('content-type');
+    
+    if (contentType && contentType.includes('application/json')) {
+      try {
+        // Clona a resposta para poder ler o corpo como JSON
+        const clonedRes = res.clone();
+        errorData = await clonedRes.json();
+        
+        // Se temos uma mensagem específica do servidor, usamos ela
+        if (errorData && errorData.message) {
+          throw new Error(errorData.message);
+        }
+      } catch (jsonError) {
+        // Se falhar ao ler JSON, continuamos com o tratamento de texto normal
+        console.error("Erro ao processar JSON da resposta:", jsonError);
+      }
+    }
+    
+    // Tratamento padrão se não conseguirmos extrair JSON ou se não tiver mensagem
     const text = (await res.text()) || res.statusText;
     throw new Error(`${res.status}: ${text}`);
   }

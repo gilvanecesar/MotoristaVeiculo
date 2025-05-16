@@ -140,6 +140,20 @@ export default function LoginPage() {
           window.location.href = "/checkout?plan=annual";
         }
       },
+      onError: (error: any) => {
+        // Exibe mensagem de erro específica para email duplicado
+        const errorMessage = error?.response?.data?.message || 
+                            error?.message || 
+                            "Erro ao criar conta. Tente novamente.";
+        
+        toast({
+          title: "Erro no cadastro",
+          description: errorMessage.includes("E-mail já cadastrado") 
+            ? "Este e-mail já está cadastrado no sistema. Por favor, use um e-mail diferente ou faça login." 
+            : errorMessage,
+          variant: "destructive",
+        });
+      },
     });
   };
 
