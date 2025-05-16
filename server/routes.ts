@@ -401,11 +401,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const clientData = req.body;
       
+      // Verificar se já existe um cliente com o mesmo CNPJ
+      const existingClientByCnpj = await storage.getClientByCnpj(clientData.cnpj);
+      if (existingClientByCnpj) {
+        return res.status(400).json({ 
+          message: "CNPJ já cadastrado no sistema. Não é possível cadastrar clientes com o mesmo CNPJ." 
+        });
+      }
+      
+      // Verificar se já existe um cliente com o mesmo nome (case insensitive)
+      const existingClientByName = await storage.getClientByName(clientData.name);
+      if (existingClientByName) {
+        return res.status(400).json({ 
+          message: "Nome já cadastrado no sistema. Por favor, use um nome diferente." 
+        });
+      }
+      
       const client = await storage.createClient(clientData);
       res.status(201).json(client);
     } catch (error) {
       console.error("Error creating client:", error);
-      res.status(500).json({ message: "Failed to create client" });
+      res.status(500).json({ message: "Falha ao criar cliente. Verifique os dados e tente novamente." });
     }
   });
 
@@ -415,16 +431,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const clientData = req.body;
       
+      // Verificar se já existe um cliente com o mesmo CNPJ (diferente do atual)
+      const existingClientByCnpj = await storage.getClientByCnpj(clientData.cnpj);
+      if (existingClientByCnpj && existingClientByCnpj.id !== id) {
+        return res.status(400).json({ 
+          message: "CNPJ já cadastrado no sistema. Não é possível ter dois clientes com o mesmo CNPJ." 
+        });
+      }
+      
+      // Verificar se já existe um cliente com o mesmo nome (case insensitive e diferente do atual)
+      const existingClientByName = await storage.getClientByName(clientData.name);
+      if (existingClientByName && existingClientByName.id !== id) {
+        return res.status(400).json({ 
+          message: "Nome já cadastrado no sistema. Por favor, use um nome diferente." 
+        });
+      }
+      
       const updatedClient = await storage.updateClient(id, clientData);
       
       if (!updatedClient) {
-        return res.status(404).json({ message: "Client not found" });
+        return res.status(404).json({ message: "Cliente não encontrado" });
       }
       
       res.json(updatedClient);
     } catch (error) {
       console.error("Error updating client:", error);
-      res.status(500).json({ message: "Failed to update client" });
+      res.status(500).json({ message: "Falha ao atualizar cliente. Verifique os dados e tente novamente." });
     }
   });
 

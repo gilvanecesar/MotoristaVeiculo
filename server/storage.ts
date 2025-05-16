@@ -781,6 +781,28 @@ export class DatabaseStorage implements IStorage {
     );
     return results;
   }
+  
+  async getClientByCnpj(cnpj: string): Promise<Client | undefined> {
+    // Remover caracteres não numéricos para normalizar o CNPJ
+    const normalizedCnpj = cnpj.replace(/\D/g, '');
+    
+    // Buscar por CNPJ normalizado ou formatado
+    const results = await db.select().from(clients).where(
+      or(
+        eq(clients.cnpj, normalizedCnpj),
+        eq(clients.cnpj, cnpj)
+      )
+    );
+    return results[0];
+  }
+  
+  async getClientByName(name: string): Promise<Client | undefined> {
+    // Busca case-insensitive pelo nome exato
+    const results = await db.select().from(clients).where(
+      sql`LOWER(${clients.name}) = LOWER(${name})`
+    );
+    return results[0];
+  }
 
   async createUser(user: InsertUser): Promise<User> {
     const results = await db.insert(users).values(user).returning();
