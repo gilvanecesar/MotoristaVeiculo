@@ -27,6 +27,7 @@ import FreightDetailPage from "@/pages/freights/[id]";
 import SimpleFreightForm from "@/pages/freights/simple-freight-form";
 import SimpleFreightEdit from "@/pages/freights/simple-edit";
 import ValorFreteEdit from "@/pages/freights/valor-edit";
+import DirectFreightEdit from "@/pages/freights/direct-edit";
 import ClientsPage from "@/pages/clients/index";
 import ClientForm from "@/pages/clients/client-form";
 import AdminPage from "@/pages/admin/index";
@@ -75,6 +76,7 @@ function Router() {
       <ProtectedRoute path="/freights/:id/edit" component={() => <FreightForm isEditMode={true} />} />
       <ProtectedRoute path="/freights/simple-edit/:id" component={SimpleFreightEdit} />
       <ProtectedRoute path="/freights/valor-edit/:id" component={ValorFreteEdit} />
+      <ProtectedRoute path="/freights/direct-edit/:id" component={DirectFreightEdit} />
       <ProtectedRoute path="/freights/:id" component={FreightDetailPage} />
       <Route path="/teste-checkbox" component={SimpleFreightForm} />
       <ProtectedRoute path="/clients" component={ClientsPage} />

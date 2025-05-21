@@ -198,7 +198,7 @@ export default function FreightDetailPage() {
             {isClientAuthorized(freight.clientId, freight.userId) && (
               <Button 
                 variant="outline"
-                onClick={() => navigate(`/freights/valor-edit/${freight.id}`)}
+                onClick={() => navigate(`/freights/direct-edit/${freight.id}`)}
               >
                 <Edit className="h-4 w-4 mr-2" /> Editar Valor
               </Button>
