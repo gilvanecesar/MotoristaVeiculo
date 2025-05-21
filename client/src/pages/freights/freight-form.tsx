@@ -861,48 +861,38 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                             </h4>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                               {vehicleTypes.map((type) => (
-                                <div key={type} className="flex items-center space-x-2">
-                                  <input 
-                                    type="checkbox"
-                                    id={`vehicle-type-${type}`}
-                                    checked={selectedVehicleTypes.includes(type)}
-                                    onChange={(e) => {
-                                      const isChecked = e.target.checked;
-                                      
-                                      if (isChecked) {
-                                        // Adicionar o tipo ao array de tipos selecionados
-                                        const newSelected = [...selectedVehicleTypes, type];
-                                        setSelectedVehicleTypes(newSelected);
-                                        form.setValue("vehicleType", type); // Para compatibilidade
-                                        
-                                        // Atualiza a categoria do veículo com base no tipo selecionado
-                                        form.setValue("vehicleCategory", getVehicleCategory(type));
-                                        
-                                        // Atualiza o campo vehicleTypesSelected no formulário
-                                        form.setValue("vehicleTypesSelected", newSelected.join(","));
-                                      } else {
-                                        // Remover o tipo do array de tipos selecionados
+                                <div key={type} className="mb-1">
+                                  <button
+                                    type="button"
+                                    className={`w-full px-3 py-2 text-left border rounded ${
+                                      selectedVehicleTypes.includes(type) 
+                                        ? 'border-primary bg-primary text-white' 
+                                        : 'border-gray-300 hover:border-primary'
+                                    }`}
+                                    onClick={() => {
+                                      if (selectedVehicleTypes.includes(type)) {
+                                        console.log(`Removendo tipo: ${type}`);
                                         const newSelected = selectedVehicleTypes.filter(t => t !== type);
                                         setSelectedVehicleTypes(newSelected);
+                                        form.setValue("vehicleTypesSelected", newSelected.join(","));
                                         
-                                        // Se removeu o que estava selecionado principal e ainda tem outros, seleciona o primeiro
                                         if (form.getValues("vehicleType") === type && newSelected.length > 0) {
                                           form.setValue("vehicleType", newSelected[0]);
-                                          form.setValue("vehicleCategory", getVehicleCategory(newSelected[0]));
                                         }
-                                        
-                                        // Atualiza o campo vehicleTypesSelected no formulário
+                                      } else {
+                                        console.log(`Adicionando tipo: ${type}`);
+                                        const newSelected = [...selectedVehicleTypes, type];
+                                        setSelectedVehicleTypes(newSelected);
                                         form.setValue("vehicleTypesSelected", newSelected.join(","));
+                                        
+                                        if (selectedVehicleTypes.length === 0) {
+                                          form.setValue("vehicleType", type);
+                                        }
                                       }
                                     }}
-                                    className="h-4 w-4 rounded border-gray-300 focus:ring-primary"
-                                  />
-                                  <label 
-                                    htmlFor={`vehicle-type-${type}`} 
-                                    className="text-sm font-medium leading-none cursor-pointer"
                                   >
                                     {getVehicleTypeNameOnly(type)}
-                                  </label>
+                                  </button>
                                 </div>
                               ))}
                             </div>
@@ -1040,44 +1030,38 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                     <FormLabel>Tipos de Carroceria</FormLabel>
                     <div className="w-full border rounded-md p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
                       {Object.entries(BODY_TYPES).map(([key, value]) => (
-                        <div key={key} className="flex items-center space-x-2">
-                          <input 
-                            type="checkbox"
-                            id={`body-type-${value}`}
-                            checked={selectedBodyTypes.includes(value)}
-                            onChange={(e) => {
-                              const isChecked = e.target.checked;
-                              
-                              if (isChecked) {
-                                // Adicionar o tipo ao array de tipos selecionados
-                                const newSelected = [...selectedBodyTypes, value];
-                                setSelectedBodyTypes(newSelected);
-                                form.setValue("bodyType", value); // Para compatibilidade
-                                
-                                // Atualiza o campo bodyTypesSelected no formulário
-                                form.setValue("bodyTypesSelected", newSelected.join(","));
-                              } else {
-                                // Remover o tipo do array de tipos selecionados
+                        <div key={key} className="mb-1">
+                          <button
+                            type="button"
+                            className={`w-full px-3 py-2 text-left border rounded ${
+                              selectedBodyTypes.includes(value) 
+                                ? 'border-primary bg-primary text-white' 
+                                : 'border-gray-300 hover:border-primary'
+                            }`}
+                            onClick={() => {
+                              if (selectedBodyTypes.includes(value)) {
+                                console.log(`Removendo carroceria: ${value}`);
                                 const newSelected = selectedBodyTypes.filter(t => t !== value);
                                 setSelectedBodyTypes(newSelected);
+                                form.setValue("bodyTypesSelected", newSelected.join(","));
                                 
-                                // Se removeu o que estava selecionado principal e ainda tem outros, seleciona o primeiro
                                 if (form.getValues("bodyType") === value && newSelected.length > 0) {
                                   form.setValue("bodyType", newSelected[0]);
                                 }
-                                
-                                // Atualiza o campo bodyTypesSelected no formulário
+                              } else {
+                                console.log(`Adicionando carroceria: ${value}`);
+                                const newSelected = [...selectedBodyTypes, value];
+                                setSelectedBodyTypes(newSelected);
                                 form.setValue("bodyTypesSelected", newSelected.join(","));
+                                
+                                if (selectedBodyTypes.length === 0) {
+                                  form.setValue("bodyType", value);
+                                }
                               }
                             }}
-                            className="h-4 w-4 rounded border-gray-300 focus:ring-primary"
-                          />
-                          <label 
-                            htmlFor={`body-type-${value}`} 
-                            className="text-sm font-medium leading-none cursor-pointer"
                           >
                             {getBodyTypeDisplay(value)}
-                          </label>
+                          </button>
                         </div>
                       ))}
                     </div>
