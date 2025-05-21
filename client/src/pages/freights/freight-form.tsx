@@ -64,10 +64,15 @@ const freightSchema = insertFreightSchema
   .extend({
     destinationState: z.string().min(2, "Selecione o estado de destino").optional(),
     destination: z.string().min(2, "Selecione a cidade de destino").optional(),
-    cargoWeight: z.string().refine(
-      (val) => !val || !isNaN(parseFloat(val)),
-      { message: "Peso da carga deve ser um número válido" }
-    ),
+    cargoWeight: z.string()
+      .refine(
+        (val) => !val || !isNaN(parseFloat(val)),
+        { message: "Peso da carga deve ser um número válido" }
+      )
+      .refine(
+        (val) => !val || parseFloat(val) > 0,
+        { message: "Peso da carga deve ser maior que zero" }
+      ),
     freightValue: z.string().refine(
       (val) => !val || !isNaN(parseFloat(val)),
       { message: "Valor do frete deve ser um número válido" }
@@ -806,17 +811,11 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                         value={field.value}
                         onValueChange={(value) => {
                           field.onChange(value);
-                          // Ao mudar categoria, limpar a seleção atual e selecionar "todos" dessa categoria
-                          if (value === VEHICLE_CATEGORIES.LEVE) {
-                            setSelectedVehicleTypes([VEHICLE_TYPES.LEVE_TODOS]);
-                            form.setValue("vehicleType", VEHICLE_TYPES.LEVE_TODOS);
-                          } else if (value === VEHICLE_CATEGORIES.MEDIO) {
-                            setSelectedVehicleTypes([VEHICLE_TYPES.MEDIO_TODOS]);
-                            form.setValue("vehicleType", VEHICLE_TYPES.MEDIO_TODOS);
-                          } else if (value === VEHICLE_CATEGORIES.PESADO) {
-                            setSelectedVehicleTypes([VEHICLE_TYPES.PESADO_TODOS]);
-                            form.setValue("vehicleType", VEHICLE_TYPES.PESADO_TODOS);
-                          }
+                          // Apenas atualiza a categoria sem selecionar automaticamente "todos"
+                          // Limpa as seleções atuais para que o usuário possa escolher explicitamente
+                          setSelectedVehicleTypes([]);
+                          form.setValue("vehicleTypesSelected", "");
+                          form.setValue("vehicleType", "");
                         }}
                       >
                         <FormControl>
