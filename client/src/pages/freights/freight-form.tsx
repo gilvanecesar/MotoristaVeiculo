@@ -322,6 +322,21 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
   }, [clients, form]);
 
   const onSubmit = async (data: FreightFormValues) => {
+    // Log para depuração
+    console.log("Função onSubmit foi chamada");
+    console.log("Dados do formulário:", data);
+
+    // Validação do formulário
+    if (form.formState.errors && Object.keys(form.formState.errors).length > 0) {
+      console.log("Erros no formulário:", form.formState.errors);
+      toast({
+        title: "Erros no formulário",
+        description: "Verifique os campos obrigatórios e tente novamente.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     // Se for multidestinos e não tiver destinos adicionados, adiciona aviso
     if (data.hasMultipleDestinations && destinations.length === 0) {
       toast({
@@ -360,6 +375,12 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
     
     // Configura o ID do usuário atual
     data.userId = user?.id;
+    
+    // Formatar o valor do frete para o formato numérico que o banco espera
+    if (data.freightValue) {
+      // Remove pontos e substitui vírgula por ponto para formato numérico
+      data.freightValue = data.freightValue.replace(/\./g, '').replace(',', '.');
+    }
     
     // Mostra erros de desenvolvimento
     console.log("Form data:", data);
@@ -510,7 +531,11 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
         </div>
       ) : (
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            console.log("Formulário enviado");
+            form.handleSubmit(onSubmit)(e);
+          }} className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Informações Básicas</CardTitle>
