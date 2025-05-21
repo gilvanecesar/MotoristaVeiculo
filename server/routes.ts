@@ -544,8 +544,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Criar novo frete
-  app.post("/api/freights", hasActiveSubscription, async (req: Request, res: Response) => {
+  // Criar novo frete (rota principal com verificação de assinatura)
+  app.post("/api/freights", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const freightData = req.body;
       
