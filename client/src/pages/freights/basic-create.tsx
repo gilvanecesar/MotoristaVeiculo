@@ -10,11 +10,45 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import LocationInput from "@/components/location/location-input";
+// Componente personalizado para entrada de localização sem dependências do form.tsx
+const SimpleLocationInput = ({ 
+  value, 
+  onChange, 
+  stateValue, 
+  onStateChange, 
+  placeholder = "Digite o nome da cidade" 
+}: { 
+  value: string; 
+  onChange: (value: string) => void; 
+  stateValue: string; 
+  onStateChange: (value: string) => void;
+  placeholder?: string;
+}) => {
+  return (
+    <div className="flex gap-2">
+      <div className="flex-grow">
+        <Input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+        />
+      </div>
+      <div className="w-20">
+        <Input
+          value={stateValue}
+          onChange={(e) => onStateChange(e.target.value)}
+          placeholder="UF"
+          maxLength={2}
+        />
+      </div>
+    </div>
+  );
+};
+
 import { Textarea } from "@/components/ui/textarea";
 
-// Componente para criação simplificada de frete sem uso de react-hook-form
-export default function SimpleCreateFreight() {
+// Componente básico para criação de fretes sem dependências de formulários complexos
+export default function BasicCreateFreight() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
@@ -28,6 +62,7 @@ export default function SimpleCreateFreight() {
   const [productType, setProductType] = useState("");
   const [contactName, setContactName] = useState("");
   const [contactPhone, setContactPhone] = useState("");
+  const [observations, setObservations] = useState("");
 
   // Função para salvar o frete usando fetch diretamente
   const handleSubmit = async (e: React.FormEvent) => {
@@ -58,6 +93,7 @@ export default function SimpleCreateFreight() {
         productType,
         contactName,
         contactPhone,
+        observations,
         userId: user?.id,
         clientId: user?.clientId || 1, // Usar o cliente do usuário ou um valor padrão
         cargoType: "completa",
@@ -101,7 +137,7 @@ export default function SimpleCreateFreight() {
       console.error("Erro ao criar frete:", error);
       toast({
         title: "Erro",
-        description: "Não foi possível criar o frete",
+        description: `Não foi possível criar o frete: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
         variant: "destructive",
       });
     } finally {
@@ -112,13 +148,13 @@ export default function SimpleCreateFreight() {
   return (
     <div className="container py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Criar Frete Simples</h1>
+        <h1 className="text-2xl font-bold">Criar Frete</h1>
         <Button variant="outline" onClick={() => navigate("/freights")}>
           Voltar
         </Button>
       </div>
       
-      <Card className="max-w-2xl mx-auto">
+      <Card>
         <CardHeader>
           <CardTitle>Novo Frete</CardTitle>
           <CardDescription>
@@ -131,21 +167,23 @@ export default function SimpleCreateFreight() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="origin">Cidade de Origem</Label>
-                  <LocationInput
+                  <SimpleLocationInput
                     value={origin}
                     onChange={setOrigin}
                     onStateChange={setOriginState}
                     stateValue={originState}
+                    placeholder="Digite a cidade de origem"
                   />
                 </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="destination">Cidade de Destino</Label>
-                  <LocationInput
+                  <SimpleLocationInput
                     value={destination}
                     onChange={setDestination}
                     onStateChange={setDestinationState}
                     stateValue={destinationState}
+                    placeholder="Digite a cidade de destino"
                   />
                 </div>
               </div>
@@ -192,6 +230,17 @@ export default function SimpleCreateFreight() {
                     placeholder="(00) 00000-0000"
                   />
                 </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="observations">Observações</Label>
+                <Textarea
+                  id="observations"
+                  value={observations}
+                  onChange={(e) => setObservations(e.target.value)}
+                  placeholder="Detalhes adicionais sobre o frete"
+                  rows={4}
+                />
               </div>
             </div>
           </CardContent>
