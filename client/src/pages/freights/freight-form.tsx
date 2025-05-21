@@ -865,34 +865,22 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                                   <input 
                                     type="checkbox"
                                     id={`vehicle-type-${type}`}
+                                    style={{ width: '20px', height: '20px' }}
                                     checked={selectedVehicleTypes.includes(type)}
-                                    style={{ width: '18px', height: '18px' }}
-                                    onChange={(e) => {
-                                      const isChecked = e.target.checked;
-                                      console.log(`Checkbox ${type} - isChecked: ${isChecked}`);
-                                      
-                                      if (isChecked) {
-                                        console.log(`Adicionando tipo: ${type}`);
-                                        const newSelected = [...selectedVehicleTypes, type];
-                                        setSelectedVehicleTypes(newSelected);
-                                        form.setValue("vehicleType", type);
-                                        form.setValue("vehicleTypesSelected", newSelected.join(","));
+                                    onChange={() => {
+                                      let newSelected;
+                                      if (selectedVehicleTypes.includes(type)) {
+                                        newSelected = selectedVehicleTypes.filter(t => t !== type);
                                       } else {
-                                        console.log(`Removendo tipo: ${type}`);
-                                        const newSelected = selectedVehicleTypes.filter(t => t !== type);
-                                        setSelectedVehicleTypes(newSelected);
-                                        
-                                        if (form.getValues("vehicleType") === type && newSelected.length > 0) {
-                                          form.setValue("vehicleType", newSelected[0]);
-                                        }
-                                        
-                                        form.setValue("vehicleTypesSelected", newSelected.join(","));
+                                        newSelected = [...selectedVehicleTypes, type];
                                       }
+                                      setSelectedVehicleTypes(newSelected);
+                                      form.setValue("vehicleType", newSelected.length > 0 ? newSelected[0] : "");
+                                      form.setValue("vehicleTypesSelected", newSelected.join(","));
                                     }}
-                                    className="cursor-pointer"
                                   />
                                   <label 
-                                    htmlFor={`vehicle-type-${type}`} 
+                                    htmlFor={`vehicle-type-${type}`}
                                     className="text-sm font-medium leading-none cursor-pointer"
                                   >
                                     {getVehicleTypeNameOnly(type)}
@@ -1038,34 +1026,22 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                           <input 
                             type="checkbox"
                             id={`body-type-${value}`}
+                            style={{ width: '20px', height: '20px' }}
                             checked={selectedBodyTypes.includes(value)}
-                            style={{ width: '18px', height: '18px' }}
-                            onChange={(e) => {
-                              const isChecked = e.target.checked;
-                              console.log(`Checkbox ${value} - isChecked: ${isChecked}`);
-                              
-                              if (isChecked) {
-                                console.log(`Adicionando carroceria: ${value}`);
-                                const newSelected = [...selectedBodyTypes, value];
-                                setSelectedBodyTypes(newSelected);
-                                form.setValue("bodyType", value);
-                                form.setValue("bodyTypesSelected", newSelected.join(","));
+                            onChange={() => {
+                              let newSelected;
+                              if (selectedBodyTypes.includes(value)) {
+                                newSelected = selectedBodyTypes.filter(t => t !== value);
                               } else {
-                                console.log(`Removendo carroceria: ${value}`);
-                                const newSelected = selectedBodyTypes.filter(t => t !== value);
-                                setSelectedBodyTypes(newSelected);
-                                
-                                if (form.getValues("bodyType") === value && newSelected.length > 0) {
-                                  form.setValue("bodyType", newSelected[0]);
-                                }
-                                
-                                form.setValue("bodyTypesSelected", newSelected.join(","));
+                                newSelected = [...selectedBodyTypes, value];
                               }
+                              setSelectedBodyTypes(newSelected);
+                              form.setValue("bodyType", newSelected.length > 0 ? newSelected[0] : "");
+                              form.setValue("bodyTypesSelected", newSelected.join(","));
                             }}
-                            className="cursor-pointer"
                           />
                           <label 
-                            htmlFor={`body-type-${value}`} 
+                            htmlFor={`body-type-${value}`}
                             className="text-sm font-medium leading-none cursor-pointer"
                           >
                             {getBodyTypeDisplay(value)}
