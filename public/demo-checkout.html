@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Demonstração de Checkbox</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      line-height: 1.5;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+      color: #333;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: white;
+      border-radius: 8px;
+      padding: 24px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    h1, h2, h3 {
+      color: #111;
+    }
+    .card {
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      margin-bottom: 24px;
+    }
+    .card-header {
+      border-bottom: 1px solid #e2e8f0;
+      padding: 16px 24px;
+    }
+    .card-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+    }
+    .card-content {
+      padding: 24px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    @media (max-width: 768px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+    }
+    label {
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    button {
+      background-color: #3b82f6;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #2563eb;
+    }
+    .button-container {
+      display: flex;
+      justify-content: flex-end;
+    }
+    .selection-display {
+      margin-top: 32px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 20px;
+    }
+    .list {
+      list-style-type: disc;
+      padding-left: 20px;
+    }
+    .text-muted {
+      color: #6b7280;
+    }
+    .solution-notes {
+      margin-top: 32px;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 24px;
+    }
+    .solution-notes pre {
+      background-color: #f8fafc;
+      border-radius: 4px;
+      padding: 12px;
+      font-size: 14px;
+      overflow-x: auto;
+    }
+    .solution-notes code {
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Teste de Checkboxes</h1>
+    
+    <form id="checkboxForm">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Tipos de Veículos</h2>
+        </div>
+        <div class="card-content">
+          <div class="grid" id="vehicleCheckboxes">
+            <!-- Checkboxes serão inseridos via JavaScript -->
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Tipos de Carrocerias</h2>
+        </div>
+        <div class="card-content">
+          <div class="grid" id="bodyCheckboxes">
+            <!-- Checkboxes serão inseridos via JavaScript -->
+          </div>
+        </div>
+      </div>
+
+      <div class="button-container">
+        <button type="submit">Testar Seleção</button>
+      </div>
+    </form>
+    
+    <div class="selection-display">
+      <h2>Selecionados:</h2>
+      <div>
+        <h3>Tipos de Veículos:</h3>
+        <ul class="list" id="selectedVehicles">
+          <li class="text-muted">Nenhum selecionado</li>
+        </ul>
+      </div>
+      
+      <div>
+        <h3>Tipos de Carrocerias:</h3>
+        <ul class="list" id="selectedBodies">
+          <li class="text-muted">Nenhuma selecionada</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="solution-notes">
+      <h2>Solução para o Problema dos Checkboxes</h2>
+      <p>
+        Esta demonstração resolve o problema de desseleção automática dos checkboxes observado no formulário 
+        de frete, utilizando abordagens fundamentais:
+      </p>
+      <ol>
+        <li><strong>Uso de inputs HTML nativos</strong> em vez do componente Checkbox customizado</li>
+        <li><strong>Estado armazenado em arrays</strong> para controlar seleções múltiplas</li>
+        <li><strong>Manipuladores de eventos simples</strong> para adicionar/remover itens do estado</li>
+      </ol>
+      
+      <h3>Código-chave:</h3>
+      <pre><code>// Estado para armazenar seleções
+const selectedVehicleTypes = [];
+const selectedBodyTypes = [];
+
+// Manipulador de evento para checkbox
+function handleVehicleTypeChange(type, checked) {
+  if (checked) {
+    // Adiciona à lista se marcado
+    selectedVehicleTypes.push(type);
+  } else {
+    // Remove da lista se desmarcado
+    const index = selectedVehicleTypes.indexOf(type);
+    if (index !== -1) {
+      selectedVehicleTypes.splice(index, 1);
+    }
+  }
+  updateSelectionDisplay();
+}
+
+// Associação de valor do checkbox ao estado
+checkbox.checked = selectedVehicleTypes.includes(type);</code></pre>
+      
+      <p>
+        Esta abordagem pode ser aplicada ao formulário de frete principal, substituindo o componente 
+        personalizado pelos inputs nativos e mantendo a mesma lógica de manipulação de estado.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // Dados de exemplo
+    const vehicleTypes = [
+      "Carreta 2 eixos",
+      "Carreta 3 eixos",
+      "Bitrem",
+      "Rodotrem",
+      "Truck"
+    ];
+
+    const bodyTypes = [
+      "Baú",
+      "Sider",
+      "Graneleiro",
+      "Tanque",
+      "Refrigerado"
+    ];
+
+    // Estado para armazenar seleções
+    const selectedVehicleTypes = [];
+    const selectedBodyTypes = [];
+
+    // Elementos DOM
+    const vehicleCheckboxesContainer = document.getElementById('vehicleCheckboxes');
+    const bodyCheckboxesContainer = document.getElementById('bodyCheckboxes');
+    const selectedVehiclesContainer = document.getElementById('selectedVehicles');
+    const selectedBodiesContainer = document.getElementById('selectedBodies');
+    const form = document.getElementById('checkboxForm');
+
+    // Criar checkboxes para tipos de veículos
+    vehicleTypes.forEach(type => {
+      const checkboxItem = document.createElement('div');
+      checkboxItem.className = 'checkbox-item';
+      
+      const id = `vehicle-type-${type.replace(/\s+/g, '-').toLowerCase()}`;
+      
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.id = id;
+      checkbox.addEventListener('change', (e) => {
+        handleVehicleTypeChange(type, e.target.checked);
+      });
+      
+      const label = document.createElement('label');
+      label.htmlFor = id;
+      label.textContent = type;
+      
+      checkboxItem.appendChild(checkbox);
+      checkboxItem.appendChild(label);
+      vehicleCheckboxesContainer.appendChild(checkboxItem);
+    });
+
+    // Criar checkboxes para tipos de carrocerias
+    bodyTypes.forEach(type => {
+      const checkboxItem = document.createElement('div');
+      checkboxItem.className = 'checkbox-item';
+      
+      const id = `body-type-${type.replace(/\s+/g, '-').toLowerCase()}`;
+      
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.id = id;
+      checkbox.addEventListener('change', (e) => {
+        handleBodyTypeChange(type, e.target.checked);
+      });
+      
+      const label = document.createElement('label');
+      label.htmlFor = id;
+      label.textContent = type;
+      
+      checkboxItem.appendChild(checkbox);
+      checkboxItem.appendChild(label);
+      bodyCheckboxesContainer.appendChild(checkboxItem);
+    });
+
+    // Manipulador de evento para checkbox de tipo de veículo
+    function handleVehicleTypeChange(type, checked) {
+      if (checked) {
+        // Adiciona à lista se marcado
+        selectedVehicleTypes.push(type);
+      } else {
+        // Remove da lista se desmarcado
+        const index = selectedVehicleTypes.indexOf(type);
+        if (index !== -1) {
+          selectedVehicleTypes.splice(index, 1);
+        }
+      }
+      updateSelectionDisplay();
+    }
+
+    // Manipulador de evento para checkbox de tipo de carroceria
+    function handleBodyTypeChange(type, checked) {
+      if (checked) {
+        // Adiciona à lista se marcado
+        selectedBodyTypes.push(type);
+      } else {
+        // Remove da lista se desmarcado
+        const index = selectedBodyTypes.indexOf(type);
+        if (index !== -1) {
+          selectedBodyTypes.splice(index, 1);
+        }
+      }
+      updateSelectionDisplay();
+    }
+
+    // Atualiza a exibição de itens selecionados
+    function updateSelectionDisplay() {
+      // Atualiza lista de veículos selecionados
+      if (selectedVehicleTypes.length === 0) {
+        selectedVehiclesContainer.innerHTML = '<li class="text-muted">Nenhum selecionado</li>';
+      } else {
+        selectedVehiclesContainer.innerHTML = '';
+        selectedVehicleTypes.forEach(type => {
+          const li = document.createElement('li');
+          li.textContent = type;
+          selectedVehiclesContainer.appendChild(li);
+        });
+      }
+      
+      // Atualiza lista de carrocerias selecionadas
+      if (selectedBodyTypes.length === 0) {
+        selectedBodiesContainer.innerHTML = '<li class="text-muted">Nenhuma selecionada</li>';
+      } else {
+        selectedBodiesContainer.innerHTML = '';
+        selectedBodyTypes.forEach(type => {
+          const li = document.createElement('li');
+          li.textContent = type;
+          selectedBodiesContainer.appendChild(li);
+        });
+      }
+    }
+
+    // Manipulador do envio do formulário
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      alert(`Veículos selecionados: ${selectedVehicleTypes.join(', ') || 'Nenhum'}
+Carrocerias selecionadas: ${selectedBodyTypes.join(', ') || 'Nenhuma'}`);
+    });
+  </script>
+</body>
+</html>

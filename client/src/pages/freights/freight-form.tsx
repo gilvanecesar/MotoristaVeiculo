@@ -738,11 +738,13 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                             {vehicleTypes.map((type) => (
                               <div key={type} className="flex items-center space-x-2">
-                                <Checkbox 
+                                <input
+                                  type="checkbox"
                                   id={`vehicle-type-${type}`}
                                   disabled={isViewingInReadOnlyMode}
                                   checked={selectedVehicleTypes.includes(type)}
-                                  onCheckedChange={(checked) => {
+                                  onChange={(e) => {
+                                    const checked = e.target.checked;
                                     if (checked) {
                                       // Adicionar tipo à lista
                                       const newList = [...selectedVehicleTypes, type];
@@ -768,6 +770,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                                       }
                                     }
                                   }}
+                                  className="h-4 w-4 rounded-sm border border-primary"
                                 />
                                 <label 
                                   htmlFor={`vehicle-type-${type}`} 
@@ -892,11 +895,13 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                   <div className="w-full border rounded-md p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
                     {Object.entries(BODY_TYPES).map(([key, value]) => (
                       <div key={key} className="flex items-center space-x-2">
-                        <Checkbox 
+                        <input
+                          type="checkbox"
                           id={`body-type-${key}`}
                           disabled={isViewingInReadOnlyMode}
                           checked={selectedBodyTypes.includes(value)}
-                          onCheckedChange={(checked) => {
+                          onChange={(e) => {
+                            const checked = e.target.checked;
                             if (checked) {
                               // Adicionar tipo à lista
                               const newList = [...selectedBodyTypes, value];
@@ -919,6 +924,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                               }
                             }
                           }}
+                          className="h-4 w-4 rounded-sm border border-primary"
                         />
                         <label 
                           htmlFor={`body-type-${key}`} 
