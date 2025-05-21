@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useRoute, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-// Removida dependência circular do useClientAuth
+// Importações atualizadas
 import { FreightWithDestinations, Client } from "@shared/schema";
 import { 
   getVehicleCategory, 
