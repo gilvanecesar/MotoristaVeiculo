@@ -850,47 +850,69 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                   <FormItem>
                     <FormLabel>Tipos de Veículo</FormLabel>
                     <div className="w-full border rounded-md p-4">
-                      {Object.entries(VEHICLE_CATEGORIES).map((categoryEntry) => {
-                        const [categoryKey, categoryValue] = categoryEntry;
-                        const vehicleTypes = VEHICLE_TYPES_BY_CATEGORY[categoryValue];
+                      {(() => {
+                        const category = form.getValues("vehicleCategory");
+                        if (!category) return null;
                         
+                        const vehicleTypes = VEHICLE_TYPES_BY_CATEGORY[category];
                         return (
-                          <div key={categoryKey} className="mb-4">
+                          <div className="mb-4">
                             <h4 className="text-sm font-semibold mb-2">
-                              {getVehicleCategoryDisplay(categoryValue)}
+                              {getVehicleCategoryDisplay(category)}
                             </h4>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                              {vehicleTypes.map((type) => (
-                                <div key={type} className="flex items-center space-x-2">
-                                  <input 
-                                    type="checkbox"
-                                    id={`vehicle-type-${type}`}
-                                    style={{ width: '20px', height: '20px' }}
-                                    checked={selectedVehicleTypes.includes(type)}
-                                    onChange={() => {
-                                      let newSelected;
-                                      if (selectedVehicleTypes.includes(type)) {
-                                        newSelected = selectedVehicleTypes.filter(t => t !== type);
-                                      } else {
-                                        newSelected = [...selectedVehicleTypes, type];
-                                      }
-                                      setSelectedVehicleTypes(newSelected);
-                                      form.setValue("vehicleType", newSelected.length > 0 ? newSelected[0] : "");
-                                      form.setValue("vehicleTypesSelected", newSelected.join(","));
-                                    }}
-                                  />
-                                  <label 
-                                    htmlFor={`vehicle-type-${type}`}
-                                    className="text-sm font-medium leading-none cursor-pointer"
-                                  >
-                                    {getVehicleTypeNameOnly(type)}
-                                  </label>
-                                </div>
-                              ))}
+                              {vehicleTypes.map((type) => {
+                                const isTodos = type.endsWith('_todos');
+                                return (
+                                  <div key={type} className="flex items-center space-x-2">
+                                    <input 
+                                      type="checkbox"
+                                      id={`vehicle-type-${type}`}
+                                      style={{ width: '20px', height: '20px' }}
+                                      checked={selectedVehicleTypes.includes(type)}
+                                      onChange={() => {
+                                        let newSelected: string[] = [];
+                                        
+                                        if (isTodos) {
+                                          // Se for "Todos"
+                                          if (selectedVehicleTypes.includes(type)) {
+                                            newSelected = []; // Limpar tudo
+                                          } else {
+                                            newSelected = [type]; // Selecionar só "Todos"
+                                          }
+                                        } else {
+                                          // Se for tipo específico
+                                          if (selectedVehicleTypes.includes(type)) {
+                                            // Remover o tipo
+                                            newSelected = selectedVehicleTypes.filter(t => t !== type);
+                                          } else {
+                                            // Adicionar o tipo e remover o "Todos" se estiver marcado
+                                            newSelected = [...selectedVehicleTypes, type];
+                                            const todosType = vehicleTypes.find(t => t.endsWith('_todos'));
+                                            if (todosType && newSelected.includes(todosType)) {
+                                              newSelected = newSelected.filter(t => t !== todosType);
+                                            }
+                                          }
+                                        }
+                                        
+                                        setSelectedVehicleTypes(newSelected);
+                                        form.setValue("vehicleType", newSelected.length > 0 ? newSelected[0] : "");
+                                        form.setValue("vehicleTypesSelected", newSelected.join(","));
+                                      }}
+                                    />
+                                    <label 
+                                      htmlFor={`vehicle-type-${type}`}
+                                      className="text-sm font-medium leading-none cursor-pointer"
+                                    >
+                                      {getVehicleTypeNameOnly(type)}
+                                    </label>
+                                  </div>
+                                );
+                              })}
                             </div>
                           </div>
                         );
-                      })}
+                      })()}
                     </div>
                     {form.formState.errors.vehicleType && (
                       <p className="text-sm font-medium text-destructive mt-2">
@@ -1029,12 +1051,15 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                             style={{ width: '20px', height: '20px' }}
                             checked={selectedBodyTypes.includes(value)}
                             onChange={() => {
-                              let newSelected;
+                              // Lógica simplificada - apenas alterna o valor atual
+                              let newSelected: string[] = [];
                               if (selectedBodyTypes.includes(value)) {
                                 newSelected = selectedBodyTypes.filter(t => t !== value);
                               } else {
                                 newSelected = [...selectedBodyTypes, value];
                               }
+                              
+                              // Atualiza o estado e os valores do formulário
                               setSelectedBodyTypes(newSelected);
                               form.setValue("bodyType", newSelected.length > 0 ? newSelected[0] : "");
                               form.setValue("bodyTypesSelected", newSelected.join(","));
