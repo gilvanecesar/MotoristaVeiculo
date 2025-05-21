@@ -22,7 +22,7 @@ import DriverForm from "@/pages/drivers/driver-form";
 import VehiclesPage from "@/pages/vehicles/index";
 import ReportsPage from "@/pages/reports";
 import FreightsPage from "@/pages/freights/index";
-import FreightForm from "@/pages/freights/freight-form-fixed";
+import FreightForm from "@/pages/freights/freight-form";
 import FreightDetailPage from "@/pages/freights/[id]";
 import SimpleFreightForm from "@/pages/freights/simple-freight-form";
 import ClientsPage from "@/pages/clients/index";
@@ -72,7 +72,7 @@ function Router() {
       <ProtectedRoute path="/freights/new" component={FreightForm} />
       <ProtectedRoute path="/freights/:id/edit" component={() => <FreightForm isEditMode={true} />} />
       <ProtectedRoute path="/freights/:id" component={FreightDetailPage} />
-      <Route path="/teste-checkbox" component={SimpleFreightForm} />
+      <Route path="/teste-checkbox" component={() => <SimpleFreightForm />} />
       <ProtectedRoute path="/clients" component={ClientsPage} />
       <ProtectedRoute path="/clients/new" component={ClientForm} />
       <ProtectedRoute path="/clients/:id" component={ClientForm} />

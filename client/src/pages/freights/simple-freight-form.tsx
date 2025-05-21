@@ -3,14 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import LocationInput from "@/components/location/location-input";
+import { useToast } from "@/hooks/use-toast";
 
 export default function SimpleFreightForm() {
   const [selectedVehicleTypes, setSelectedVehicleTypes] = useState<string[]>([]);
-  const [cityOrigin, setCityOrigin] = useState("");
-  const [stateOrigin, setStateOrigin] = useState("");
-  const [cityDestination, setCityDestination] = useState("");
-  const [stateDestination, setStateDestination] = useState("");
+  const [origin, setOrigin] = useState("");
+  const [destination, setDestination] = useState("");
+  const { toast } = useToast();
   
   // Exemplos de tipos de veículos (simplificados)
   const vehicleTypes = [
@@ -33,52 +32,34 @@ export default function SimpleFreightForm() {
     });
   };
   
-  const handleOriginChange = (value: string) => {
-    setCityOrigin(value);
-  };
-  
-  const handleStateOriginChange = (value: string) => {
-    setStateOrigin(value);
-  };
-  
-  const handleDestinationChange = (value: string) => {
-    setCityDestination(value);
-  };
-  
-  const handleStateDestinationChange = (value: string) => {
-    setStateDestination(value);
-  };
-  
   return (
     <div className="container p-8">
-      <h1 className="text-2xl font-bold mb-6">Formulário Simplificado de Fretes</h1>
+      <h1 className="text-2xl font-bold mb-6">Demonstração de Melhorias</h1>
       
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Origem e Destino</CardTitle>
+          <CardTitle>Origem e Destino (Alinhados Verticalmente)</CardTitle>
         </CardHeader>
         <CardContent>
           {/* Campos de ORIGEM E DESTINO - ALINHADOS VERTICALMENTE */}
           <div className="grid grid-cols-1 gap-6">
             <div>
               <Label htmlFor="origin">Cidade de Origem</Label>
-              <LocationInput 
-                value={cityOrigin}
-                onChange={handleOriginChange}
-                stateField="originState"
-                stateValue={stateOrigin}
-                onStateChange={handleStateOriginChange}
+              <Input 
+                id="origin"
+                value={origin}
+                onChange={(e) => setOrigin(e.target.value)}
+                placeholder="Digite a cidade de origem"
               />
             </div>
             
             <div>
               <Label htmlFor="destination">Cidade de Destino</Label>
-              <LocationInput 
-                value={cityDestination}
-                onChange={handleDestinationChange}
-                stateField="destinationState"
-                stateValue={stateDestination}
-                onStateChange={handleStateDestinationChange}
+              <Input 
+                id="destination"
+                value={destination}
+                onChange={(e) => setDestination(e.target.value)}
+                placeholder="Digite a cidade de destino"
               />
             </div>
           </div>
@@ -126,8 +107,13 @@ export default function SimpleFreightForm() {
         </CardContent>
       </Card>
       
-      <div className="mt-4">
-        <Button onClick={() => alert("Informações salvas")}>Salvar Informações</Button>
+      <div className="flex gap-4 mt-6">
+        <Button onClick={() => {
+          toast({
+            title: "Demonstração de Melhorias",
+            description: "Veículos selecionados: " + selectedVehicleTypes.length,
+          })
+        }}>Testar Seleção</Button>
       </div>
     </div>
   );
