@@ -6,15 +6,12 @@ import { toast } from "@/hooks/use-toast";
 import { 
   Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter
 } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import LocationInput from "@/components/location/location-input";
-// Removemos a dependência dos componentes Form que estavam causando erro
 
-// Componente para criação simplificada de frete
-export default function SimpleCreateFreight() {
+// Componente básico para criar fretes sem usar Form ou LocationInput
+export default function BasicCreateFreight() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
@@ -112,7 +109,7 @@ export default function SimpleCreateFreight() {
   return (
     <div className="container py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Criar Frete Simples</h1>
+        <h1 className="text-2xl font-bold">Criar Frete</h1>
         <Button variant="outline" onClick={() => navigate("/freights")}>
           Voltar
         </Button>
@@ -130,31 +127,50 @@ export default function SimpleCreateFreight() {
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="origin">Cidade de Origem</Label>
-                  <LocationInput
+                  <div className="text-sm font-medium">Cidade de Origem</div>
+                  <Input
                     value={origin}
-                    onChange={setOrigin}
-                    onStateChange={setOriginState}
-                    stateValue={originState}
+                    onChange={(e) => setOrigin(e.target.value)}
+                    placeholder="Ex: São Paulo"
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="destination">Cidade de Destino</Label>
-                  <LocationInput
-                    value={destination}
-                    onChange={setDestination}
-                    onStateChange={setDestinationState}
-                    stateValue={destinationState}
+                  <div className="text-sm font-medium">Estado de Origem</div>
+                  <Input
+                    value={originState}
+                    onChange={(e) => setOriginState(e.target.value)}
+                    placeholder="Ex: SP"
+                    maxLength={2}
                   />
                 </div>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="freightValue">Valor do Frete (R$)</Label>
+                  <div className="text-sm font-medium">Cidade de Destino</div>
                   <Input
-                    id="freightValue"
+                    value={destination}
+                    onChange={(e) => setDestination(e.target.value)}
+                    placeholder="Ex: Rio de Janeiro"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="text-sm font-medium">Estado de Destino</div>
+                  <Input
+                    value={destinationState}
+                    onChange={(e) => setDestinationState(e.target.value)}
+                    placeholder="Ex: RJ"
+                    maxLength={2}
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <div className="text-sm font-medium">Valor do Frete (R$)</div>
+                  <Input
                     value={freightValue}
                     onChange={(e) => setFreightValue(e.target.value)}
                     placeholder="0,00"
@@ -162,9 +178,8 @@ export default function SimpleCreateFreight() {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="productType">Tipo de Produto</Label>
+                  <div className="text-sm font-medium">Tipo de Produto</div>
                   <Input
-                    id="productType"
                     value={productType}
                     onChange={(e) => setProductType(e.target.value)}
                     placeholder="Ex: Grãos, Bebidas, etc."
@@ -174,9 +189,8 @@ export default function SimpleCreateFreight() {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="contactName">Nome do Contato</Label>
+                  <div className="text-sm font-medium">Nome do Contato</div>
                   <Input
-                    id="contactName"
                     value={contactName}
                     onChange={(e) => setContactName(e.target.value)}
                     placeholder="Nome completo"
@@ -184,9 +198,8 @@ export default function SimpleCreateFreight() {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="contactPhone">Telefone</Label>
+                  <div className="text-sm font-medium">Telefone</div>
                   <Input
-                    id="contactPhone"
                     value={contactPhone}
                     onChange={(e) => setContactPhone(e.target.value)}
                     placeholder="(00) 00000-0000"
