@@ -11,7 +11,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import LocationInput from "@/components/location/location-input";
-// Removemos a dependência dos componentes Form que estavam causando erro
 
 // Componente para criação simplificada de frete
 export default function SimpleCreateFreight() {
