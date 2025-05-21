@@ -391,14 +391,24 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
       let freightResponse;
       
       if (isEditing) {
+        console.log("Enviando requisição PUT para atualizar frete:", `/api/freights/${freightId}`);
+        
+        // Garante que o freightId está definido
+        if (!freightId) {
+          throw new Error("ID do frete não definido para atualização");
+        }
+        
         // Atualiza um frete existente
         response = await apiRequest(
           "PUT",
           `/api/freights/${freightId}`,
           data
         );
+        
+        console.log("Resposta da atualização:", response.status, response.statusText);
       } else {
         // Cria um novo frete
+        console.log("Enviando requisição POST para criar frete");
         response = await apiRequest("POST", "/api/freights", data);
       }
 
@@ -534,6 +544,19 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
           <form onSubmit={(e) => {
             e.preventDefault();
             console.log("Formulário enviado");
+            
+            // Verificar se estamos no modo de edição e garantir que temos o ID
+            if (isEditing && !freightId) {
+              console.error("Erro: Tentando editar, mas freightId não está definido");
+              toast({
+                title: "Erro",
+                description: "Não foi possível identificar o frete para atualização",
+                variant: "destructive",
+              });
+              return;
+            }
+            
+            // Executar onSubmit manualmente
             form.handleSubmit(onSubmit)(e);
           }} className="space-y-6">
             <Card>
