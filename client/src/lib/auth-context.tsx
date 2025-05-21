@@ -1,6 +1,16 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Client } from '@shared/schema';
-import { useAuth } from '@/hooks/use-auth';
+import { apiRequest } from '@/lib/queryClient';
+import { useQuery } from '@tanstack/react-query';
+
+// Interface para usuário logado
+type User = {
+  id: number;
+  name: string;
+  email: string;
+  profileType?: string;
+  clientId?: number | null;
+};
 
 type AuthContextType = {
   currentClient: Client | null;
