@@ -862,33 +862,29 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                                     checked={selectedVehicleTypes.includes(type)}
                                     onCheckedChange={(checked) => {
                                       if (checked) {
-                                        // Adicionar o tipo ao array de tipos selecionados
-                                        const newSelected = [...selectedVehicleTypes, type];
-                                        setSelectedVehicleTypes(newSelected);
-                                        form.setValue("vehicleType", type); // Para compatibilidade
-                                        
-                                        // Atualiza a categoria do veículo com base no tipo selecionado
-                                        form.setValue("vehicleCategory", getVehicleCategory(type));
-                                        
-                                        // Atualiza o campo vehicleTypesSelected no formulário
-                                        form.setValue("vehicleTypesSelected", newSelected.join(","));
-                                        
-                                        console.log("Veículo selecionado:", type, "Array atualizado:", newSelected);
+                                        // Adicionar apenas se não estiver na lista
+                                        if (!selectedVehicleTypes.includes(type)) {
+                                          const newSelected = [...selectedVehicleTypes, type];
+                                          setSelectedVehicleTypes(newSelected);
+                                          form.setValue("vehicleType", type); // Para compatibilidade
+                                          form.setValue("vehicleCategory", getVehicleCategory(type));
+                                          form.setValue("vehicleTypesSelected", newSelected.join(","));
+                                          console.log("Veículo selecionado:", type, "Array atualizado:", newSelected);
+                                        }
                                       } else {
                                         // Remover o tipo do array de tipos selecionados
-                                        const newSelected = selectedVehicleTypes.filter(t => t !== type);
-                                        setSelectedVehicleTypes(newSelected);
+                                        const filteredTypes = selectedVehicleTypes.filter(t => t !== type);
+                                        setSelectedVehicleTypes(filteredTypes);
                                         
                                         // Se removeu o que estava selecionado principal e ainda tem outros, seleciona o primeiro
-                                        if (form.getValues("vehicleType") === type && newSelected.length > 0) {
-                                          form.setValue("vehicleType", newSelected[0]);
-                                          form.setValue("vehicleCategory", getVehicleCategory(newSelected[0]));
+                                        if (form.getValues("vehicleType") === type && filteredTypes.length > 0) {
+                                          form.setValue("vehicleType", filteredTypes[0]);
+                                          form.setValue("vehicleCategory", getVehicleCategory(filteredTypes[0]));
                                         }
                                         
                                         // Atualiza o campo vehicleTypesSelected no formulário
-                                        form.setValue("vehicleTypesSelected", newSelected.join(","));
-                                        
-                                        console.log("Veículo removido:", type, "Array atualizado:", newSelected);
+                                        form.setValue("vehicleTypesSelected", filteredTypes.join(","));
+                                        console.log("Veículo removido:", type, "Array atualizado:", filteredTypes);
                                       }
                                     }}
                                   />
@@ -1041,27 +1037,27 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                             checked={selectedBodyTypes.includes(value)}
                             onCheckedChange={(checked) => {
                               if (checked) {
-                                // Adicionar o tipo ao array de tipos selecionados
-                                const newSelected = [...selectedBodyTypes, value];
-                                setSelectedBodyTypes(newSelected);
-                                form.setValue("bodyType", value); // Para compatibilidade
-                                
-                                // Atualiza o campo bodyTypesSelected no formulário
-                                form.setValue("bodyTypesSelected", newSelected.join(","));
-                                console.log("Carroceria selecionada:", value, "Array atualizado:", newSelected);
+                                // Adicionar apenas se não estiver na lista
+                                if (!selectedBodyTypes.includes(value)) {
+                                  const newSelected = [...selectedBodyTypes, value];
+                                  setSelectedBodyTypes(newSelected);
+                                  form.setValue("bodyType", value); // Para compatibilidade
+                                  form.setValue("bodyTypesSelected", newSelected.join(","));
+                                  console.log("Carroceria selecionada:", value, "Array atualizado:", newSelected);
+                                }
                               } else {
                                 // Remover o tipo do array de tipos selecionados
-                                const newSelected = selectedBodyTypes.filter(t => t !== value);
-                                setSelectedBodyTypes(newSelected);
+                                const filteredTypes = selectedBodyTypes.filter(t => t !== value);
+                                setSelectedBodyTypes(filteredTypes);
                                 
                                 // Se removeu o que estava selecionado principal e ainda tem outros, seleciona o primeiro
-                                if (form.getValues("bodyType") === value && newSelected.length > 0) {
-                                  form.setValue("bodyType", newSelected[0]);
+                                if (form.getValues("bodyType") === value && filteredTypes.length > 0) {
+                                  form.setValue("bodyType", filteredTypes[0]);
                                 }
                                 
                                 // Atualiza o campo bodyTypesSelected no formulário
-                                form.setValue("bodyTypesSelected", newSelected.join(","));
-                                console.log("Carroceria removida:", value, "Array atualizado:", newSelected);
+                                form.setValue("bodyTypesSelected", filteredTypes.join(","));
+                                console.log("Carroceria removida:", value, "Array atualizado:", filteredTypes);
                               }
                             }}
                           />
