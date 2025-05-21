@@ -101,10 +101,10 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
   
   // Esta função cria e abre um novo formulário em modo de edição
   const enableEditMode = () => {
-    console.log("Ativando modo de edição através da navegação");
+    console.log("Ativando modo de edição diretamente");
     
-    // Redirecionar para a página de edição com parâmetro forçado
-    navigate(`/freights/${freightId}/edit?v=${Date.now()}`);
+    // Alterar estado para modo de edição sem redirecionar
+    setIsViewingInReadOnlyMode(false);
   };
 
   const { user } = useAuth();
@@ -398,11 +398,18 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
           throw new Error("ID do frete não definido para atualização");
         }
         
-        // Atualiza um frete existente
+        // Atualiza um frete existente - adicionando userId para garantir
+        const updateData = {
+          ...data,
+          userId: user?.id
+        };
+        
+        console.log("Dados para atualização:", updateData);
+        
         response = await apiRequest(
           "PUT",
           `/api/freights/${freightId}`,
-          data
+          updateData
         );
         
         console.log("Resposta da atualização:", response.status, response.statusText);
