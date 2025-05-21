@@ -13,8 +13,11 @@ interface LocationInputProps {
   placeholder?: string;
   errorMessage?: string;
   disabled?: boolean;
+  readOnly?: boolean;
   onStateChange?: (state: string) => void;
   onCityChange?: (city: string) => void;
+  stateField?: string;
+  stateValue?: string;
 }
 
 // Lista de estados brasileiros para sugestões
@@ -77,8 +80,11 @@ const LocationInput: React.FC<LocationInputProps> = ({
   placeholder = "Digite a cidade e estado (ex: Contagem - MG)",
   errorMessage,
   disabled = false,
+  readOnly = false,
   onStateChange,
-  onCityChange
+  onCityChange,
+  stateField,
+  stateValue
 }) => {
   const [citySuggestions, setCitySuggestions] = useState<CitySuggestion[]>([]);
   const [loading, setLoading] = useState(false);
@@ -255,12 +261,15 @@ const LocationInput: React.FC<LocationInputProps> = ({
                 value={value}
                 onChange={handleInputChange}
                 placeholder={placeholder}
-                disabled={disabled}
+                disabled={disabled || readOnly}
+                readOnly={readOnly}
                 className={`${errorMessage ? "border-red-500" : ""} pr-10`}
                 onClick={() => {
-                  setOpen(true);
-                  // Focar o input quando clicado
-                  inputRef.current?.focus();
+                  if (!readOnly) {
+                    setOpen(true);
+                    // Focar o input quando clicado
+                    inputRef.current?.focus();
+                  }
                 }}
               />
               <ChevronsUpDown className="h-4 w-4 opacity-50 absolute right-3 top-3" />

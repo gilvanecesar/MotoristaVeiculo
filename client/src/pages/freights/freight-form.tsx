@@ -440,7 +440,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
           );
         }
 
-        queryClient.invalidateQueries(["/api/freights"]);
+        queryClient.invalidateQueries({queryKey: ["/api/freights"]});
 
         toast({
           title: isEditing ? "Frete atualizado" : "Frete criado",
