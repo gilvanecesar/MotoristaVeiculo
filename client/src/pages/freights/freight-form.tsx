@@ -1059,37 +1059,40 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                     <FormLabel>Tipos de Carroceria</FormLabel>
                     <div className="w-full border rounded-md p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
                       {Object.entries(BODY_TYPES).map(([key, value]) => (
-                        <div 
-                          key={key} 
-                          className={`flex items-center gap-2 p-2 border rounded cursor-pointer ${
-                            selectedBodyTypes.includes(value) ? 'bg-blue-50 border-blue-500' : 'border-gray-200'
-                          }`}
-                          onClick={() => {
-                            // Lógica simplificada - apenas alterna o valor atual
-                            let newSelected: string[] = [];
-                            if (selectedBodyTypes.includes(value)) {
-                              newSelected = selectedBodyTypes.filter(t => t !== value);
-                            } else {
-                              newSelected = [...selectedBodyTypes, value];
-                            }
-                            
-                            // Atualiza o estado e os valores do formulário
-                            console.log(`Atualizando tipos de carroceria: ${newSelected.join(', ')}`);
-                            setSelectedBodyTypes([...newSelected]); // Clone para garantir nova referência
-                            form.setValue("bodyType", newSelected.length > 0 ? newSelected[0] : "");
-                            form.setValue("bodyTypesSelected", newSelected.join(","));
-                          }}
-                        >
-                          <div className={`w-5 h-5 flex-shrink-0 flex items-center justify-center border ${
-                            selectedBodyTypes.includes(value) ? 'bg-blue-500 border-blue-500 text-white' : 'border-gray-400 bg-white'
-                          } rounded`}>
-                            {selectedBodyTypes.includes(value) && (
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                              </svg>
-                            )}
-                          </div>
-                          <span className="text-sm font-medium">{getBodyTypeDisplay(value)}</span>
+                        <div key={key} className="flex items-center mb-2">
+                          <input
+                            type="checkbox"
+                            id={`body-type-${value}`}
+                            checked={selectedBodyTypes.includes(value)}
+                            style={{ 
+                              width: '24px', 
+                              height: '24px',
+                              margin: '0px 8px 0px 0px'
+                            }}
+                            onChange={(e) => {
+                              // Lógica simplificada - apenas alterna o valor atual
+                              let newSelected: string[] = [];
+                              if (e.target.checked) {
+                                // Adicionar à seleção
+                                newSelected = [...selectedBodyTypes, value];
+                              } else {
+                                // Remover da seleção
+                                newSelected = selectedBodyTypes.filter(t => t !== value);
+                              }
+                              
+                              // Atualiza o estado e os valores do formulário
+                              console.log(`Atualizando tipos de carroceria: ${newSelected.join(', ')}`);
+                              setSelectedBodyTypes([...newSelected]); // Clone para garantir nova referência
+                              form.setValue("bodyType", newSelected.length > 0 ? newSelected[0] : "");
+                              form.setValue("bodyTypesSelected", newSelected.join(","));
+                            }}
+                          />
+                          <label 
+                            htmlFor={`body-type-${value}`}
+                            className="text-sm font-medium cursor-pointer"
+                          >
+                            {getBodyTypeDisplay(value)}
+                          </label>
                         </div>
                       ))}
                     </div>
