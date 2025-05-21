@@ -845,86 +845,82 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                   )}
                 />
                 
-                {/* Vehicle Types - Multiple Selection */}
+                {/* Vehicle Types - Checkboxes padrão sem estilização */}
                 <div className="md:col-span-2">
                   <FormItem>
                     <FormLabel>Tipos de Veículo</FormLabel>
                     <div className="w-full border rounded-md p-4">
                       {(() => {
-                        const category = form.getValues("vehicleCategory");
-                        if (!category) return null;
+                        const category = form.getValues("vehicleCategory") || VEHICLE_CATEGORIES.LEVE;
                         
-                        // Obter os tipos de veículo para a categoria selecionada
-                        const vehicleTypesForCategory = 
-                          category === VEHICLE_CATEGORIES.LEVE ? VEHICLE_TYPES_BY_CATEGORY[VEHICLE_CATEGORIES.LEVE] :
-                          category === VEHICLE_CATEGORIES.MEDIO ? VEHICLE_TYPES_BY_CATEGORY[VEHICLE_CATEGORIES.MEDIO] :
-                          category === VEHICLE_CATEGORIES.PESADO ? VEHICLE_TYPES_BY_CATEGORY[VEHICLE_CATEGORIES.PESADO] : 
-                          [];
-                        
-                        if (vehicleTypesForCategory.length === 0) return null;
+                        let types = [];
+                        if (category === VEHICLE_CATEGORIES.LEVE) {
+                          types = VEHICLE_TYPES_BY_CATEGORY[VEHICLE_CATEGORIES.LEVE];
+                        } else if (category === VEHICLE_CATEGORIES.MEDIO) {
+                          types = VEHICLE_TYPES_BY_CATEGORY[VEHICLE_CATEGORIES.MEDIO];
+                        } else if (category === VEHICLE_CATEGORIES.PESADO) {
+                          types = VEHICLE_TYPES_BY_CATEGORY[VEHICLE_CATEGORIES.PESADO];
+                        }
                         
                         return (
                           <div className="mb-4">
                             <h4 className="text-sm font-semibold mb-2">
                               {getVehicleCategoryDisplay(category)}
                             </h4>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                              {vehicleTypesForCategory.map((type) => {
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              {types.map((type) => {
                                 const isAllOption = type.endsWith('_todos');
                                 const displayName = getVehicleTypeNameOnly(type);
-                                const isSelected = selectedVehicleTypes.includes(type);
                                 
                                 return (
-                                  <div 
-                                    key={type} 
-                                    className={`flex items-center gap-2 p-2 border rounded cursor-pointer ${
-                                      isSelected ? 'bg-blue-50 border-blue-500' : 'border-gray-200'
-                                    }`}
-                                    onClick={() => {
-                                      let updatedTypes: string[] = [];
-                                      
-                                      if (isAllOption) {
-                                        // Se for "Todos"
-                                        if (isSelected) {
-                                          // Desmarcando "Todos" - não seleciona nada
-                                          updatedTypes = [];
+                                  <div key={type} className="flex items-center mb-2">
+                                    <input
+                                      type="checkbox"
+                                      id={`vehicle-type-${type}`}
+                                      checked={selectedVehicleTypes.includes(type)}
+                                      style={{ 
+                                        width: '24px', 
+                                        height: '24px',
+                                        margin: '0px 8px 0px 0px'
+                                      }}
+                                      onChange={(e) => {
+                                        let newTypes = [...selectedVehicleTypes];
+                                        
+                                        if (isAllOption) {
+                                          if (e.target.checked) {
+                                            // Selecionando "Todos" - só seleciona ele
+                                            newTypes = [type];
+                                          } else {
+                                            // Desmarcando "Todos" - limpa todas as seleções
+                                            newTypes = [];
+                                          }
                                         } else {
-                                          // Marcando "Todos" - seleciona apenas "Todos"
-                                          updatedTypes = [type];
-                                        }
-                                      } else {
-                                        if (isSelected) {
-                                          // Desmarcando um tipo específico
-                                          updatedTypes = selectedVehicleTypes.filter(t => t !== type);
-                                        } else {
-                                          // Marcando um tipo específico
-                                          updatedTypes = [...selectedVehicleTypes, type];
-                                          
-                                          // Remover "Todos" se existir na lista de selecionados
-                                          const allType = vehicleTypesForCategory.find(t => t.endsWith('_todos'));
-                                          if (allType && updatedTypes.includes(allType)) {
-                                            updatedTypes = updatedTypes.filter(t => t !== allType);
+                                          if (e.target.checked) {
+                                            // Selecionando um tipo específico
+                                            newTypes.push(type);
+                                            // Remove o "Todos" se estiver marcado
+                                            const todosType = types.find(t => t.endsWith('_todos'));
+                                            if (todosType && newTypes.includes(todosType)) {
+                                              newTypes = newTypes.filter(t => t !== todosType);
+                                            }
+                                          } else {
+                                            // Desmarcando um tipo específico
+                                            newTypes = newTypes.filter(t => t !== type);
                                           }
                                         }
-                                      }
-                                      
-                                      // Log para debug
-                                      console.log(`Atualizando tipos de veículo: ${updatedTypes.join(', ')}`);
-                                      
-                                      // Atualizar estado e campos do formulário
-                                      setSelectedVehicleTypes(updatedTypes);
-                                      form.setValue("vehicleType", updatedTypes.length > 0 ? updatedTypes[0] : "");
-                                      form.setValue("vehicleTypesSelected", updatedTypes.join(","));
-                                    }}
-                                  >
-                                    <div className={`w-5 h-5 flex-shrink-0 flex items-center justify-center border ${
-                                      isSelected ? 'bg-blue-500 border-blue-500 text-white' : 'border-gray-400 bg-white'
-                                    } rounded`}>
-                                      {isSelected && (
-                                        <Check className="h-3 w-3" />
-                                      )}
-                                    </div>
-                                    <span className="text-sm font-medium">{displayName}</span>
+                                        
+                                        console.log(`Atualizando tipos de veículo: ${newTypes.join(', ')}`);
+                                        setSelectedVehicleTypes([...newTypes]);
+                                        form.setValue("vehicleType", newTypes.length > 0 ? newTypes[0] : "");
+                                        form.setValue("vehicleTypesSelected", newTypes.join(","));
+                                      }}
+                                    />
+                                    <label 
+                                      htmlFor={`vehicle-type-${type}`}
+                                      className="text-sm font-medium cursor-pointer"
+                                    >
+                                      {displayName}
+                                    </label>
                                   </div>
                                 );
                               })}
