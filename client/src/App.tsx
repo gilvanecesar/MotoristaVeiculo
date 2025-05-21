@@ -26,6 +26,7 @@ import FreightForm from "@/pages/freights/freight-form";
 import FreightDetailPage from "@/pages/freights/[id]";
 import SimpleFreightForm from "@/pages/freights/simple-freight-form";
 import DemonstracaoMelhorias from "@/pages/demonstracao-melhorias";
+import FormularioMelhorado from "@/pages/freights/formulario-melhorado";
 import ClientsPage from "@/pages/clients/index";
 import ClientForm from "@/pages/clients/client-form";
 import AdminPage from "@/pages/admin/index";
@@ -75,6 +76,7 @@ function Router() {
       <ProtectedRoute path="/freights/:id" component={FreightDetailPage} />
       <Route path="/teste-checkbox" component={() => <SimpleFreightForm />} />
       <Route path="/demonstracao" component={DemonstracaoMelhorias} />
+      <Route path="/formulario-melhorado" component={FormularioMelhorado} />
       <ProtectedRoute path="/clients" component={ClientsPage} />
       <ProtectedRoute path="/clients/new" component={ClientForm} />
       <ProtectedRoute path="/clients/:id" component={ClientForm} />
