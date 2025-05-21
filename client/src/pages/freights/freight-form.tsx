@@ -866,15 +866,19 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                                     type="checkbox"
                                     id={`vehicle-type-${type}`}
                                     checked={selectedVehicleTypes.includes(type)}
+                                    style={{ width: '18px', height: '18px' }}
                                     onChange={(e) => {
                                       const isChecked = e.target.checked;
+                                      console.log(`Checkbox ${type} - isChecked: ${isChecked}`);
                                       
                                       if (isChecked) {
+                                        console.log(`Adicionando tipo: ${type}`);
                                         const newSelected = [...selectedVehicleTypes, type];
                                         setSelectedVehicleTypes(newSelected);
                                         form.setValue("vehicleType", type);
                                         form.setValue("vehicleTypesSelected", newSelected.join(","));
                                       } else {
+                                        console.log(`Removendo tipo: ${type}`);
                                         const newSelected = selectedVehicleTypes.filter(t => t !== type);
                                         setSelectedVehicleTypes(newSelected);
                                         
@@ -885,7 +889,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                                         form.setValue("vehicleTypesSelected", newSelected.join(","));
                                       }
                                     }}
-                                    className="h-4 w-4 text-primary border-primary rounded focus:ring-primary"
+                                    className="cursor-pointer"
                                   />
                                   <label 
                                     htmlFor={`vehicle-type-${type}`} 
@@ -1035,15 +1039,19 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                             type="checkbox"
                             id={`body-type-${value}`}
                             checked={selectedBodyTypes.includes(value)}
+                            style={{ width: '18px', height: '18px' }}
                             onChange={(e) => {
                               const isChecked = e.target.checked;
+                              console.log(`Checkbox ${value} - isChecked: ${isChecked}`);
                               
                               if (isChecked) {
+                                console.log(`Adicionando carroceria: ${value}`);
                                 const newSelected = [...selectedBodyTypes, value];
                                 setSelectedBodyTypes(newSelected);
                                 form.setValue("bodyType", value);
                                 form.setValue("bodyTypesSelected", newSelected.join(","));
                               } else {
+                                console.log(`Removendo carroceria: ${value}`);
                                 const newSelected = selectedBodyTypes.filter(t => t !== value);
                                 setSelectedBodyTypes(newSelected);
                                 
@@ -1054,7 +1062,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                                 form.setValue("bodyTypesSelected", newSelected.join(","));
                               }
                             }}
-                            className="h-4 w-4 text-primary border-primary rounded focus:ring-primary"
+                            className="cursor-pointer"
                           />
                           <label 
                             htmlFor={`body-type-${value}`} 
