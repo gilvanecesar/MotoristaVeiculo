@@ -155,8 +155,8 @@ export function VehicleForm({ index, control, onRemove }: VehicleFormProps) {
                 Tipo de Veículo
               </FormLabel>
               <Select 
-                onValueChange={field.onChange} 
-                defaultValue={field.value || VEHICLE_TYPES.LEVE_TODOS}
+                onValueChange={field.onChange}
+                value={field.value || VEHICLE_TYPES.LEVE_TODOS}
               >
                 <FormControl>
                   <SelectTrigger>
@@ -208,7 +208,7 @@ export function VehicleForm({ index, control, onRemove }: VehicleFormProps) {
               </FormLabel>
               <Select 
                 onValueChange={field.onChange} 
-                defaultValue={field.value || BODY_TYPES.FECHADA}
+                value={field.value || BODY_TYPES.FECHADA}
               >
                 <FormControl>
                   <SelectTrigger>
