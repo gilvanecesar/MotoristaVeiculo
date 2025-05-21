@@ -456,8 +456,10 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
             : "O novo frete foi cadastrado com sucesso.",
         });
 
-        // Redireciona para a página de lista de fretes ou detalhes do frete
-        navigate(isEditing ? `/freights/${freightId}` : "/freights");
+        console.log("Salvamento concluído, redirecionando...");
+        
+        // Redireciona para a página de lista de fretes
+        navigate("/freights");
       } else {
         const errorData = await response.json();
         toast({
