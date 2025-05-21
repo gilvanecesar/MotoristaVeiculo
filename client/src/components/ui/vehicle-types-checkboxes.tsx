@@ -1,7 +1,7 @@
 import React from 'react';
-import { VEHICLE_CATEGORIES, VEHICLE_TYPES, VEHICLE_TYPES_BY_CATEGORY, getVehicleTypeNameOnly } from '@/lib/utils/vehicle-types';
+import { VEHICLE_TYPES } from '@shared/schema';
 
-// Componente para exibir tipos de veículo exatamente como mostrado na imagem de exemplo
+// Componente simples para exibir os checkboxes de tipos de veículo
 function VehicleTypesCheckboxes({
   selectedVehicleTypes,
   onChange,
@@ -9,415 +9,201 @@ function VehicleTypesCheckboxes({
   selectedVehicleTypes: string[];
   onChange: (newSelectedTypes: string[]) => void;
 }) {
+  // Função auxiliar para atualizar a seleção
+  const updateSelection = (type: string, isChecked: boolean) => {
+    let newTypes = [...selectedVehicleTypes];
+    
+    if (isChecked) {
+      // Se está marcando, adiciona o tipo
+      if (!newTypes.includes(type)) {
+        newTypes.push(type);
+      }
+      
+      // Se está marcando um tipo específico, desmarca o "Todos" da categoria
+      if (type !== "leve_todos" && type.startsWith("leve_")) {
+        newTypes = newTypes.filter(t => t !== "leve_todos");
+      } else if (type !== "medio_todos" && type.startsWith("medio_")) {
+        newTypes = newTypes.filter(t => t !== "medio_todos");
+      } else if (type !== "pesado_todos" && type.startsWith("pesado_")) {
+        newTypes = newTypes.filter(t => t !== "pesado_todos");
+      }
+      
+      // Se está marcando "Todos", desmarca os específicos da categoria
+      if (type === "leve_todos") {
+        newTypes = newTypes.filter(t => !t.startsWith("leve_") || t === "leve_todos");
+      } else if (type === "medio_todos") {
+        newTypes = newTypes.filter(t => !t.startsWith("medio_") || t === "medio_todos");
+      } else if (type === "pesado_todos") {
+        newTypes = newTypes.filter(t => !t.startsWith("pesado_") || t === "pesado_todos");
+      }
+    } else {
+      // Se está desmarcando, remove o tipo
+      newTypes = newTypes.filter(t => t !== type);
+    }
+    
+    console.log("Tipos de veículo selecionados:", newTypes);
+    onChange(newTypes);
+  };
+  
   return (
     <div className="border rounded-md p-4">
       {/* Leve */}
       <div className="mb-4">
         <h4 className="text-sm font-semibold mb-2">Leve</h4>
-        <div className="flex flex-wrap gap-4">
-          <div className="min-w-[100px] flex items-center">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="flex items-center">
             <input
               type="checkbox"
               id="leve-todos"
-              checked={selectedVehicleTypes.includes(VEHICLE_TYPES.LEVE_TODOS)}
-              style={{
-                width: '24px',
-                height: '24px',
-                margin: '0 8px 0 0'
-              }}
-              onChange={(e) => {
-                let newTypes = [...selectedVehicleTypes];
-                if (e.target.checked) {
-                  // Selecionar "Todos" remove outros tipos da categoria
-                  newTypes = newTypes.filter(type => 
-                    !Object.values(VEHICLE_TYPES_BY_CATEGORY[VEHICLE_CATEGORIES.LEVE]).includes(type)
-                  );
-                  newTypes.push(VEHICLE_TYPES.LEVE_TODOS);
-                } else {
-                  // Desmarcar "Todos"
-                  newTypes = newTypes.filter(type => type !== VEHICLE_TYPES.LEVE_TODOS);
-                }
-                console.log(`Atualizando tipos de veículo: ${newTypes.join(', ')}`);
-                onChange(newTypes);
-              }}
+              checked={selectedVehicleTypes.includes("leve_todos")}
+              style={{ width: '24px', height: '24px', margin: '0 8px 0 0' }}
+              onChange={(e) => updateSelection("leve_todos", e.target.checked)}
             />
-            <label htmlFor="leve-todos" className="cursor-pointer">
-              Todos
-            </label>
-          </div>
-
-          <div className="min-w-[100px] flex items-center">
-            <input
-              type="checkbox"
-              id="leve-fiorino"
-              checked={selectedVehicleTypes.includes(VEHICLE_TYPES.LEVE_FIORINO)}
-              style={{
-                width: '24px',
-                height: '24px',
-                margin: '0 8px 0 0'
-              }}
-              onChange={(e) => {
-                let newTypes = [...selectedVehicleTypes];
-                if (e.target.checked) {
-                  // Adicionando Fiorino
-                  newTypes.push(VEHICLE_TYPES.LEVE_FIORINO);
-                  // Remover "Todos" se estiver selecionado
-                  newTypes = newTypes.filter(type => type !== VEHICLE_TYPES.LEVE_TODOS);
-                } else {
-                  // Removendo Fiorino
-                  newTypes = newTypes.filter(type => type !== VEHICLE_TYPES.LEVE_FIORINO);
-                }
-                console.log(`Atualizando tipos de veículo: ${newTypes.join(', ')}`);
-                onChange(newTypes);
-              }}
-            />
-            <label htmlFor="leve-fiorino" className="cursor-pointer">
-              Fiorino
-            </label>
-          </div>
-
-          <div className="min-w-[100px] flex items-center">
-            <input
-              type="checkbox"
-              id="leve-toco"
-              checked={selectedVehicleTypes.includes(VEHICLE_TYPES.LEVE_TOCO)}
-              style={{
-                width: '24px',
-                height: '24px',
-                margin: '0 8px 0 0'
-              }}
-              onChange={(e) => {
-                let newTypes = [...selectedVehicleTypes];
-                if (e.target.checked) {
-                  // Adicionando Toco
-                  newTypes.push(VEHICLE_TYPES.LEVE_TOCO);
-                  // Remover "Todos" se estiver selecionado
-                  newTypes = newTypes.filter(type => type !== VEHICLE_TYPES.LEVE_TODOS);
-                } else {
-                  // Removendo Toco
-                  newTypes = newTypes.filter(type => type !== VEHICLE_TYPES.LEVE_TOCO);
-                }
-                console.log(`Atualizando tipos de veículo: ${newTypes.join(', ')}`);
-                onChange(newTypes);
-              }}
-            />
-            <label htmlFor="leve-toco" className="cursor-pointer">
-              Toco
-            </label>
+            <label htmlFor="leve-todos" className="cursor-pointer">Todos</label>
           </div>
           
-          <div className="min-w-[100px] flex items-center">
+          <div className="flex items-center">
             <input
               type="checkbox"
               id="leve-vlc"
-              checked={selectedVehicleTypes.includes(VEHICLE_TYPES.LEVE_VLC)}
-              style={{
-                width: '24px',
-                height: '24px',
-                margin: '0 8px 0 0'
-              }}
-              onChange={(e) => {
-                let newTypes = [...selectedVehicleTypes];
-                if (e.target.checked) {
-                  // Adicionando VLC
-                  newTypes.push(VEHICLE_TYPES.LEVE_VLC);
-                  // Remover "Todos" se estiver selecionado
-                  newTypes = newTypes.filter(type => type !== VEHICLE_TYPES.LEVE_TODOS);
-                } else {
-                  // Removendo VLC
-                  newTypes = newTypes.filter(type => type !== VEHICLE_TYPES.LEVE_VLC);
-                }
-                console.log(`Atualizando tipos de veículo: ${newTypes.join(', ')}`);
-                onChange(newTypes);
-              }}
+              checked={selectedVehicleTypes.includes("leve_vlc")}
+              style={{ width: '24px', height: '24px', margin: '0 8px 0 0' }}
+              onChange={(e) => updateSelection("leve_vlc", e.target.checked)}
             />
-            <label htmlFor="leve-vlc" className="cursor-pointer">
-              VLC
-            </label>
+            <label htmlFor="leve-vlc" className="cursor-pointer">VLC</label>
+          </div>
+          
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="leve-fiorino"
+              checked={selectedVehicleTypes.includes("leve_fiorino")}
+              style={{ width: '24px', height: '24px', margin: '0 8px 0 0' }}
+              onChange={(e) => updateSelection("leve_fiorino", e.target.checked)}
+            />
+            <label htmlFor="leve-fiorino" className="cursor-pointer">Fiorino</label>
+          </div>
+          
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="leve-toco"
+              checked={selectedVehicleTypes.includes("leve_toco")}
+              style={{ width: '24px', height: '24px', margin: '0 8px 0 0' }}
+              onChange={(e) => updateSelection("leve_toco", e.target.checked)}
+            />
+            <label htmlFor="leve-toco" className="cursor-pointer">Toco</label>
           </div>
         </div>
       </div>
-
+      
       {/* Médio */}
       <div className="mb-4">
         <h4 className="text-sm font-semibold mb-2">Médio</h4>
-        <div className="flex flex-wrap gap-4">
-          <div className="min-w-[100px] flex items-center">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="flex items-center">
             <input
               type="checkbox"
               id="medio-todos"
-              checked={selectedVehicleTypes.includes(VEHICLE_TYPES.MEDIO_TODOS)}
-              style={{
-                width: '24px',
-                height: '24px',
-                margin: '0 8px 0 0'
-              }}
-              onChange={(e) => {
-                let newTypes = [...selectedVehicleTypes];
-                if (e.target.checked) {
-                  // Selecionar "Todos" remove outros tipos da categoria
-                  newTypes = newTypes.filter(type => 
-                    !Object.values(VEHICLE_TYPES_BY_CATEGORY[VEHICLE_CATEGORIES.MEDIO]).includes(type)
-                  );
-                  newTypes.push(VEHICLE_TYPES.MEDIO_TODOS);
-                } else {
-                  // Desmarcar "Todos"
-                  newTypes = newTypes.filter(type => type !== VEHICLE_TYPES.MEDIO_TODOS);
-                }
-                console.log(`Atualizando tipos de veículo: ${newTypes.join(', ')}`);
-                onChange(newTypes);
-              }}
+              checked={selectedVehicleTypes.includes("medio_todos")}
+              style={{ width: '24px', height: '24px', margin: '0 8px 0 0' }}
+              onChange={(e) => updateSelection("medio_todos", e.target.checked)}
             />
-            <label htmlFor="medio-todos" className="cursor-pointer">
-              Todos
-            </label>
+            <label htmlFor="medio-todos" className="cursor-pointer">Todos</label>
           </div>
-
-          <div className="min-w-[100px] flex items-center">
+          
+          <div className="flex items-center">
             <input
               type="checkbox"
               id="medio-bitruck"
-              checked={selectedVehicleTypes.includes(VEHICLE_TYPES.MEDIO_BITRUCK)}
-              style={{
-                width: '24px',
-                height: '24px',
-                margin: '0 8px 0 0'
-              }}
-              onChange={(e) => {
-                let newTypes = [...selectedVehicleTypes];
-                if (e.target.checked) {
-                  // Adicionando Bitruck
-                  newTypes.push(VEHICLE_TYPES.MEDIO_BITRUCK);
-                  // Remover "Todos" se estiver selecionado
-                  newTypes = newTypes.filter(type => type !== VEHICLE_TYPES.MEDIO_TODOS);
-                } else {
-                  // Removendo Bitruck
-                  newTypes = newTypes.filter(type => type !== VEHICLE_TYPES.MEDIO_BITRUCK);
-                }
-                console.log(`Atualizando tipos de veículo: ${newTypes.join(', ')}`);
-                onChange(newTypes);
-              }}
+              checked={selectedVehicleTypes.includes("medio_bitruck")}
+              style={{ width: '24px', height: '24px', margin: '0 8px 0 0' }}
+              onChange={(e) => updateSelection("medio_bitruck", e.target.checked)}
             />
-            <label htmlFor="medio-bitruck" className="cursor-pointer">
-              Bitruck
-            </label>
+            <label htmlFor="medio-bitruck" className="cursor-pointer">Bitruck</label>
           </div>
-
-          <div className="min-w-[100px] flex items-center">
+          
+          <div className="flex items-center">
             <input
               type="checkbox"
               id="medio-truck"
-              checked={selectedVehicleTypes.includes(VEHICLE_TYPES.MEDIO_TRUCK)}
-              style={{
-                width: '24px',
-                height: '24px',
-                margin: '0 8px 0 0'
-              }}
-              onChange={(e) => {
-                let newTypes = [...selectedVehicleTypes];
-                if (e.target.checked) {
-                  // Adicionando Truck
-                  newTypes.push(VEHICLE_TYPES.MEDIO_TRUCK);
-                  // Remover "Todos" se estiver selecionado
-                  newTypes = newTypes.filter(type => type !== VEHICLE_TYPES.MEDIO_TODOS);
-                } else {
-                  // Removendo Truck
-                  newTypes = newTypes.filter(type => type !== VEHICLE_TYPES.MEDIO_TRUCK);
-                }
-                console.log(`Atualizando tipos de veículo: ${newTypes.join(', ')}`);
-                onChange(newTypes);
-              }}
+              checked={selectedVehicleTypes.includes("medio_truck")}
+              style={{ width: '24px', height: '24px', margin: '0 8px 0 0' }}
+              onChange={(e) => updateSelection("medio_truck", e.target.checked)}
             />
-            <label htmlFor="medio-truck" className="cursor-pointer">
-              Truck
-            </label>
+            <label htmlFor="medio-truck" className="cursor-pointer">Truck</label>
           </div>
         </div>
       </div>
-
+      
       {/* Pesado */}
       <div>
         <h4 className="text-sm font-semibold mb-2">Pesado</h4>
-        <div className="flex flex-wrap gap-4">
-          <div className="min-w-[100px] flex items-center">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="flex items-center">
             <input
               type="checkbox"
               id="pesado-todos"
-              checked={selectedVehicleTypes.includes(VEHICLE_TYPES.PESADO_TODOS)}
-              style={{
-                width: '24px',
-                height: '24px',
-                margin: '0 8px 0 0'
-              }}
-              onChange={(e) => {
-                let newTypes = [...selectedVehicleTypes];
-                if (e.target.checked) {
-                  // Selecionar "Todos" remove outros tipos da categoria
-                  newTypes = newTypes.filter(type => 
-                    !Object.values(VEHICLE_TYPES_BY_CATEGORY[VEHICLE_CATEGORIES.PESADO]).includes(type)
-                  );
-                  newTypes.push(VEHICLE_TYPES.PESADO_TODOS);
-                } else {
-                  // Desmarcar "Todos"
-                  newTypes = newTypes.filter(type => type !== VEHICLE_TYPES.PESADO_TODOS);
-                }
-                console.log(`Atualizando tipos de veículo: ${newTypes.join(', ')}`);
-                onChange(newTypes);
-              }}
+              checked={selectedVehicleTypes.includes("pesado_todos")}
+              style={{ width: '24px', height: '24px', margin: '0 8px 0 0' }}
+              onChange={(e) => updateSelection("pesado_todos", e.target.checked)}
             />
-            <label htmlFor="pesado-todos" className="cursor-pointer">
-              Todos
-            </label>
+            <label htmlFor="pesado-todos" className="cursor-pointer">Todos</label>
           </div>
-
-          <div className="min-w-[100px] flex items-center">
+          
+          <div className="flex items-center">
             <input
               type="checkbox"
               id="pesado-bitrem"
-              checked={selectedVehicleTypes.includes(VEHICLE_TYPES.PESADO_BITREM)}
-              style={{
-                width: '24px',
-                height: '24px',
-                margin: '0 8px 0 0'
-              }}
-              onChange={(e) => {
-                let newTypes = [...selectedVehicleTypes];
-                if (e.target.checked) {
-                  // Adicionando Bitrem
-                  newTypes.push(VEHICLE_TYPES.PESADO_BITREM);
-                  // Remover "Todos" se estiver selecionado
-                  newTypes = newTypes.filter(type => type !== VEHICLE_TYPES.PESADO_TODOS);
-                } else {
-                  // Removendo Bitrem
-                  newTypes = newTypes.filter(type => type !== VEHICLE_TYPES.PESADO_BITREM);
-                }
-                console.log(`Atualizando tipos de veículo: ${newTypes.join(', ')}`);
-                onChange(newTypes);
-              }}
+              checked={selectedVehicleTypes.includes("pesado_bitrem")}
+              style={{ width: '24px', height: '24px', margin: '0 8px 0 0' }}
+              onChange={(e) => updateSelection("pesado_bitrem", e.target.checked)}
             />
-            <label htmlFor="pesado-bitrem" className="cursor-pointer">
-              Bitrem
-            </label>
+            <label htmlFor="pesado-bitrem" className="cursor-pointer">Bitrem</label>
           </div>
-
-          <div className="min-w-[100px] flex items-center">
+          
+          <div className="flex items-center">
             <input
               type="checkbox"
               id="pesado-carreta"
-              checked={selectedVehicleTypes.includes(VEHICLE_TYPES.PESADO_CARRETA)}
-              style={{
-                width: '24px',
-                height: '24px',
-                margin: '0 8px 0 0'
-              }}
-              onChange={(e) => {
-                let newTypes = [...selectedVehicleTypes];
-                if (e.target.checked) {
-                  // Adicionando Carreta
-                  newTypes.push(VEHICLE_TYPES.PESADO_CARRETA);
-                  // Remover "Todos" se estiver selecionado
-                  newTypes = newTypes.filter(type => type !== VEHICLE_TYPES.PESADO_TODOS);
-                } else {
-                  // Removendo Carreta
-                  newTypes = newTypes.filter(type => type !== VEHICLE_TYPES.PESADO_CARRETA);
-                }
-                console.log(`Atualizando tipos de veículo: ${newTypes.join(', ')}`);
-                onChange(newTypes);
-              }}
+              checked={selectedVehicleTypes.includes("pesado_carreta")}
+              style={{ width: '24px', height: '24px', margin: '0 8px 0 0' }}
+              onChange={(e) => updateSelection("pesado_carreta", e.target.checked)}
             />
-            <label htmlFor="pesado-carreta" className="cursor-pointer">
-              Carreta
-            </label>
+            <label htmlFor="pesado-carreta" className="cursor-pointer">Carreta</label>
           </div>
-
-          <div className="min-w-[100px] flex items-center">
+          
+          <div className="flex items-center">
             <input
               type="checkbox"
               id="pesado-carreta-ls"
-              checked={selectedVehicleTypes.includes(VEHICLE_TYPES.PESADO_CARRETA_LS)}
-              style={{
-                width: '24px',
-                height: '24px',
-                margin: '0 8px 0 0'
-              }}
-              onChange={(e) => {
-                let newTypes = [...selectedVehicleTypes];
-                if (e.target.checked) {
-                  // Adicionando Carreta LS
-                  newTypes.push(VEHICLE_TYPES.PESADO_CARRETA_LS);
-                  // Remover "Todos" se estiver selecionado
-                  newTypes = newTypes.filter(type => type !== VEHICLE_TYPES.PESADO_TODOS);
-                } else {
-                  // Removendo Carreta LS
-                  newTypes = newTypes.filter(type => type !== VEHICLE_TYPES.PESADO_CARRETA_LS);
-                }
-                console.log(`Atualizando tipos de veículo: ${newTypes.join(', ')}`);
-                onChange(newTypes);
-              }}
+              checked={selectedVehicleTypes.includes("pesado_carreta_ls")}
+              style={{ width: '24px', height: '24px', margin: '0 8px 0 0' }}
+              onChange={(e) => updateSelection("pesado_carreta_ls", e.target.checked)}
             />
-            <label htmlFor="pesado-carreta-ls" className="cursor-pointer">
-              Carreta LS
-            </label>
+            <label htmlFor="pesado-carreta-ls" className="cursor-pointer">Carreta LS</label>
           </div>
-
-          <div className="min-w-[100px] flex items-center">
+          
+          <div className="flex items-center">
             <input
               type="checkbox"
               id="pesado-rodotrem"
-              checked={selectedVehicleTypes.includes(VEHICLE_TYPES.PESADO_RODOTREM)}
-              style={{
-                width: '24px',
-                height: '24px',
-                margin: '0 8px 0 0'
-              }}
-              onChange={(e) => {
-                let newTypes = [...selectedVehicleTypes];
-                if (e.target.checked) {
-                  // Adicionando Rodotrem
-                  newTypes.push(VEHICLE_TYPES.PESADO_RODOTREM);
-                  // Remover "Todos" se estiver selecionado
-                  newTypes = newTypes.filter(type => type !== VEHICLE_TYPES.PESADO_TODOS);
-                } else {
-                  // Removendo Rodotrem
-                  newTypes = newTypes.filter(type => type !== VEHICLE_TYPES.PESADO_RODOTREM);
-                }
-                console.log(`Atualizando tipos de veículo: ${newTypes.join(', ')}`);
-                onChange(newTypes);
-              }}
+              checked={selectedVehicleTypes.includes("pesado_rodotrem")}
+              style={{ width: '24px', height: '24px', margin: '0 8px 0 0' }}
+              onChange={(e) => updateSelection("pesado_rodotrem", e.target.checked)}
             />
-            <label htmlFor="pesado-rodotrem" className="cursor-pointer">
-              Rodotrem
-            </label>
+            <label htmlFor="pesado-rodotrem" className="cursor-pointer">Rodotrem</label>
           </div>
-
-          <div className="min-w-[100px] flex items-center">
+          
+          <div className="flex items-center">
             <input
               type="checkbox"
               id="pesado-vanderleia"
-              checked={selectedVehicleTypes.includes(VEHICLE_TYPES.PESADO_VANDERLEIA)}
-              style={{
-                width: '24px',
-                height: '24px',
-                margin: '0 8px 0 0'
-              }}
-              onChange={(e) => {
-                let newTypes = [...selectedVehicleTypes];
-                if (e.target.checked) {
-                  // Adicionando Vanderleia
-                  newTypes.push(VEHICLE_TYPES.PESADO_VANDERLEIA);
-                  // Remover "Todos" se estiver selecionado
-                  newTypes = newTypes.filter(type => type !== VEHICLE_TYPES.PESADO_TODOS);
-                } else {
-                  // Removendo Vanderleia
-                  newTypes = newTypes.filter(type => type !== VEHICLE_TYPES.PESADO_VANDERLEIA);
-                }
-                console.log(`Atualizando tipos de veículo: ${newTypes.join(', ')}`);
-                onChange(newTypes);
-              }}
+              checked={selectedVehicleTypes.includes("pesado_vanderleia")}
+              style={{ width: '24px', height: '24px', margin: '0 8px 0 0' }}
+              onChange={(e) => updateSelection("pesado_vanderleia", e.target.checked)}
             />
-            <label htmlFor="pesado-vanderleia" className="cursor-pointer">
-              Vanderleia
-            </label>
+            <label htmlFor="pesado-vanderleia" className="cursor-pointer">Vanderleia</label>
           </div>
         </div>
       </div>
