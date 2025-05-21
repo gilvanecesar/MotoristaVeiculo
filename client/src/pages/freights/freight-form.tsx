@@ -359,11 +359,11 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
         form.setValue("clientId", user.clientId);
       }
       
-      // Inicializar tipos de veículo
-      setSelectedVehicleTypes([VEHICLE_TYPES.LEVE_TODOS]);
+      // Inicializar tipos de veículo - deixar vazio para não marcar nenhum por padrão
+      setSelectedVehicleTypes([]);
       
-      // Inicializar tipos de carroceria
-      setSelectedBodyTypes([BODY_TYPES.BAU]);
+      // Inicializar tipos de carroceria - deixar vazio para não marcar nenhum por padrão
+      setSelectedBodyTypes([]);
       
       setIsLoadingFreight(false);
     }
