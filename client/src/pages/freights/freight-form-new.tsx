@@ -5,13 +5,10 @@ import { z } from "zod";
 import { useLocation, useRoute, useParams, useSearch } from "wouter";
 import { toast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { insertFreightSchema } from "@shared/schema";
+import { insertFreightSchema, VEHICLE_TYPES, BODY_TYPES, TOLL_OPTIONS } from "@shared/schema";
 import {
-  TOLL_OPTIONS,
   VEHICLE_CATEGORIES,
-  VEHICLE_TYPES,
   VEHICLE_TYPES_BY_CATEGORY,
-  BODY_TYPES,
   getVehicleCategoryDisplay,
   getVehicleTypeDisplay,
   getVehicleTypeNameOnly,
@@ -51,49 +48,44 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Plus, Trash, X } from "lucide-react";
-import { Truck } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
-import { useClientAuth } from "@/lib/auth-context";
-import StateSelect from "@/components/location/state-select";
-import CitySelect from "@/components/location/city-select";
+import LocationInput from "@/components/location/location-input";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useAuth } from "@/lib/auth-context";
+import ClientSelector from "@/components/clients/client-selector";
+import { FreightDetailModal } from "@/components/freights/freight-detail-modal";
 
-const freightSchema = insertFreightSchema
-  .omit({
-    createdAt: true,
-    expirationDate: true,
-  })
-  .extend({
-    hasMultipleDestinations: z.boolean().optional().default(false),
-    destinationState: z.string().min(2, "Selecione o estado de destino").optional(),
-    destination: z.string().min(2, "Selecione a cidade de destino").optional(),
-    cargoWeight: z.string().or(z.number().positive()),
-    freightValue: z.string().or(z.number().positive()),
-  })
-  .refine(
-    (data) => {
-      // Se não tiver múltiplos destinos, verificar se o destino único foi informado
-      if (!data.hasMultipleDestinations) {
-        return data.destinationState && data.destination;
-      }
-      return true;
-    },
-    {
-      message: "Informe o destino ou selecione a opção de múltiplos destinos",
-      path: ["destination"],
-    }
-  );
+// Schema para validação do formulário de frete
+const freightSchema = insertFreightSchema.extend({
+  clientId: z.union([z.number(), z.null()]),
+  cargoWeight: z.string().min(1, "Peso da carga é obrigatório"),
+  destination: z.string().optional(),
+  destinationState: z.string().optional(),
+  origin: z.string().min(1, "Origem é obrigatória"),
+  originState: z.string().min(1, "Estado de origem é obrigatório"),
+  // Campos calculados ou definidos internamente
+  userId: z.number().optional(),
+  vehicleCategory: z.string().optional(),
+  vehicleTypesSelected: z.string().optional(),
+  bodyTypesSelected: z.string().optional(),
+  // Campo para multidestinos
+  hasMultipleDestinations: z.boolean().optional().default(false),
+});
 
-// Validação para destinos múltiplos
+// Schema para validação dos destinos
 const destinationSchema = z.object({
-  destinationState: z.string().min(2, "Selecione o estado"),
-  destination: z.string().min(2, "Selecione a cidade"),
+  destination: z.string().optional(),
+  destinationState: z.string().optional(),
 });
 
 // Tipos inferidos do schema
 type FreightFormValues = z.infer<typeof freightSchema>;
 type DestinationFormValues = z.infer<typeof destinationSchema>;
 
-export default function FreightForm() {
+interface FreightFormProps {
+  isEditMode?: boolean;
+}
+
+export default function FreightForm({ isEditMode }: FreightFormProps) {
   const params = useParams();
   const [, navigate] = useLocation();
   const [search] = useSearch();
@@ -101,12 +93,37 @@ export default function FreightForm() {
   const isEditing = Boolean(params.id);
   const freightId = params.id;
 
+  // Inicia como somente leitura apenas se estiver editando e sem parâmetro de edição ou se isEditMode não for true
+  // Será atualizado após carregar os dados do frete
   const [isViewingInReadOnlyMode, setIsViewingInReadOnlyMode] = useState(
-    isEditing && !searchParams.get("edit")
+    isEditing && !searchParams.get("edit") && !isEditMode
   );
+  
+  // Esta função cria e abre um novo formulário em modo de edição
+  const enableEditMode = () => {
+    console.log("Ativando modo de edição através da navegação");
+    
+    // Redirecionar para a página de edição com parâmetro forçado
+    navigate(`/freights/${freightId}/edit?v=${Date.now()}`);
+  };
 
   const { user } = useAuth();
-  const { currentClient, isClientAuthorized } = useClientAuth();
+  const [currentClient, setCurrentClient] = useState<any>(null);
+
+  // Função para verificar se usuário tem permissão para editar este frete
+  const userCanEditFreight = (freightUserId?: number) => {
+    // Se é administrador, pode editar qualquer frete
+    if (user?.profileType === "admin" || user?.profileType === "administrador") {
+      return true;
+    }
+    
+    // Se é o criador do frete, pode editar
+    if (freightUserId && freightUserId === user?.id) {
+      return true;
+    }
+    
+    return false;
+  };
 
   const [isLoadingFreight, setIsLoadingFreight] = useState(isEditing);
   const [clients, setClients] = useState<any[]>([]);
@@ -117,26 +134,25 @@ export default function FreightForm() {
   const [selectedBodyTypes, setSelectedBodyTypes] = useState<string[]>([]);
 
   const defaultValues: FreightFormValues = {
-    clientId: null,
+    clientId: user?.clientId || currentClient?.id || undefined, // Usar ID do cliente do usuário ou cliente atual
     origin: "",
     originState: "",
     destination: "",
     destinationState: "",
-    cargoType: "completa",
-    needsTarp: "nao",
+    cargoType: "",
+    needsTarp: "",
     productType: "",
-    cargoWeight: "",
-    vehicleCategory: VEHICLE_CATEGORIES.LEVE,
-    vehicleType: VEHICLE_TYPES.LEVE_TODOS,
-    bodyType: BODY_TYPES.BAU,
-    freightValue: "",
-    tollOption: TOLL_OPTIONS.INCLUSO,
+    cargoWeight: "", // Iniciando vazio para forçar o usuário a preencher
+    vehicleCategory: "", // Iniciando vazio - nenhuma categoria selecionada por padrão
+    vehicleType: "", // Iniciando vazio - nenhum tipo selecionado por padrão
+    bodyType: "", // Iniciando vazio - nenhum tipo de carroceria selecionado por padrão
+    freightValue: "", // Iniciando vazio para forçar o usuário a preencher
+    tollOption: "",
     paymentMethod: "",
     observations: "",
-    status: "aberto",
+    status: "",
     contactName: "",
     contactPhone: "",
-    hasMultipleDestinations: false,
   };
 
   const form = useForm<FreightFormValues>({
@@ -169,45 +185,48 @@ export default function FreightForm() {
     setDestinations(destinations.filter((_, i) => i !== index));
   };
 
-  // Carregar clientes
-  useEffect(() => {
-    const loadClients = async () => {
-      try {
-        const res = await fetch("/api/clients");
-        if (res.ok) {
-          const data = await res.json();
-          setClients(data);
-        }
-      } catch (error) {
-        console.error("Erro ao carregar clientes:", error);
-      } finally {
-        setIsLoadingClients(false);
-      }
-    };
-
-    loadClients();
-  }, []);
-
-  // Carregar frete para edição
-  useEffect(() => {
+  // Função para carregar os dados de um frete existente (no modo de edição)
+  const loadFreight = async () => {
     if (isEditing && freightId) {
-      const loadFreight = async () => {
-        try {
-          const res = await fetch(`/api/freights/${freightId}`);
-          if (res.ok) {
-            const freight = await res.json();
-            console.log("Carregando frete para edição:", [freight]);
-
-            // Verificar se tem permissão para editar - apenas admin ou dono do frete
-            if (!isClientAuthorized(freight.clientId)) {
-              toast({
-                title: "Acesso negado",
-                description: "Você não tem permissão para editar este frete.",
-                variant: "destructive",
-              });
-              navigate("/freights");
-              return;
+      setIsLoadingFreight(true);
+      try {
+        const response = await apiRequest("GET", `/api/freights/${freightId}`);
+        
+        if (response.ok) {
+          const freight = await response.json();
+          
+          if (freight.clientId) {
+            const clientResponse = await apiRequest("GET", `/api/clients/${freight.clientId}`);
+            if (clientResponse.ok) {
+              const client = await clientResponse.json();
+              setCurrentClient(client);
+              
+              // Se o usuário não puder editar este frete, forçar modo somente leitura
+              if (!userCanEditFreight(freight.userId)) {
+                setIsViewingInReadOnlyMode(true);
+              }
             }
+          }
+
+          // Carregar destinos adicionais associados a este frete (multidestinos)
+          const destinationsResponse = await apiRequest("GET", `/api/freight-destinations?freightId=${freightId}`);
+          if (destinationsResponse.ok) {
+            const destinationData = await destinationsResponse.json();
+            setFreightDestinations(destinationData);
+            
+            // Configurar destinos para o formulário
+            const destinationsForForm = destinationData.map((dest: any) => ({
+              destination: dest.destination,
+              destinationState: dest.destinationState,
+            }));
+            
+            setDestinations(destinationsForForm);
+  
+            // Se tem destinos adicionais, marcar como multidestinos
+            if (destinationsForForm.length > 0) {
+              freight.hasMultipleDestinations = true;
+            }
+          }
 
             // Configurar form com dados do frete
             form.reset({
@@ -240,601 +259,569 @@ export default function FreightForm() {
               bodyTypesArray = [freight.bodyType];
             }
             setSelectedBodyTypes(bodyTypesArray);
-
-            // Configurar destinos
-            if (freight.destinations && freight.destinations.length > 0) {
-              setFreightDestinations(freight.destinations);
-              
-              // Transformar os destinos do formato do BD para o formato do formulário
-              const formattedDestinations = freight.destinations.map((dest: any) => ({
-                destinationState: dest.destinationState,
-                destination: dest.destination,
-              }));
-              
-              setDestinations(formattedDestinations);
-            }
-          } else {
-            toast({
-              title: "Erro ao carregar",
-              description: "Não foi possível carregar as informações do frete.",
-              variant: "destructive",
-            });
-          }
-        } catch (error) {
-          console.error("Erro ao carregar frete:", error);
+        } else {
           toast({
-            title: "Erro ao carregar",
-            description: "Ocorreu um erro ao carregar as informações do frete.",
+            title: "Erro",
+            description: "Não foi possível carregar os dados do frete.",
             variant: "destructive",
           });
-        } finally {
-          setIsLoadingFreight(false);
         }
-      };
-
-      loadFreight();
-    } else {
-      // Se não for edição, verificar se tem cliente logado e pré-selecionar
-      if (currentClient) {
-        form.setValue("clientId", currentClient.id);
-      } else if (user && user.clientId) {
-        form.setValue("clientId", user.clientId);
+      } catch (error) {
+        console.error("Erro ao carregar frete:", error);
+        toast({
+          title: "Erro",
+          description: "Ocorreu um erro ao carregar os dados do frete.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoadingFreight(false);
       }
-      
-      // Inicializar tipos de veículo
-      setSelectedVehicleTypes([VEHICLE_TYPES.LEVE_TODOS]);
-      
-      // Inicializar tipos de carroceria
-      setSelectedBodyTypes([BODY_TYPES.BAU]);
-      
-      setIsLoadingFreight(false);
     }
-  }, [isEditing, freightId, form, currentClient, user, navigate, isClientAuthorized]);
+  };
+
+  // Função para carregar clientes
+  const loadClients = async () => {
+    setIsLoadingClients(true);
+    try {
+      const response = await apiRequest("GET", "/api/clients");
+      if (response.ok) {
+        const clientsData = await response.json();
+        setClients(clientsData);
+      } else {
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar a lista de clientes.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao carregar clientes:", error);
+    } finally {
+      setIsLoadingClients(false);
+    }
+  };
+
+  // Carregar clientes e dados do frete ao montar o componente
+  useEffect(() => {
+    loadClients();
+    
+    if (isEditing) {
+      loadFreight();
+    }
+  }, [isEditing, freightId]);
+
+  // Atualiza o cliente atual quando muda o clientId no formulário
+  useEffect(() => {
+    const clientId = form.getValues("clientId");
+    if (clientId) {
+      const selectedClient = clients.find(client => client.id === clientId);
+      if (selectedClient) {
+        setCurrentClient(selectedClient);
+      }
+    }
+  }, [clients, form]);
 
   const onSubmit = async (data: FreightFormValues) => {
-    try {
-      if (isViewingInReadOnlyMode) {
-        // Evitar submissão no modo somente leitura
-        return;
-      }
-      
-      // Usar o primeiro tipo de veículo selecionado como o principal para o campo vehicleType
-      // mantendo compatibilidade com sistemas existentes que esperam um único tipo
-      
-      // Verificar se pelo menos um tipo de carroceria foi selecionado
-      if (selectedBodyTypes.length === 0) {
+    // Se for multidestinos e não tiver destinos adicionados, adiciona aviso
+    if (data.hasMultipleDestinations && destinations.length === 0) {
+      toast({
+        title: "Aviso",
+        description: "Você selecionou a opção de múltiplos destinos, mas não adicionou nenhum destino.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Se for multidestinos, verifica se tem pelo menos um destino completo
+    if (data.hasMultipleDestinations) {
+      const hasValidDestination = destinations.some(dest => dest.destination && dest.destinationState);
+      if (!hasValidDestination) {
         toast({
-          title: "Erro no formulário",
-          description: "É necessário selecionar pelo menos um tipo de carroceria",
+          title: "Aviso",
+          description: "Adicione pelo menos um destino completo (cidade e estado).",
           variant: "destructive",
         });
         return;
       }
+    }
 
-      // Add destinations to the form data if has multiple destinations
-      const submitData = {
-        ...data,
-        // Garantir que os campos numéricos sejam enviados como string
-        cargoWeight: String(data.cargoWeight),
-        freightValue: String(data.freightValue),
-        // Garantir que status seja enviado
-        status: data.status || "aberto",
-        // Usar o primeiro tipo de veículo selecionado como principal
-        vehicleType: selectedVehicleTypes[0] || data.vehicleType,
-        // Adicionar meta-informação com todos os veículos selecionados (como string separada por vírgula)
-        vehicleTypesSelected: selectedVehicleTypes.join(','),
-        // Usar o primeiro tipo de carroceria selecionado como principal
-        bodyType: selectedBodyTypes[0] || data.bodyType,
-        // Adicionar meta-informação com todos os tipos de carroceria selecionados
-        bodyTypesSelected: selectedBodyTypes.join(',')
-      };
-
-      // For create or update
+    // Define status inicial como aberto
+    data.status = "aberto";
+    
+    // Define o tipo de veículo principal (primeiro da lista)
+    if (selectedVehicleTypes.length > 0) {
+      data.vehicleType = selectedVehicleTypes[0];
+    }
+    
+    // Define o tipo de carroceria principal (primeiro da lista)
+    if (selectedBodyTypes.length > 0) {
+      data.bodyType = selectedBodyTypes[0];
+    }
+    
+    // Configura o ID do usuário atual
+    data.userId = user?.id;
+    
+    // Mostra erros de desenvolvimento
+    console.log("Form data:", data);
+    console.log("Destinations:", destinations);
+    
+    try {
       let response;
+      let freightResponse;
+      
       if (isEditing) {
+        // Atualiza um frete existente
         response = await apiRequest(
+          "PUT",
           `/api/freights/${freightId}`,
-          'PUT',
-          submitData
+          data
         );
-
-        // Handle destinations separately for editing
-        if (data.hasMultipleDestinations) {
-          // Remove existing destinations first (will re-add them)
-          if (freightDestinations && freightDestinations.length > 0) {
-            for (const dest of freightDestinations) {
-              await fetch(`/api/freight-destinations/${dest.id}`, {
-                method: 'DELETE',
-              });
-            }
-          }
-
-          // Add new destinations
-          for (const dest of destinations) {
-            await apiRequest(
-              'POST',
-              `/api/freight-destinations`,
-              { ...dest, freightId }
-            );
-          }
-        }
       } else {
-        response = await apiRequest(
-          'POST',
-          '/api/freights',
-          submitData
-        );
-
-        // Handle destinations separately for new freight
-        if (data.hasMultipleDestinations && response) {
-          for (const dest of destinations) {
-            await apiRequest(
-              'POST',
-              `/api/freight-destinations`,
-              { ...dest, freightId: response.id }
-            );
-          }
-        }
+        // Cria um novo frete
+        response = await apiRequest("POST", "/api/freights", data);
       }
 
-      toast({
-        title: isEditing ? "Frete atualizado" : "Frete criado",
-        description: isEditing 
-          ? "As alterações foram salvas com sucesso."
-          : "O novo frete foi cadastrado com sucesso.",
-      });
+      if (response.ok) {
+        freightResponse = await response.json();
+        
+        // Se é multidestinos e tem destinos, salva os destinos
+        if (data.hasMultipleDestinations && destinations.length > 0) {
+          // Primeiro, remove destinos antigos se estiver editando
+          if (isEditing) {
+            await Promise.all(
+              freightDestinations.map(async (dest) => {
+                await apiRequest("DELETE", `/api/freight-destinations/${dest.id}`);
+              })
+            );
+          }
+          
+          // Depois adiciona os novos
+          await Promise.all(
+            destinations.map(async (dest) => {
+              if (dest.destination && dest.destinationState) {
+                await apiRequest("POST", "/api/freight-destinations", {
+                  freightId: freightResponse.id,
+                  destination: dest.destination,
+                  destinationState: dest.destinationState,
+                });
+              }
+            })
+          );
+        }
 
-      queryClient.invalidateQueries({ queryKey: ['/api/freights'] });
-      navigate("/freights");
+        queryClient.invalidateQueries(["/api/freights"]);
+
+        toast({
+          title: isEditing ? "Frete atualizado" : "Frete criado",
+          description: isEditing
+            ? "O frete foi atualizado com sucesso."
+            : "O novo frete foi cadastrado com sucesso.",
+        });
+
+        // Redireciona para a página de lista de fretes ou detalhes do frete
+        navigate(isEditing ? `/freights/${freightId}` : "/freights");
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: "Erro",
+          description: errorData.message || "Ocorreu um erro ao salvar o frete.",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
-      console.error("Error saving freight:", error);
+      console.error("Erro ao salvar frete:", error);
       toast({
-        title: "Erro ao salvar",
-        description: "Ocorreu um erro ao salvar o frete. Tente novamente.",
+        title: "Erro",
+        description: "Ocorreu um erro ao processar a operação.",
         variant: "destructive",
       });
     }
   };
 
+  // Função para selecionar um cliente
+  const handleClientSelect = (clientId: number | null) => {
+    form.setValue("clientId", clientId);
+    if (clientId) {
+      const selectedClient = clients.find(client => client.id === clientId);
+      setCurrentClient(selectedClient);
+    } else {
+      setCurrentClient(null);
+    }
+  };
+
+  // Função para formatar um valor monetário em reais
+  const formatarValorReal = (valor: string) => {
+    // Remove tudo que não é número
+    const numerico = valor.replace(/\D/g, "");
+    
+    // Converte para centavos
+    const centavos = parseInt(numerico) / 100;
+    
+    // Formata em moeda brasileira
+    return centavos.toLocaleString("pt-BR", {
+      style: "decimal",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
+  // Manipulador para formatar valor do frete
+  const handleFreightValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const valor = e.target.value;
+    const valorFormatado = formatarValorReal(valor);
+    form.setValue("freightValue", valorFormatado);
+  };
+
   return (
-    <div>
-      <div className="mb-6 flex justify-between items-center">
-        <div className="flex items-center gap-2">
+    <div className="container px-2 py-4 mx-auto">
+      <div className="flex items-center mb-6">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate("/freights")}
+          className="mr-4"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Voltar
+        </Button>
+        <h1 className="text-2xl font-bold">
+          {isViewingInReadOnlyMode
+            ? "Detalhes do Frete"
+            : isEditing
+            ? "Editar Frete"
+            : "Novo Frete"}
+        </h1>
+        
+        {isViewingInReadOnlyMode && userCanEditFreight(form.getValues("userId")) && (
           <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => navigate("/freights")}
+            variant="outline" 
+            size="sm"
+            className="ml-auto"
+            onClick={enableEditMode}
           >
-            <ArrowLeft className="h-5 w-5" />
+            Editar
           </Button>
-          <div className="flex items-center gap-2">
-            <Truck className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold">
-              {isEditing ? "Editar Frete" : "Novo Frete"}
-            </h1>
-          </div>
-        </div>
+        )}
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Informações do Frete</CardTitle>
-          <CardDescription>
-            Preencha as informações sobre o frete e a carga
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {isViewingInReadOnlyMode && (
-                <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 p-4 rounded-md mb-4">
-                  <p className="text-amber-700 dark:text-amber-300 text-sm">
-                    Você está visualizando este frete no modo somente leitura. Clique em "Editar Frete" para fazer alterações.
-                  </p>
-                </div>
-              )}
-              <fieldset disabled={isViewingInReadOnlyMode}>
-                <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
-                {/* Client Selection */}
-                <FormField
-                  control={form.control}
-                  name="clientId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Cliente</FormLabel>
-                      <Select
-                        value={field.value?.toString() || ""}
-                        onValueChange={(value) => field.onChange(value !== "null" ? parseInt(value) : null)}
-                        disabled={(currentClient !== null || user?.clientId !== null) && !isEditing}
-                      >
+      {isLoadingFreight ? (
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
+        </div>
+      ) : (
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Informações Básicas</CardTitle>
+                <CardDescription>
+                  Dados essenciais para o cadastro do frete
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="clientId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Cliente</FormLabel>
                         <FormControl>
-                          <SelectTrigger>
-                            {currentClient && !isEditing ? (
-                              <div className="text-foreground">{currentClient.name}</div>
-                            ) : user?.clientId && !isEditing && clients ? (
-                              <div className="text-foreground">
-                                {clients.find((c: any) => c.id === user.clientId)?.name || "Cliente do usuário"}
-                              </div>
-                            ) : field.value && clients ? (
-                              <div className="text-foreground">
-                                {clients.find((c: any) => c.id === field.value)?.name || "Cliente selecionado"}
-                              </div>
-                            ) : (
-                              <SelectValue placeholder="Selecione um cliente" />
-                            )}
-                          </SelectTrigger>
+                          <ClientSelector
+                            readOnly={isViewingInReadOnlyMode}
+                            selectedClientId={field.value || null}
+                            onClientSelect={handleClientSelect}
+                          />
                         </FormControl>
-                        <SelectContent>
-                          {clients?.map((client: any) => (
-                            <SelectItem key={client.id} value={client.id.toString()}>
-                              {client.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {(currentClient || user?.clientId) && !isEditing && (
-                        <FormDescription>
-                          {currentClient ? (
-                            <>O frete será associado automaticamente ao cliente logado ({currentClient.name})</>
-                          ) : user?.clientId && clients ? (
-                            <>O frete será associado automaticamente ao seu cliente ({clients.find((c: any) => c.id === user.clientId)?.name || "Cliente associado"})</>
-                          ) : null}
-                        </FormDescription>
-                      )}
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                {/* Status Selection */}
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status do Frete</FormLabel>
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o status" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="aberto">Aberto</SelectItem>
-                          <SelectItem value="em_andamento">Em Andamento</SelectItem>
-                          <SelectItem value="concluido">Concluído</SelectItem>
-                          <SelectItem value="cancelado">Cancelado</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <Separator className="my-4" />
-              
-              <h3 className="text-lg font-medium mb-4">Origem e Destino</h3>
-              <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
-                {/* Origin State */}
-                <FormField
-                  control={form.control}
-                  name="originState"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Estado de Origem</FormLabel>
-                      <FormControl>
-                        <StateSelect
-                          value={field.value}
-                          onChange={field.onChange}
-                          placeholder="Selecione o estado de origem"
-                          errorMessage={form.formState.errors.originState?.message}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Origin City */}
-                <FormField
-                  control={form.control}
-                  name="origin"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Cidade de Origem</FormLabel>
-                      <FormControl>
-                        <CitySelect
-                          state={form.watch("originState")}
-                          value={field.value}
-                          onChange={field.onChange}
-                          placeholder="Selecione a cidade de origem"
-                          disabled={!form.watch("originState")}
-                          errorMessage={form.formState.errors.origin?.message}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Multiple Destinations Checkbox */}
-                <FormField
-                  control={form.control}
-                  name="hasMultipleDestinations"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 col-span-full">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>Frete com múltiplos destinos</FormLabel>
-                        <FormDescription>
-                          Marque esta opção se o frete possuir mais de um destino
-                        </FormDescription>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-
-                {/* Primary Destination */}
-                {!hasMultipleDestinations ? (
-                  <>
-                    <FormField
-                      control={form.control}
-                      name="destinationState"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Estado de Destino</FormLabel>
-                          <FormControl>
-                            <StateSelect
-                              value={field.value}
-                              onChange={field.onChange}
-                              placeholder="Selecione o estado de destino"
-                              errorMessage={form.formState.errors.destinationState?.message}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="destination"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Cidade de Destino</FormLabel>
-                          <FormControl>
-                            <CitySelect
-                              state={form.watch("destinationState")}
-                              value={field.value}
-                              onChange={field.onChange}
-                              placeholder="Selecione a cidade de destino"
-                              disabled={!form.watch("destinationState")}
-                              errorMessage={form.formState.errors.destination?.message}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </>
-                ) : (
-                  <div className="col-span-full">
-                    <div className="flex justify-between items-center mb-4">
-                      <h4 className="text-md font-medium">Destinos</h4>
-                      <Button type="button" variant="outline" size="sm" onClick={addDestination}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Adicionar Destino
-                      </Button>
-                    </div>
-                    
-                    {destinations.length === 0 ? (
-                      <div className="text-center py-6 border rounded-md bg-slate-50 dark:bg-slate-800">
-                        <p className="text-sm text-slate-500">
-                          Nenhum destino adicionado. Clique no botão acima para adicionar.
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {destinations.map((dest, index) => (
-                          <div 
-                            key={index} 
-                            className="grid grid-cols-1 md:grid-cols-5 gap-4 p-4 border rounded-md bg-slate-50 dark:bg-slate-800"
+                          <Select
+                            disabled={isViewingInReadOnlyMode || !isEditing}
+                            value={field.value || "aberto"}
+                            onValueChange={field.onChange}
                           >
-                            <div className="md:col-span-2">
-                              <FormLabel>Estado</FormLabel>
-                              <StateSelect
-                                value={dest.destinationState}
-                                onChange={(value) => updateDestination(index, 'destinationState', value)}
-                                placeholder="Selecione o estado"
-                              />
-                            </div>
-                            <div className="md:col-span-2">
-                              <FormLabel>Cidade</FormLabel>
-                              <CitySelect
-                                state={dest.destinationState}
-                                value={dest.destination}
-                                onChange={(value) => updateDestination(index, 'destination', value)}
-                                placeholder="Selecione a cidade de destino"
-                                disabled={!dest.destinationState}
-                              />
-                            </div>
-                            <div className="flex items-end justify-end h-full md:col-span-1">
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => removeDestination(index)}
-                                className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                              >
-                                <Trash className="h-4 w-4" />
-                              </Button>
-                            </div>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="aberto">Aberto</SelectItem>
+                              <SelectItem value="em_transporte">
+                                Em Transporte
+                              </SelectItem>
+                              <SelectItem value="concluido">
+                                Concluído
+                              </SelectItem>
+                              <SelectItem value="cancelado">
+                                Cancelado
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <Separator className="my-4" />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <FormField
+                      control={form.control}
+                      name="origin"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Cidade de Origem</FormLabel>
+                          <FormControl>
+                            <LocationInput
+                              readOnly={isViewingInReadOnlyMode}
+                              value={field.value}
+                              onChange={field.onChange}
+                              stateField="originState"
+                              stateValue={form.watch("originState")}
+                              onStateChange={(state) =>
+                                form.setValue("originState", state)
+                              }
+                            />
+                          </FormControl>
+                          {form.formState.errors.origin && (
+                            <FormMessage>
+                              {form.formState.errors.origin.message}
+                            </FormMessage>
+                          )}
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div>
+                    <FormField
+                      control={form.control}
+                      name="hasMultipleDestinations"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 mb-4">
+                          <FormControl>
+                            <Checkbox
+                              disabled={isViewingInReadOnlyMode}
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Múltiplos destinos</FormLabel>
+                            <FormDescription>
+                              Marque esta opção para adicionar mais de um destino para este frete
+                            </FormDescription>
                           </div>
-                        ))}
+                        </FormItem>
+                      )}
+                    />
+                    
+                    {!hasMultipleDestinations && (
+                      <FormField
+                        control={form.control}
+                        name="destination"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Cidade de Destino</FormLabel>
+                            <FormControl>
+                              <LocationInput
+                                readOnly={isViewingInReadOnlyMode}
+                                value={field.value || ""}
+                                onChange={field.onChange}
+                                stateField="destinationState"
+                                stateValue={form.watch("destinationState")}
+                                onStateChange={(state) =>
+                                  form.setValue("destinationState", state)
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                    
+                    {hasMultipleDestinations && (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <FormLabel className="text-base">Destinos</FormLabel>
+                          {!isViewingInReadOnlyMode && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={addDestination}
+                            >
+                              <Plus className="h-4 w-4 mr-1" />
+                              Adicionar Destino
+                            </Button>
+                          )}
+                        </div>
+                        
+                        {destinations.length === 0 ? (
+                          <div className="p-4 border border-dashed rounded-md text-center text-muted-foreground">
+                            Nenhum destino adicionado. Clique em "Adicionar Destino".
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            {destinations.map((dest, index) => (
+                              <div key={index} className="flex gap-2 items-start p-3 border rounded-md">
+                                <div className="flex-1">
+                                  <div className="mb-2">
+                                    <FormLabel className="text-xs">Cidade</FormLabel>
+                                    <LocationInput
+                                      readOnly={isViewingInReadOnlyMode}
+                                      value={dest.destination || ""}
+                                      onChange={(value) => updateDestination(index, "destination", value)}
+                                      stateField={`destination-state-${index}`}
+                                      stateValue={dest.destinationState || ""}
+                                      onStateChange={(state) => updateDestination(index, "destinationState", state)}
+                                    />
+                                  </div>
+                                </div>
+                                {!isViewingInReadOnlyMode && (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => removeDestination(index)}
+                                  >
+                                    <Trash className="h-4 w-4 text-destructive" />
+                                  </Button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
-                )}
-              </div>
+                </div>
+              </CardContent>
+            </Card>
 
-              <Separator className="my-4" />
-              
-              <h3 className="text-lg font-medium mb-4">Veículo e Valores</h3>
-              <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
-                {/* Vehicle Category */}
-                <FormField
-                  control={form.control}
-                  name="vehicleCategory"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Categoria de Veículo</FormLabel>
-                      <Select
-                        value={field.value}
-                        onValueChange={(value) => {
-                          field.onChange(value);
-                          // Ao mudar categoria, limpar a seleção atual e selecionar "todos" dessa categoria
-                          if (value === VEHICLE_CATEGORIES.LEVE) {
-                            setSelectedVehicleTypes([VEHICLE_TYPES.LEVE_TODOS]);
-                            form.setValue("vehicleType", VEHICLE_TYPES.LEVE_TODOS);
-                          } else if (value === VEHICLE_CATEGORIES.MEDIO) {
-                            setSelectedVehicleTypes([VEHICLE_TYPES.MEDIO_TODOS]);
-                            form.setValue("vehicleType", VEHICLE_TYPES.MEDIO_TODOS);
-                          } else if (value === VEHICLE_CATEGORIES.PESADO) {
-                            setSelectedVehicleTypes([VEHICLE_TYPES.PESADO_TODOS]);
-                            form.setValue("vehicleType", VEHICLE_TYPES.PESADO_TODOS);
-                          }
-                        }}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione a categoria" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value={VEHICLE_CATEGORIES.LEVE}>
-                            {getVehicleCategoryDisplay(VEHICLE_CATEGORIES.LEVE)}
-                          </SelectItem>
-                          <SelectItem value={VEHICLE_CATEGORIES.MEDIO}>
-                            {getVehicleCategoryDisplay(VEHICLE_CATEGORIES.MEDIO)}
-                          </SelectItem>
-                          <SelectItem value={VEHICLE_CATEGORIES.PESADO}>
-                            {getVehicleCategoryDisplay(VEHICLE_CATEGORIES.PESADO)}
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                {/* Vehicle Types - Multiple Selection */}
-                <div className="md:col-span-2">
-                  <FormItem>
-                    <FormLabel>Tipos de Veículo</FormLabel>
-                    <div className="w-full border rounded-md p-4">
-                      {Object.entries(VEHICLE_CATEGORIES).map((categoryEntry) => {
-                        const [categoryKey, categoryValue] = categoryEntry;
-                        const vehicleTypes = VEHICLE_TYPES_BY_CATEGORY[categoryValue];
-                        
-                        return (
-                          <div key={categoryKey} className="mb-4">
-                            <h4 className="text-sm font-semibold mb-2">
-                              {getVehicleCategoryDisplay(categoryValue)}
-                            </h4>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                              {vehicleTypes.map((type) => (
-                                <div key={type} className="flex items-center space-x-2">
-                                  <Checkbox 
-                                    id={`vehicle-type-${type}`}
-                                    checked={selectedVehicleTypes.includes(type)}
-                                    onCheckedChange={(checked) => {
-                                      if (checked) {
-                                        setSelectedVehicleTypes(prev => [...prev, type]);
-                                        form.setValue("vehicleType", type); // Para compatibilidade
-                                        
-                                        // Atualiza a categoria do veículo com base no tipo selecionado
-                                        form.setValue("vehicleCategory", getVehicleCategory(type));
+            <Card>
+              <CardHeader>
+                <CardTitle>Veículo e Carga</CardTitle>
+                <CardDescription>
+                  Detalhes do veículo necessário e da carga
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div>
+                  <FormLabel className="text-base">Tipo de Veículo</FormLabel>
+                  <FormDescription className="mb-4">
+                    Selecione o(s) tipo(s) de veículo adequado(s) para o frete
+                  </FormDescription>
+
+                  <div className="space-y-4">
+                    {Object.entries(VEHICLE_CATEGORIES).map(([categoryKey, categoryValue]) => {
+                      const vehicleTypes = VEHICLE_TYPES_BY_CATEGORY[categoryValue];
+                      
+                      return (
+                        <div key={categoryKey} className="mb-4">
+                          <h4 className="text-sm font-semibold mb-2">
+                            {getVehicleCategoryDisplay(categoryValue)}
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            {vehicleTypes.map((type) => (
+                              <div key={type} className="flex items-center space-x-2">
+                                <Checkbox 
+                                  id={`vehicle-type-${type}`}
+                                  disabled={isViewingInReadOnlyMode}
+                                  checked={selectedVehicleTypes.includes(type)}
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      // Adicionar tipo à lista
+                                      const newList = [...selectedVehicleTypes, type];
+                                      setSelectedVehicleTypes(newList);
+                                      form.setValue("vehicleTypesSelected", newList.join(","));
+                                      
+                                      // Atualizar o tipo principal para o primeiro da lista
+                                      form.setValue("vehicleType", newList[0]);
+                                      form.setValue("vehicleCategory", getVehicleCategory(newList[0]));
+                                    } else {
+                                      // Remover tipo da lista
+                                      const newList = selectedVehicleTypes.filter(t => t !== type);
+                                      setSelectedVehicleTypes(newList);
+                                      form.setValue("vehicleTypesSelected", newList.join(","));
+                                      
+                                      // Atualizar o tipo principal 
+                                      if (newList.length > 0) {
+                                        form.setValue("vehicleType", newList[0]);
+                                        form.setValue("vehicleCategory", getVehicleCategory(newList[0]));
                                       } else {
-                                        setSelectedVehicleTypes(prev => prev.filter(t => t !== type));
-                                        // Se removeu o que estava selecionado principal e ainda tem outros, seleciona o primeiro
-                                        if (form.getValues("vehicleType") === type && selectedVehicleTypes.length > 1) {
-                                          const remaining = selectedVehicleTypes.filter(t => t !== type);
-                                          form.setValue("vehicleType", remaining[0]);
-                                          form.setValue("vehicleCategory", getVehicleCategory(remaining[0]));
-                                        }
+                                        form.setValue("vehicleType", "");
+                                        form.setValue("vehicleCategory", "");
                                       }
-                                    }}
-                                  />
-                                  <label 
-                                    htmlFor={`vehicle-type-${type}`} 
-                                    className="text-sm font-medium leading-none cursor-pointer"
-                                  >
-                                    {getVehicleTypeNameOnly(type)}
-                                  </label>
-                                </div>
-                              ))}
-                            </div>
+                                    }
+                                  }}
+                                />
+                                <label 
+                                  htmlFor={`vehicle-type-${type}`} 
+                                  className="text-sm font-medium leading-none cursor-pointer"
+                                >
+                                  {getVehicleTypeNameOnly(type)}
+                                </label>
+                              </div>
+                            ))}
                           </div>
-                        );
-                      })}
-                    </div>
-                    {form.formState.errors.vehicleType && (
-                      <p className="text-sm font-medium text-destructive mt-2">
-                        {form.formState.errors.vehicleType.message}
-                      </p>
-                    )}
-                    
-                    {selectedVehicleTypes.length > 0 && (
-                      <div className="mt-2">
-                        <p className="text-sm text-gray-500 mb-1">Tipos de veículo selecionados:</p>
-                        <div className="flex flex-wrap gap-1">
-                          {selectedVehicleTypes.map((type) => (
-                            <div key={type} className="bg-primary/10 text-primary rounded-full px-2 py-1 text-xs flex items-center">
-                              {getVehicleTypeDisplay(type)}
-                            </div>
-                          ))}
                         </div>
-                      </div>
-                    )}
-                  </FormItem>
+                      );
+                    })}
+                  </div>
+                  
+                  {form.formState.errors.vehicleType && (
+                    <p className="text-sm font-medium text-destructive mt-2">
+                      {form.formState.errors.vehicleType.message}
+                    </p>
+                  )}
                 </div>
 
-                {/* Cargo Type */}
                 <FormField
                   control={form.control}
                   name="cargoType"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Tipo de Carga</FormLabel>
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o tipo" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="completa">Carga Completa</SelectItem>
-                          <SelectItem value="fracionada">Carga Fracionada</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <ToggleGroup
+                          disabled={isViewingInReadOnlyMode}
+                          type="single"
+                          value={field.value}
+                          onValueChange={(value) => {
+                            if (value) field.onChange(value);
+                          }}
+                          className="flex flex-wrap"
+                        >
+                          <ToggleGroupItem value="completa" className="mb-1">
+                            Completa
+                          </ToggleGroupItem>
+                          <ToggleGroupItem value="fracionada" className="mb-1">
+                            Fracionada
+                          </ToggleGroupItem>
+                          <ToggleGroupItem value="retorno" className="mb-1">
+                            Retorno
+                          </ToggleGroupItem>
+                        </ToggleGroup>
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                {/* Product Type */}
                 <FormField
                   control={form.control}
                   name="productType"
@@ -842,9 +829,10 @@ export default function FreightForm() {
                     <FormItem>
                       <FormLabel>Tipo de Produto</FormLabel>
                       <FormControl>
-                        <Input 
-                          placeholder="Ex: Caixas, Grãos, etc" 
-                          {...field} 
+                        <Input
+                          readOnly={isViewingInReadOnlyMode}
+                          placeholder="Ex: Grãos, Bebidas, Eletrônicos..."
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
@@ -852,109 +840,112 @@ export default function FreightForm() {
                   )}
                 />
 
-                {/* Needs Tarp */}
                 <FormField
                   control={form.control}
                   name="needsTarp"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Necessita Lona?</FormLabel>
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="sim">Sim</SelectItem>
-                          <SelectItem value="nao">Não</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Cargo Weight */}
-                <FormField
-                  control={form.control}
-                  name="cargoWeight"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Peso da Carga (toneladas)</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="number" 
-                          step="0.01"
-                          placeholder="0,00" 
-                          {...field}
-                          value={field.value || ""}
-                          onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)}
-                        />
+                        <ToggleGroup
+                          disabled={isViewingInReadOnlyMode}
+                          type="single"
+                          value={field.value}
+                          onValueChange={(value) => {
+                            if (value) field.onChange(value);
+                          }}
+                        >
+                          <ToggleGroupItem value="sim">Sim</ToggleGroupItem>
+                          <ToggleGroupItem value="nao">Não</ToggleGroupItem>
+                        </ToggleGroup>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                {/* Body Type - Multiple Selection */}
-                <div className="md:col-span-2">
-                  <FormItem>
-                    <FormLabel>Tipos de Carroceria</FormLabel>
-                    <div className="w-full border rounded-md p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-                      {Object.entries(BODY_TYPES).map(([key, value]) => (
-                        <div key={key} className="flex items-center space-x-2">
-                          <Checkbox 
-                            id={`body-type-${key}`}
-                            checked={selectedBodyTypes.includes(value)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setSelectedBodyTypes(prev => [...prev, value]);
-                                form.setValue("bodyType", value); // Para compatibilidade
-                              } else {
-                                setSelectedBodyTypes(prev => prev.filter(t => t !== value));
-                                // Se removeu o que estava selecionado principal e ainda tem outros, seleciona o primeiro
-                                if (form.getValues("bodyType") === value && selectedBodyTypes.length > 1) {
-                                  const remaining = selectedBodyTypes.filter(t => t !== value);
-                                  form.setValue("bodyType", remaining[0]);
-                                }
-                              }
-                            }}
-                          />
-                          <label 
-                            htmlFor={`body-type-${key}`} 
-                            className="text-sm font-medium leading-none cursor-pointer"
-                          >
-                            {getBodyTypeDisplay(value)}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                    {form.formState.errors.bodyType && (
-                      <p className="text-sm font-medium text-destructive mt-2">
-                        {form.formState.errors.bodyType.message}
-                      </p>
-                    )}
-                    
-                    {selectedBodyTypes.length > 0 && (
-                      <div className="mt-2">
-                        <p className="text-sm text-gray-500 mb-1">Tipos de carroceria selecionados:</p>
-                        <div className="flex flex-wrap gap-1">
-                          {selectedBodyTypes.map((type) => (
-                            <div key={type} className="bg-primary/10 text-primary rounded-full px-2 py-1 text-xs flex items-center">
-                              {getBodyTypeDisplay(type)}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </FormItem>
-                </div>
+                <FormField
+                  control={form.control}
+                  name="cargoWeight"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Peso da Carga (kg)</FormLabel>
+                      <FormControl>
+                        <Input
+                          readOnly={isViewingInReadOnlyMode}
+                          type="number"
+                          min="1"
+                          placeholder="Ex: 25000"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Informe o peso em quilogramas (kg)
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                {/* Freight Value */}
+                <div>
+                  <FormLabel>Tipos de Carroceria</FormLabel>
+                  <div className="w-full border rounded-md p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {Object.entries(BODY_TYPES).map(([key, value]) => (
+                      <div key={key} className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={`body-type-${key}`}
+                          disabled={isViewingInReadOnlyMode}
+                          checked={selectedBodyTypes.includes(value)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              // Adicionar tipo à lista
+                              const newList = [...selectedBodyTypes, value];
+                              setSelectedBodyTypes(newList);
+                              form.setValue("bodyTypesSelected", newList.join(","));
+                              
+                              // Atualizar o tipo principal para o primeiro da lista
+                              form.setValue("bodyType", newList[0]);
+                            } else {
+                              // Remover tipo da lista
+                              const newList = selectedBodyTypes.filter(t => t !== value);
+                              setSelectedBodyTypes(newList);
+                              form.setValue("bodyTypesSelected", newList.join(","));
+                              
+                              // Atualizar o tipo principal
+                              if (newList.length > 0) {
+                                form.setValue("bodyType", newList[0]);
+                              } else {
+                                form.setValue("bodyType", "");
+                              }
+                            }
+                          }}
+                        />
+                        <label 
+                          htmlFor={`body-type-${key}`} 
+                          className="text-sm font-medium leading-none cursor-pointer"
+                        >
+                          {getBodyTypeDisplay(value)}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                  {form.formState.errors.bodyType && (
+                    <p className="text-sm font-medium text-destructive mt-2">
+                      {form.formState.errors.bodyType.message}
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Informações Financeiras</CardTitle>
+                <CardDescription>
+                  Detalhes sobre valores e formas de pagamento
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <FormField
                   control={form.control}
                   name="freightValue"
@@ -962,47 +953,54 @@ export default function FreightForm() {
                     <FormItem>
                       <FormLabel>Valor do Frete (R$)</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="number" 
-                          step="0.01"
-                          placeholder="0,00" 
+                        <Input
+                          readOnly={isViewingInReadOnlyMode}
+                          placeholder="0,00"
                           {...field}
-                          value={field.value || ""}
-                          onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)}
+                          onChange={(e) => {
+                            handleFreightValueChange(e);
+                          }}
                         />
+                      </FormControl>
+                      <FormDescription>
+                        Informe o valor em reais (R$)
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="tollOption"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Opção de Pedágio</FormLabel>
+                      <FormControl>
+                        <ToggleGroup
+                          disabled={isViewingInReadOnlyMode}
+                          type="single"
+                          value={field.value}
+                          onValueChange={(value) => {
+                            if (value) field.onChange(value);
+                          }}
+                        >
+                          <ToggleGroupItem value={TOLL_OPTIONS.INCLUSO}>
+                            Incluso
+                          </ToggleGroupItem>
+                          <ToggleGroupItem value={TOLL_OPTIONS.EMBARCADOR}>
+                            Pago pelo Embarcador
+                          </ToggleGroupItem>
+                          <ToggleGroupItem value={TOLL_OPTIONS.TRANSPORTADOR}>
+                            Pago pelo Transportador
+                          </ToggleGroupItem>
+                        </ToggleGroup>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                {/* Toll Option */}
-                <FormField
-                  control={form.control}
-                  name="tollOption"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Pedágio</FormLabel>
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Opção de pedágio" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value={TOLL_OPTIONS.INCLUSO}>Incluso no Valor</SelectItem>
-                          <SelectItem value={TOLL_OPTIONS.A_PARTE}>À Parte</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Payment Method */}
                 <FormField
                   control={form.control}
                   name="paymentMethod"
@@ -1010,109 +1008,101 @@ export default function FreightForm() {
                     <FormItem>
                       <FormLabel>Forma de Pagamento</FormLabel>
                       <FormControl>
-                        <Input 
-                          placeholder="Ex: À Vista, 28 DDL, etc" 
-                          {...field} 
+                        <Input
+                          readOnly={isViewingInReadOnlyMode}
+                          placeholder="Ex: À vista, 28 dias, 50% adiantado..."
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              </div>
+              </CardContent>
+            </Card>
 
-              {/* Contact Info Section */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Contato e Observações</CardTitle>
+                <CardDescription>
+                  Informações adicionais e contato
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <FormField
                   control={form.control}
                   name="contactName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nome do Contato</FormLabel>
+                      <FormLabel>Nome para Contato</FormLabel>
                       <FormControl>
-                        <Input 
-                          placeholder="Nome da pessoa de contato" 
-                          {...field} 
+                        <Input
+                          readOnly={isViewingInReadOnlyMode}
+                          placeholder="Ex: João da Silva"
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="contactPhone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Telefone do Contato (WhatsApp)</FormLabel>
+                      <FormLabel>Telefone para Contato</FormLabel>
                       <FormControl>
-                        <Input 
-                          placeholder="(00) 00000-0000" 
-                          {...field} 
+                        <Input
+                          readOnly={isViewingInReadOnlyMode}
+                          placeholder="Ex: (11) 98765-4321"
+                          {...field}
                         />
                       </FormControl>
-                      <FormDescription>
-                        Será usado como contato de WhatsApp
-                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              </div>
 
-              {/* Observations */}
-              <FormField
-                control={form.control}
-                name="observations"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Observações</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Observações adicionais sobre o frete..." 
-                        className="min-h-[100px]"
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Até 500 caracteres
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="observations"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Observações</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          readOnly={isViewingInReadOnlyMode}
+                          placeholder="Observações adicionais sobre o frete..."
+                          className="min-h-32"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
 
-              <div className="flex justify-end gap-3">
-                <Button 
-                  type="button" 
+            {!isViewingInReadOnlyMode && (
+              <div className="flex justify-end space-x-4">
+                <Button
+                  type="button"
                   variant="outline"
                   onClick={() => navigate("/freights")}
                 >
                   Cancelar
                 </Button>
-                
-                {isViewingInReadOnlyMode ? (
-                  <Button 
-                    type="button"
-                    onClick={() => navigate(`/freights/${freightId}?edit=true`)}
-                  >
-                    Editar Frete
-                  </Button>
-                ) : (
-                  <Button 
-                    type="submit"
-                    disabled={isViewingInReadOnlyMode}
-                  >
-                    {isEditing ? "Salvar Alterações" : "Criar Frete"}
-                  </Button>
-                )}
+                <Button type="submit">
+                  {isEditing ? "Atualizar Frete" : "Criar Frete"}
+                </Button>
               </div>
-              </fieldset>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+            )}
+          </form>
+        </Form>
+      )}
     </div>
   );
 }

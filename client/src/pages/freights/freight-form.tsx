@@ -861,18 +861,21 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                                     id={`vehicle-type-${type}`}
                                     checked={selectedVehicleTypes.includes(type)}
                                     onCheckedChange={(checked) => {
-                                      // Cria uma nova lista baseada na seleção
-                                      const newList = checked 
-                                        ? [...selectedVehicleTypes, type]
-                                        : selectedVehicleTypes.filter(t => t !== type);
+                                      let newList;
+                                      if (checked) {
+                                        // Adicionar à lista
+                                        newList = [...selectedVehicleTypes, type];
+                                      } else {
+                                        // Remover da lista
+                                        newList = selectedVehicleTypes.filter(t => t !== type);
+                                      }
                                       
-                                      // Atualiza o estado
+                                      // Atualizar estado
                                       setSelectedVehicleTypes(newList);
                                       
-                                      // Atualiza os valores do formulário
+                                      // Atualizar formulário
                                       form.setValue("vehicleTypesSelected", newList.join(","));
                                       
-                                      // Define o veículo principal (para compatibilidade)
                                       if (newList.length > 0) {
                                         form.setValue("vehicleType", newList[0]);
                                         form.setValue("vehicleCategory", getVehicleCategory(newList[0]));
@@ -880,8 +883,9 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                                         form.setValue("vehicleType", "");
                                         form.setValue("vehicleCategory", "");
                                       }
+                                      
+                                      console.log("Tipos de veículo:", newList);
                                     }}
-                                  />
                                   <label 
                                     htmlFor={`vehicle-type-${type}`} 
                                     className="text-sm font-medium leading-none cursor-pointer"
@@ -1026,28 +1030,39 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                     <div className="w-full border rounded-md p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
                       {Object.entries(BODY_TYPES).map(([key, value]) => (
                         <div key={key} className="flex items-center space-x-2">
-                          <Checkbox 
-                            id={`body-type-${key}`}
-                            checked={selectedBodyTypes.includes(value)}
-                            onCheckedChange={(checked) => {
-                              // Cria uma nova lista baseada na seleção
-                              const newList = checked 
-                                ? [...selectedBodyTypes, value]
-                                : selectedBodyTypes.filter(t => t !== value);
+                          <div 
+                            className="flex items-center"
+                            onClick={() => {
+                              // Nova abordagem: manipular diretamente usando o div como wrapper
+                              // Verificar se o tipo já está na lista
+                              const isSelected = selectedBodyTypes.includes(value);
                               
-                              // Atualiza o estado
+                              // Criar a nova lista baseada na seleção
+                              const newList = isSelected
+                                ? selectedBodyTypes.filter(t => t !== value)
+                                : [...selectedBodyTypes, value];
+                              
+                              // Atualizar o estado
                               setSelectedBodyTypes(newList);
                               
-                              // Atualiza os valores do formulário
+                              // Atualizar os valores do formulário
                               form.setValue("bodyTypesSelected", newList.join(","));
                               
-                              // Define a carroceria principal (para compatibilidade)
+                              // Definir a carroceria principal (para compatibilidade)
                               if (newList.length > 0) {
                                 form.setValue("bodyType", newList[0]);
                               } else {
                                 form.setValue("bodyType", "");
                               }
+                              
+                              console.log("Tipos de carroceria após clique:", newList);
                             }}
+                          >
+                            <Checkbox 
+                              id={`body-type-${key}`}
+                              checked={selectedBodyTypes.includes(value)}
+                              className="pointer-events-none"
+                            />
                           />
                           <label 
                             htmlFor={`body-type-${key}`} 
