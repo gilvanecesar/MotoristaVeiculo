@@ -48,7 +48,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CustomCheckbox } from "@/components/ui/custom-checkbox";
-import { ArrowLeft, Plus, Trash, X } from "lucide-react";
+import { ArrowLeft, Check, Plus, Trash, X } from "lucide-react";
 import { Truck } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 // Removido useClientAuth para evitar dependências circulares
@@ -846,25 +846,17 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                             </h4>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                               {vehicleTypes.map((type) => (
-                                <div key={type}>
-                                  <CustomCheckbox 
-                                    id={`vehicle-type-${type}`}
-                                    checked={selectedVehicleTypes.includes(type)}
-                                    label={getVehicleTypeNameOnly(type)}
-                                    onChange={(isChecked) => {
-                                      if (isChecked) {
-                                        // Adicionar o tipo ao array de tipos selecionados
-                                        const newSelected = [...selectedVehicleTypes, type];
-                                        setSelectedVehicleTypes(newSelected);
-                                        form.setValue("vehicleType", type); // Para compatibilidade
-                                        
-                                        // Atualiza a categoria do veículo com base no tipo selecionado
-                                        form.setValue("vehicleCategory", getVehicleCategory(type));
-                                        
-                                        // Atualiza o campo vehicleTypesSelected no formulário
-                                        form.setValue("vehicleTypesSelected", newSelected.join(","));
-                                      } else {
-                                        // Remover o tipo do array de tipos selecionados
+                                <div key={type} className="mb-1">
+                                  <button
+                                    type="button"
+                                    className={`px-3 py-2 rounded-md border-2 text-left w-full ${
+                                      selectedVehicleTypes.includes(type) 
+                                        ? 'bg-primary text-white border-primary font-bold' 
+                                        : 'bg-background border-gray-300 hover:border-primary'
+                                    }`}
+                                    onClick={() => {
+                                      // Se já está selecionado, remover
+                                      if (selectedVehicleTypes.includes(type)) {
                                         const newSelected = selectedVehicleTypes.filter(t => t !== type);
                                         setSelectedVehicleTypes(newSelected);
                                         
@@ -876,9 +868,24 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                                         
                                         // Atualiza o campo vehicleTypesSelected no formulário
                                         form.setValue("vehicleTypesSelected", newSelected.join(","));
+                                      } 
+                                      // Se não está selecionado, adicionar
+                                      else {
+                                        const newSelected = [...selectedVehicleTypes, type];
+                                        setSelectedVehicleTypes(newSelected);
+                                        form.setValue("vehicleType", type); // Para compatibilidade
+                                        
+                                        // Atualiza a categoria do veículo com base no tipo selecionado
+                                        form.setValue("vehicleCategory", getVehicleCategory(type));
+                                        
+                                        // Atualiza o campo vehicleTypesSelected no formulário
+                                        form.setValue("vehicleTypesSelected", newSelected.join(","));
                                       }
                                     }}
-                                  />
+                                  >
+                                    {selectedVehicleTypes.includes(type) ? '✓ ' : ''}
+                                    {getVehicleTypeNameOnly(type)}
+                                  </button>
                                 </div>
                               ))}
                             </div>
@@ -1016,22 +1023,17 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                     <FormLabel>Tipos de Carroceria</FormLabel>
                     <div className="w-full border rounded-md p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
                       {Object.entries(BODY_TYPES).map(([key, value]) => (
-                        <div key={key}>
-                          <CustomCheckbox 
-                            id={`body-type-${key}`}
-                            checked={selectedBodyTypes.includes(value)}
-                            label={getBodyTypeDisplay(value)}
-                            onChange={(isChecked) => {
-                              if (isChecked) {
-                                // Adicionar o tipo ao array de tipos selecionados
-                                const newSelected = [...selectedBodyTypes, value];
-                                setSelectedBodyTypes(newSelected);
-                                form.setValue("bodyType", value); // Para compatibilidade
-                                
-                                // Atualiza o campo bodyTypesSelected no formulário
-                                form.setValue("bodyTypesSelected", newSelected.join(","));
-                              } else {
-                                // Remover o tipo do array de tipos selecionados
+                        <div key={key} className="mb-1">
+                          <button
+                            type="button"
+                            className={`px-3 py-2 rounded-md border-2 text-left w-full ${
+                              selectedBodyTypes.includes(value) 
+                                ? 'bg-primary text-white border-primary font-bold' 
+                                : 'bg-background border-gray-300 hover:border-primary'
+                            }`}
+                            onClick={() => {
+                              // Se já está selecionado, remover
+                              if (selectedBodyTypes.includes(value)) {
                                 const newSelected = selectedBodyTypes.filter(t => t !== value);
                                 setSelectedBodyTypes(newSelected);
                                 
@@ -1042,9 +1044,21 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                                 
                                 // Atualiza o campo bodyTypesSelected no formulário
                                 form.setValue("bodyTypesSelected", newSelected.join(","));
+                              } 
+                              // Se não está selecionado, adicionar
+                              else {
+                                const newSelected = [...selectedBodyTypes, value];
+                                setSelectedBodyTypes(newSelected);
+                                form.setValue("bodyType", value); // Para compatibilidade
+                                
+                                // Atualiza o campo bodyTypesSelected no formulário
+                                form.setValue("bodyTypesSelected", newSelected.join(","));
                               }
                             }}
-                          />
+                          >
+                            {selectedBodyTypes.includes(value) ? '✓ ' : ''}
+                            {getBodyTypeDisplay(value)}
+                          </button>
                         </div>
                       ))}
                     </div>
