@@ -316,7 +316,7 @@ const LocationInput: React.FC<LocationInputProps> = ({
                       <Check
                         className={cn(
                           "mr-2 h-4 w-4",
-                          value && typeof value === 'string' && value.endsWith(` - ${state.value}`) ? "opacity-100" : "opacity-0"
+                          value.endsWith(` - ${state.value}`) ? "opacity-100" : "opacity-0"
                         )}
                       />
                       {state.label} - {state.value}
