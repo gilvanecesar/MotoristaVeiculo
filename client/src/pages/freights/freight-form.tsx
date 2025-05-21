@@ -1040,10 +1040,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                             id={`body-type-${key}`}
                             checked={selectedBodyTypes.includes(value)}
                             onCheckedChange={(checked) => {
-                              // Converter para booleano explícito para garantir o funcionamento adequado
-                              const isChecked = checked === true;
-                              
-                              if (isChecked) {
+                              if (checked) {
                                 // Adicionar o tipo ao array de tipos selecionados
                                 const newSelected = [...selectedBodyTypes, value];
                                 setSelectedBodyTypes(newSelected);
@@ -1051,6 +1048,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                                 
                                 // Atualiza o campo bodyTypesSelected no formulário
                                 form.setValue("bodyTypesSelected", newSelected.join(","));
+                                console.log("Carroceria selecionada:", value, "Array atualizado:", newSelected);
                               } else {
                                 // Remover o tipo do array de tipos selecionados
                                 const newSelected = selectedBodyTypes.filter(t => t !== value);
@@ -1063,6 +1061,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                                 
                                 // Atualiza o campo bodyTypesSelected no formulário
                                 form.setValue("bodyTypesSelected", newSelected.join(","));
+                                console.log("Carroceria removida:", value, "Array atualizado:", newSelected);
                               }
                             }}
                           />
