@@ -197,11 +197,36 @@ export default function FreightsPage() {
     refetchOnWindowFocus: false,
   });
 
+  // Função para verificar autorização baseado no usuário que criou o frete
+  const isClientAuthorized = (clientId: number | null, freightUserId?: number | null) => {
+    // Motoristas não podem editar/excluir fretes
+    if (user?.profileType === 'motorista' || user?.profileType === 'driver') {
+      return false;
+    }
+    
+    // Administradores têm acesso total
+    if (user?.profileType === 'admin' || user?.profileType === 'administrador') {
+      return true;
+    }
+    
+    // Verificação primária: o usuário é o criador do frete?
+    if (freightUserId && user?.id === freightUserId) {
+      return true;
+    }
+    
+    // Verificação secundária para compatibilidade: cliente associado
+    // Se não houver userId no frete, usa a regra do cliente
+    if (!freightUserId && user?.clientId === clientId) {
+      return true;
+    }
+    
+    return false;
+  };
+
   // Botões de ação para cada frete
   const renderActionButtons = (freight: FreightWithDestinations) => {
-    // Para motoristas, simplificamos e mostramos apenas botões de visualização e contato
-    // Não mostramos botões de edição/exclusão
-    const isMotorista = user?.profileType === 'motorista' || user?.profileType === 'driver';
+    // Verifica se o usuário atual está autorizado a editar/excluir este frete específico
+    const canEditOrDelete = isClientAuthorized(freight.clientId, freight.userId);
 
     return (
       <div className="flex space-x-1">
@@ -214,8 +239,8 @@ export default function FreightsPage() {
           <Eye className="h-4 w-4" />
         </Button>
         
-        {/* Botões para administradores ou usuários autorizados */}
-        {!isMotorista && (
+        {/* Botões para usuários autorizados (criador do frete ou admin) */}
+        {canEditOrDelete && (
           <>
             <Button
               variant="ghost"
