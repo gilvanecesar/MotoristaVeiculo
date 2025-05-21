@@ -144,7 +144,7 @@ export default function DemonstracaoMelhorias() {
             <p className="text-sm mb-2">Para usar checkboxes nativos que funcionam corretamente:</p>
             <ol className="list-decimal list-inside text-sm space-y-1">
               <li>Use o elemento <code className="bg-muted px-1 rounded">&lt;input type="checkbox"&gt;</code> em vez do componente Checkbox</li>
-              <li>Controle o estado com <code className="bg-muted px-1 rounded">checked={selectedVehicleTypes.includes(type.id)}</code></li>
+              <li>Controle o estado com <code className="bg-muted px-1 rounded">checked={`{selectedVehicleTypes.includes(id)}`}</code></li>
               <li>Use um <code className="bg-muted px-1 rounded">onChange</code> para adicionar/remover itens do array de seleção</li>
               <li>Associe o checkbox com o label usando <code className="bg-muted px-1 rounded">htmlFor</code> e <code className="bg-muted px-1 rounded">id</code></li>
             </ol>
