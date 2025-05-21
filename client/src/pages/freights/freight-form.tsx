@@ -845,91 +845,212 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                   )}
                 />
                 
-                {/* Vehicle Types - Checkboxes padrão sem estilização */}
-                <div className="md:col-span-2">
-                  <FormItem>
-                    <FormLabel>Tipos de Veículo</FormLabel>
-                    <div className="w-full border rounded-md p-4">
-                      {(() => {
-                        const category = form.getValues("vehicleCategory") || VEHICLE_CATEGORIES.LEVE;
-                        
-                        let types = [];
-                        if (category === VEHICLE_CATEGORIES.LEVE) {
-                          types = VEHICLE_TYPES_BY_CATEGORY[VEHICLE_CATEGORIES.LEVE];
-                        } else if (category === VEHICLE_CATEGORIES.MEDIO) {
-                          types = VEHICLE_TYPES_BY_CATEGORY[VEHICLE_CATEGORIES.MEDIO];
-                        } else if (category === VEHICLE_CATEGORIES.PESADO) {
-                          types = VEHICLE_TYPES_BY_CATEGORY[VEHICLE_CATEGORIES.PESADO];
-                        }
-                        
-                        return (
-                          <div className="mb-4">
-                            <h4 className="text-sm font-semibold mb-2">
-                              {getVehicleCategoryDisplay(category)}
-                            </h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                              {types.map((type) => {
-                                const isAllOption = type.endsWith('_todos');
-                                const displayName = getVehicleTypeNameOnly(type);
-                                
-                                return (
-                                  <div key={type} className="flex items-center mb-2">
-                                    <input
-                                      type="checkbox"
-                                      id={`vehicle-type-${type}`}
-                                      checked={selectedVehicleTypes.includes(type)}
-                                      style={{ 
-                                        width: '24px', 
-                                        height: '24px',
-                                        margin: '0px 8px 0px 0px'
-                                      }}
-                                      onChange={(e) => {
-                                        let newTypes = [...selectedVehicleTypes];
-                                        
-                                        if (isAllOption) {
-                                          if (e.target.checked) {
-                                            // Selecionando "Todos" - só seleciona ele
-                                            newTypes = [type];
-                                          } else {
-                                            // Desmarcando "Todos" - limpa todas as seleções
-                                            newTypes = [];
+                {/* Vehicle Types - Checkboxes de todas as categorias */}
+                <FormField
+                  control={form.control}
+                  name="vehicleType"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>Tipos de Veículo</FormLabel>
+                      <div className="w-full border rounded-md p-4">
+                        {/* Leve */}
+                        <div className="mb-6">
+                          <h4 className="text-sm font-semibold mb-2">Leve</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            {VEHICLE_TYPES_BY_CATEGORY[VEHICLE_CATEGORIES.LEVE].map((type) => {
+                              const isAllOption = type.endsWith('_todos');
+                              const displayName = getVehicleTypeNameOnly(type);
+                              
+                              return (
+                                <div key={type} className="flex items-center mb-2">
+                                  <input
+                                    type="checkbox"
+                                    id={`vehicle-type-${type}`}
+                                    checked={selectedVehicleTypes.includes(type)}
+                                    style={{ 
+                                      width: '24px', 
+                                      height: '24px',
+                                      margin: '0px 8px 0px 0px'
+                                    }}
+                                    onChange={(e) => {
+                                      let newTypes = [...selectedVehicleTypes];
+                                      
+                                      if (isAllOption) {
+                                        if (e.target.checked) {
+                                          // Selecionando "Todos" - só seleciona ele
+                                          newTypes = [type];
+                                        } else {
+                                          // Desmarcando "Todos" - limpa todas as seleções
+                                          newTypes = [];
+                                        }
+                                      } else {
+                                        if (e.target.checked) {
+                                          // Selecionando um tipo específico
+                                          newTypes.push(type);
+                                          // Remove o "Todos" se estiver marcado
+                                          const todosType = VEHICLE_TYPES_BY_CATEGORY[VEHICLE_CATEGORIES.LEVE].find(t => t.endsWith('_todos'));
+                                          if (todosType && newTypes.includes(todosType)) {
+                                            newTypes = newTypes.filter(t => t !== todosType);
                                           }
                                         } else {
-                                          if (e.target.checked) {
-                                            // Selecionando um tipo específico
-                                            newTypes.push(type);
-                                            // Remove o "Todos" se estiver marcado
-                                            const todosType = types.find(t => t.endsWith('_todos'));
-                                            if (todosType && newTypes.includes(todosType)) {
-                                              newTypes = newTypes.filter(t => t !== todosType);
-                                            }
-                                          } else {
-                                            // Desmarcando um tipo específico
-                                            newTypes = newTypes.filter(t => t !== type);
-                                          }
+                                          // Desmarcando um tipo específico
+                                          newTypes = newTypes.filter(t => t !== type);
                                         }
-                                        
-                                        console.log(`Atualizando tipos de veículo: ${newTypes.join(', ')}`);
-                                        setSelectedVehicleTypes([...newTypes]);
-                                        form.setValue("vehicleType", newTypes.length > 0 ? newTypes[0] : "");
-                                        form.setValue("vehicleTypesSelected", newTypes.join(","));
-                                      }}
-                                    />
-                                    <label 
-                                      htmlFor={`vehicle-type-${type}`}
-                                      className="text-sm font-medium cursor-pointer"
-                                    >
-                                      {displayName}
-                                    </label>
-                                  </div>
-                                );
-                              })}
-                            </div>
+                                      }
+                                      
+                                      console.log(`Atualizando tipos de veículo: ${newTypes.join(', ')}`);
+                                      setSelectedVehicleTypes([...newTypes]);
+                                      form.setValue("vehicleType", newTypes.length > 0 ? newTypes[0] : "");
+                                      form.setValue("vehicleTypesSelected", newTypes.join(","));
+                                    }}
+                                  />
+                                  <label 
+                                    htmlFor={`vehicle-type-${type}`}
+                                    className="text-sm font-medium cursor-pointer"
+                                  >
+                                    {displayName}
+                                  </label>
+                                </div>
+                              );
+                            })}
                           </div>
-                        );
-                      })()}
-                    </div>
-                    {form.formState.errors.vehicleType && (
+                        </div>
+                        
+                        {/* Médio */}
+                        <div className="mb-6">
+                          <h4 className="text-sm font-semibold mb-2">Médio</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            {VEHICLE_TYPES_BY_CATEGORY[VEHICLE_CATEGORIES.MEDIO].map((type) => {
+                              const isAllOption = type.endsWith('_todos');
+                              const displayName = getVehicleTypeNameOnly(type);
+                              
+                              return (
+                                <div key={type} className="flex items-center mb-2">
+                                  <input
+                                    type="checkbox"
+                                    id={`vehicle-type-${type}`}
+                                    checked={selectedVehicleTypes.includes(type)}
+                                    style={{ 
+                                      width: '24px', 
+                                      height: '24px',
+                                      margin: '0px 8px 0px 0px'
+                                    }}
+                                    onChange={(e) => {
+                                      let newTypes = [...selectedVehicleTypes];
+                                      
+                                      if (isAllOption) {
+                                        if (e.target.checked) {
+                                          // Selecionando "Todos" - só seleciona ele
+                                          newTypes = [type];
+                                        } else {
+                                          // Desmarcando "Todos" - limpa todas as seleções
+                                          newTypes = [];
+                                        }
+                                      } else {
+                                        if (e.target.checked) {
+                                          // Selecionando um tipo específico
+                                          newTypes.push(type);
+                                          // Remove o "Todos" se estiver marcado
+                                          const todosType = VEHICLE_TYPES_BY_CATEGORY[VEHICLE_CATEGORIES.MEDIO].find(t => t.endsWith('_todos'));
+                                          if (todosType && newTypes.includes(todosType)) {
+                                            newTypes = newTypes.filter(t => t !== todosType);
+                                          }
+                                        } else {
+                                          // Desmarcando um tipo específico
+                                          newTypes = newTypes.filter(t => t !== type);
+                                        }
+                                      }
+                                      
+                                      console.log(`Atualizando tipos de veículo: ${newTypes.join(', ')}`);
+                                      setSelectedVehicleTypes([...newTypes]);
+                                      form.setValue("vehicleType", newTypes.length > 0 ? newTypes[0] : "");
+                                      form.setValue("vehicleTypesSelected", newTypes.join(","));
+                                    }}
+                                  />
+                                  <label 
+                                    htmlFor={`vehicle-type-${type}`}
+                                    className="text-sm font-medium cursor-pointer"
+                                  >
+                                    {displayName}
+                                  </label>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        
+                        {/* Pesado */}
+                        <div className="mb-4">
+                          <h4 className="text-sm font-semibold mb-2">Pesado</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            {VEHICLE_TYPES_BY_CATEGORY[VEHICLE_CATEGORIES.PESADO].map((type) => {
+                              const isAllOption = type.endsWith('_todos');
+                              const displayName = getVehicleTypeNameOnly(type);
+                              
+                              return (
+                                <div key={type} className="flex items-center mb-2">
+                                  <input
+                                    type="checkbox"
+                                    id={`vehicle-type-${type}`}
+                                    checked={selectedVehicleTypes.includes(type)}
+                                    style={{ 
+                                      width: '24px', 
+                                      height: '24px',
+                                      margin: '0px 8px 0px 0px'
+                                    }}
+                                    onChange={(e) => {
+                                      let newTypes = [...selectedVehicleTypes];
+                                      
+                                      if (isAllOption) {
+                                        if (e.target.checked) {
+                                          // Selecionando "Todos" - só seleciona ele
+                                          newTypes = [type];
+                                        } else {
+                                          // Desmarcando "Todos" - limpa todas as seleções
+                                          newTypes = [];
+                                        }
+                                      } else {
+                                        if (e.target.checked) {
+                                          // Selecionando um tipo específico
+                                          newTypes.push(type);
+                                          // Remove o "Todos" se estiver marcado
+                                          const todosType = VEHICLE_TYPES_BY_CATEGORY[VEHICLE_CATEGORIES.PESADO].find(t => t.endsWith('_todos'));
+                                          if (todosType && newTypes.includes(todosType)) {
+                                            newTypes = newTypes.filter(t => t !== todosType);
+                                          }
+                                        } else {
+                                          // Desmarcando um tipo específico
+                                          newTypes = newTypes.filter(t => t !== type);
+                                        }
+                                      }
+                                      
+                                      console.log(`Atualizando tipos de veículo: ${newTypes.join(', ')}`);
+                                      setSelectedVehicleTypes([...newTypes]);
+                                      form.setValue("vehicleType", newTypes.length > 0 ? newTypes[0] : "");
+                                      form.setValue("vehicleTypesSelected", newTypes.join(","));
+                                    }}
+                                  />
+                                  <label 
+                                    htmlFor={`vehicle-type-${type}`}
+                                    className="text-sm font-medium cursor-pointer"
+                                  >
+                                    {displayName}
+                                  </label>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                      {form.formState.errors.vehicleType && (
+                        <FormMessage>{form.formState.errors.vehicleType.message}</FormMessage>
+                      )}
+                    </FormItem>
+                  )}
+                />
+                
+                {/* Corpo do próximo campo */}
+                {form.formState.errors.vehicleType && (
                       <p className="text-sm font-medium text-destructive mt-2">
                         {form.formState.errors.vehicleType.message}
                       </p>
