@@ -854,58 +854,77 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                         const category = form.getValues("vehicleCategory");
                         if (!category) return null;
                         
-                        const vehicleTypes = VEHICLE_TYPES_BY_CATEGORY[category];
+                        // Obter os tipos de veículo para a categoria selecionada
+                        const vehicleTypesForCategory = 
+                          category === VEHICLE_CATEGORIES.LEVE ? VEHICLE_TYPES_BY_CATEGORY[VEHICLE_CATEGORIES.LEVE] :
+                          category === VEHICLE_CATEGORIES.MEDIO ? VEHICLE_TYPES_BY_CATEGORY[VEHICLE_CATEGORIES.MEDIO] :
+                          category === VEHICLE_CATEGORIES.PESADO ? VEHICLE_TYPES_BY_CATEGORY[VEHICLE_CATEGORIES.PESADO] : 
+                          [];
+                        
+                        if (vehicleTypesForCategory.length === 0) return null;
+                        
                         return (
                           <div className="mb-4">
                             <h4 className="text-sm font-semibold mb-2">
                               {getVehicleCategoryDisplay(category)}
                             </h4>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                              {vehicleTypes.map((type) => {
-                                const isTodos = type.endsWith('_todos');
+                              {vehicleTypesForCategory.map((type) => {
+                                const isAllOption = type.endsWith('_todos');
+                                const displayName = getVehicleTypeNameOnly(type);
+                                const isSelected = selectedVehicleTypes.includes(type);
+                                
                                 return (
-                                  <div key={type} className="flex items-center space-x-2">
-                                    <input 
-                                      type="checkbox"
-                                      id={`vehicle-type-${type}`}
-                                      style={{ width: '20px', height: '20px' }}
-                                      checked={selectedVehicleTypes.includes(type)}
-                                      onChange={() => {
-                                        let newSelected: string[] = [];
-                                        
-                                        if (isTodos) {
-                                          // Se for "Todos"
-                                          if (selectedVehicleTypes.includes(type)) {
-                                            newSelected = []; // Limpar tudo
-                                          } else {
-                                            newSelected = [type]; // Selecionar só "Todos"
-                                          }
+                                  <div 
+                                    key={type} 
+                                    className={`flex items-center gap-2 p-2 border rounded cursor-pointer ${
+                                      isSelected ? 'bg-blue-50 border-blue-500' : 'border-gray-200'
+                                    }`}
+                                    onClick={() => {
+                                      let updatedTypes: string[] = [];
+                                      
+                                      if (isAllOption) {
+                                        // Se for "Todos"
+                                        if (isSelected) {
+                                          // Desmarcando "Todos" - não seleciona nada
+                                          updatedTypes = [];
                                         } else {
-                                          // Se for tipo específico
-                                          if (selectedVehicleTypes.includes(type)) {
-                                            // Remover o tipo
-                                            newSelected = selectedVehicleTypes.filter(t => t !== type);
-                                          } else {
-                                            // Adicionar o tipo e remover o "Todos" se estiver marcado
-                                            newSelected = [...selectedVehicleTypes, type];
-                                            const todosType = vehicleTypes.find(t => t.endsWith('_todos'));
-                                            if (todosType && newSelected.includes(todosType)) {
-                                              newSelected = newSelected.filter(t => t !== todosType);
-                                            }
+                                          // Marcando "Todos" - seleciona apenas "Todos"
+                                          updatedTypes = [type];
+                                        }
+                                      } else {
+                                        if (isSelected) {
+                                          // Desmarcando um tipo específico
+                                          updatedTypes = selectedVehicleTypes.filter(t => t !== type);
+                                        } else {
+                                          // Marcando um tipo específico
+                                          updatedTypes = [...selectedVehicleTypes, type];
+                                          
+                                          // Remover "Todos" se existir na lista de selecionados
+                                          const allType = vehicleTypesForCategory.find(t => t.endsWith('_todos'));
+                                          if (allType && updatedTypes.includes(allType)) {
+                                            updatedTypes = updatedTypes.filter(t => t !== allType);
                                           }
                                         }
-                                        
-                                        setSelectedVehicleTypes(newSelected);
-                                        form.setValue("vehicleType", newSelected.length > 0 ? newSelected[0] : "");
-                                        form.setValue("vehicleTypesSelected", newSelected.join(","));
-                                      }}
-                                    />
-                                    <label 
-                                      htmlFor={`vehicle-type-${type}`}
-                                      className="text-sm font-medium leading-none cursor-pointer"
-                                    >
-                                      {getVehicleTypeNameOnly(type)}
-                                    </label>
+                                      }
+                                      
+                                      // Log para debug
+                                      console.log(`Atualizando tipos de veículo: ${updatedTypes.join(', ')}`);
+                                      
+                                      // Atualizar estado e campos do formulário
+                                      setSelectedVehicleTypes(updatedTypes);
+                                      form.setValue("vehicleType", updatedTypes.length > 0 ? updatedTypes[0] : "");
+                                      form.setValue("vehicleTypesSelected", updatedTypes.join(","));
+                                    }}
+                                  >
+                                    <div className={`w-5 h-5 flex-shrink-0 flex items-center justify-center border ${
+                                      isSelected ? 'bg-blue-500 border-blue-500 text-white' : 'border-gray-400 bg-white'
+                                    } rounded`}>
+                                      {isSelected && (
+                                        <Check className="h-3 w-3" />
+                                      )}
+                                    </div>
+                                    <span className="text-sm font-medium">{displayName}</span>
                                   </div>
                                 );
                               })}
@@ -1044,33 +1063,37 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                     <FormLabel>Tipos de Carroceria</FormLabel>
                     <div className="w-full border rounded-md p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
                       {Object.entries(BODY_TYPES).map(([key, value]) => (
-                        <div key={key} className="flex items-center space-x-2">
-                          <input 
-                            type="checkbox"
-                            id={`body-type-${value}`}
-                            style={{ width: '20px', height: '20px' }}
-                            checked={selectedBodyTypes.includes(value)}
-                            onChange={() => {
-                              // Lógica simplificada - apenas alterna o valor atual
-                              let newSelected: string[] = [];
-                              if (selectedBodyTypes.includes(value)) {
-                                newSelected = selectedBodyTypes.filter(t => t !== value);
-                              } else {
-                                newSelected = [...selectedBodyTypes, value];
-                              }
-                              
-                              // Atualiza o estado e os valores do formulário
-                              setSelectedBodyTypes(newSelected);
-                              form.setValue("bodyType", newSelected.length > 0 ? newSelected[0] : "");
-                              form.setValue("bodyTypesSelected", newSelected.join(","));
-                            }}
-                          />
-                          <label 
-                            htmlFor={`body-type-${value}`}
-                            className="text-sm font-medium leading-none cursor-pointer"
-                          >
-                            {getBodyTypeDisplay(value)}
-                          </label>
+                        <div 
+                          key={key} 
+                          className={`flex items-center gap-2 p-2 border rounded cursor-pointer ${
+                            selectedBodyTypes.includes(value) ? 'bg-blue-50 border-blue-500' : 'border-gray-200'
+                          }`}
+                          onClick={() => {
+                            // Lógica simplificada - apenas alterna o valor atual
+                            let newSelected: string[] = [];
+                            if (selectedBodyTypes.includes(value)) {
+                              newSelected = selectedBodyTypes.filter(t => t !== value);
+                            } else {
+                              newSelected = [...selectedBodyTypes, value];
+                            }
+                            
+                            // Atualiza o estado e os valores do formulário
+                            console.log(`Atualizando tipos de carroceria: ${newSelected.join(', ')}`);
+                            setSelectedBodyTypes([...newSelected]); // Clone para garantir nova referência
+                            form.setValue("bodyType", newSelected.length > 0 ? newSelected[0] : "");
+                            form.setValue("bodyTypesSelected", newSelected.join(","));
+                          }}
+                        >
+                          <div className={`w-5 h-5 flex-shrink-0 flex items-center justify-center border ${
+                            selectedBodyTypes.includes(value) ? 'bg-blue-500 border-blue-500 text-white' : 'border-gray-400 bg-white'
+                          } rounded`}>
+                            {selectedBodyTypes.includes(value) && (
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </div>
+                          <span className="text-sm font-medium">{getBodyTypeDisplay(value)}</span>
                         </div>
                       ))}
                     </div>
