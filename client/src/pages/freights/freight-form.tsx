@@ -1233,15 +1233,17 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                   Cancelar
                 </Button>
                 
-                {/* Novo modo de botões - sempre exibe ambos, controlando apenas desativação */}
-                <Button 
-                  type="button"
-                  variant={isViewingInReadOnlyMode ? "default" : "outline"}
-                  onClick={enableEditMode}
-                  className="mr-2"
-                >
-                  Editar Frete
-                </Button>
+                {/* Botão de editar somente para usuários autorizados */}
+                {isEditing && isViewingInReadOnlyMode && isClientAuthorized(form.getValues("clientId")) && (
+                  <Button 
+                    type="button"
+                    variant="default"
+                    onClick={enableEditMode}
+                    className="mr-2"
+                  >
+                    Editar Frete
+                  </Button>
+                )}
                 
                 <Button 
                   type="submit"
