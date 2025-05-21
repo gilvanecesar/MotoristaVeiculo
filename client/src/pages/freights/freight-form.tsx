@@ -50,7 +50,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Plus, Trash, X } from "lucide-react";
 import LocationInput from "@/components/location/location-input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/hooks/use-auth";
 import ClientSelector from "@/components/clients/client-selector";
 import { FreightDetailModal } from "@/components/freights/freight-detail-modal";
 
