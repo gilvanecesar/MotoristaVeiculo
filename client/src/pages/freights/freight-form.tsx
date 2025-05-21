@@ -149,6 +149,9 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
   const [destinations, setDestinations] = useState<DestinationFormValues[]>([]);
   const [selectedVehicleTypes, setSelectedVehicleTypes] = useState<string[]>([]);
   const [selectedBodyTypes, setSelectedBodyTypes] = useState<string[]>([]);
+  
+  // Estado para controlar se já inicializou os valores (para evitar sobrescrita)
+  const [initializedSelections, setInitializedSelections] = useState(false);
 
   const defaultValues: FreightFormValues = {
     clientId: user?.clientId || currentClient?.id || undefined, // Usar ID do cliente do usuário ou cliente atual
@@ -234,6 +237,18 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
 
     loadClients();
   }, []);
+  
+  // Inicializar as seleções de tipos de veículos e carroceria
+  useEffect(() => {
+    // Se não estiver em modo de edição, começar com arrays vazios
+    // Isso garante que o usuário escolha explicitamente seus tipos
+    if (!isEditing) {
+      console.log("Inicializando seleções com arrays vazios para novo frete");
+      setSelectedVehicleTypes([]);
+      setSelectedBodyTypes([]);
+      setInitializedSelections(true);
+    }
+  }, [isEditing]);
 
   // Atualizar modo de edição quando isEditMode mudar
   useEffect(() => {
