@@ -1031,7 +1031,7 @@ export default function FreightsPage() {
                   <Eye className="h-4 w-4 mr-2" /> Ver Página
                 </Button>
                 
-                {!((user?.profileType === 'motorista' || user?.profileType === 'driver')) && (
+                {isClientAuthorized(selectedFreight.clientId, selectedFreight.userId) && (
                   <Button 
                     variant="outline"
                     onClick={() => navigate(`/freights/${selectedFreight.id}/edit`)}
