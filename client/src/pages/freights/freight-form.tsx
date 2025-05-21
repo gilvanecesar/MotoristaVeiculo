@@ -575,21 +575,47 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
 
                 <Separator className="my-4" />
 
-                <div className="grid grid-cols-1 gap-4">
-                  {/* Opção de múltiplos destinos */}
-                  <div className="mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <FormField
+                      control={form.control}
+                      name="origin"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Cidade de Origem</FormLabel>
+                          <FormControl>
+                            <LocationInput
+                              readOnly={isViewingInReadOnlyMode}
+                              value={field.value}
+                              onChange={field.onChange}
+                              stateField="originState"
+                              stateValue={form.watch("originState")}
+                              onStateChange={(state) =>
+                                form.setValue("originState", state)
+                              }
+                            />
+                          </FormControl>
+                          {form.formState.errors.origin && (
+                            <FormMessage>
+                              {form.formState.errors.origin.message}
+                            </FormMessage>
+                          )}
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div>
                     <FormField
                       control={form.control}
                       name="hasMultipleDestinations"
                       render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 mb-4">
                           <FormControl>
-                            <input
-                              type="checkbox"
+                            <Checkbox
                               disabled={isViewingInReadOnlyMode}
                               checked={field.value}
-                              onChange={(e) => field.onChange(e.target.checked)}
-                              className="h-4 w-4 rounded-sm border border-primary"
+                              onCheckedChange={field.onChange}
                             />
                           </FormControl>
                           <div className="space-y-1 leading-none">
@@ -601,61 +627,31 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                         </FormItem>
                       )}
                     />
-                  </div>
-
-                  {/* Cidade de Origem */}
-                  <FormField
-                    control={form.control}
-                    name="origin"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Cidade de Origem</FormLabel>
-                        <FormControl>
-                          <LocationInput
-                            readOnly={isViewingInReadOnlyMode}
-                            value={field.value}
-                            onChange={field.onChange}
-                            stateField="originState"
-                            stateValue={form.watch("originState")}
-                            onStateChange={(state) =>
-                              form.setValue("originState", state)
-                            }
-                          />
-                        </FormControl>
-                        {form.formState.errors.origin && (
-                          <FormMessage>
-                            {form.formState.errors.origin.message}
-                          </FormMessage>
+                    
+                    {!hasMultipleDestinations && (
+                      <FormField
+                        control={form.control}
+                        name="destination"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Cidade de Destino</FormLabel>
+                            <FormControl>
+                              <LocationInput
+                                readOnly={isViewingInReadOnlyMode}
+                                value={field.value || ""}
+                                onChange={field.onChange}
+                                stateField="destinationState"
+                                stateValue={form.watch("destinationState")}
+                                onStateChange={(state) =>
+                                  form.setValue("destinationState", state)
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
                         )}
-                      </FormItem>
+                      />
                     )}
-                  />
-                  
-                  {/* Cidade de Destino - só aparece se não for múltiplos destinos */}
-                  {!hasMultipleDestinations && (
-                    <FormField
-                      control={form.control}
-                      name="destination"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Cidade de Destino</FormLabel>
-                          <FormControl>
-                            <LocationInput
-                              readOnly={isViewingInReadOnlyMode}
-                              value={field.value || ""}
-                              onChange={field.onChange}
-                              stateField="destinationState"
-                              stateValue={form.watch("destinationState")}
-                              onStateChange={(state) =>
-                                form.setValue("destinationState", state)
-                              }
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
                     
                     {hasMultipleDestinations && (
                       <div className="space-y-3">

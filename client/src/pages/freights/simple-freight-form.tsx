@@ -1,119 +1,153 @@
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 
+// Este é um formulário simplificado para demonstrar a funcionalidade dos checkboxes
 export default function SimpleFreightForm() {
   const [selectedVehicleTypes, setSelectedVehicleTypes] = useState<string[]>([]);
-  const [origin, setOrigin] = useState("");
-  const [destination, setDestination] = useState("");
-  const { toast } = useToast();
-  
-  // Exemplos de tipos de veículos (simplificados)
+  const [selectedBodyTypes, setSelectedBodyTypes] = useState<string[]>([]);
+
+  // Dados de exemplo
   const vehicleTypes = [
-    { id: "carreta", label: "Carreta" },
-    { id: "truck", label: "Caminhão Truck" },
-    { id: "toco", label: "Caminhão Toco" },
-    { id: "bitruck", label: "Caminhão Bitruck" },
-    { id: "vuc", label: "VUC" }
+    "Carreta 2 eixos",
+    "Carreta 3 eixos",
+    "Bitrem",
+    "Rodotrem",
+    "Truck"
   ];
-  
-  const handleVehicleTypeChange = (type: string) => {
-    setSelectedVehicleTypes(prev => {
-      if (prev.includes(type)) {
-        // Se já estiver selecionado, remove
-        return prev.filter(item => item !== type);
-      } else {
-        // Se não estiver selecionado, adiciona
-        return [...prev, type];
-      }
-    });
+
+  const bodyTypes = [
+    "Baú",
+    "Sider",
+    "Graneleiro",
+    "Tanque",
+    "Refrigerado"
+  ];
+
+  // Função para lidar com mudanças nos checkboxes de tipos de veículos
+  const handleVehicleTypeChange = (type: string, checked: boolean) => {
+    if (checked) {
+      // Adicionar à lista se o checkbox estiver marcado
+      setSelectedVehicleTypes([...selectedVehicleTypes, type]);
+    } else {
+      // Remover da lista se o checkbox estiver desmarcado
+      setSelectedVehicleTypes(selectedVehicleTypes.filter(t => t !== type));
+    }
   };
-  
+
+  // Função para lidar com mudanças nos checkboxes de tipos de carrocerias
+  const handleBodyTypeChange = (type: string, checked: boolean) => {
+    if (checked) {
+      // Adicionar à lista se o checkbox estiver marcado
+      setSelectedBodyTypes([...selectedBodyTypes, type]);
+    } else {
+      // Remover da lista se o checkbox estiver desmarcado
+      setSelectedBodyTypes(selectedBodyTypes.filter(t => t !== type));
+    }
+  };
+
+  // Submeter o formulário (apenas para demonstração)
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Mostrar dados selecionados no console para verificar
+    console.log("Tipos de veículos selecionados:", selectedVehicleTypes);
+    console.log("Tipos de carrocerias selecionados:", selectedBodyTypes);
+    
+    alert(`Veículos selecionados: ${selectedVehicleTypes.join(", ")}\nCarrocerias selecionadas: ${selectedBodyTypes.join(", ")}`);
+  };
+
   return (
-    <div className="container p-8">
-      <h1 className="text-2xl font-bold mb-6">Demonstração de Melhorias</h1>
+    <div className="container px-4 py-6">
+      <h1 className="text-2xl font-bold mb-6">Teste de Checkboxes</h1>
       
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Origem e Destino (Alinhados Verticalmente)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {/* Campos de ORIGEM E DESTINO - ALINHADOS VERTICALMENTE */}
-          <div className="grid grid-cols-1 gap-6">
-            <div>
-              <Label htmlFor="origin">Cidade de Origem</Label>
-              <Input 
-                id="origin"
-                value={origin}
-                onChange={(e) => setOrigin(e.target.value)}
-                placeholder="Digite a cidade de origem"
-              />
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Tipos de Veículos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {vehicleTypes.map((type) => (
+                <div key={type} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id={`vehicle-type-${type}`}
+                    checked={selectedVehicleTypes.includes(type)}
+                    onChange={(e) => handleVehicleTypeChange(type, e.target.checked)}
+                    className="h-4 w-4 rounded-sm border border-primary"
+                  />
+                  <label
+                    htmlFor={`vehicle-type-${type}`}
+                    className="text-sm font-medium leading-none cursor-pointer"
+                  >
+                    {type}
+                  </label>
+                </div>
+              ))}
             </div>
-            
-            <div>
-              <Label htmlFor="destination">Cidade de Destino</Label>
-              <Input 
-                id="destination"
-                value={destination}
-                onChange={(e) => setDestination(e.target.value)}
-                placeholder="Digite a cidade de destino"
-              />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Tipos de Carrocerias</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {bodyTypes.map((type) => (
+                <div key={type} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id={`body-type-${type}`}
+                    checked={selectedBodyTypes.includes(type)}
+                    onChange={(e) => handleBodyTypeChange(type, e.target.checked)}
+                    className="h-4 w-4 rounded-sm border border-primary"
+                  />
+                  <label
+                    htmlFor={`body-type-${type}`}
+                    className="text-sm font-medium leading-none cursor-pointer"
+                  >
+                    {type}
+                  </label>
+                </div>
+              ))}
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+
+        <div className="flex justify-end">
+          <Button type="submit">
+            Testar Seleção
+          </Button>
+        </div>
+      </form>
       
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Tipo de Veículo (com checkboxes nativos HTML)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-            {vehicleTypes.map(type => (
-              <div key={type.id} className="flex items-center space-x-2">
-                <input 
-                  type="checkbox"
-                  id={`vehicle-type-${type.id}`}
-                  checked={selectedVehicleTypes.includes(type.id)}
-                  onChange={() => handleVehicleTypeChange(type.id)}
-                  className="h-4 w-4 rounded-sm border border-primary"
-                />
-                <Label 
-                  htmlFor={`vehicle-type-${type.id}`}
-                  className="text-sm font-medium leading-none cursor-pointer"
-                >
-                  {type.label}
-                </Label>
-              </div>
-            ))}
-          </div>
-          
-          <div className="mt-4 p-4 border rounded-md">
-            <h3 className="font-medium mb-2">Veículos selecionados:</h3>
-            {selectedVehicleTypes.length > 0 ? (
-              <ul className="list-disc pl-5">
-                {selectedVehicleTypes.map(typeId => {
-                  const vehicle = vehicleTypes.find(v => v.id === typeId);
-                  return <li key={typeId}>{vehicle?.label}</li>;
-                })}
-              </ul>
+      <div className="mt-8">
+        <h2 className="text-lg font-semibold mb-2">Selecionados:</h2>
+        <div className="p-4 border rounded-lg">
+          <h3 className="font-medium">Tipos de Veículos:</h3>
+          <ul className="list-disc pl-5 mb-4">
+            {selectedVehicleTypes.length === 0 ? (
+              <li className="text-muted-foreground">Nenhum selecionado</li>
             ) : (
-              <p className="text-gray-500">Nenhum veículo selecionado</p>
+              selectedVehicleTypes.map(type => (
+                <li key={type}>{type}</li>
+              ))
             )}
-          </div>
-        </CardContent>
-      </Card>
-      
-      <div className="flex gap-4 mt-6">
-        <Button onClick={() => {
-          toast({
-            title: "Demonstração de Melhorias",
-            description: "Veículos selecionados: " + selectedVehicleTypes.length,
-          })
-        }}>Testar Seleção</Button>
+          </ul>
+          
+          <h3 className="font-medium">Tipos de Carrocerias:</h3>
+          <ul className="list-disc pl-5">
+            {selectedBodyTypes.length === 0 ? (
+              <li className="text-muted-foreground">Nenhuma selecionada</li>
+            ) : (
+              selectedBodyTypes.map(type => (
+                <li key={type}>{type}</li>
+              ))
+            )}
+          </ul>
+        </div>
       </div>
     </div>
   );
