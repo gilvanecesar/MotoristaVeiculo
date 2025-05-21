@@ -30,7 +30,11 @@ export default function SimpleFreightEdit() {
 
   // Configurar formulário com Zod
   const form = useForm({
-    resolver: zodResolver(insertFreightSchema),
+    resolver: zodResolver(insertFreightSchema.omit({ 
+      // Omitir campos complexos que podem causar problemas de validação
+      vehicleTypesSelected: true,
+      bodyTypesSelected: true 
+    })),
     defaultValues: {
       clientId: 0,
       origin: "",
@@ -128,19 +132,28 @@ export default function SimpleFreightEdit() {
       data.freightValue = data.freightValue.replace(/\./g, '').replace(',', '.');
     }
     
-    // Configurar ID do usuário
-    data.userId = user?.id;
+    // Certifique-se de manter os campos obrigatórios
+    const freightData = {
+      ...data,
+      userId: user?.id,
+      clientId: parseInt(data.clientId) || form.getValues("clientId"),
+      hasMultipleDestinations: hasMultipleDestinations
+    };
+    
+    console.log("Dados formatados para envio:", freightData);
     
     try {
       // Enviar atualização para a API
       const response = await apiRequest(
         "PUT",
         `/api/freights/${freightId}`,
-        data
+        freightData
       );
       
       if (!response.ok) {
-        throw new Error("Erro ao atualizar frete");
+        const errorText = await response.text();
+        console.error("Erro completo:", errorText);
+        throw new Error(`Erro ao atualizar frete: ${response.status} ${errorText}`);
       }
       
       const updatedFreight = await response.json();
