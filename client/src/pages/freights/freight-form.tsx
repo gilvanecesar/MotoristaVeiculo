@@ -47,6 +47,7 @@ import {
 } from "@/components/ui/toggle-group";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
+import { CustomCheckbox } from "@/components/ui/custom-checkbox";
 import { ArrowLeft, Plus, Trash, X } from "lucide-react";
 import { Truck } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
@@ -845,14 +846,12 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                             </h4>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                               {vehicleTypes.map((type) => (
-                                <div key={type} className="flex items-center space-x-2">
-                                  <Checkbox 
+                                <div key={type}>
+                                  <CustomCheckbox 
                                     id={`vehicle-type-${type}`}
                                     checked={selectedVehicleTypes.includes(type)}
-                                    onCheckedChange={(checked) => {
-                                      // Converter para booleano explícito para garantir o funcionamento adequado
-                                      const isChecked = checked === true;
-                                      
+                                    label={getVehicleTypeNameOnly(type)}
+                                    onChange={(isChecked) => {
                                       if (isChecked) {
                                         // Adicionar o tipo ao array de tipos selecionados
                                         const newSelected = [...selectedVehicleTypes, type];
@@ -880,12 +879,6 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                                       }
                                     }}
                                   />
-                                  <label 
-                                    htmlFor={`vehicle-type-${type}`} 
-                                    className="text-sm font-medium leading-none cursor-pointer"
-                                  >
-                                    {getVehicleTypeNameOnly(type)}
-                                  </label>
                                 </div>
                               ))}
                             </div>
@@ -1023,14 +1016,12 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                     <FormLabel>Tipos de Carroceria</FormLabel>
                     <div className="w-full border rounded-md p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
                       {Object.entries(BODY_TYPES).map(([key, value]) => (
-                        <div key={key} className="flex items-center space-x-2">
-                          <Checkbox 
+                        <div key={key}>
+                          <CustomCheckbox 
                             id={`body-type-${key}`}
                             checked={selectedBodyTypes.includes(value)}
-                            onCheckedChange={(checked) => {
-                              // Converter para booleano explícito para garantir o funcionamento adequado
-                              const isChecked = checked === true;
-                              
+                            label={getBodyTypeDisplay(value)}
+                            onChange={(isChecked) => {
                               if (isChecked) {
                                 // Adicionar o tipo ao array de tipos selecionados
                                 const newSelected = [...selectedBodyTypes, value];
@@ -1054,12 +1045,6 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                               }
                             }}
                           />
-                          <label 
-                            htmlFor={`body-type-${key}`} 
-                            className="text-sm font-medium leading-none cursor-pointer"
-                          >
-                            {getBodyTypeDisplay(value)}
-                          </label>
                         </div>
                       ))}
                     </div>
