@@ -20,6 +20,27 @@ type AuthContextType = {
   isClientAuthorized: (clientId: number | null) => boolean;
 };
 
+export const useAuth = () => {
+  // Hook simplificado para evitar dependência circular
+  const { data: user } = useQuery({
+    queryKey: ["/api/user"],
+    queryFn: async () => {
+      try {
+        const response = await apiRequest("GET", "/api/user");
+        if (response.ok) {
+          return await response.json();
+        }
+        return null;
+      } catch (error) {
+        console.error("Erro ao carregar usuário:", error);
+        return null;
+      }
+    }
+  });
+
+  return { user: user || null };
+};
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {

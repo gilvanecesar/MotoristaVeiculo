@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Loader2, ExternalLink } from "lucide-react";
-// Removida importação de useAuth para evitar dependência circular
+import { useAuth } from "@/lib/auth-context";
 import {
   Dialog,
   DialogContent,
