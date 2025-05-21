@@ -1,7 +1,6 @@
 import React from 'react';
 import { VEHICLE_CATEGORIES, VEHICLE_TYPES_BY_CATEGORY, getVehicleTypeNameOnly } from '@/lib/utils/vehicle-types';
 
-// Componente para checkboxes de tipos de veículo
 function VehicleTypesCheckboxes({
   selectedVehicleTypes,
   onChange,
@@ -42,10 +41,10 @@ function VehicleTypesCheckboxes({
                         newTypes = [];
                       }
                     } else {
+                      // Opção específica
                       if (e.target.checked) {
-                        // Selecionando um tipo específico
+                        // Adicionando tipo específico - remover o "todos" se estiver presente
                         newTypes.push(type);
-                        // Remove o "Todos" se estiver marcado
                         const todosType = VEHICLE_TYPES_BY_CATEGORY[VEHICLE_CATEGORIES.LEVE].find(t => t.endsWith('_todos'));
                         if (todosType && newTypes.includes(todosType)) {
                           newTypes = newTypes.filter(t => t !== todosType);
@@ -103,10 +102,10 @@ function VehicleTypesCheckboxes({
                         newTypes = [];
                       }
                     } else {
+                      // Opção específica
                       if (e.target.checked) {
-                        // Selecionando um tipo específico
+                        // Adicionando tipo específico - remover o "todos" se estiver presente
                         newTypes.push(type);
-                        // Remove o "Todos" se estiver marcado
                         const todosType = VEHICLE_TYPES_BY_CATEGORY[VEHICLE_CATEGORIES.MEDIO].find(t => t.endsWith('_todos'));
                         if (todosType && newTypes.includes(todosType)) {
                           newTypes = newTypes.filter(t => t !== todosType);
@@ -164,10 +163,10 @@ function VehicleTypesCheckboxes({
                         newTypes = [];
                       }
                     } else {
+                      // Opção específica
                       if (e.target.checked) {
-                        // Selecionando um tipo específico
+                        // Adicionando tipo específico - remover o "todos" se estiver presente
                         newTypes.push(type);
-                        // Remove o "Todos" se estiver marcado
                         const todosType = VEHICLE_TYPES_BY_CATEGORY[VEHICLE_CATEGORIES.PESADO].find(t => t.endsWith('_todos'));
                         if (todosType && newTypes.includes(todosType)) {
                           newTypes = newTypes.filter(t => t !== todosType);
