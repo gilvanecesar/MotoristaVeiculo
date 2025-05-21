@@ -172,18 +172,18 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
     originState: "",
     destination: "",
     destinationState: "",
-    cargoType: "completa",
-    needsTarp: "nao",
+    cargoType: "",
+    needsTarp: "",
     productType: "",
     cargoWeight: "", // Iniciando vazio para forçar o usuário a preencher
     vehicleCategory: "", // Iniciando vazio - nenhuma categoria selecionada por padrão
     vehicleType: "", // Iniciando vazio - nenhum tipo selecionado por padrão
     bodyType: "", // Iniciando vazio - nenhum tipo de carroceria selecionado por padrão
     freightValue: "", // Iniciando vazio para forçar o usuário a preencher
-    tollOption: TOLL_OPTIONS.INCLUSO,
+    tollOption: "",
     paymentMethod: "",
     observations: "",
-    status: "aberto",
+    status: "",
     contactName: "",
     contactPhone: "",
   };
@@ -414,7 +414,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
         // Garantir que os campos numéricos sejam enviados como string e com valores válidos
         cargoWeight: data.cargoWeight ? String(data.cargoWeight) : "",
         freightValue: data.freightValue ? String(data.freightValue) : "",
-        // Garantir que status seja enviado
+        // Garantir que status seja enviado com valor padrão "aberto" se não for selecionado
         status: data.status || "aberto",
         // Usar o primeiro tipo de veículo selecionado como principal
         vehicleType: selectedVehicleTypes[0] || data.vehicleType,
