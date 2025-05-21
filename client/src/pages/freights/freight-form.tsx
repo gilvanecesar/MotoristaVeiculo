@@ -861,10 +861,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                                     id={`vehicle-type-${type}`}
                                     checked={selectedVehicleTypes.includes(type)}
                                     onCheckedChange={(checked) => {
-                                      // Converter para booleano explícito para garantir o funcionamento adequado
-                                      const isChecked = checked === true;
-                                      
-                                      if (isChecked) {
+                                      if (checked) {
                                         // Adicionar o tipo ao array de tipos selecionados
                                         const newSelected = [...selectedVehicleTypes, type];
                                         setSelectedVehicleTypes(newSelected);
@@ -875,6 +872,8 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                                         
                                         // Atualiza o campo vehicleTypesSelected no formulário
                                         form.setValue("vehicleTypesSelected", newSelected.join(","));
+                                        
+                                        console.log("Veículo selecionado:", type, "Array atualizado:", newSelected);
                                       } else {
                                         // Remover o tipo do array de tipos selecionados
                                         const newSelected = selectedVehicleTypes.filter(t => t !== type);
@@ -888,6 +887,8 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                                         
                                         // Atualiza o campo vehicleTypesSelected no formulário
                                         form.setValue("vehicleTypesSelected", newSelected.join(","));
+                                        
+                                        console.log("Veículo removido:", type, "Array atualizado:", newSelected);
                                       }
                                     }}
                                   />
