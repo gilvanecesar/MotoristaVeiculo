@@ -993,7 +993,6 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                         <NumberInput 
                           {...field} 
                           placeholder="0" 
-                          showControls
                           min={0}
                           step={50}
                         />
@@ -1011,7 +1010,6 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                         <NumberInput 
                           {...field} 
                           placeholder="0.00" 
-                          showControls 
                           min={0}
                           step={100}
                         />
@@ -1040,8 +1038,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                           </FormControl>
                           <SelectContent>
                             <SelectItem value={TOLL_OPTIONS.INCLUSO}>Incluso no Valor</SelectItem>
-                            <SelectItem value={TOLL_OPTIONS.NAO_INCLUSO}>Não Incluso</SelectItem>
-                            <SelectItem value={TOLL_OPTIONS.ADIANTADO}>Adiantado</SelectItem>
+                            <SelectItem value={TOLL_OPTIONS.A_PARTE}>Não Incluso (à parte)</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
