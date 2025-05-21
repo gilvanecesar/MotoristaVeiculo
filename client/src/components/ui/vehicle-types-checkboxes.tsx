@@ -41,10 +41,10 @@ function VehicleTypesCheckboxes({
                         newTypes = [];
                       }
                     } else {
-                      // Opção específica
                       if (e.target.checked) {
-                        // Adicionando tipo específico - remover o "todos" se estiver presente
+                        // Selecionando um tipo específico
                         newTypes.push(type);
+                        // Remove o "Todos" se estiver marcado
                         const todosType = VEHICLE_TYPES_BY_CATEGORY[VEHICLE_CATEGORIES.LEVE].find(t => t.endsWith('_todos'));
                         if (todosType && newTypes.includes(todosType)) {
                           newTypes = newTypes.filter(t => t !== todosType);
@@ -102,10 +102,10 @@ function VehicleTypesCheckboxes({
                         newTypes = [];
                       }
                     } else {
-                      // Opção específica
                       if (e.target.checked) {
-                        // Adicionando tipo específico - remover o "todos" se estiver presente
+                        // Selecionando um tipo específico
                         newTypes.push(type);
+                        // Remove o "Todos" se estiver marcado
                         const todosType = VEHICLE_TYPES_BY_CATEGORY[VEHICLE_CATEGORIES.MEDIO].find(t => t.endsWith('_todos'));
                         if (todosType && newTypes.includes(todosType)) {
                           newTypes = newTypes.filter(t => t !== todosType);
@@ -163,10 +163,10 @@ function VehicleTypesCheckboxes({
                         newTypes = [];
                       }
                     } else {
-                      // Opção específica
                       if (e.target.checked) {
-                        // Adicionando tipo específico - remover o "todos" se estiver presente
+                        // Selecionando um tipo específico
                         newTypes.push(type);
+                        // Remove o "Todos" se estiver marcado
                         const todosType = VEHICLE_TYPES_BY_CATEGORY[VEHICLE_CATEGORIES.PESADO].find(t => t.endsWith('_todos'));
                         if (todosType && newTypes.includes(todosType)) {
                           newTypes = newTypes.filter(t => t !== todosType);
