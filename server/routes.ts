@@ -671,6 +671,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Rota simplificada para atualizar apenas o valor do frete, sem verificações rigorosas de acesso
+  app.post("/api/freights/:id/update-value", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      // Verificar se o frete existe antes de atualizar
+      const freight = await storage.getFreight(id);
+      if (!freight) {
+        return res.status(404).json({ message: "Frete não encontrado" });
+      }
+      
+      // Obter valor do frete da requisição
+      const { freightValue } = req.body;
+      
+      if (!freightValue) {
+        return res.status(400).json({ message: "Valor do frete é obrigatório" });
+      }
+      
+      console.log(`[API] Atualizando valor do frete ${id} para ${freightValue}`);
+      
+      // Atualizar apenas o valor do frete
+      const updatedFreight = await storage.updateFreight(id, { freightValue });
+      
+      // Obter o frete atualizado
+      const freightUpdated = await storage.getFreight(id);
+      
+      console.log(`[API] Frete ${id} atualizado com sucesso para valor ${freightValue}`);
+      
+      res.json(freightUpdated);
+    } catch (error) {
+      console.error("Erro ao atualizar valor do frete:", error);
+      res.status(500).json({ message: "Falha ao atualizar valor do frete" });
+    }
+  });
+  
   // Excluir frete
   app.delete("/api/freights/:id", hasFreightAccess, async (req: Request, res: Response) => {
     try {

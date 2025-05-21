@@ -84,11 +84,11 @@ export default function ValorFreteEdit() {
         userId: user?.id || originalFreight.userId
       };
       
-      // Enviar requisição para atualizar apenas o valor do frete
+      // Enviar requisição para rota simplificada de atualização de valor
       const response = await apiRequest(
-        "PUT",
-        `/api/freights/${freightId}`,
-        updatedData
+        "POST",
+        `/api/freights/${freightId}/update-value`,
+        { freightValue: valorNumerico }
       );
       
       if (!response.ok) {
