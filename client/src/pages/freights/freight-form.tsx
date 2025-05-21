@@ -127,18 +127,30 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
   // Simplificando a lógica sem useClientAuth para evitar dependências circulares
   const currentClient = null; // Não precisamos do cliente atual para motoristas
   
-  // Função simplificada para verificar autorização
-  const isClientAuthorized = (clientId: number | null) => {
+  // Função para verificar autorização baseado no usuário que criou o frete
+  const isClientAuthorized = (clientId: number | null, freightUserId?: number | null) => {
     // Motoristas não podem editar/excluir fretes
     if (user?.profileType === 'motorista' || user?.profileType === 'driver') {
       return false;
     }
+    
     // Administradores têm acesso total
     if (user?.profileType === 'admin' || user?.profileType === 'administrador') {
       return true;
     }
-    // Para outros perfis, verifica se o frete pertence ao cliente do usuário
-    return user?.clientId === clientId;
+    
+    // Verificação primária: o usuário é o criador do frete?
+    if (freightUserId && user?.id === freightUserId) {
+      return true;
+    }
+    
+    // Verificação secundária para compatibilidade: cliente associado
+    // Se não houver userId no frete, usa a regra do cliente
+    if (!freightUserId && user?.clientId === clientId) {
+      return true;
+    }
+    
+    return false;
   };
 
   const [isLoadingFreight, setIsLoadingFreight] = useState(isEditing);
@@ -1234,7 +1246,10 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                 </Button>
                 
                 {/* Botão de editar somente para usuários autorizados */}
-                {isEditing && isViewingInReadOnlyMode && isClientAuthorized(form.getValues("clientId")) && (
+                {isEditing && isViewingInReadOnlyMode && isClientAuthorized(
+                  Number(form.getValues("clientId")), 
+                  form.getValues("userId") || null
+                ) && (
                   <Button 
                     type="button"
                     variant="default"

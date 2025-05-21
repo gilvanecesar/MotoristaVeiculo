@@ -43,18 +43,30 @@ export default function FreightDetailPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
-  // Substituindo useClientAuth com uma verificação simplificada
-  const isClientAuthorized = (clientId: number | null) => {
+  // Função para verificar autorização baseado no usuário que criou o frete
+  const isClientAuthorized = (clientId: number | null, freightUserId?: number | null) => {
     // Motoristas não podem editar/excluir fretes
     if (user?.profileType === 'motorista' || user?.profileType === 'driver') {
       return false;
     }
+    
     // Administradores têm acesso total
     if (user?.profileType === 'admin' || user?.profileType === 'administrador') {
       return true;
     }
-    // Para outros perfis, verifica se o frete pertence ao cliente do usuário
-    return user?.clientId === clientId;
+    
+    // Verificação primária: o usuário é o criador do frete?
+    if (freightUserId && user?.id === freightUserId) {
+      return true;
+    }
+    
+    // Verificação secundária para compatibilidade: cliente associado
+    // Se não houver userId no frete, usa a regra do cliente
+    if (!freightUserId && user?.clientId === clientId) {
+      return true;
+    }
+    
+    return false;
   };
   const freightId = params?.id;
 
@@ -183,7 +195,7 @@ export default function FreightDetailPage() {
           </Button>
           
           <div className="flex gap-2">
-            {isClientAuthorized(freight.clientId) && (
+            {isClientAuthorized(freight.clientId, freight.userId) && (
               <Button 
                 variant="outline"
                 onClick={() => navigate(`/freights/${freight.id}/edit`)}
