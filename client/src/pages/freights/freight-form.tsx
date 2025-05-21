@@ -637,10 +637,12 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-start space-x-3 space-y-0 mb-4">
                           <FormControl>
-                            <Checkbox
+                            <input
+                              type="checkbox"
                               disabled={isViewingInReadOnlyMode}
                               checked={field.value}
-                              onCheckedChange={field.onChange}
+                              onChange={(e) => field.onChange(e.target.checked)}
+                              className="h-4 w-4 rounded-sm border border-primary"
                             />
                           </FormControl>
                           <div className="space-y-1 leading-none">
