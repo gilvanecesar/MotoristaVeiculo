@@ -988,15 +988,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Obter assinaturas regulares do banco de dados
       const subscriptions = await storage.getSubscriptions();
+      console.log("[ANÁLISE MERCADO PAGO] Assinaturas regulares:", subscriptions.length);
       
       // Obter pagamentos do Mercado Pago que representam assinaturas
       const allPayments = await storage.getAllPayments();
+      console.log("[ANÁLISE MERCADO PAGO] Total de pagamentos:", allPayments.length);
+      console.log("[ANÁLISE MERCADO PAGO] Pagamentos do Mercado Pago:", 
+        allPayments.filter(p => p.paymentMethod === 'mercadopago').length);
+      console.log("[ANÁLISE MERCADO PAGO] Pagamentos aprovados do Mercado Pago:", 
+        allPayments.filter(p => p.paymentMethod === 'mercadopago' && p.status === 'approved').length);
+        
       const mercadoPagoPayments = allPayments.filter(p => 
         p.paymentMethod === 'mercadopago' && 
         p.status === 'approved' &&
         // Verificar pagamentos que não estão associados a uma assinatura existente
         !subscriptions.some(s => s.id === p.subscriptionId)
       );
+      
+      console.log("[ANÁLISE MERCADO PAGO] Pagamentos do Mercado Pago que serão convertidos em assinaturas:", 
+        mercadoPagoPayments.length);
       
       // Converter pagamentos do Mercado Pago para o formato de assinatura
       const mercadoPagoSubscriptions = mercadoPagoPayments.map(payment => {
@@ -1032,6 +1042,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Combinar assinaturas regulares com assinaturas do Mercado Pago
       const allSubscriptions = [...subscriptions, ...mercadoPagoSubscriptions];
+      
+      console.log("[ANÁLISE MERCADO PAGO] Total de assinaturas enviadas para o frontend:", allSubscriptions.length);
+      console.log("[ANÁLISE MERCADO PAGO] Assinaturas convertidas do Mercado Pago:", mercadoPagoSubscriptions.length);
       
       res.json(allSubscriptions);
     } catch (error) {
