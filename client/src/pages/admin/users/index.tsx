@@ -93,6 +93,7 @@ export default function AdminUsersPage() {
   const [selectedProfileType, setSelectedProfileType] = useState("");
   const [resetPasswordDialogOpen, setResetPasswordDialogOpen] = useState(false);
   const [newPassword, setNewPassword] = useState("");
+  const [deleteUserDialogOpen, setDeleteUserDialogOpen] = useState(false);
   
   // Hooks de consulta e mutação - IMPORTANTE: todos os hooks precisam estar nesta seção
   // e nunca dentro de condicionais
@@ -422,6 +423,14 @@ export default function AdminUsersPage() {
                             className="whitespace-nowrap"
                           >
                             Redefinir Senha
+                          </Button>
+                          <Button 
+                            variant="destructive" 
+                            size="sm" 
+                            onClick={() => openDeleteUserDialog(user)}
+                            className="whitespace-nowrap"
+                          >
+                            Excluir Usuário
                           </Button>
                         </div>
                       </div>
