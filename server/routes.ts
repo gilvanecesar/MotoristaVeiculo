@@ -605,6 +605,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const destinations = freightData.destinations || [];
       delete freightData.destinations;
       
+      // Garantir que as datas estejam no formato correto ou sejam removidas
+      if (freightData.expirationDate && typeof freightData.expirationDate === 'string') {
+        try {
+          freightData.expirationDate = new Date(freightData.expirationDate);
+        } catch (error) {
+          delete freightData.expirationDate;
+        }
+      }
+      
+      if (freightData.createdAt && typeof freightData.createdAt === 'string') {
+        try {
+          freightData.createdAt = new Date(freightData.createdAt);
+        } catch (error) {
+          delete freightData.createdAt;
+        }
+      }
+      
+      // Remover campos que podem causar problemas na atualização
+      delete freightData.id; // Evita conflito com o ID na rota
+      
+      console.log("Dados para atualização de frete:", { 
+        id, 
+        expirationDate: freightData.expirationDate,
+        createdAt: freightData.createdAt
+      });
+      
       // Atualizar dados do frete
       const updatedFreight = await storage.updateFreight(id, freightData);
       
