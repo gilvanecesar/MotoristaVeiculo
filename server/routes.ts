@@ -574,11 +574,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Remover pontos de milhares e substituir vírgula por ponto para o formato padrão do banco
         valueStr = valueStr.replace(/\./g, '').replace(',', '.');
         
-        // Converter para número para garantir formato correto
-        let numValue = parseFloat(valueStr);
+        // Converter para número com formatação adequada
+        // Verificar se o valor parece estar no formato com centavos ou se precisa converter
+        let numValue;
         
-        // Para manter formato consistente
-        freightData.freightValue = numValue.toString();
+        // Se o valor contém ponto decimal, presume-se que já esteja no formato correto
+        if (valueStr.includes('.')) {
+          numValue = parseFloat(valueStr);
+        } else {
+          // Verificar o tamanho da string para determinar se precisa de conversão
+          if (valueStr.length > 2) {
+            // Dividir em parte inteira e decimal
+            const intPart = valueStr.slice(0, -2) || '0';
+            const decPart = valueStr.slice(-2);
+            numValue = parseFloat(`${intPart}.${decPart}`);
+          } else {
+            // Número pequeno, provavelmente já está no formato correto
+            numValue = parseFloat(valueStr);
+          }
+        }
+        
+        // Para manter o formato com 2 casas decimais como string
+        freightData.freightValue = numValue.toFixed(2);
         
         console.log("Valor do frete formatado (criação):", freightData.freightValue);
       }
@@ -647,11 +664,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Remover pontos de milhares e substituir vírgula por ponto para o formato padrão do banco
         valueStr = valueStr.replace(/\./g, '').replace(',', '.');
         
-        // Converter para número para remover zeros à direita desnecessários
-        let numValue = parseFloat(valueStr);
+        // Converter para número com formatação adequada
+        // Verificar se o valor parece estar no formato com centavos ou se precisa converter
+        let numValue;
         
-        // Para manter no máximo 2 casas decimais
-        freightData.freightValue = numValue.toString();
+        // Se o valor contém ponto decimal, presume-se que já esteja no formato correto
+        if (valueStr.includes('.')) {
+          numValue = parseFloat(valueStr);
+        } else {
+          // Verificar o tamanho da string para determinar se precisa de conversão
+          if (valueStr.length > 2) {
+            // Provavelmente está em centavos, manter como está (ex: 3800.00 -> 3800.00)
+            const intPart = valueStr.slice(0, -2) || '0';
+            const decPart = valueStr.slice(-2);
+            numValue = parseFloat(`${intPart}.${decPart}`);
+          } else {
+            // Número pequeno, provavelmente já está no formato correto
+            numValue = parseFloat(valueStr);
+          }
+        }
+        
+        // Para manter o formato com 2 casas decimais como string
+        freightData.freightValue = numValue.toFixed(2);
         
         console.log("Valor do frete formatado:", freightData.freightValue);
       }
