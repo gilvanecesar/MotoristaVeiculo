@@ -1166,9 +1166,18 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                 </Button>
                 <Button 
                   type="button"
-                  onClick={() => {
+                  onClick={async () => {
                     console.log("Botão de submissão clicado diretamente");
-                    form.handleSubmit(onSubmit)();
+                    try {
+                      await form.handleSubmit(async (data) => {
+                        await onSubmit(data);
+                        // Redireciona para a lista de fretes após salvar com sucesso
+                        navigate("/freights");
+                      })();
+                    } catch (error) {
+                      console.error("Erro ao salvar:", error);
+                      // O toast de erro já é exibido na função onSubmit
+                    }
                   }}
                 >
                   {isEditing ? "Salvar Edição" : "Criar Frete"}
