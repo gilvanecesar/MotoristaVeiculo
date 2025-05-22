@@ -376,7 +376,14 @@ export default function ClientForm() {
       // ou volta para a página de clientes se estiver editando
       if (!isEditing) {
         // Se for um novo cliente, redireciona para a página de pagamento
-        navigate("/subscribe/fixed");
+        toast({
+          title: "Redirecionando para pagamento",
+          description: "Por favor, escolha seu plano para ativar o acesso completo."
+        });
+        // Curto atraso para garantir que o toast seja exibido
+        setTimeout(() => {
+          navigate("/subscribe/fixed");
+        }, 1000);
       } else {
         // Se estiver editando, volta para a lista de clientes
         navigate("/clients");
