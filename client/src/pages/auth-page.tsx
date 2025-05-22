@@ -215,14 +215,14 @@ export default function AuthPage() {
     };
 
     registerMutation.mutate(registerData, {
-      onSuccess: () => {
+      onSuccess: (userData) => {
         toast({
           title: "Conta criada com sucesso",
-          description: "Para continuar, selecione um plano de assinatura",
+          description: "Por favor, complete o cadastro do seu cliente",
         });
         
-        // Redireciona para a página fixa de assinatura do site
-        window.location.href = "https://querofretes.com.br/subscribe/fixed";
+        // Redireciona para a página de cadastro de cliente
+        navigate("/clients/new");
       },
     });
   };

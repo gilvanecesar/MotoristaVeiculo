@@ -284,29 +284,30 @@ export default function ClientForm() {
       // Log para depuração
       console.log("Enviando dados do cliente:", data);
       
-      // Verificar campos obrigatórios manualmente
-      if (!data.name) {
-        toast({
-          title: "Erro de validação",
-          description: "O nome é obrigatório",
-          variant: "destructive"
-        });
-        return;
-      }
+      // Lista de campos obrigatórios
+      const requiredFields = [
+        { name: 'name', label: 'Nome/Razão Social' },
+        { name: 'email', label: 'E-mail' },
+        { name: 'cnpj', label: 'CNPJ' },
+        { name: 'phone', label: 'Telefone' },
+        { name: 'street', label: 'Endereço' },
+        { name: 'number', label: 'Número' },
+        { name: 'neighborhood', label: 'Bairro' },
+        { name: 'city', label: 'Cidade' },
+        { name: 'state', label: 'Estado' },
+        { name: 'zipcode', label: 'CEP' },
+        { name: 'contactName', label: 'Nome do Contato' },
+        { name: 'contactPhone', label: 'Telefone do Contato' }
+      ];
       
-      if (!data.email) {
-        toast({
-          title: "Erro de validação",
-          description: "O email é obrigatório",
-          variant: "destructive"
-        });
-        return;
-      }
+      // Verificar todos os campos obrigatórios
+      const missingFields = requiredFields.filter(field => !data[field.name]);
       
-      if (!data.cnpj) {
+      if (missingFields.length > 0) {
+        const missingLabels = missingFields.map(field => field.label).join(', ');
         toast({
-          title: "Erro de validação",
-          description: "O CNPJ é obrigatório",
+          title: "Campos obrigatórios não preenchidos",
+          description: `Por favor, preencha os seguintes campos: ${missingLabels}`,
           variant: "destructive"
         });
         return;
@@ -371,8 +372,15 @@ export default function ClientForm() {
       queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
       
-      // Redireciona para a página de clientes
-      navigate("/clients");
+      // Redireciona para a página de pagamento se estiver criando um novo cliente
+      // ou volta para a página de clientes se estiver editando
+      if (!isEditing) {
+        // Se for um novo cliente, redireciona para a página de pagamento
+        navigate("/subscribe/fixed");
+      } else {
+        // Se estiver editando, volta para a lista de clientes
+        navigate("/clients");
+      }
     } catch (error) {
       console.error("Error saving client:", error);
       toast({

@@ -122,13 +122,23 @@ export default function Navigation() {
   menuItems.push(navItems[0]); // Home
   
   if (user) {
-    // Menus baseados no tipo de perfil
+    // Verificar se a assinatura está ativa ou se o usuário é motorista (que tem acesso gratuito)
+    const hasActiveSubscription = user.subscriptionActive || isDriver;
+    
+    // Se for admin, tem acesso a tudo independente de pagamento
     if (isAdmin) {
       // Admins veem tudo
       menuItems = [...navItems];
       // Adicionamos os menus administrativos
       menuItems.push(financeMenuItem, usersMenuItem);
-    } else if (isDriver) {
+    } 
+    // Se não tiver assinatura ativa (exceto motoristas), mostra apenas o menu home
+    else if (!hasActiveSubscription) {
+      menuItems = [navItems[0]]; // Apenas Home
+      console.log("Usuário sem assinatura ativa - mostrando apenas menu Home");
+    }
+    // Se for motorista, tem acesso específico
+    else if (isDriver) {
       // Motoristas veem home, fretes disponíveis, seus dados e seus veículos
       menuItems = [
         navItems[0],  // Home
@@ -136,7 +146,9 @@ export default function Navigation() {
         navItems[3],  // Veículos
         navItems[4]   // Fretes
       ];
-    } else if (isShipper) {
+    } 
+    // Se for embarcador com assinatura ativa
+    else if (isShipper && hasActiveSubscription) {
       // Embarcadores podem criar e gerenciar fretes, ver motoristas, veículos
       menuItems = [
         navItems[0],  // Home
@@ -146,7 +158,9 @@ export default function Navigation() {
         navItems[5],  // Clientes
         navItems[6]   // Relatórios
       ];
-    } else if (isAgent) {
+    } 
+    // Se for agente com assinatura ativa
+    else if (isAgent && hasActiveSubscription) {
       // Transportadoras podem gerenciar motoristas, veículos e fretes
       menuItems = [
         navItems[0],  // Home
@@ -156,9 +170,10 @@ export default function Navigation() {
         navItems[5],  // Clientes
         navItems[6]   // Relatórios
       ];
-    } else {
+    } 
+    // Para qualquer outro caso que não se encaixe nas condições acima
+    else {
       // Perfil não definido ainda - mostrar apenas home 
-      // (usuário provavelmente será redirecionado para seleção de perfil)
       menuItems = [navItems[0]]; // Apenas Home
     }
   }
