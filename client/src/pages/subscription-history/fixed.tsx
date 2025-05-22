@@ -12,30 +12,51 @@ const currencyFormatter = new Intl.NumberFormat('pt-BR', {
   currency: 'BRL',
 });
 
-// Dados demo para o histórico de assinaturas
-const demoSubscriptionHistory = [
-  {
-    id: "SUB-2025-001",
-    startDate: new Date(2025, 4, 1),
-    endDate: new Date(2025, 5, 1),
-    planType: "Mensal",
-    amount: 99.90,
-    status: "active"
-  }
-];
-
 export default function SubscriptionHistoryPageFixed() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
-  const [history, setHistory] = useState(demoSubscriptionHistory);
+  const [history, setHistory] = useState<any[]>([]);
 
   useEffect(() => {
-    // Simula o carregamento do histórico
-    setTimeout(() => {
+    if (user) {
+      // Criar histórico com dados reais do usuário
+      const userSubscriptionHistory = [];
+      
+      // Verificar se o usuário possui uma assinatura ativa
+      if (user.subscriptionActive) {
+        // Datas baseadas nos dados do usuário
+        const startDate = user.createdAt ? new Date(user.createdAt) : new Date();
+        const endDate = user.subscriptionExpiresAt ? new Date(user.subscriptionExpiresAt) : new Date();
+        
+        // Definir tipo de plano baseado no subscriptionType
+        let planType = "Mensal";
+        let amount = 99.90;
+        
+        if (user.subscriptionType === "trial") {
+          planType = "Período de Teste";
+          amount = 0;
+        } else if (user.subscriptionType === "annual") {
+          planType = "Anual";
+          amount = 960.00;
+        }
+        
+        userSubscriptionHistory.push({
+          id: `SUB-${user.id}-${new Date().getFullYear()}`,
+          startDate: startDate,
+          endDate: endDate,
+          planType: planType,
+          amount: amount,
+          status: user.subscriptionActive ? "active" : "inactive"
+        });
+      }
+      
+      setHistory(userSubscriptionHistory);
       setIsLoading(false);
-    }, 1000);
-  }, []);
+    } else {
+      setIsLoading(false);
+    }
+  }, [user]);
 
   return (
     <div>
@@ -130,12 +151,19 @@ export default function SubscriptionHistoryPageFixed() {
                 <span className="font-medium">Assinatura Atual</span>
                 <div className="flex items-center gap-2">
                   <span className="text-primary font-semibold">
-                    {currencyFormatter.format(99.90)} / mês
+                    {user?.subscriptionType === "trial" 
+                      ? "Período de Teste"
+                      : user?.subscriptionType === "annual" 
+                        ? `${currencyFormatter.format(960.00)} / ano` 
+                        : `${currencyFormatter.format(99.90)} / mês`
+                    }
                   </span>
-                  <div className="flex items-center gap-1 text-sm px-2 py-1 bg-green-100 text-green-800 rounded-full">
-                    <CheckCircle className="h-3 w-3" />
-                    <span>Ativo até 12/06/2025</span>
-                  </div>
+                  {user?.subscriptionActive && user?.subscriptionExpiresAt && (
+                    <div className="flex items-center gap-1 text-sm px-2 py-1 bg-green-100 text-green-800 rounded-full">
+                      <CheckCircle className="h-3 w-3" />
+                      <span>Ativo até {new Date(user.subscriptionExpiresAt).toLocaleDateString('pt-BR')}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
