@@ -1,19 +1,8 @@
-import { MercadoPagoConfig, Payment, Preference } from 'mercadopago';
-import { Request, Response } from 'express';
-import { storage } from './storage';
-import { format } from 'date-fns';
+import { Request, Response } from "express";
+import { storage } from "./storage";
+import { MercadoPagoConfig, Payment, Preference } from "mercadopago";
+import { client } from "./mercadopago-client";
 
-// Configurar o Mercado Pago com a chave de acesso
-if (!process.env.MERCADOPAGO_ACCESS_TOKEN) {
-  throw new Error('MERCADOPAGO_ACCESS_TOKEN não configurada');
-}
-
-// Inicializar cliente do Mercado Pago
-const client = new MercadoPagoConfig({ 
-  accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN 
-});
-
-// Criar instâncias para métodos específicos
 const paymentClient = new Payment(client);
 const preferenceClient = new Preference(client);
 
@@ -26,54 +15,52 @@ export async function consultarPagamentosMercadoPago(req: Request, res: Response
     const { email } = req.query;
     
     if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email não fornecido'
-      });
+      return res.status(400).json({ error: { message: 'Email é obrigatório' } });
     }
     
-    console.log(`Consultando pagamentos para o email: ${email}`);
+    console.log('Consultando pagamentos para o email:', email);
     
-    // Tentar obter pagamentos pela API do Mercado Pago
+    // Buscar pagamentos por email
     const response = await paymentClient.search({
-      options: { 
-        limit: 50 
+      options: {
+        criteria: "desc",
+        limit: 50
+      },
+      filters: {
+        payer_email: email as string
       }
     });
     
-    console.log(`Total de pagamentos encontrados na API do Mercado Pago: ${response.paging.total}`);
+    // Log para debug
+    console.log('Total de resultados:', response.paging?.total || 0);
     
-    // Filtrar pagamentos por email
-    const pagamentosDoUsuario = response.results.filter(
-      p => p.payer && p.payer.email === email
-    );
+    // Mapear resultados para formato simplificado
+    const pagamentos = (response.results || []).map(payment => ({
+      id: payment.id,
+      status: payment.status,
+      status_detail: payment.status_detail,
+      date_created: payment.date_created,
+      date_approved: payment.date_approved,
+      amount: payment.transaction_amount,
+      payment_method: payment.payment_method_id,
+      external_reference: payment.external_reference
+    }));
     
-    console.log(`Pagamentos encontrados para ${email}: ${pagamentosDoUsuario.length}`);
+    // Dados para paginação
+    const paginacao = {
+      total: response.paging?.total || 0,
+      offset: response.paging?.offset || 0,
+      limit: response.paging?.limit || 0
+    };
     
-    // Retornar resultados
     return res.json({
-      success: true,
-      totalPagamentos: response.paging.total,
-      pagamentosDoUsuario: pagamentosDoUsuario,
-      pagamentosFormatados: pagamentosDoUsuario.map(p => ({
-        id: p.id,
-        status: p.status,
-        valor: p.transaction_amount,
-        data: p.date_created,
-        descricao: p.description,
-        metodo: p.payment_method_id,
-        detalhes: {
-          email: p.payer?.email,
-          identificador: p.external_reference
-        }
-      }))
+      pagamentos,
+      paginacao
     });
-  } catch (error) {
-    console.error('Erro ao consultar pagamentos no Mercado Pago:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Erro ao consultar pagamentos no Mercado Pago',
-      error: error instanceof Error ? error.message : String(error)
+  } catch (error: any) {
+    console.error('Erro ao consultar pagamentos:', error);
+    return res.status(500).json({ 
+      error: { message: error.message || 'Erro ao consultar pagamentos' } 
     });
   }
 }
@@ -85,40 +72,26 @@ export async function consultarPagamentosMercadoPago(req: Request, res: Response
  */
 export async function getUserPayments(userId: number) {
   try {
-    // Buscar pagamentos do usuário no banco de dados local
-    const userPayments = await storage.getMercadoPagoPaymentsByUser(userId);
-    
-    if (!userPayments || userPayments.length === 0) {
-      return [];
+    // Buscar usuário
+    const user = await storage.getUserById(userId);
+    if (!user) {
+      throw new Error('Usuário não encontrado');
     }
     
-    // Formatar pagamentos para o formato esperado pelo frontend
-    const formattedPayments = userPayments.map(payment => {
-      const createdDate = payment.createdAt instanceof Date 
-        ? payment.createdAt 
-        : new Date(payment.createdAt || Date.now());
-      
-      return {
-        id: `mp_${payment.id}`,
-        invoiceNumber: `MP-${payment.id}`,
-        amountDue: Number(payment.amount) * 100, // Converter para centavos como no Stripe
-        amountPaid: Number(payment.amount) * 100,
-        currency: 'brl',
-        status: payment.status || 'paid',
-        createdAt: String(Math.floor(createdDate.getTime() / 1000)), // Timestamp em segundos
-        periodStart: String(Math.floor(createdDate.getTime() / 1000)),
-        periodEnd: String(Math.floor(createdDate.getTime() / 1000)),
-        dueDate: String(Math.floor(createdDate.getTime() / 1000)),
-        paymentMethod: 'mercadopago',
-        description: payment.description || 'Pagamento via Mercado Pago',
-        url: payment.receiptUrl || null,
-        pdf: null
-      };
-    });
+    // Obter pagamentos do banco de dados local
+    const payments = await storage.getPaymentsByUser(userId);
     
-    return formattedPayments;
+    // Mapear para formato de exibição
+    return payments.map(payment => ({
+      id: payment.id,
+      amount: payment.amount,
+      status: payment.status,
+      date: payment.createdAt,
+      description: payment.description || 'Pagamento QUERO FRETES',
+      receiptUrl: payment.receiptUrl || null
+    }));
   } catch (error) {
-    console.error('Erro ao buscar pagamentos do Mercado Pago:', error);
+    console.error('Erro ao buscar pagamentos do usuário:', error);
     return [];
   }
 }
@@ -128,41 +101,37 @@ export async function getUserPayments(userId: number) {
  */
 export async function createPaymentPreference(req: Request, res: Response) {
   try {
-    console.log('Iniciando criação de preferência de pagamento:', req.body);
+    if (!req.user) {
+      return res.status(401).json({ error: { message: 'Usuário não autenticado' } });
+    }
+    
+    const userId = req.user.id;
     const { planType } = req.body;
-    const user = req.user;
     
+    if (!planType || !['monthly', 'yearly'].includes(planType)) {
+      return res.status(400).json({ 
+        error: { message: 'Tipo de plano inválido. Use "monthly" ou "yearly".' } 
+      });
+    }
+    
+    const user = await storage.getUserById(userId);
     if (!user) {
-      console.log('Falha na autenticação: usuário não encontrado na requisição');
-      return res.status(401).json({ 
-        error: "Usuário não autenticado" 
-      });
+      return res.status(404).json({ error: { message: 'Usuário não encontrado' } });
     }
     
-    console.log('Processando pagamento para usuário:', user.id, user.email);
-    
-    // Definir preço com base no tipo de plano
+    // Definir valor com base no tipo de plano
     const amount = planType === 'yearly' ? 960.00 : 99.90;
-    console.log('Tipo de plano selecionado:', planType, 'Valor:', amount);
     
-    // Verificar integridade do token
-    if (!process.env.MERCADOPAGO_ACCESS_TOKEN) {
-      console.error('ERRO: Token do Mercado Pago não configurado');
-      return res.status(500).json({ 
-        error: { message: 'Configuração do Mercado Pago ausente' } 
-      });
-    }
-    
-    // Configurar preferência de pagamento
+    // Criar preferência de pagamento
     const preference = {
       items: [
         {
-          id: `assinatura-${planType}`,
-          title: `Assinatura QUERO FRETES - ${planType === 'yearly' ? 'Anual' : 'Mensal'}`,
-          description: `Assinatura ${planType === 'yearly' ? 'anual' : 'mensal'} da plataforma QUERO FRETES`,
+          id: `subscription-${planType}`,
+          title: `Assinatura ${planType === 'yearly' ? 'Anual' : 'Mensal'} - QUERO FRETES`,
           quantity: 1,
           unit_price: amount,
           currency_id: 'BRL',
+          description: `Assinatura ${planType === 'yearly' ? 'Anual' : 'Mensal'} da plataforma QUERO FRETES`
         }
       ],
       payer: {
@@ -264,139 +233,84 @@ export async function createPaymentPreference(req: Request, res: Response) {
  */
 export async function processWebhook(req: Request, res: Response) {
   try {
-    const { id, topic } = req.query;
+    const { id, topic, type } = req.query;
     
-    console.log('Webhook recebido do Mercado Pago:', { id, topic });
+    // Log mais detalhado para debugging
+    console.log('Webhook recebido do Mercado Pago:', { 
+      id, 
+      topic, 
+      type,
+      query: req.query,
+      body: req.body
+    });
     
     // Verificar tipo de notificação
-    if (topic === 'payment') {
+    if (topic === 'payment' || type === 'payment') {
       const paymentId = id;
-      const payment = await paymentClient.get({ id: Number(paymentId) });
-      
-      console.log('Detalhes do pagamento:', JSON.stringify(payment));
-      
-      // Extrair referência externa
-      const externalReference = payment.external_reference;
-      if (!externalReference) {
-        return res.status(400).send('Referência externa não encontrada');
-      }
+      console.log('Buscando detalhes do pagamento:', paymentId);
       
       try {
-        const referenceData = JSON.parse(externalReference);
-        const userId = referenceData.userId;
-        const planType = referenceData.planType;
-        const isSubscription = referenceData.isSubscription;
+        const payment = await paymentClient.get({ id: Number(paymentId) });
         
-        if (!userId || !planType) {
-          return res.status(400).send('Dados de referência incompletos');
-        }
+        console.log('Detalhes do pagamento:', payment.id, payment.status);
         
-        // Buscar usuário
-        const user = await storage.getUserById(userId);
-        if (!user) {
-          return res.status(404).send('Usuário não encontrado');
-        }
+        // Extrair referência externa
+        const externalReference = payment.external_reference;
         
-        // Processar de acordo com o status do pagamento
-        if (payment.status === 'approved') {
-          // Para assinaturas, atualizar dados do usuário
-          if (isSubscription) {
-            // Calcular data de expiração baseada no tipo de plano
-            const now = new Date();
-            const expirationDate = new Date();
-            if (planType === 'yearly') {
-              expirationDate.setFullYear(now.getFullYear() + 1);
-            } else {
-              expirationDate.setMonth(now.getMonth() + 1);
-            }
+        // Tentar identificar usuário pela referência externa
+        if (externalReference) {
+          try {
+            const referenceData = JSON.parse(externalReference);
+            const userId = referenceData.userId;
+            const planType = referenceData.planType || 'monthly'; // Default para mensal
+            const isSubscription = referenceData.isSubscription !== false; // Default para true
             
-            // Atualizar dados do usuário
-            await storage.updateUser(userId, {
-              subscriptionActive: true,
-              subscriptionType: planType,
-              subscriptionExpiresAt: expirationDate.toISOString(),
-              paymentRequired: false
-            });
-            
-            // Atualizar status da assinatura
-            const subscriptions = await storage.getSubscriptionsByUser(userId);
-            if (subscriptions.length > 0) {
-              const latestSubscription = subscriptions[0];
-              await storage.updateSubscription(latestSubscription.id, {
-                status: 'active',
-                metadata: {
-                  ...latestSubscription.metadata,
-                  paymentId: payment.id.toString(),
-                  preferenceId: payment.preference_id || null
-                }
-              });
-            }
-            
-            // Registrar fatura
-            await storage.createInvoice({
-              userId: userId,
-              status: 'paid',
-              amount: payment.transaction_amount.toString(),
-              clientId: user.clientId,
-              subscriptionId: subscriptions[0]?.id || null,
-              description: `Assinatura ${planType} - QUERO FRETES`,
-              dueDate: new Date(),
-              paidAt: new Date(),
-              metadata: {
-                paymentId: payment.id.toString(),
-                preferenceId: payment.preference_id || null,
-                paymentMethod: payment.payment_method_id || 'mercadopago'
-              },
-              paymentMethod: 'mercadopago',
-              receiptUrl: null
-            });
-            
-            // Registrar evento
-            await storage.createSubscriptionEvent({
-              userId: userId,
-              eventType: 'payment_success',
-              metadata: {
-                paymentId: payment.id.toString(),
-                amount: payment.transaction_amount.toString(),
-                planType: planType
+            if (userId) {
+              // Buscar usuário pelo ID
+              const user = await storage.getUserById(userId);
+              if (user) {
+                await processPayment(payment, user, planType, isSubscription);
+                return res.status(200).send('Webhook processado com sucesso');
               }
-            });
+            }
+          } catch (parseError) {
+            console.error('Erro ao processar referência externa:', parseError);
           }
-          
-          return res.status(200).send('Webhook processado com sucesso');
-        } else if (payment.status === 'pending' || payment.status === 'in_process') {
-          // Registrar evento de pagamento pendente
-          await storage.createSubscriptionEvent({
-            userId: userId,
-            eventType: 'payment_pending',
-            metadata: {
-              paymentId: payment.id.toString(),
-              amount: payment.transaction_amount?.toString() || '0',
-              planType: planType,
-              status: payment.status
-            }
-          });
-          
-          return res.status(200).send('Webhook de pagamento pendente processado');
-        } else if (payment.status === 'rejected') {
-          // Registrar evento de pagamento rejeitado
-          await storage.createSubscriptionEvent({
-            userId: userId,
-            eventType: 'payment_failed',
-            metadata: {
-              paymentId: payment.id.toString(),
-              amount: payment.transaction_amount?.toString() || '0',
-              planType: planType,
-              status: payment.status,
-              reason: payment.status_detail
-            }
-          });
-          
-          return res.status(200).send('Webhook de pagamento rejeitado processado');
         }
-      } catch (parseError) {
-        console.error('Erro ao processar referência externa:', parseError);
-        return res.status(400).send('Formato de referência externa inválido');
+        
+        // Tentar identificar usuário pelo email
+        if (payment.payer && payment.payer.email) {
+          const payerEmail = payment.payer.email;
+          console.log('Tentando identificar usuário pelo email:', payerEmail);
+          
+          const user = await storage.getUserByEmail(payerEmail);
+          if (user) {
+            console.log('Usuário encontrado pelo email:', user.id, user.email);
+            
+            // Determinar tipo de plano com base no valor
+            let planType = 'monthly';
+            if (payment.transaction_amount) {
+              const amount = Number(payment.transaction_amount);
+              if (amount >= 600) {
+                planType = 'yearly';
+              } else if (amount >= 70 && amount <= 90) {
+                planType = 'monthly';
+              }
+            }
+            
+            await processPayment(payment, user, planType, true);
+            return res.status(200).send('Webhook processado com sucesso via email');
+          } else {
+            console.log('Nenhum usuário encontrado para o email:', payerEmail);
+          }
+        }
+        
+        // Se chegou aqui, não foi possível identificar o usuário
+        console.log('Impossível identificar usuário para este pagamento');
+        return res.status(404).send('Usuário não identificado');
+      } catch (paymentError) {
+        console.error('Erro ao buscar detalhes do pagamento:', paymentError);
+        return res.status(500).send('Erro ao buscar detalhes do pagamento');
       }
     }
     
@@ -409,6 +323,136 @@ export async function processWebhook(req: Request, res: Response) {
 }
 
 /**
+ * Processa um pagamento para um usuário específico
+ */
+async function processPayment(payment: any, user: any, planType: string, isSubscription: boolean) {
+  const userId = user.id;
+  
+  // Para pagamentos aprovados
+  if (payment.status === 'approved') {
+    if (isSubscription) {
+      // Calcular data de expiração baseada no tipo de plano
+      const now = new Date();
+      const expirationDate = new Date();
+      
+      if (planType === 'yearly') {
+        expirationDate.setFullYear(now.getFullYear() + 1);
+      } else {
+        expirationDate.setMonth(now.getMonth() + 1);
+      }
+      
+      // Atualizar dados do usuário
+      await storage.updateUser(userId, {
+        subscriptionActive: true,
+        subscriptionType: planType,
+        subscriptionExpiresAt: expirationDate.toISOString(),
+        paymentRequired: false
+      });
+      
+      // Verificar se já existe uma assinatura
+      const subscriptions = await storage.getSubscriptionsByUser(userId);
+      
+      // Criar ou atualizar assinatura
+      let subscriptionId;
+      if (subscriptions.length > 0) {
+        const latestSubscription = subscriptions[0];
+        await storage.updateSubscription(latestSubscription.id, {
+          status: 'active',
+          metadata: {
+            ...latestSubscription.metadata,
+            paymentId: payment.id.toString(),
+            paymentMethod: payment.payment_method_id || 'mercadopago'
+          }
+        });
+        subscriptionId = latestSubscription.id;
+      } else {
+        // Criar nova assinatura se não existir
+        const newSubscription = await storage.createSubscription({
+          userId: userId,
+          status: 'active',
+          planType: planType,
+          currentPeriodStart: new Date(),
+          currentPeriodEnd: expirationDate,
+          clientId: user.clientId,
+          metadata: {
+            paymentId: payment.id.toString(),
+            amount: payment.transaction_amount?.toString() || '0'
+          }
+        });
+        subscriptionId = newSubscription.id;
+      }
+      
+      // Registrar fatura
+      await storage.createInvoice({
+        userId: userId,
+        status: 'paid',
+        amount: payment.transaction_amount?.toString() || '0',
+        clientId: user.clientId,
+        subscriptionId: subscriptionId,
+        description: `Assinatura ${planType === 'yearly' ? 'Anual' : 'Mensal'} - QUERO FRETES`,
+        dueDate: new Date(),
+        paidAt: new Date(),
+        metadata: {
+          paymentId: payment.id.toString(),
+          paymentMethod: payment.payment_method_id || 'mercadopago'
+        }
+      });
+      
+      // Registrar evento
+      await storage.createSubscriptionEvent({
+        userId: userId,
+        eventType: 'payment_success',
+        metadata: {
+          paymentId: payment.id.toString(),
+          amount: payment.transaction_amount?.toString() || '0',
+          planType: planType
+        }
+      });
+      
+      // Enviar email de confirmação se possível
+      try {
+        const { sendSubscriptionEmail } = await import('./email-service');
+        await sendSubscriptionEmail(
+          user.email,
+          user.name,
+          planType,
+          new Date(),
+          expirationDate,
+          payment.transaction_amount || 0
+        );
+      } catch (emailError) {
+        console.error('Erro ao enviar email de assinatura:', emailError);
+      }
+    }
+  } else if (payment.status === 'pending' || payment.status === 'in_process') {
+    // Registrar evento de pagamento pendente
+    await storage.createSubscriptionEvent({
+      userId: userId,
+      eventType: 'payment_pending',
+      metadata: {
+        paymentId: payment.id.toString(),
+        amount: payment.transaction_amount?.toString() || '0',
+        planType: planType,
+        status: payment.status
+      }
+    });
+  } else if (payment.status === 'rejected') {
+    // Registrar evento de pagamento rejeitado
+    await storage.createSubscriptionEvent({
+      userId: userId,
+      eventType: 'payment_failed',
+      metadata: {
+        paymentId: payment.id.toString(),
+        amount: payment.transaction_amount?.toString() || '0',
+        planType: planType,
+        status: payment.status,
+        reason: payment.status_detail || 'Não especificado'
+      }
+    });
+  }
+}
+
+/**
  * Gera um link de pagamento para teste
  */
 export async function createTestPayment(req: Request, res: Response) {
@@ -416,6 +460,7 @@ export async function createTestPayment(req: Request, res: Response) {
     const preferenceData = {
       items: [
         {
+          id: "test-payment",
           title: "Teste de Pagamento",
           unit_price: 1.00,
           quantity: 1,
