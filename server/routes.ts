@@ -409,9 +409,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Verificar se já existe um cliente com o mesmo nome (case insensitive)
+      // Verificar se já existe um cliente com o mesmo nome (case insensitive), mas permitir que o usuário atual crie um cliente com seu próprio nome
       const existingClientByName = await storage.getClientByName(clientData.name);
-      if (existingClientByName) {
+      
+      // Apenas rejeitar se o nome já existir E não for o nome do usuário atual
+      if (existingClientByName && clientData.name !== req.user?.name) {
         return res.status(400).json({ 
           message: "Nome já cadastrado no sistema. Por favor, use um nome diferente." 
         });
