@@ -1783,6 +1783,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Excluir usuário (admin)
+  app.delete("/api/admin/users/:id", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.id);
+      
+      // Verificar se o usuário existe
+      const user = await storage.getUserById(userId);
+      if (!user) {
+        return res.status(404).json({ message: "Usuário não encontrado" });
+      }
+      
+      // Verificar se o usuário não é um administrador (para evitar excluir admins)
+      if (user.profileType === USER_TYPES.ADMIN || user.profileType === 'admin' || user.profileType === 'administrador') {
+        return res.status(403).json({ message: "Não é permitido excluir usuários administradores" });
+      }
+      
+      // Verificar se o ID do usuário não é o mesmo do administrador logado
+      if (userId === req.user?.id) {
+        return res.status(403).json({ message: "Não é permitido excluir seu próprio usuário" });
+      }
+      
+      // Excluir usuário
+      await storage.deleteUser(userId);
+      
+      res.json({
+        message: "Usuário excluído com sucesso"
+      });
+    } catch (error) {
+      console.error("Erro ao excluir usuário:", error);
+      res.status(500).json({ message: "Erro ao excluir usuário" });
+    }
+  });
+
   // Atualizar tipo de perfil de usuário (admin)
   app.put("/api/admin/users/:id/update-profile-type", isAdmin, async (req: Request, res: Response) => {
     try {
