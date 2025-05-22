@@ -18,6 +18,67 @@ const paymentClient = new Payment(client);
 const preferenceClient = new Preference(client);
 
 /**
+ * Consulta pagamentos diretamente na API do Mercado Pago
+ * @param email Email do usuário a ser consultado
+ */
+export async function consultarPagamentosMercadoPago(req: Request, res: Response) {
+  try {
+    const { email } = req.query;
+    
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email não fornecido'
+      });
+    }
+    
+    console.log(`Consultando pagamentos para o email: ${email}`);
+    
+    // Tentar obter pagamentos pela API do Mercado Pago
+    const response = await paymentClient.search({
+      options: { 
+        limit: 50 
+      }
+    });
+    
+    console.log(`Total de pagamentos encontrados na API do Mercado Pago: ${response.paging.total}`);
+    
+    // Filtrar pagamentos por email
+    const pagamentosDoUsuario = response.results.filter(
+      p => p.payer && p.payer.email === email
+    );
+    
+    console.log(`Pagamentos encontrados para ${email}: ${pagamentosDoUsuario.length}`);
+    
+    // Retornar resultados
+    return res.json({
+      success: true,
+      totalPagamentos: response.paging.total,
+      pagamentosDoUsuario: pagamentosDoUsuario,
+      pagamentosFormatados: pagamentosDoUsuario.map(p => ({
+        id: p.id,
+        status: p.status,
+        valor: p.transaction_amount,
+        data: p.date_created,
+        descricao: p.description,
+        metodo: p.payment_method_id,
+        detalhes: {
+          email: p.payer?.email,
+          identificador: p.external_reference
+        }
+      }))
+    });
+  } catch (error) {
+    console.error('Erro ao consultar pagamentos no Mercado Pago:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Erro ao consultar pagamentos no Mercado Pago',
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
+}
+
+/**
  * Busca pagamentos do usuário no Mercado Pago
  * @param userId ID do usuário
  * @returns Lista de pagamentos formatada para o frontend

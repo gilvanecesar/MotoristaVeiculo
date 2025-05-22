@@ -2,7 +2,7 @@ import { Express, Request, Response } from 'express';
 import { isAuthenticated, isActive, isAdmin } from './middlewares';
 import { storage } from './storage';
 import { format } from 'date-fns';
-import { createPaymentPreference, processWebhook, createTestPayment, getUserPayments } from './mercadopago';
+import { createPaymentPreference, processWebhook, createTestPayment, getUserPayments, consultarPagamentosMercadoPago } from './mercadopago';
 
 /**
  * Configura todas as rotas relacionadas a assinaturas e pagamentos via Mercado Pago
@@ -19,6 +19,9 @@ export function setupMercadoPagoRoutes(app: Express) {
   
   // Rota de teste para administradores
   app.get("/api/mercadopago/test-payment", isAdmin, createTestPayment);
+  
+  // Rota para consulta direta de pagamentos na API do Mercado Pago
+  app.get("/api/mercadopago/consulta-pagamentos", isAdmin, consultarPagamentosMercadoPago);
   
   // Rota para simular pagamento bem-sucedido (ambiente de desenvolvimento)
   app.post('/api/mercadopago/simulate-payment', isAuthenticated, async (req: Request, res: Response) => {
