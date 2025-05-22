@@ -657,28 +657,52 @@ export default function FinancePage() {
                         
                         return !isNaN(numAmount) && numAmount > 0;
                       })
-                      .map((subscription) => (
-                        <TableRow key={subscription.id}>
-                          <TableCell className="font-medium">
-                            <div>{subscription.clientName}</div>
-                            <div className="text-xs text-muted-foreground">{subscription.email}</div>
-                          </TableCell>
-                          <TableCell>{subscription.plan}</TableCell>
-                          <TableCell>{formatCurrency(subscription.amount)}</TableCell>
-                          <TableCell>
-                            <Badge variant={getSubscriptionBadgeVariant(subscription.status)}>
-                              {subscriptionStatusMap[subscription.status] || subscription.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{formatDate(subscription.startDate)}</TableCell>
-                          <TableCell>{formatDate(subscription.endDate)}</TableCell>
-                          <TableCell className="text-right">
-                            <Button variant="ghost" size="sm">
-                              Detalhes
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))
+                      .map((subscription) => {
+                        // Determinar o nome do plano baseado no planType ou outros dados disponíveis
+                        let planName = subscription.plan || subscription.planType || 'Mensal';
+                        
+                        // Converter o tipo de plano para um formato legível
+                        if (planName === 'monthly') {
+                          planName = 'Mensal';
+                        } else if (planName === 'annual') {
+                          planName = 'Anual';
+                        } else if (planName === 'trial') {
+                          planName = 'Teste';
+                        }
+                        
+                        // Extrair data de início e fim
+                        const startDate = subscription.startDate || subscription.currentPeriodStart;
+                        const endDate = subscription.endDate || subscription.currentPeriodEnd;
+                        
+                        // Determinar o nome do cliente
+                        const clientName = subscription.clientName || 'Cliente';
+                        
+                        // Determinar email (com fallback para evitar dados undefined)
+                        const email = subscription.email || '';
+                        
+                        return (
+                          <TableRow key={subscription.id}>
+                            <TableCell className="font-medium">
+                              <div>{clientName}</div>
+                              <div className="text-xs text-muted-foreground">{email}</div>
+                            </TableCell>
+                            <TableCell>{planName}</TableCell>
+                            <TableCell>{formatCurrency(subscription.amount)}</TableCell>
+                            <TableCell>
+                              <Badge variant={getSubscriptionBadgeVariant(subscription.status)}>
+                                {subscriptionStatusMap[subscription.status] || subscription.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{formatDate(startDate)}</TableCell>
+                            <TableCell>{formatDate(endDate)}</TableCell>
+                            <TableCell className="text-right">
+                              <Button variant="ghost" size="sm">
+                                Detalhes
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
                   ) : (
                     <TableRow>
                       <TableCell colSpan={7} className="h-32 text-center">
