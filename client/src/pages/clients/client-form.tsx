@@ -114,6 +114,22 @@ export default function ClientForm() {
   const { data: client, isLoading: isClientLoading } = useQuery({
     queryKey: ['/api/clients', clientId],
     enabled: isEditing,
+    queryFn: async () => {
+      console.log("Buscando dados do cliente para edição:", clientId);
+      try {
+        const res = await apiRequest("GET", `/api/clients/${clientId}`);
+        if (!res.ok) {
+          console.error("Erro ao buscar cliente:", await res.text());
+          throw new Error("Falha ao carregar dados do cliente");
+        }
+        const data = await res.json();
+        console.log("Dados do cliente recebidos:", data);
+        return data;
+      } catch (error) {
+        console.error("Exceção ao buscar cliente:", error);
+        throw error;
+      }
+    }
   });
 
   // Fetch logged-in user's client data if they have a clientId
@@ -152,7 +168,15 @@ export default function ClientForm() {
       };
       
       console.log("Dados normalizados para edição:", safeClient);
-      form.reset(safeClient);
+      
+      // Em vez de usar form.reset, vamos definir cada campo individualmente
+      // isso pode resolver problemas de sincronização dos dados
+      Object.entries(safeClient).forEach(([field, value]) => {
+        form.setValue(field as any, value);
+      });
+      
+      // Ainda mantemos o reset, mas ele vem depois da definição manual dos campos
+      form.reset(safeClient, { keepValues: true });
       
       const clientLogoUrl = client.logoUrl as string | undefined;
       if (clientLogoUrl) {
