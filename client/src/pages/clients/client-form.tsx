@@ -350,11 +350,18 @@ export default function ClientForm() {
       } else {
         // Quando estamos criando um novo cliente
         console.log("Criando novo cliente:", clientDataToSend);
-        clientResponse = await apiRequest(
+        const response = await apiRequest(
           'POST',
           '/api/clients',
           clientDataToSend
         );
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Erro ao criar o cliente");
+        }
+        
+        clientResponse = await response.json();
         console.log("Resposta da criação:", clientResponse);
         
         // A associação automática ao usuário já é feita no backend
@@ -369,16 +376,28 @@ export default function ClientForm() {
       });
 
       // Atualiza o cache do React Query para refletir as mudanças
-      queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
       
       // Importante: Atualizar os dados do usuário para refletir a associação com o cliente
       // Isso garante que o menu será liberado imediatamente
       await queryClient.invalidateQueries({ queryKey: ['/api/user'] });
       
-      // Buscar os dados atualizados do usuário para garantir que a UI seja atualizada
-      const userResponse = await apiRequest('GET', '/api/user');
-      const updatedUser = await userResponse.json();
-      queryClient.setQueryData(['/api/user'], updatedUser);
+      try {
+        // Buscar os dados atualizados do usuário para garantir que a UI seja atualizada
+        const userResponse = await fetch('/api/user', {
+          method: 'GET',
+          credentials: 'include'
+        });
+        
+        if (userResponse.ok) {
+          const updatedUser = await userResponse.json();
+          queryClient.setQueryData(['/api/user'], updatedUser);
+          console.log("Dados do usuário atualizados:", updatedUser);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar dados atualizados do usuário:", error);
+        // Continua mesmo se houver erro ao buscar os dados do usuário
+      }
       
       // Redireciona para a página de pagamento se estiver criando um novo cliente
       // ou volta para a página de clientes se estiver editando
