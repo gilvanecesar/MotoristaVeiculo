@@ -1164,7 +1164,13 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                 >
                   Cancelar
                 </Button>
-                <Button type="submit">
+                <Button 
+                  type="button"
+                  onClick={() => {
+                    console.log("Botão de submissão clicado diretamente");
+                    form.handleSubmit(onSubmit)();
+                  }}
+                >
                   {isEditing ? "Atualizar Frete" : "Criar Frete"}
                 </Button>
               </div>
