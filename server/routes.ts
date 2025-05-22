@@ -1561,36 +1561,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Obter todas as faturas
       const invoices = await storage.getInvoices();
       
+      // Obter todos os pagamentos (inclusive do Mercado Pago)
+      const allPayments = await storage.getAllPayments();
+      
       // Estatísticas básicas
       const totalSubscriptions = subscriptions.length;
       const activeSubscriptions = subscriptions.filter(s => s.status === 'active').length;
       const annualSubscriptions = subscriptions.filter(s => s.planType === 'annual').length;
       const monthlySubscriptions = subscriptions.filter(s => s.planType === 'monthly').length;
       
-      // Calcular faturamento
+      // Calcular faturamento de faturas
       let totalRevenue = 0;
       let paidInvoices = 0;
       let failedInvoices = 0;
       
       for (const invoice of invoices) {
         if (invoice.status === 'paid') {
-          totalRevenue += parseFloat(invoice.amount);
+          totalRevenue += parseFloat(String(invoice.amount || 0));
           paidInvoices++;
         } else if (invoice.status === 'failed') {
           failedInvoices++;
         }
       }
       
+      // Adicionar faturamento do Mercado Pago
+      for (const payment of allPayments) {
+        if (payment.status === 'approved' && payment.paymentMethod === 'mercadopago') {
+          // Evitar duplicação se o pagamento já está associado a uma fatura
+          if (!payment.invoiceId) {
+            totalRevenue += parseFloat(String(payment.amount || 0));
+          }
+        }
+      }
+      
       // Calcular média mensal
       const today = new Date();
       const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-      const monthlyRevenue = invoices
+      
+      // Calculando receita mensal das faturas regulares
+      let monthlyRevenue = invoices
         .filter(invoice => 
           invoice.status === 'paid' && 
           invoice.createdAt && 
           new Date(invoice.createdAt) >= firstDayOfMonth
         )
-        .reduce((sum, invoice) => sum + parseFloat(invoice.amount), 0);
+        .reduce((sum, invoice) => sum + parseFloat(String(invoice.amount || 0)), 0);
+      
+      // Adicionando receita mensal dos pagamentos do Mercado Pago
+      const mercadoPagoMonthlyRevenue = allPayments
+        .filter(payment => 
+          payment.status === 'approved' && 
+          payment.paymentMethod === 'mercadopago' && 
+          payment.createdAt && 
+          new Date(payment.createdAt) >= firstDayOfMonth && 
+          // Evitar duplicação se o pagamento já está associado a uma fatura
+          !payment.invoiceId
+        )
+        .reduce((sum, payment) => sum + parseFloat(String(payment.amount || 0)), 0);
+      
+      monthlyRevenue += mercadoPagoMonthlyRevenue;
       
       // Calcular taxa de cancelamento (churn rate)
       const canceledSubscriptions = subscriptions.filter(s => s.status === 'canceled').length;
@@ -1611,14 +1640,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         revenue: 0
       }));
       
-      // Calcular receita por mês
+      // Calcular receita por mês das faturas
       for (const invoice of invoices) {
         if (invoice.status === 'paid' && invoice.createdAt) {
           const invoiceDate = new Date(invoice.createdAt);
           // Verificar se é do ano atual
           if (invoiceDate.getFullYear() === currentYear) {
             const monthIndex = invoiceDate.getMonth();
-            monthlyData[monthIndex].revenue += parseFloat(invoice.amount);
+            monthlyData[monthIndex].revenue += parseFloat(String(invoice.amount || 0));
+          }
+        }
+      }
+      
+      // Adicionar receita por mês dos pagamentos do Mercado Pago
+      for (const payment of allPayments) {
+        if (
+          payment.status === 'approved' && 
+          payment.paymentMethod === 'mercadopago' && 
+          payment.createdAt && 
+          // Evitar duplicação se o pagamento já está associado a uma fatura
+          !payment.invoiceId
+        ) {
+          const paymentDate = new Date(payment.createdAt);
+          if (paymentDate.getFullYear() === currentYear) {
+            const monthIndex = paymentDate.getMonth();
+            monthlyData[monthIndex].revenue += parseFloat(String(payment.amount || 0));
           }
         }
       }

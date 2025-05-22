@@ -549,6 +549,10 @@ export class MemStorage implements IStorage {
     return Array.from(this.paymentsData.values());
   }
   
+  async getAllPayments(): Promise<Payment[]> {
+    return Array.from(this.paymentsData.values());
+  }
+  
   async getMercadoPagoPaymentsByUser(userId: number): Promise<Payment[]> {
     return Array.from(this.paymentsData.values()).filter(
       (payment) => payment.userId === userId && payment.paymentMethod === 'mercadopago'
