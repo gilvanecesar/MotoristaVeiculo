@@ -122,8 +122,23 @@ export default function Navigation() {
   menuItems.push(navItems[0]); // Home
   
   if (user) {
-    // Verificar se a assinatura está ativa ou se o usuário é motorista (que tem acesso gratuito)
-    const hasActiveSubscription = user.subscriptionActive || isDriver;
+    // IMPORTANTE: Debug para diagnosticar problema
+    console.log("Dados do usuário para menus:", {
+      id: user.id,
+      profileType: user.profileType,
+      clientId: user.clientId,
+      subscriptionActive: user.subscriptionActive,
+      subscriptionType: user.subscriptionType,
+      subscriptionExpiresAt: user.subscriptionExpiresAt
+    });
+    
+    // Verificar se a assinatura está ativa, se o usuário é motorista, ou se tem um clientId associado
+    // Adicionamos a verificação de clientId para liberar menus após cadastro de cliente
+    const hasActiveSubscription = user.subscriptionActive || isDriver || !!user.clientId;
+    
+    // Forçar mostrar todos os menus se o usuário tiver cadastrado um cliente,
+    // mesmo que a assinatura não esteja ativa no momento
+    const hasClient = !!user.clientId;
     
     // Se for admin, tem acesso a tudo independente de pagamento
     if (isAdmin) {
@@ -132,6 +147,18 @@ export default function Navigation() {
       // Adicionamos os menus administrativos
       menuItems.push(financeMenuItem, usersMenuItem);
     } 
+    // Se tiver um cliente cadastrado, liberar todos os menus (condição nova)
+    else if (hasClient) {
+      console.log("Usuário com cliente cadastrado - mostrando todos os menus");
+      menuItems = [
+        navItems[0],  // Home
+        navItems[2],  // Motoristas
+        navItems[3],  // Veículos
+        navItems[4],  // Fretes
+        navItems[5],  // Clientes
+        navItems[6]   // Relatórios
+      ];
+    }
     // Se não tiver assinatura ativa (exceto motoristas), mostra apenas o menu home
     else if (!hasActiveSubscription) {
       menuItems = [navItems[0]]; // Apenas Home
