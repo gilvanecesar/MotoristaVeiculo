@@ -310,6 +310,14 @@ export default function AdminUsersPage() {
       });
     }
   };
+  
+  // Nova função para excluir usuário
+  const handleDeleteUser = () => {
+    if (selectedUser) {
+      // Implementar a mutação para excluir o usuário
+      deleteUserMutation.mutate(selectedUser.id);
+    }
+  };
 
   // Renderização da UI
   return (
