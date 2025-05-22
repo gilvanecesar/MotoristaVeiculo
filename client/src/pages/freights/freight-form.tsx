@@ -1168,15 +1168,84 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                   type="button"
                   onClick={async () => {
                     console.log("Botão de submissão clicado diretamente");
+                    
+                    // Dados do formulário
+                    const formData = form.getValues();
+                    
+                    // Validação manual
+                    const isValid = await form.trigger();
+                    
+                    if (!isValid) {
+                      console.error("Formulário inválido:", form.formState.errors);
+                      toast({
+                        title: "Formulário inválido",
+                        description: "Por favor, corrija os campos destacados.",
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+                    
                     try {
-                      await form.handleSubmit(async (data) => {
-                        await onSubmit(data);
-                        // Redireciona para a lista de fretes após salvar com sucesso
-                        navigate("/freights");
-                      })();
+                      // Formatar o valor do frete para o formato numérico que o banco espera
+                      let freightValue = formData.freightValue;
+                      if (freightValue) {
+                        freightValue = freightValue.replace(/\./g, '').replace(',', '.');
+                      }
+                      
+                      // Preparar dados com userId
+                      const submitData = {
+                        ...formData,
+                        freightValue,
+                        userId: user?.id
+                      };
+                      
+                      console.log("Enviando dados:", submitData);
+                      
+                      let response;
+                      
+                      if (isEditing && freightId) {
+                        response = await fetch(`/api/freights/${freightId}`, {
+                          method: 'PUT',
+                          headers: {
+                            'Content-Type': 'application/json',
+                          },
+                          body: JSON.stringify(submitData),
+                          credentials: 'include'
+                        });
+                      } else {
+                        response = await fetch('/api/freights', {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                          },
+                          body: JSON.stringify(submitData),
+                          credentials: 'include'
+                        });
+                      }
+                      
+                      if (response.ok) {
+                        toast({
+                          title: isEditing ? "Frete atualizado" : "Frete criado",
+                          description: "Operação realizada com sucesso.",
+                        });
+                        
+                        // Forçar redirecionamento para a lista de fretes
+                        window.location.href = "/freights";
+                      } else {
+                        const errorData = await response.json();
+                        toast({
+                          title: "Erro",
+                          description: errorData.message || "Ocorreu um erro ao salvar o frete.",
+                          variant: "destructive",
+                        });
+                      }
                     } catch (error) {
                       console.error("Erro ao salvar:", error);
-                      // O toast de erro já é exibido na função onSubmit
+                      toast({
+                        title: "Erro no sistema",
+                        description: "Não foi possível salvar. Tente novamente.",
+                        variant: "destructive",
+                      });
                     }
                   }}
                 >
