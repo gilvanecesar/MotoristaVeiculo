@@ -419,7 +419,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // Criar o cliente
       const client = await storage.createClient(clientData);
+      
+      // Associar o cliente ao usuário atual
+      if (req.user && req.user.id) {
+        // Atualizar o usuário com o ID do cliente
+        await storage.updateUser(req.user.id, {
+          clientId: client.id
+        });
+        
+        console.log(`Cliente ID ${client.id} associado ao usuário ID ${req.user.id}`);
+      }
+      
       res.status(201).json(client);
     } catch (error) {
       console.error("Error creating client:", error);
