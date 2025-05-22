@@ -297,6 +297,11 @@ export default function AdminUsersPage() {
     setResetPasswordDialogOpen(true);
   };
   
+  const openDeleteUserDialog = (user: any) => {
+    setSelectedUser(user);
+    setDeleteUserDialogOpen(true);
+  };
+  
   const handleResetPassword = () => {
     if (selectedUser && newPassword) {
       resetPasswordMutation.mutate({
