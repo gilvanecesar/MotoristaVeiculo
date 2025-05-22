@@ -368,9 +368,17 @@ export default function ClientForm() {
           : "O novo cliente foi cadastrado com sucesso.",
       });
 
-      // Atualiza o cache do React Query
+      // Atualiza o cache do React Query para refletir as mudanças
       queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      
+      // Importante: Atualizar os dados do usuário para refletir a associação com o cliente
+      // Isso garante que o menu será liberado imediatamente
+      await queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      
+      // Buscar os dados atualizados do usuário para garantir que a UI seja atualizada
+      const userResponse = await apiRequest('GET', '/api/user');
+      const updatedUser = await userResponse.json();
+      queryClient.setQueryData(['/api/user'], updatedUser);
       
       // Redireciona para a página de pagamento se estiver criando um novo cliente
       // ou volta para a página de clientes se estiver editando
