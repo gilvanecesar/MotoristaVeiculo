@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { MercadoPagoButton } from '@/components/MercadoPagoButton';
@@ -7,11 +7,39 @@ import { useToast } from '@/hooks/use-toast';
 import { Link } from 'wouter';
 import { Check, ShieldCheck } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function SubscribeFixed() {
   const [isActivatingTrial, setIsActivatingTrial] = useState(false);
   const [isCancellingSubscription, setIsCancellingSubscription] = useState(false);
+  const [subscriptionInfo, setSubscriptionInfo] = useState({
+    expiresAt: '',
+    planType: '',
+    isActive: false
+  });
   const { toast } = useToast();
+  const { user } = useAuth();
+  
+  useEffect(() => {
+    // Buscar informações da assinatura ao carregar a página
+    const fetchSubscriptionInfo = async () => {
+      try {
+        const response = await apiRequest('GET', '/api/user/subscription-info');
+        if (response.ok) {
+          const data = await response.json();
+          setSubscriptionInfo({
+            expiresAt: data.expiresAt,
+            planType: data.subscriptionType || user?.subscriptionType || 'trial',
+            isActive: data.active || user?.subscriptionActive || false
+          });
+        }
+      } catch (error) {
+        console.error('Erro ao buscar informações da assinatura:', error);
+      }
+    };
+    
+    fetchSubscriptionInfo();
+  }, [user]);
 
   const handleActivateTrial = async () => {
     try {
@@ -294,22 +322,46 @@ export default function SubscribeFixed() {
                 <div className="flex items-center justify-between border-b pb-4">
                   <div>
                     <h3 className="font-medium">Status da Assinatura</h3>
-                    <p className="text-sm text-muted-foreground">Ativa até 12/06/2025</p>
+                    <p className="text-sm text-muted-foreground">
+                      {subscriptionInfo.isActive 
+                        ? `Ativa até ${subscriptionInfo.expiresAt 
+                            ? new Date(subscriptionInfo.expiresAt).toLocaleDateString() 
+                            : user?.subscriptionExpiresAt 
+                              ? new Date(user.subscriptionExpiresAt).toLocaleDateString()
+                              : 'data não disponível'}`
+                        : 'Inativa'}
+                    </p>
                   </div>
-                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">Ativa</span>
+                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">
+                    {subscriptionInfo.isActive ? 'Ativa' : 'Inativa'}
+                  </span>
                 </div>
                 
                 <div className="flex items-center justify-between border-b pb-4">
                   <div>
                     <h3 className="font-medium">Plano Atual</h3>
-                    <p className="text-sm text-muted-foreground">Plano Mensal - R$ 99,90/mês</p>
+                    <p className="text-sm text-muted-foreground">
+                      {subscriptionInfo.planType === 'monthly' || subscriptionInfo.planType === 'mensal' 
+                        ? 'Plano Mensal - R$ 99,90/mês'
+                        : subscriptionInfo.planType === 'annual' || subscriptionInfo.planType === 'anual'
+                        ? 'Plano Anual - R$ 960,00/ano'
+                        : subscriptionInfo.planType === 'trial'
+                        ? 'Período de Teste - Gratuito' 
+                        : 'Plano não identificado'}
+                    </p>
                   </div>
                 </div>
                 
                 <div className="flex items-center justify-between border-b pb-4">
                   <div>
                     <h3 className="font-medium">Próxima Cobrança</h3>
-                    <p className="text-sm text-muted-foreground">12/06/2025</p>
+                    <p className="text-sm text-muted-foreground">
+                      {subscriptionInfo.expiresAt 
+                        ? new Date(subscriptionInfo.expiresAt).toLocaleDateString()
+                        : user?.subscriptionExpiresAt
+                          ? new Date(user.subscriptionExpiresAt).toLocaleDateString()
+                          : 'Data não disponível'}
+                    </p>
                   </div>
                 </div>
                 
