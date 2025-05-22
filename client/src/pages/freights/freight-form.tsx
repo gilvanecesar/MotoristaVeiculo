@@ -1182,9 +1182,20 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                         freightValue = freightValue.replace(/\./g, '').replace(',', '.');
                       }
                       
-                      // Preparar dados com userId
+                      // Preparar dados com userId e corrigir datas
+                      // Convertendo strings de data para objetos Date ou null para envio ao servidor
+                      const expirationDate = formData.expirationDate ? 
+                        (typeof formData.expirationDate === 'string' ? 
+                          new Date(formData.expirationDate) : formData.expirationDate) : null;
+                      
+                      const createdAt = formData.createdAt ? 
+                        (typeof formData.createdAt === 'string' ? 
+                          new Date(formData.createdAt) : formData.createdAt) : null;
+                          
                       const submitData = {
                         ...formData,
+                        expirationDate,
+                        createdAt,
                         freightValue,
                         userId: user?.id
                       };
