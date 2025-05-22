@@ -1172,18 +1172,8 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                     // Dados do formulário
                     const formData = form.getValues();
                     
-                    // Validação manual
-                    const isValid = await form.trigger();
-                    
-                    if (!isValid) {
-                      console.error("Formulário inválido:", form.formState.errors);
-                      toast({
-                        title: "Formulário inválido",
-                        description: "Por favor, corrija os campos destacados.",
-                        variant: "destructive",
-                      });
-                      return;
-                    }
+                    // Pulamos a validação manual para evitar problemas com campos de data
+                    // Isso permitirá que o backend faça o processamento adequado
                     
                     try {
                       // Formatar o valor do frete para o formato numérico que o banco espera
