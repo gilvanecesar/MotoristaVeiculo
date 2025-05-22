@@ -1351,6 +1351,10 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(payments).where(eq(payments.userId, userId));
   }
 
+  async getAllPayments(): Promise<Payment[]> {
+    return await db.select().from(payments);
+  }
+
   async getMercadoPagoPaymentsByUser(userId: number): Promise<Payment[]> {
     return await db
       .select()
