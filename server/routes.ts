@@ -566,6 +566,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const destinations = freightData.destinations || [];
       delete freightData.destinations;
       
+      // Formatar o valor do frete para o padrão do banco
+      if (freightData.freightValue) {
+        // Garantir que o valor seja tratado como uma string para manipulação
+        let valueStr = String(freightData.freightValue);
+        
+        // Remover pontos de milhares e substituir vírgula por ponto para o formato padrão do banco
+        valueStr = valueStr.replace(/\./g, '').replace(',', '.');
+        
+        // Converter para número para garantir formato correto
+        let numValue = parseFloat(valueStr);
+        
+        // Para manter formato consistente
+        freightData.freightValue = numValue.toString();
+        
+        console.log("Valor do frete formatado (criação):", freightData.freightValue);
+      }
+      
       // Criar o frete principal
       const freight = await storage.createFreight(freightData);
       
@@ -620,6 +637,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } catch (error) {
           delete freightData.createdAt;
         }
+      }
+      
+      // Corrigir o formato do valor do frete para evitar zeros extras
+      if (freightData.freightValue) {
+        // Garantir que o valor seja tratado como uma string para manipulação
+        let valueStr = String(freightData.freightValue);
+        
+        // Remover pontos de milhares e substituir vírgula por ponto para o formato padrão do banco
+        valueStr = valueStr.replace(/\./g, '').replace(',', '.');
+        
+        // Converter para número para remover zeros à direita desnecessários
+        let numValue = parseFloat(valueStr);
+        
+        // Para manter no máximo 2 casas decimais
+        freightData.freightValue = numValue.toString();
+        
+        console.log("Valor do frete formatado:", freightData.freightValue);
       }
       
       // Remover campos que podem causar problemas na atualização
