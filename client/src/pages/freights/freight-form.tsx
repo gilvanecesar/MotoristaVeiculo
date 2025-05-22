@@ -1171,7 +1171,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                     form.handleSubmit(onSubmit)();
                   }}
                 >
-                  {isEditing ? "Atualizar Frete" : "Criar Frete"}
+                  {isEditing ? "Salvar Edição" : "Criar Frete"}
                 </Button>
               </div>
             )}
