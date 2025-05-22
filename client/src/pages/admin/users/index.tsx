@@ -98,6 +98,33 @@ export default function AdminUsersPage() {
   // Hooks de consulta e mutação - IMPORTANTE: todos os hooks precisam estar nesta seção
   // e nunca dentro de condicionais
   
+  // Excluir usuário
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      const res = await apiRequest("DELETE", `/api/admin/users/${userId}`);
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Falha ao excluir usuário");
+      }
+      return await res.json();
+    },
+    onSuccess: () => {
+      setDeleteUserDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({
+        title: "Usuário excluído",
+        description: "O usuário foi excluído com sucesso",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao excluir usuário",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+  
   // Resetar senha
   const resetPasswordMutation = useMutation({
     mutationFn: async ({ userId, newPassword }: { userId: number, newPassword: string }) => {
@@ -647,6 +674,42 @@ export default function AdminUsersPage() {
                 </>
               ) : (
                 "Redefinir Senha"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Diálogo de confirmação para exclusão de usuário */}
+      <Dialog open={deleteUserDialogOpen} onOpenChange={setDeleteUserDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Excluir Usuário</DialogTitle>
+            <DialogDescription>
+              Você tem certeza que deseja excluir o usuário {selectedUser?.name || "selecionado"}?
+              <br />
+              <span className="text-red-500 font-medium">Esta ação não pode ser desfeita!</span>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setDeleteUserDialogOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleDeleteUser}
+              disabled={deleteUserMutation.isPending}
+            >
+              {deleteUserMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Excluindo...
+                </>
+              ) : (
+                "Excluir Usuário"
               )}
             </Button>
           </DialogFooter>

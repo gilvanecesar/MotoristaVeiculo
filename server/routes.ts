@@ -1795,7 +1795,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Verificar se o usuário não é um administrador (para evitar excluir admins)
-      if (user.profileType === USER_TYPES.ADMIN || user.profileType === 'admin' || user.profileType === 'administrador') {
+      if (user.profileType === 'admin' || user.profileType === 'administrador') {
         return res.status(403).json({ message: "Não é permitido excluir usuários administradores" });
       }
       
