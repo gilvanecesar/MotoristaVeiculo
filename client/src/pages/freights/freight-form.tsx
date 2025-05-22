@@ -406,11 +406,15 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
         
         console.log("Dados para atualização:", updateData);
         
-        response = await apiRequest(
-          "PUT",
-          `/api/freights/${freightId}`,
-          updateData
-        );
+        // Alterando para usar fetch diretamente para maior confiabilidade
+        response = await fetch(`/api/freights/${freightId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(updateData),
+          credentials: 'include'
+        });
         
         console.log("Resposta da atualização:", response.status, response.statusText);
       } else {

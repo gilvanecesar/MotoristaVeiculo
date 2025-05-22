@@ -596,7 +596,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Atualizar frete existente
-  app.put("/api/freights/:id", hasFreightAccess, async (req: Request, res: Response) => {
+  app.put("/api/freights/:id", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       const freightData = req.body;
