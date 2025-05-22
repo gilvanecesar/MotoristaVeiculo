@@ -986,8 +986,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obter todas as assinaturas (admin)
   app.get("/api/admin/subscriptions", isAdmin, async (req: Request, res: Response) => {
     try {
+      // Obter assinaturas regulares do banco de dados
       const subscriptions = await storage.getSubscriptions();
-      res.json(subscriptions);
+      
+      // Obter pagamentos do Mercado Pago que representam assinaturas
+      const allPayments = await storage.getAllPayments();
+      const mercadoPagoPayments = allPayments.filter(p => 
+        p.paymentMethod === 'mercadopago' && 
+        p.status === 'approved' &&
+        // Verificar pagamentos que não estão associados a uma assinatura existente
+        !subscriptions.some(s => s.id === p.subscriptionId)
+      );
+      
+      // Converter pagamentos do Mercado Pago para o formato de assinatura
+      const mercadoPagoSubscriptions = mercadoPagoPayments.map(payment => {
+        // Calcular datas de início e fim baseadas na data do pagamento
+        const paymentDate = new Date(payment.createdAt || new Date());
+        const endDate = new Date(paymentDate);
+        
+        // Para pagamentos mensais, adicionar 30 dias
+        endDate.setDate(paymentDate.getDate() + 30);
+        
+        // Determinar o tipo de plano com base no valor
+        const amount = parseFloat(String(payment.amount));
+        const planType = amount >= 600 ? 'annual' : 'monthly';
+        
+        return {
+          id: payment.id,
+          userId: payment.userId,
+          clientId: payment.clientId,
+          status: 'active',
+          planType: planType,
+          amount: String(payment.amount),
+          currentPeriodStart: paymentDate,
+          currentPeriodEnd: endDate,
+          createdAt: paymentDate,
+          updatedAt: paymentDate,
+          cancelAt: null,
+          canceledAt: null,
+          paymentMethod: 'mercadopago',
+          mercadoPagoId: payment.mercadoPagoId,
+          metadata: payment.metadata
+        };
+      });
+      
+      // Combinar assinaturas regulares com assinaturas do Mercado Pago
+      const allSubscriptions = [...subscriptions, ...mercadoPagoSubscriptions];
+      
+      res.json(allSubscriptions);
     } catch (error) {
       console.error("Erro ao obter assinaturas:", error);
       res.status(500).json({ message: "Erro ao obter assinaturas" });
