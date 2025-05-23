@@ -185,18 +185,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ==================== DRIVERS ====================
-  // Obter todos motoristas
+  // Obter todos motoristas com seus veículos
   app.get("/api/drivers", hasActiveSubscription, async (req: Request, res: Response) => {
     try {
+      // Obter todos os motoristas
       const drivers = await storage.getDrivers();
-      res.json(drivers);
+      
+      // Para cada motorista, buscar seus veículos
+      const driversWithVehicles = await Promise.all(
+        drivers.map(async (driver) => {
+          const vehicles = await storage.getVehiclesByDriver(driver.id);
+          return {
+            ...driver,
+            vehicles: vehicles || [],
+            // Garantir que a categoria CNH seja sempre uma string válida para exibição
+            cnhCategory: driver.cnhCategory || "Não informada"
+          };
+        })
+      );
+      
+      console.log(`Carregados ${drivers.length} motoristas com seus veículos`);
+      res.json(driversWithVehicles);
     } catch (error) {
       console.error("Error fetching drivers:", error);
       res.status(500).json({ message: "Failed to fetch drivers" });
     }
   });
 
-  // Obter motorista por ID
+  // Obter motorista por ID com seus veículos
   app.get("/api/drivers/:id", hasActiveSubscription, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
@@ -206,7 +222,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Driver not found" });
       }
       
-      res.json(driver);
+      // Buscar veículos associados ao motorista
+      const vehicles = await storage.getVehiclesByDriver(id);
+      
+      // Retornar motorista com seus veículos
+      res.json({
+        ...driver,
+        vehicles: vehicles || [],
+        // Garantir que a categoria CNH seja sempre uma string válida para exibição
+        cnhCategory: driver.cnhCategory || "Não informada"
+      });
     } catch (error) {
       console.error("Error fetching driver:", error);
       res.status(500).json({ message: "Failed to fetch driver" });

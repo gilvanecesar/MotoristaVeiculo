@@ -214,7 +214,7 @@ export function hasDriverAccess(req: Request, res: Response, next: NextFunction)
   const driverId = parseInt(req.params.id, 10);
   
   // Log para diagnóstico
-  console.log(`Verificando acesso ao motorista: ID motorista=${driverId}, User ID=${req.user?.id}, Profile=${req.user?.profileType}, DriverID=${req.user?.driverId}`);
+  console.log(`Verificando acesso ao motorista: ID motorista=${driverId}, User ID=${req.user?.id}, Profile=${req.user?.profileType}, DriverID=${req.user?.driverId}, Subscription=${req.user?.subscriptionActive}`);
   
   // Administrador tem acesso total
   if (req.user?.profileType?.toLowerCase() === "administrador" || req.user?.profileType?.toLowerCase() === "admin") {
@@ -223,7 +223,8 @@ export function hasDriverAccess(req: Request, res: Response, next: NextFunction)
   }
   
   // Embarcador e Agente têm acesso com assinatura
-  if ((req.user?.profileType?.toLowerCase() === "embarcador" || req.user?.profileType?.toLowerCase() === "agente") && req.user?.subscriptionActive) {
+  if ((req.user?.profileType?.toLowerCase() === "embarcador" || req.user?.profileType?.toLowerCase() === "agente") && 
+      (req.user?.subscriptionActive === true || req.user?.subscriptionActive === 1)) {
     console.log(`Acesso concedido ao ${req.user?.profileType} (${req.user?.id}) com assinatura ativa para o motorista ${driverId}`);
     return next();
   }
