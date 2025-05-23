@@ -10,11 +10,12 @@ import { Separator } from "@/components/ui/separator";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
-import { ArrowLeft, Loader2, Save } from "lucide-react";
+import { ArrowLeft, Loader2, Save, UserPlus, BadgeCheck, AlertCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { apiRequest, getQueryFn, queryClient } from "@/lib/queryClient";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Schema de validação para configurações de faturamento
 const billingSettingsSchema = z.object({
@@ -43,8 +44,18 @@ const planSettingsSchema = z.object({
 type PlanSettingsFormValues = z.infer<typeof planSettingsSchema>;
 
 // Componente principal de configurações financeiras
+// Interface para resposta manual
+interface ManualResponse {
+  type: 'success' | 'error';
+  message: string;
+}
+
 export default function FinanceSettingsPage() {
   const [activeTab, setActiveTab] = useState("billing");
+  const [manualEmail, setManualEmail] = useState("");
+  const [manualPlanType, setManualPlanType] = useState("monthly");
+  const [manualAmount, setManualAmount] = useState("80.00");
+  const [manualResponse, setManualResponse] = useState<ManualResponse | null>(null);
   const { toast } = useToast();
 
   // Buscar configurações existentes
@@ -126,6 +137,40 @@ export default function FinanceSettingsPage() {
       });
     },
   });
+  
+  // Mutation para ativação manual de assinatura
+  const activateManualMutation = useMutation({
+    mutationFn: async (data: { email: string; planType: string; amount: string }) => {
+      return await apiRequest("POST", "/api/admin/activate-subscription-manual", data);
+    },
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/subscriptions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/finance/stats"] });
+      
+      setManualResponse({
+        type: 'success',
+        message: `Assinatura ativada com sucesso para ${manualEmail}!`
+      });
+      
+      toast({
+        title: "Assinatura ativada",
+        description: `A assinatura foi ativada manualmente para ${manualEmail}.`,
+      });
+    },
+    onError: (error: any) => {
+      setManualResponse({
+        type: 'error',
+        message: error.message || "Erro ao ativar a assinatura. Verifique se o email existe no sistema."
+      });
+      
+      toast({
+        variant: "destructive",
+        title: "Erro ao ativar assinatura",
+        description: error.message || "Ocorreu um erro ao ativar a assinatura.",
+      });
+    },
+  });
 
   // Handler para salvar configurações de faturamento
   const handleSaveBillingSettings = (values: BillingSettingsFormValues) => {
@@ -140,6 +185,16 @@ export default function FinanceSettingsPage() {
     saveMutation.mutate({
       ...values,
       type: "plan",
+    });
+  };
+  
+  // Handler para ativar assinatura manualmente
+  const handleActivateManual = () => {
+    setManualResponse(null);
+    activateManualMutation.mutate({
+      email: manualEmail,
+      planType: manualPlanType,
+      amount: manualAmount
     });
   };
 
@@ -166,6 +221,7 @@ export default function FinanceSettingsPage() {
         <TabsList>
           <TabsTrigger value="billing">Faturamento</TabsTrigger>
           <TabsTrigger value="plans">Planos</TabsTrigger>
+          <TabsTrigger value="manual">Ativação Manual</TabsTrigger>
         </TabsList>
         
         {/* Tab: Configurações de Faturamento */}
@@ -567,6 +623,117 @@ export default function FinanceSettingsPage() {
             </CardContent>
           </Card>
         </TabsContent>
+      
+      {/* Tab: Ativação Manual de Assinaturas */}
+      <TabsContent value="manual">
+        <Card>
+          <CardHeader>
+            <CardTitle>Ativação Manual de Assinaturas</CardTitle>
+            <CardDescription>
+              Ative manualmente uma assinatura para um usuário específico.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-medium mb-4">Ativar Assinatura</h3>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="userEmail">Email do Usuário</Label>
+                      <Input 
+                        id="userEmail" 
+                        placeholder="example@email.com" 
+                        value={manualEmail} 
+                        onChange={(e) => setManualEmail(e.target.value)}
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        Email do usuário para ativar a assinatura
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="planType">Tipo de Plano</Label>
+                      <Select 
+                        value={manualPlanType} 
+                        onValueChange={setManualPlanType}
+                      >
+                        <SelectTrigger id="planType">
+                          <SelectValue placeholder="Selecione o tipo de plano" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="monthly">Mensal</SelectItem>
+                          <SelectItem value="yearly">Anual</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-sm text-muted-foreground">
+                        Tipo de plano a ser ativado
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="amount">Valor (R$)</Label>
+                    <Input 
+                      id="amount" 
+                      placeholder="99.90" 
+                      value={manualAmount} 
+                      onChange={(e) => setManualAmount(e.target.value)} 
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      Valor cobrado pela assinatura
+                    </p>
+                  </div>
+                  
+                  {manualResponse && (
+                    <div className={`p-4 rounded-md ${
+                      manualResponse.type === 'success' 
+                        ? 'bg-green-50 text-green-800 border border-green-200' 
+                        : 'bg-red-50 text-red-800 border border-red-200'
+                    }`}>
+                      <div className="flex items-start">
+                        <div className="flex-shrink-0">
+                          {manualResponse.type === 'success' ? (
+                            <BadgeCheck className="h-5 w-5 text-green-500" />
+                          ) : (
+                            <AlertCircle className="h-5 w-5 text-red-500" />
+                          )}
+                        </div>
+                        <div className="ml-3">
+                          <h3 className="text-sm font-medium">
+                            {manualResponse.type === 'success' ? 'Sucesso!' : 'Erro!'}
+                          </h3>
+                          <div className="mt-1 text-sm">
+                            {manualResponse.message}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <Button 
+                    onClick={handleActivateManual} 
+                    disabled={!manualEmail || !manualPlanType || !manualAmount || activateManualMutation.isPending}
+                    className="w-full md:w-auto"
+                  >
+                    {activateManualMutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Processando...
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className="mr-2 h-4 w-4" />
+                        Ativar Assinatura
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
       </Tabs>
     </div>
   );
