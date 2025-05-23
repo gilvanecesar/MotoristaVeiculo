@@ -2052,6 +2052,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // As rotas do Mercado Pago já foram configuradas no início do arquivo
   
+  // Rota específica para corrigir o usuário logistica@inovaccbrasil.com.br
+  app.post("/api/admin/fix-user-subscription", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const userEmail = "logistica@inovaccbrasil.com.br";
+      console.log(`Tentando corrigir assinatura para o usuário ${userEmail}`);
+      
+      const user = await storage.getUserByEmail(userEmail);
+      if (!user) {
+        return res.status(404).json({ error: { message: "Usuário não encontrado" } });
+      }
+      
+      console.log(`Usuário encontrado: ID: ${user.id}, Status atual: subscriptionActive=${user.subscriptionActive}, paymentRequired=${user.paymentRequired}`);
+      
+      // Calculando data de expiração (1 ano a partir de agora)
+      const expiresAt = new Date();
+      expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+      
+      // Atualizando todos os campos relevantes
+      await storage.updateUser(user.id, {
+        subscriptionActive: true,
+        paymentRequired: false,
+        subscriptionType: "yearly",
+        subscriptionExpiresAt: expiresAt.toISOString()
+      });
+      
+      // Verificando se a atualização funcionou
+      const updatedUser = await storage.getUserById(user.id);
+      console.log(`Status após correção: subscriptionActive=${updatedUser?.subscriptionActive}, paymentRequired=${updatedUser?.paymentRequired}`);
+      
+      return res.status(200).json({ 
+        message: "Assinatura corrigida com sucesso", 
+        user: { 
+          id: user.id, 
+          email: user.email,
+          subscriptionActive: updatedUser?.subscriptionActive,
+          paymentRequired: updatedUser?.paymentRequired,
+          subscriptionExpiresAt: updatedUser?.subscriptionExpiresAt
+        } 
+      });
+    } catch (error) {
+      console.error("Erro ao corrigir assinatura:", error);
+      return res.status(500).json({ error: { message: "Erro ao corrigir assinatura" } });
+    }
+  });
+  
   // Rota especial para ativação manual de assinatura
   app.post("/api/admin/activate-subscription-manual", isAdmin, async (req: Request, res: Response) => {
     try {
@@ -2084,27 +2129,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Ativar assinatura no usuário - sem usar a data diretamente para evitar erro de conversão
       console.log(`Atualizando status de assinatura para o usuário ID: ${user.id}`);
       try {
-        // Garantir que todos os campos importantes sejam explicitamente atualizados
+        // Calcular data de expiração
+        const now = new Date();
+        const expiresAt = new Date();
+        
+        if (subscriptionType === "monthly") {
+          expiresAt.setMonth(now.getMonth() + 1);
+        } else if (subscriptionType === "yearly") {
+          expiresAt.setFullYear(now.getFullYear() + 1);
+        } else {
+          // Para períodos de teste ou outros, adicionar 30 dias
+          expiresAt.setDate(now.getDate() + 30);
+        }
+        
+        // Garantir que todos os campos importantes sejam atualizados corretamente
+        // Usando apenas os nomes de campo que correspondem ao tipo User no schema
         await storage.updateUser(user.id, {
-          subscription_active: true,  // Usando o nome exato da coluna no banco de dados
-          subscriptionActive: true,   // Para compatibilidade com possíveis referências no código
+          subscriptionActive: true,
           subscriptionType: subscriptionType,
-          subscription_type: subscriptionType, // Usando o nome exato da coluna no banco de dados
           paymentRequired: false,
-          payment_required: false,    // Usando o nome exato da coluna no banco de dados
+          subscriptionExpiresAt: expiresAt.toISOString()
         });
         
         // Verificar se a atualização foi bem-sucedida
         const updatedUser = await storage.getUserById(user.id);
-        console.log(`Status após atualização: subscription_active=${updatedUser.subscription_active}, payment_required=${updatedUser.payment_required}`);
+        console.log(`Status após atualização: subscriptionActive=${updatedUser.subscriptionActive}, paymentRequired=${updatedUser.paymentRequired}`);
         
-        if (!updatedUser.subscription_active || updatedUser.payment_required) {
-          console.log("ALERTA: Os campos não foram atualizados corretamente. Tentando atualização direta no banco.");
+        if (!updatedUser.subscriptionActive || updatedUser.paymentRequired) {
+          console.log("ALERTA: Os campos não foram atualizados corretamente. Tentando via SQL direto (apenas em último caso).");
           
-          // Fazer uma atualização direta no banco de dados como fallback
-          await db.execute(
+          // Usar SQL direto apenas em último caso, usando a propriedade pool do storage
+          const { pool } = await import('./db');
+          await pool.query(
             `UPDATE users 
-             SET subscription_active = true, payment_required = false 
+             SET "subscriptionActive" = true, "paymentRequired" = false 
              WHERE id = $1`,
             [user.id]
           );

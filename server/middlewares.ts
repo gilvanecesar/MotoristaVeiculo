@@ -224,7 +224,7 @@ export function hasDriverAccess(req: Request, res: Response, next: NextFunction)
   
   // Embarcador e Agente têm acesso com assinatura
   if ((req.user?.profileType?.toLowerCase() === "embarcador" || req.user?.profileType?.toLowerCase() === "agente") && 
-      (req.user?.subscriptionActive === true || req.user?.subscriptionActive === 1)) {
+      (req.user?.subscriptionActive === true || req.user?.subscriptionActive === 1 || req.user?.subscriptionActive === "1")) {
     console.log(`Acesso concedido ao ${req.user?.profileType} (${req.user?.id}) com assinatura ativa para o motorista ${driverId}`);
     return next();
   }
