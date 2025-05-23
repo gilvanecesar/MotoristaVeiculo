@@ -2036,11 +2036,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: { message: "Email é obrigatório" } });
       }
       
+      console.log(`Tentando ativar assinatura manual para email: ${email}`);
+      
       // Encontrar usuário pelo email
       const user = await storage.getUserByEmail(email);
       if (!user) {
+        console.log(`Usuário não encontrado com email: ${email}`);
         return res.status(404).json({ error: { message: "Usuário não encontrado" } });
       }
+      
+      console.log(`Usuário encontrado: ID: ${user.id}, Nome: ${user.name}`);
       
       // Definir tipo de plano e período
       const subscriptionType = planType || "monthly";
@@ -2052,6 +2057,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         expirationDate.setMonth(now.getMonth() + 1);
       }
+      
+      console.log(`Atualizando usuário com assinatura ${subscriptionType}, válida até ${expirationDate.toISOString()}`);
       
       // Ativar assinatura no usuário
       await storage.updateUser(user.id, {
@@ -2068,6 +2075,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (subscriptions.length > 0) {
         // Atualizar assinatura existente
         const latestSubscription = subscriptions[0];
+        console.log(`Atualizando assinatura existente ID: ${latestSubscription.id}`);
+        
         await storage.updateSubscription(latestSubscription.id, {
           status: 'active',
           planType: subscriptionType,
@@ -2077,6 +2086,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         subscriptionId = latestSubscription.id;
       } else {
         // Criar nova assinatura
+        console.log(`Criando nova assinatura para usuário ID: ${user.id}`);
+        
         const newSubscription = await storage.createSubscription({
           userId: user.id,
           status: 'active',
@@ -2090,10 +2101,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         });
         subscriptionId = newSubscription.id;
+        console.log(`Nova assinatura criada com ID: ${subscriptionId}`);
       }
       
       // Registrar fatura paga
-      await storage.createInvoice({
+      console.log(`Registrando fatura paga para a assinatura`);
+      const invoice = await storage.createInvoice({
         userId: user.id,
         status: 'paid',
         amount: amount || '80.00',
@@ -2108,9 +2121,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           paymentMethod: 'mercadopago'
         }
       });
+      console.log(`Fatura registrada com ID: ${invoice.id}`);
       
       // Registrar evento
-      await storage.createSubscriptionEvent({
+      console.log(`Registrando evento de assinatura`);
+      const event = await storage.createSubscriptionEvent({
         userId: user.id,
         eventType: 'payment_success',
         metadata: {
@@ -2119,9 +2134,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           activatedManually: true
         }
       });
+      console.log(`Evento registrado com ID: ${event.id}`);
       
       // Enviar email de confirmação se possível
       try {
+        console.log(`Tentando enviar email de confirmação para ${user.email}`);
         const { sendSubscriptionEmail } = await import('./email-service');
         await sendSubscriptionEmail(
           user.email,
@@ -2131,10 +2148,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           expirationDate,
           parseFloat(amount || '80.00')
         );
+        console.log(`Email de confirmação enviado com sucesso`);
       } catch (emailError) {
         console.error('Erro ao enviar email de assinatura:', emailError);
       }
       
+      console.log(`Ativação manual concluída com sucesso`);
       res.json({
         success: true,
         message: `Assinatura ativada com sucesso para ${user.email}`,

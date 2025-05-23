@@ -142,25 +142,22 @@ export default function FinanceSettingsPage() {
   const activateManualMutation = useMutation({
     mutationFn: async (data: { email: string; planType: string; amount: string }) => {
       try {
-        // Vamos tentar uma abordagem alternativa criando uma assinatura via API de administração
-        const response = await apiRequest("POST", "/api/admin/subscriptions", {
-          clientName: "Usuário Ativado Manualmente", // Nome genérico
-          email: data.email,
-          userId: null, // API buscará o usuário pelo email
-          plan: data.planType,
-          amount: data.amount,
-          status: "active",
-          startDate: new Date().toISOString(),
-          endDate: new Date(
-            data.planType === "yearly" 
-              ? new Date().setFullYear(new Date().getFullYear() + 1)
-              : new Date().setMonth(new Date().getMonth() + 1)
-          ).toISOString(),
-          planType: data.planType,
-          findUserByEmail: true // Adicione uma flag para indicar que deve buscar por email
-        });
+        // Usar a rota específica para ativação manual
+        console.log("Enviando requisição para ativação manual:", data);
+        const response = await apiRequest(
+          "POST", 
+          "/api/admin/activate-subscription-manual", 
+          data
+        );
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("Erro retornado pela API:", errorData);
+          throw new Error(errorData.error?.message || "Erro ao ativar assinatura");
+        }
         
         const jsonData = await response.json();
+        console.log("Resposta da ativação manual:", jsonData);
         return jsonData;
       } catch (error) {
         console.error("Erro ao ativar assinatura:", error);
