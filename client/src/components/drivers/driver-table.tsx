@@ -251,7 +251,7 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
                               {getVehicleCategory(driver.vehicles[0])}
                             </Badge>
                           ) : (
-                            <div className="text-xs text-slate-500">Não definido</div>
+                            <div className="text-xs text-slate-500">Sem veículo</div>
                           )}
                         </TableCell>
                         <TableCell>
@@ -260,7 +260,7 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
                               {getSpecificVehicleType(driver.vehicles[0])}
                             </div>
                           ) : (
-                            <div className="text-xs text-slate-500">Não definido</div>
+                            <div className="text-xs text-slate-500">Sem veículo</div>
                           )}
                         </TableCell>
                         <TableCell>
@@ -271,7 +271,7 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
                               </Badge>
                             </div>
                           ) : (
-                            <div className="text-xs text-slate-500">Não definido</div>
+                            <div className="text-xs text-slate-500">Sem veículo</div>
                           )}
                         </TableCell>
                         <TableCell>
