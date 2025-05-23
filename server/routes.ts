@@ -2026,6 +2026,132 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // As rotas do Mercado Pago já foram configuradas no início do arquivo
+  
+  // Rota especial para ativação manual de assinatura
+  app.post("/api/admin/activate-subscription-manual", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const { email, planType, amount } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ error: { message: "Email é obrigatório" } });
+      }
+      
+      // Encontrar usuário pelo email
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(404).json({ error: { message: "Usuário não encontrado" } });
+      }
+      
+      // Definir tipo de plano e período
+      const subscriptionType = planType || "monthly";
+      const now = new Date();
+      const expirationDate = new Date();
+      
+      if (subscriptionType === "yearly") {
+        expirationDate.setFullYear(now.getFullYear() + 1);
+      } else {
+        expirationDate.setMonth(now.getMonth() + 1);
+      }
+      
+      // Ativar assinatura no usuário
+      await storage.updateUser(user.id, {
+        subscriptionActive: true,
+        subscriptionType: subscriptionType,
+        subscriptionExpiresAt: expirationDate.toISOString(),
+        paymentRequired: false
+      });
+      
+      // Criar ou atualizar registro de assinatura
+      const subscriptions = await storage.getSubscriptionsByUser(user.id);
+      let subscriptionId;
+      
+      if (subscriptions.length > 0) {
+        // Atualizar assinatura existente
+        const latestSubscription = subscriptions[0];
+        await storage.updateSubscription(latestSubscription.id, {
+          status: 'active',
+          planType: subscriptionType,
+          currentPeriodStart: now,
+          currentPeriodEnd: expirationDate
+        });
+        subscriptionId = latestSubscription.id;
+      } else {
+        // Criar nova assinatura
+        const newSubscription = await storage.createSubscription({
+          userId: user.id,
+          status: 'active',
+          planType: subscriptionType,
+          currentPeriodStart: now,
+          currentPeriodEnd: expirationDate,
+          clientId: user.clientId,
+          metadata: {
+            amount: amount || '80.00',
+            activatedManually: true
+          }
+        });
+        subscriptionId = newSubscription.id;
+      }
+      
+      // Registrar fatura paga
+      await storage.createInvoice({
+        userId: user.id,
+        status: 'paid',
+        amount: amount || '80.00',
+        clientId: user.clientId,
+        subscriptionId: subscriptionId,
+        description: `Assinatura ${subscriptionType === 'yearly' ? 'Anual' : 'Mensal'} - QUERO FRETES (Ativação Manual)`,
+        dueDate: now,
+        paidAt: now,
+        metadata: {
+          activatedManually: true,
+          activatedByUserId: req.user?.id,
+          paymentMethod: 'mercadopago'
+        }
+      });
+      
+      // Registrar evento
+      await storage.createSubscriptionEvent({
+        userId: user.id,
+        eventType: 'payment_success',
+        metadata: {
+          amount: amount || '80.00',
+          planType: subscriptionType,
+          activatedManually: true
+        }
+      });
+      
+      // Enviar email de confirmação se possível
+      try {
+        const { sendSubscriptionEmail } = await import('./email-service');
+        await sendSubscriptionEmail(
+          user.email,
+          user.name,
+          subscriptionType,
+          now,
+          expirationDate,
+          parseFloat(amount || '80.00')
+        );
+      } catch (emailError) {
+        console.error('Erro ao enviar email de assinatura:', emailError);
+      }
+      
+      res.json({
+        success: true,
+        message: `Assinatura ativada com sucesso para ${user.email}`,
+        details: {
+          userId: user.id,
+          email: user.email,
+          name: user.name,
+          planType: subscriptionType,
+          expiresAt: expirationDate,
+          subscriptionId: subscriptionId
+        }
+      });
+    } catch (error: any) {
+      console.error('Erro ao ativar assinatura manual:', error);
+      res.status(500).json({ error: { message: error.message || 'Erro ao ativar assinatura' } });
+    }
+  });
 
   const httpServer = createServer(app);
 
