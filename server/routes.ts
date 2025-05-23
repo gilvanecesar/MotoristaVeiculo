@@ -2059,11 +2059,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Ativar assinatura no usuário - sem usar a data diretamente para evitar erro de conversão
       console.log(`Atualizando status de assinatura para o usuário ID: ${user.id}`);
       try {
+        // Garantir que todos os campos importantes sejam explicitamente atualizados
         await storage.updateUser(user.id, {
-          subscriptionActive: true,
+          subscription_active: true,  // Usando o nome exato da coluna no banco de dados
+          subscriptionActive: true,   // Para compatibilidade com possíveis referências no código
           subscriptionType: subscriptionType,
-          paymentRequired: false
+          subscription_type: subscriptionType, // Usando o nome exato da coluna no banco de dados
+          paymentRequired: false,
+          payment_required: false,    // Usando o nome exato da coluna no banco de dados
         });
+        
+        // Verificar se a atualização foi bem-sucedida
+        const updatedUser = await storage.getUserById(user.id);
+        console.log(`Status após atualização: subscription_active=${updatedUser.subscription_active}, payment_required=${updatedUser.payment_required}`);
+        
+        if (!updatedUser.subscription_active || updatedUser.payment_required) {
+          console.log("ALERTA: Os campos não foram atualizados corretamente. Tentando atualização direta no banco.");
+          
+          // Fazer uma atualização direta no banco de dados como fallback
+          await db.execute(
+            `UPDATE users 
+             SET subscription_active = true, payment_required = false 
+             WHERE id = $1`,
+            [user.id]
+          );
+        }
+        
         console.log("Status de assinatura atualizado com sucesso");
       } catch (e) {
         console.error("Erro ao atualizar status de assinatura do usuário:", e);
