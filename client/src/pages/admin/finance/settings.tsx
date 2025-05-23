@@ -141,9 +141,11 @@ export default function FinanceSettingsPage() {
   // Mutation para ativação manual de assinatura
   const activateManualMutation = useMutation({
     mutationFn: async (data: { email: string; planType: string; amount: string }) => {
-      return await apiRequest("POST", "/api/admin/activate-subscription-manual", data);
+      const response = await apiRequest("POST", "/api/admin/activate-subscription-manual", data);
+      const jsonData = await response.json();
+      return jsonData;
     },
-    onSuccess: (response) => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/subscriptions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/invoices"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/finance/stats"] });
