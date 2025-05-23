@@ -498,6 +498,11 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
     // Remove tudo que não é número
     const numerico = valor.replace(/\D/g, "");
     
+    // Verifica se é um valor vazio ou zero
+    if (!numerico || parseInt(numerico) === 0) {
+      return "0,00";
+    }
+    
     // Converte para centavos
     const centavos = parseInt(numerico) / 100;
     
@@ -512,6 +517,13 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
   // Manipulador para formatar valor do frete
   const handleFreightValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const valor = e.target.value;
+    
+    // Permitir valor zero explicitamente
+    if (valor === "0" || valor === "0,00" || valor === "0.00" || valor === "") {
+      form.setValue("freightValue", "0,00");
+      return;
+    }
+    
     const valorFormatado = formatarValorReal(valor);
     form.setValue("freightValue", valorFormatado);
   };
