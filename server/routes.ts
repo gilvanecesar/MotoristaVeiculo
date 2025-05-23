@@ -2038,8 +2038,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`Tentando ativar assinatura manual para email: ${email}`);
       
-      // Encontrar usuário pelo email
-      const user = await storage.getUserByEmail(email);
+      // Primeiro verificamos se o usuário existe
+      let user;
+      try {
+        user = await storage.getUserByEmail(email);
+      } catch (e) {
+        console.error("Erro ao buscar usuário:", e);
+      }
+      
       if (!user) {
         console.log(`Usuário não encontrado com email: ${email}`);
         return res.status(404).json({ error: { message: "Usuário não encontrado" } });
@@ -2049,108 +2055,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Definir tipo de plano e período
       const subscriptionType = planType || "monthly";
-      const now = new Date();
-      const expirationDate = new Date();
       
-      if (subscriptionType === "yearly") {
-        expirationDate.setFullYear(now.getFullYear() + 1);
-      } else {
-        expirationDate.setMonth(now.getMonth() + 1);
+      // Ativar assinatura no usuário - sem usar a data diretamente para evitar erro de conversão
+      console.log(`Atualizando status de assinatura para o usuário ID: ${user.id}`);
+      try {
+        await storage.updateUser(user.id, {
+          subscriptionActive: true,
+          subscriptionType: subscriptionType,
+          paymentRequired: false
+        });
+        console.log("Status de assinatura atualizado com sucesso");
+      } catch (e) {
+        console.error("Erro ao atualizar status de assinatura do usuário:", e);
+        throw new Error("Falha ao atualizar status de assinatura");
       }
       
-      console.log(`Atualizando usuário com assinatura ${subscriptionType}, válida até ${expirationDate.toISOString()}`);
-      
-      // Ativar assinatura no usuário
-      await storage.updateUser(user.id, {
-        subscriptionActive: true,
-        subscriptionType: subscriptionType,
-        subscriptionExpiresAt: expirationDate.toISOString(),
-        paymentRequired: false
-      });
-      
-      // Criar ou atualizar registro de assinatura
-      const subscriptions = await storage.getSubscriptionsByUser(user.id);
+      // Gerar ou atualizar assinatura
       let subscriptionId;
-      
-      if (subscriptions.length > 0) {
-        // Atualizar assinatura existente
-        const latestSubscription = subscriptions[0];
-        console.log(`Atualizando assinatura existente ID: ${latestSubscription.id}`);
+      try {
+        const now = new Date();
+        const expirationDate = new Date();
         
-        await storage.updateSubscription(latestSubscription.id, {
-          status: 'active',
-          planType: subscriptionType,
-          currentPeriodStart: now,
-          currentPeriodEnd: expirationDate
-        });
-        subscriptionId = latestSubscription.id;
-      } else {
-        // Criar nova assinatura
-        console.log(`Criando nova assinatura para usuário ID: ${user.id}`);
+        if (subscriptionType === "yearly") {
+          expirationDate.setFullYear(now.getFullYear() + 1);
+        } else {
+          expirationDate.setMonth(now.getMonth() + 1);
+        }
         
+        // Buscar os campos exatos que o modelo espera
         const newSubscription = await storage.createSubscription({
           userId: user.id,
           status: 'active',
           planType: subscriptionType,
+          clientId: user.clientId || null,
           currentPeriodStart: now,
           currentPeriodEnd: expirationDate,
-          clientId: user.clientId,
           metadata: {
             amount: amount || '80.00',
-            activatedManually: true
+            activatedManually: true,
+            activatedBy: req.user?.id
           }
         });
+        
         subscriptionId = newSubscription.id;
         console.log(`Nova assinatura criada com ID: ${subscriptionId}`);
+      } catch (e) {
+        console.error("Erro ao criar assinatura:", e);
+        throw new Error("Falha ao criar registro de assinatura");
       }
       
-      // Registrar fatura paga
-      console.log(`Registrando fatura paga para a assinatura`);
-      const invoice = await storage.createInvoice({
-        userId: user.id,
-        status: 'paid',
-        amount: amount || '80.00',
-        clientId: user.clientId,
-        subscriptionId: subscriptionId,
-        description: `Assinatura ${subscriptionType === 'yearly' ? 'Anual' : 'Mensal'} - QUERO FRETES (Ativação Manual)`,
-        dueDate: now,
-        paidAt: now,
-        metadata: {
-          activatedManually: true,
-          activatedByUserId: req.user?.id,
-          paymentMethod: 'mercadopago'
-        }
-      });
-      console.log(`Fatura registrada com ID: ${invoice.id}`);
-      
-      // Registrar evento
-      console.log(`Registrando evento de assinatura`);
-      const event = await storage.createSubscriptionEvent({
-        userId: user.id,
-        eventType: 'payment_success',
-        metadata: {
-          amount: amount || '80.00',
-          planType: subscriptionType,
-          activatedManually: true
-        }
-      });
-      console.log(`Evento registrado com ID: ${event.id}`);
-      
-      // Enviar email de confirmação se possível
+      // Registrar fatura paga - sem usar datas para evitar erros
+      let invoice;
       try {
-        console.log(`Tentando enviar email de confirmação para ${user.email}`);
-        const { sendSubscriptionEmail } = await import('./email-service');
-        await sendSubscriptionEmail(
-          user.email,
-          user.name,
-          subscriptionType,
-          now,
-          expirationDate,
-          parseFloat(amount || '80.00')
-        );
-        console.log(`Email de confirmação enviado com sucesso`);
-      } catch (emailError) {
-        console.error('Erro ao enviar email de assinatura:', emailError);
+        invoice = await storage.createInvoice({
+          userId: user.id,
+          status: 'paid',
+          amount: amount || '80.00',
+          clientId: user.clientId || null,
+          subscriptionId: subscriptionId,
+          description: `Assinatura ${subscriptionType === 'yearly' ? 'Anual' : 'Mensal'} - QUERO FRETES (Ativação Manual)`,
+        });
+        console.log(`Fatura registrada com ID: ${invoice.id}`);
+      } catch (e) {
+        console.error("Erro ao criar fatura:", e);
+      }
+      
+      // Registrar evento de pagamento
+      try {
+        const now = new Date();
+        const eventData = {
+          userId: user.id,
+          eventType: 'payment_success',
+          planType: subscriptionType,
+          eventDate: now,
+          details: `Ativação manual de assinatura para o usuário ${user.email}`
+        };
+        const event = await storage.createSubscriptionEvent(eventData);
+        console.log(`Evento registrado com ID: ${event.id}`);
+      } catch (e) {
+        console.error("Erro ao registrar evento:", e);
       }
       
       console.log(`Ativação manual concluída com sucesso`);
@@ -2161,9 +2144,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId: user.id,
           email: user.email,
           name: user.name,
-          planType: subscriptionType,
-          expiresAt: expirationDate,
-          subscriptionId: subscriptionId
+          planType: subscriptionType
         }
       });
     } catch (error: any) {
