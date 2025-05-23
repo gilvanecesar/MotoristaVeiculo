@@ -213,10 +213,28 @@ export function hasDriverAccess(req: Request, res: Response, next: NextFunction)
 
   const driverId = parseInt(req.params.id, 10);
   
-  if (req.user?.profileType?.toLowerCase() === "administrador" || req.user?.profileType?.toLowerCase() === "admin" || req.user?.driverId === driverId) {
+  // Log para diagnóstico
+  console.log(`Verificando acesso ao motorista: ID motorista=${driverId}, User ID=${req.user?.id}, Profile=${req.user?.profileType}, DriverID=${req.user?.driverId}`);
+  
+  // Administrador tem acesso total
+  if (req.user?.profileType?.toLowerCase() === "administrador" || req.user?.profileType?.toLowerCase() === "admin") {
+    console.log(`Acesso concedido ao administrador (${req.user?.id}) para o motorista ${driverId}`);
     return next();
   }
   
+  // Embarcador e Agente têm acesso com assinatura
+  if ((req.user?.profileType?.toLowerCase() === "embarcador" || req.user?.profileType?.toLowerCase() === "agente") && req.user?.subscriptionActive) {
+    console.log(`Acesso concedido ao ${req.user?.profileType} (${req.user?.id}) com assinatura ativa para o motorista ${driverId}`);
+    return next();
+  }
+  
+  // Motorista só tem acesso a seus próprios dados
+  if (req.user?.profileType?.toLowerCase() === "motorista" && req.user?.driverId === driverId) {
+    console.log(`Acesso concedido ao motorista (${req.user?.id}) para seu próprio cadastro ${driverId}`);
+    return next();
+  }
+  
+  console.log(`Acesso negado ao motorista ${driverId}. User ID: ${req.user?.id}, User driverId: ${req.user?.driverId}, User profileType: ${req.user?.profileType}`);
   res.status(403).json({ message: "Acesso não autorizado" });
 }
 
