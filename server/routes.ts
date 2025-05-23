@@ -2127,7 +2127,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId: user.id,
           eventType: 'payment_success',
           planType: subscriptionType,
-          eventDate: now,
+          eventDate: now.toISOString(), // Convertendo para formato ISO string
           details: `Ativação manual de assinatura para o usuário ${user.email}`
         };
         const event = await storage.createSubscriptionEvent(eventData);
