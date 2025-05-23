@@ -141,9 +141,31 @@ export default function FinanceSettingsPage() {
   // Mutation para ativação manual de assinatura
   const activateManualMutation = useMutation({
     mutationFn: async (data: { email: string; planType: string; amount: string }) => {
-      const response = await apiRequest("POST", "/api/admin/activate-subscription-manual", data);
-      const jsonData = await response.json();
-      return jsonData;
+      try {
+        // Vamos tentar uma abordagem alternativa criando uma assinatura via API de administração
+        const response = await apiRequest("POST", "/api/admin/subscriptions", {
+          clientName: "Usuário Ativado Manualmente", // Nome genérico
+          email: data.email,
+          userId: null, // API buscará o usuário pelo email
+          plan: data.planType,
+          amount: data.amount,
+          status: "active",
+          startDate: new Date().toISOString(),
+          endDate: new Date(
+            data.planType === "yearly" 
+              ? new Date().setFullYear(new Date().getFullYear() + 1)
+              : new Date().setMonth(new Date().getMonth() + 1)
+          ).toISOString(),
+          planType: data.planType,
+          findUserByEmail: true // Adicione uma flag para indicar que deve buscar por email
+        });
+        
+        const jsonData = await response.json();
+        return jsonData;
+      } catch (error) {
+        console.error("Erro ao ativar assinatura:", error);
+        throw new Error("Erro ao ativar assinatura. Verifique se o email existe no sistema.");
+      }
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/subscriptions"] });
