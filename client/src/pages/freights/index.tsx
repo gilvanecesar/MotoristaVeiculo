@@ -342,10 +342,10 @@ ${destinosText}
 💰 *Pagamento:* ${freight.paymentMethod}
 💵 *Valor:* ${formatCurrency(freight.freightValue)}
 
-ℹ️ *Contato:* ${freight.contactName}
-📱 *Telefone:* ${freight.contactPhone}
+👤 *Contato:* ${freight.contactName}
+📞 *Telefone:* ${freight.contactPhone}
 ${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : ''}
-🔗 *Sistema QUERO FRETES:* ${baseUrl}
+🌐 *Sistema QUERO FRETES:* ${baseUrl}
 🔗 *Link do frete:* ${freightUrl}
 `);
   };
