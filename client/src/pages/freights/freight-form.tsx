@@ -184,7 +184,8 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
       ...updatedDestinations[index],
       [field]: value,
     };
-    console.log("Atualizando destino:", index, field, value, updatedDestinations);
+    console.log("🔧 UPDATEDESTINATION - Index:", index, "Field:", field, "Value:", value);
+    console.log("🔧 Destinations array atualizado:", updatedDestinations);
     setDestinations(updatedDestinations);
   };
 
@@ -349,8 +350,9 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
     // Filtrar destinos válidos (com cidade e estado preenchidos)
     const validDestinations = destinations.filter(dest => dest.destination && dest.destinationState);
     
-    console.log("Destinos antes da filtragem:", destinations);
-    console.log("Destinos válidos após filtragem:", validDestinations);
+    console.log("🎯 SUBMISSÃO - Destinos antes da filtragem:", destinations);
+    console.log("🎯 SUBMISSÃO - Destinos válidos após filtragem:", validDestinations);
+    console.log("🎯 SUBMISSÃO - hasMultipleDestinations:", data.hasMultipleDestinations);
 
     // Define status inicial como aberto
     data.status = "aberto";
