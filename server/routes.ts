@@ -646,21 +646,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Se houver destinos múltiplos, salvá-los
       if (destinations.length > 0) {
+        console.log(`Salvando ${destinations.length} destinos para o frete ${freight.id}`);
         for (const dest of destinations) {
-          await storage.createFreightDestination({
-            freightId: freight.id,
-            destination: dest.destination,
-            destinationState: dest.destinationState,
-            arrivalDate: dest.arrivalDate || null,
-            destinationContact: dest.destinationContact || null,
-            destinationPhone: dest.destinationPhone || null,
-            destinationAddress: dest.destinationAddress || null,
-            destinationNotes: dest.destinationNotes || null,
-          });
+          console.log("Salvando destino:", dest);
+          if (dest.destination && dest.destinationState) {
+            await storage.createFreightDestination({
+              freightId: freight.id,
+              destination: dest.destination,
+              destinationState: dest.destinationState,
+            });
+            console.log("Destino salvo com sucesso");
+          } else {
+            console.log("Destino inválido, pulando:", dest);
+          }
         }
         
         // Atualizar o frete para indicar que tem múltiplos destinos
         await storage.updateFreight(freight.id, { hasMultipleDestinations: true });
+        console.log("Frete atualizado para múltiplos destinos");
+      } else {
+        console.log("Nenhum destino múltiplo para salvar");
       }
       
       res.status(201).json(freight);
