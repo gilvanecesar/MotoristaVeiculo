@@ -159,43 +159,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
     defaultValues,
   });
 
-  const hasMultipleDestinations = form.watch("hasMultipleDestinations");
-  
-  // Log para debug do estado dos destinos
-  console.log("Estado atual dos destinos:", destinations);
-  console.log("hasMultipleDestinations:", hasMultipleDestinations);
-
-  // Criar uma função para adicionar destinos
-  const addDestination = () => {
-    const newDestinations = [
-      ...destinations,
-      { destinationState: "", destination: "" },
-    ];
-    console.log("🚀 ADICIONANDO DESTINO - Estado atual:", destinations);
-    console.log("🚀 ADICIONANDO DESTINO - Novo estado será:", newDestinations);
-    setDestinations(newDestinations);
-    // Forçar re-render
-    setTimeout(() => {
-      console.log("🚀 APÓS TIMEOUT - Destinations:", destinations.length);
-    }, 100);
-  };
-
-  // Criar uma função para atualizar um destino
-  const updateDestination = (index: number, field: keyof DestinationFormValues, value: string) => {
-    const updatedDestinations = [...destinations];
-    updatedDestinations[index] = {
-      ...updatedDestinations[index],
-      [field]: value,
-    };
-    console.log("🔧 UPDATEDESTINATION - Index:", index, "Field:", field, "Value:", value);
-    console.log("🔧 Destinations array atualizado:", updatedDestinations);
-    setDestinations(updatedDestinations);
-  };
-
-  // Criar uma função para remover um destino
-  const removeDestination = (index: number) => {
-    setDestinations(destinations.filter((_, i) => i !== index));
-  };
+  // Campos diretos para destinos agora - sem arrays complexos
 
   // Função para carregar os dados de um frete existente (no modo de edição)
   const loadFreight = async () => {
@@ -220,26 +184,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
             }
           }
 
-          // Carregar destinos adicionais associados a este frete (multidestinos)
-          const destinationsResponse = await apiRequest("GET", `/api/freight-destinations?freightId=${freightId}`);
-          if (destinationsResponse.ok) {
-            const destinationData = await destinationsResponse.json();
-            setFreightDestinations(destinationData);
-            
-            // Configurar destinos para o formulário
-            const destinationsForForm = destinationData.map((dest: any) => ({
-              destination: dest.destination,
-              destinationState: dest.destinationState,
-            }));
-            
-            console.log("Carregando destinos existentes:", destinationsForForm);
-            setDestinations(destinationsForForm);
-  
-            // Se tem destinos adicionais, marcar como multidestinos
-            if (destinationsForForm.length > 0) {
-              freight.hasMultipleDestinations = true;
-            }
-          }
+          // Os destinos adicionais agora são campos diretos no formulário
 
             // Configurar form com dados do frete
             form.reset({
@@ -248,7 +193,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
               cargoWeight: freight.cargoWeight,
               freightValue: freight.freightValue,
               vehicleCategory: getVehicleCategory(freight.vehicleType),
-              hasMultipleDestinations: freight.destinations && freight.destinations.length > 0,
+              hasMultipleDestinations: Boolean(freight.destination1 || freight.destination2),
             });
 
             // Configurar tipos de veículos
