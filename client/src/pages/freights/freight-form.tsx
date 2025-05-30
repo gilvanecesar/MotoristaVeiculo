@@ -449,7 +449,14 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
         freightResponse = await response.json();
         
         // Se é multidestinos e tem destinos, salva os destinos
+        console.log("Verificando se precisa salvar destinos múltiplos:", {
+          hasMultipleDestinations: data.hasMultipleDestinations,
+          destinationsCount: destinations.length,
+          destinations: destinations
+        });
+        
         if (data.hasMultipleDestinations && destinations.length > 0) {
+          console.log("Iniciando salvamento de destinos múltiplos...");
           // Primeiro, remove destinos antigos se estiver editando
           if (isEditing) {
             await Promise.all(
