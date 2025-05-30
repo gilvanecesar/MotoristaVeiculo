@@ -392,10 +392,13 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
     }
     
     // Incluir destinos múltiplos no payload principal
+    const destinationsToSend = data.hasMultipleDestinations ? destinations : [];
     const payloadData = {
       ...data,
-      destinations: data.hasMultipleDestinations ? destinations : []
+      destinations: destinationsToSend
     };
+    
+    console.log("Destinos a serem enviados:", destinationsToSend);
     
     // Mostra erros de desenvolvimento
     console.log("Form data:", data);
