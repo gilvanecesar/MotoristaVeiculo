@@ -647,13 +647,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Se houver destinos múltiplos, salvá-los
       if (destinations.length > 0) {
         console.log(`Salvando ${destinations.length} destinos para o frete ${freight.id}`);
-        for (const dest of destinations) {
+        for (let i = 0; i < destinations.length; i++) {
+          const dest = destinations[i];
           console.log("Salvando destino:", dest);
           if (dest.destination && dest.destinationState) {
             await storage.createFreightDestination({
               freightId: freight.id,
               destination: dest.destination,
               destinationState: dest.destinationState,
+              order: i + 1,
             });
             console.log("Destino salvo com sucesso");
           } else {

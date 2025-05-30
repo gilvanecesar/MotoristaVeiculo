@@ -634,7 +634,12 @@ export default function FreightsPage() {
                             <TableCell>{renderStatusBadge(freight)}</TableCell>
                             <TableCell>{clientFound?.name || "Cliente não encontrado"}</TableCell>
                             <TableCell>{freight.origin}, {freight.originState}</TableCell>
-                            <TableCell>{freight.destination}, {freight.destinationState}</TableCell>
+                            <TableCell>
+                              {freight.destinations && freight.destinations.length > 0 
+                                ? freight.destinations.map(dest => `${dest.destination}, ${dest.destinationState}`).join(' • ')
+                                : `${freight.destination}, ${freight.destinationState}`
+                              }
+                            </TableCell>
                             <TableCell>{getVehicleCategory(freight.vehicleType)}</TableCell>
                             <TableCell>{formatMultipleVehicleTypes(freight)}</TableCell>
                             <TableCell>{formatMultipleBodyTypes(freight)}</TableCell>
@@ -686,7 +691,12 @@ export default function FreightsPage() {
                             <MapPin className="h-4 w-4 text-slate-500 mt-0.5" />
                             <div className="flex-1">
                               <p className="text-xs text-slate-500">Destino:</p>
-                              <p className="text-sm">{freight.destination}, {freight.destinationState}</p>
+                              <p className="text-sm">
+                                {freight.destinations && freight.destinations.length > 0 
+                                  ? freight.destinations.map(dest => `${dest.destination}, ${dest.destinationState}`).join(' • ')
+                                  : `${freight.destination}, ${freight.destinationState}`
+                                }
+                              </p>
                             </div>
                           </div>
                           
