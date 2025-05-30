@@ -594,6 +594,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Garantir que o status é 'active' inicialmente
       freightData.status = 'active';
       
+      // Definir data de criação automaticamente
+      freightData.createdAt = new Date();
+      
       // Se não for enviada uma data de expiração, definir para 24h no futuro
       if (!freightData.expirationDate) {
         const expirationDate = new Date();
