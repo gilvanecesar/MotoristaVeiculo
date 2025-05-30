@@ -224,6 +224,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
               destinationState: dest.destinationState,
             }));
             
+            console.log("Carregando destinos existentes:", destinationsForForm);
             setDestinations(destinationsForForm);
   
             // Se tem destinos adicionais, marcar como multidestinos
