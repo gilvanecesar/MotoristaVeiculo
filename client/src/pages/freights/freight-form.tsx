@@ -391,8 +391,10 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
     
     // Mostra erros de desenvolvimento
     console.log("Form data:", data);
-    console.log("Destinations:", destinations);
+    console.log("Destinations state:", destinations);
+    console.log("hasMultipleDestinations:", data.hasMultipleDestinations);
     console.log("Payload completo:", payloadData);
+    console.log("Destinations no payload:", payloadData.destinations);
     
     try {
       let response;
