@@ -12,11 +12,10 @@ interface FreightData {
   originState: string;
   destination: string;
   destinationState: string;
-  destinations?: Array<{
-    id: number;
-    destination: string;
-    destinationState: string;
-  }>;
+  destination2?: string;
+  destinationState2?: string;
+  destination3?: string;
+  destinationState3?: string;
   cargoType: string;
   cargoWeight: string;
   vehicleType: string;
@@ -149,10 +148,10 @@ export default function PublicFreight() {
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
             Detalhes do Frete
           </h1>
-          <p className="text-slate-600 dark:text-slate-400">
+          <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base">
             Frete #{freight.id} - Sistema QUERO FRETES
           </p>
         </div>
@@ -184,18 +183,27 @@ export default function PublicFreight() {
 
               <div className="flex items-start gap-2">
                 <MapPin className="h-4 w-4 text-red-500 mt-1" />
-                <div>
-                  <p className="text-sm text-slate-500">Destino:</p>
-                  <div className="font-medium space-y-1">
-                    <div>{freight.destination}, {freight.destinationState}</div>
-                    {freight.destination1 && (
-                      <div className="text-sm text-blue-600">
-                        Destino 2: {freight.destination1}, {freight.destinationState1}
+                <div className="flex-1">
+                  <p className="text-sm text-slate-500">Destinos:</p>
+                  <div className="font-medium space-y-2">
+                    <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded">
+                      <span className="text-xs text-slate-600 dark:text-slate-400">Principal:</span>
+                      <div>{freight.destination}, {freight.destinationState}</div>
+                    </div>
+                    {freight.destination2 && (
+                      <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
+                        <span className="text-xs text-blue-600 dark:text-blue-400">Destino 2:</span>
+                        <div className="text-blue-700 dark:text-blue-300">
+                          {freight.destination2}, {freight.destinationState2}
+                        </div>
                       </div>
                     )}
-                    {freight.destination2 && (
-                      <div className="text-sm text-blue-600">
-                        Destino 3: {freight.destination2}, {freight.destinationState2}
+                    {freight.destination3 && (
+                      <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
+                        <span className="text-xs text-blue-600 dark:text-blue-400">Destino 3:</span>
+                        <div className="text-blue-700 dark:text-blue-300">
+                          {freight.destination3}, {freight.destinationState3}
+                        </div>
                       </div>
                     )}
                   </div>

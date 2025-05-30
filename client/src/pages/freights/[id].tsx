@@ -200,16 +200,17 @@ ${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : '
     <div className="container mx-auto py-8">
       <div className="flex flex-col gap-6">
         {/* Cabeçalho */}
-        <div className="flex justify-between items-center">
-          <Button variant="outline" onClick={() => navigate("/freights")}>
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+          <Button variant="outline" onClick={() => navigate("/freights")} className="self-start">
             <ArrowLeft className="h-4 w-4 mr-2" /> Voltar
           </Button>
           
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             {isClientAuthorized(freight.clientId, freight.userId) && (
               <Button 
                 variant="outline"
                 onClick={() => navigate(`/freights/direct-edit/${freight.id}`)}
+                className="text-sm"
               >
                 <Edit className="h-4 w-4 mr-2" /> Editar Valor
               </Button>
@@ -218,6 +219,7 @@ ${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : '
             <Button 
               variant="default"
               onClick={shareViaWhatsApp}
+              className="text-sm"
             >
               <Share2 className="h-4 w-4 mr-2" /> Compartilhar
             </Button>
@@ -227,21 +229,21 @@ ${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : '
         {/* Card principal */}
         <Card>
           <CardHeader className="pb-0">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-primary/10 rounded-full">
                   <Truck className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold">
+                  <h2 className="text-xl sm:text-2xl font-bold">
                     Frete {renderStatusBadge()}
                   </h2>
-                  <p className="text-slate-500">
+                  <p className="text-slate-500 text-sm sm:text-base">
                     {clients.find((client: Client) => client.id === freight.clientId)?.name || "Cliente não encontrado"}
                   </p>
                 </div>
               </div>
-              <div className="text-xl font-bold text-primary">
+              <div className="text-lg sm:text-xl font-bold text-primary self-start sm:self-center">
                 {formatCurrency(freight.freightValue)}
               </div>
             </div>
@@ -249,15 +251,15 @@ ${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : '
           
           <CardContent className="pt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-              {/* Origem e Destino */}
+              {/* Origem e Destinos */}
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
                   <div className="p-2 bg-slate-100 rounded-md dark:bg-slate-800">
                     <MapPin className="h-5 w-5 text-slate-600 dark:text-slate-400" />
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <h3 className="font-medium text-slate-700 dark:text-slate-300">Origem</h3>
-                    <p className="text-lg">{freight.origin}, {freight.originState}</p>
+                    <p className="text-base sm:text-lg">{freight.origin}, {freight.originState}</p>
                   </div>
                 </div>
                 
@@ -265,11 +267,40 @@ ${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : '
                   <div className="p-2 bg-slate-100 rounded-md dark:bg-slate-800">
                     <MapPin className="h-5 w-5 text-slate-600 dark:text-slate-400" />
                   </div>
-                  <div>
-                    <h3 className="font-medium text-slate-700 dark:text-slate-300">Destino</h3>
-                    <p className="text-lg">{freight.destination}, {freight.destinationState}</p>
+                  <div className="flex-1">
+                    <h3 className="font-medium text-slate-700 dark:text-slate-300">Destino Principal</h3>
+                    <p className="text-base sm:text-lg">{freight.destination}, {freight.destinationState}</p>
                   </div>
                 </div>
+
+                {/* Destinos Adicionais */}
+                {(freight.destination2 || freight.destination3) && (
+                  <div className="space-y-3">
+                    {freight.destination2 && (
+                      <div className="flex items-start gap-3 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg">
+                        <div className="p-1.5 bg-slate-200 rounded-md dark:bg-slate-700">
+                          <MapPin className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-sm font-medium text-slate-600 dark:text-slate-400">Destino 2</h4>
+                          <p className="text-sm sm:text-base">{freight.destination2}, {freight.destinationState2}</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {freight.destination3 && (
+                      <div className="flex items-start gap-3 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg">
+                        <div className="p-1.5 bg-slate-200 rounded-md dark:bg-slate-700">
+                          <MapPin className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-sm font-medium text-slate-600 dark:text-slate-400">Destino 3</h4>
+                          <p className="text-sm sm:text-base">{freight.destination3}, {freight.destinationState3}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               
               {/* Informações do Veículo */}
