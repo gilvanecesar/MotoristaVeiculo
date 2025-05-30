@@ -428,7 +428,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
       } else {
         // Cria um novo frete
         console.log("Enviando requisição POST para criar frete");
-        response = await apiRequest("POST", "/api/freights", data);
+        response = await apiRequest("POST", "/api/freights", payloadData);
       }
 
       if (response.ok) {
