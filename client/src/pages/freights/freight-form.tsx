@@ -346,23 +346,13 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
       return;
     }
     
-    // Se for multidestinos e não tiver destinos adicionados, adiciona aviso
-    if (data.hasMultipleDestinations && destinations.length === 0) {
-      toast({
-        title: "Aviso",
-        description: "Você selecionou a opção de múltiplos destinos, mas não adicionou nenhum destino.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Se for multidestinos, verifica se tem pelo menos um destino completo
-    if (data.hasMultipleDestinations) {
-      const hasValidDestination = destinations.some(dest => dest.destination && dest.destinationState);
-      if (!hasValidDestination) {
+    // Se houver destinos adicionais, verifica se estão completos
+    if (destinations.length > 0) {
+      const invalidDestinations = destinations.filter(dest => !dest.destination || !dest.destinationState);
+      if (invalidDestinations.length > 0) {
         toast({
           title: "Aviso",
-          description: "Adicione pelo menos um destino completo (cidade e estado).",
+          description: "Complete todos os destinos adicionais (cidade e estado) ou remova os campos vazios.",
           variant: "destructive",
         });
         return;
@@ -733,20 +723,6 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                     
                     {destinations.length > 0 && (
                       <div className="space-y-3 mt-4">
-                        <div className="flex items-center justify-between">
-                          <FormLabel className="text-base">Destinos Adicionais</FormLabel>
-                          {!isViewingInReadOnlyMode && destinations.length < 2 && (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={addDestination}
-                            >
-                              <Plus className="h-4 w-4 mr-1" />
-                              Adicionar Mais Um
-                            </Button>
-                          )}
-                        </div>
                         
                         {destinations.length === 0 ? (
                           <div className="p-4 border border-dashed rounded-md text-center text-muted-foreground">
