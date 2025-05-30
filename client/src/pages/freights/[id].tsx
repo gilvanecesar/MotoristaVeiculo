@@ -291,28 +291,28 @@ ${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : '
                 </div>
 
                 {/* Destinos Adicionais */}
-                {(freight.destination2 || freight.destination3) && (
+                {(freight.destination1 || freight.destination2) && (
                   <div className="space-y-3">
-                    {freight.destination2 && (
+                    {freight.destination1 && (
                       <div className="flex items-start gap-3 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg">
                         <div className="p-1.5 bg-slate-200 rounded-md dark:bg-slate-700">
                           <MapPin className="h-4 w-4 text-slate-600 dark:text-slate-400" />
                         </div>
                         <div className="flex-1">
                           <h4 className="text-sm font-medium text-slate-600 dark:text-slate-400">Destino 2</h4>
-                          <p className="text-sm sm:text-base">{freight.destination2}, {freight.destinationState2}</p>
+                          <p className="text-sm sm:text-base">{freight.destination1}, {freight.destinationState1}</p>
                         </div>
                       </div>
                     )}
                     
-                    {freight.destination3 && (
+                    {freight.destination2 && (
                       <div className="flex items-start gap-3 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg">
                         <div className="p-1.5 bg-slate-200 rounded-md dark:bg-slate-700">
                           <MapPin className="h-4 w-4 text-slate-600 dark:text-slate-400" />
                         </div>
                         <div className="flex-1">
                           <h4 className="text-sm font-medium text-slate-600 dark:text-slate-400">Destino 3</h4>
-                          <p className="text-sm sm:text-base">{freight.destination3}, {freight.destinationState3}</p>
+                          <p className="text-sm sm:text-base">{freight.destination2}, {freight.destinationState2}</p>
                         </div>
                       </div>
                     )}

@@ -199,19 +199,19 @@ export default function PublicFreight() {
                       <span className="text-xs text-slate-600 dark:text-slate-400">Principal:</span>
                       <div>{freight.destination}, {freight.destinationState}</div>
                     </div>
-                    {freight.destination2 && (
+                    {freight.destination1 && (
                       <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
                         <span className="text-xs text-blue-600 dark:text-blue-400">Destino 2:</span>
                         <div className="text-blue-700 dark:text-blue-300">
-                          {freight.destination2}, {freight.destinationState2}
+                          {freight.destination1}, {freight.destinationState1}
                         </div>
                       </div>
                     )}
-                    {freight.destination3 && (
+                    {freight.destination2 && (
                       <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
                         <span className="text-xs text-blue-600 dark:text-blue-400">Destino 3:</span>
                         <div className="text-blue-700 dark:text-blue-300">
-                          {freight.destination3}, {freight.destinationState3}
+                          {freight.destination2}, {freight.destinationState2}
                         </div>
                       </div>
                     )}

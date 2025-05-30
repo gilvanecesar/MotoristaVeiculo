@@ -334,12 +334,12 @@ export default function FreightsPage() {
     // Formatação dos destinos
     let destinosText = `🏁 *Destino:* ${freight.destination}, ${freight.destinationState}`;
     
-    if (freight.destination2) {
-      destinosText += `\n🏁 *Destino 2:* ${freight.destination2}, ${freight.destinationState2}`;
+    if (freight.destination1) {
+      destinosText += `\n🏁 *Destino 2:* ${freight.destination1}, ${freight.destinationState1}`;
     }
     
-    if (freight.destination3) {
-      destinosText += `\n🏁 *Destino 3:* ${freight.destination3}, ${freight.destinationState3}`;
+    if (freight.destination2) {
+      destinosText += `\n🏁 *Destino 3:* ${freight.destination2}, ${freight.destinationState2}`;
     }
     
     return encodeURIComponent(`
