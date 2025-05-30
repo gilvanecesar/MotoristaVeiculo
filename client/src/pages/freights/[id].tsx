@@ -99,6 +99,20 @@ export default function FreightDetailPage() {
     );
   };
 
+  // Função para formatar data
+  const formatDate = (dateString: string | Date) => {
+    if (!dateString) return 'Data não disponível';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Data inválida';
+    return date.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit', 
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   // Função para compartilhar via WhatsApp
   const formatWhatsAppMessage = () => {
     if (!freight) return "";
@@ -109,17 +123,17 @@ export default function FreightDetailPage() {
     // URL fixa do sistema QUERO FRETES
     const baseUrl = "https://querofretes.com.br";
     // URL específica do frete
-    const freightUrl = `${window.location.origin}/freights/${freight.id}`;
+    const freightUrl = `${window.location.origin}/freight/${freight.id}`;
     
     // Formatação dos destinos
     let destinosText = `🏁 *Destino:* ${freight.destination}, ${freight.destinationState}`;
     
-    if (freight.destination1) {
-      destinosText += `\n🏁 *Destino 2:* ${freight.destination1}, ${freight.destinationState1}`;
+    if (freight.destination2) {
+      destinosText += `\n🏁 *Destino 2:* ${freight.destination2}, ${freight.destinationState2}`;
     }
     
-    if (freight.destination2) {
-      destinosText += `\n🏁 *Destino 3:* ${freight.destination2}, ${freight.destinationState2}`;
+    if (freight.destination3) {
+      destinosText += `\n🏁 *Destino 3:* ${freight.destination3}, ${freight.destinationState3}`;
     }
     
     return encodeURIComponent(`
@@ -135,6 +149,9 @@ ${destinosText}
 ⚖️ *Peso:* ${freight.cargoWeight} Kg
 💰 *Pagamento:* ${freight.paymentMethod}
 💵 *Valor:* ${formatCurrency(freight.freightValue)}
+
+📅 *Publicado em:* ${formatDate(freight.createdAt)}
+⏰ *Válido até:* ${formatDate(freight.expirationDate)}
 
 👤 *Contato:* ${freight.contactName}
 📞 *Telefone:* ${freight.contactPhone}
