@@ -638,8 +638,8 @@ export default function FreightsPage() {
                               {freight.destinations && freight.destinations.length > 0 
                                 ? freight.destinations
                                     .filter(dest => dest.destination && dest.destinationState)
-                                    .map(dest => `${dest.destination}/${dest.destinationState}`)
-                                    .join(' - ')
+                                    .map((dest, index) => `Destino ${index + 1}: ${dest.destination}/${dest.destinationState}`)
+                                    .join(' • ')
                                 : `${freight.destination}/${freight.destinationState}`
                               }
                             </TableCell>
@@ -698,8 +698,8 @@ export default function FreightsPage() {
                                 {freight.destinations && freight.destinations.length > 0 
                                   ? freight.destinations
                                       .filter(dest => dest.destination && dest.destinationState)
-                                      .map(dest => `${dest.destination}/${dest.destinationState}`)
-                                      .join(' - ')
+                                      .map((dest, index) => `Destino ${index + 1}: ${dest.destination}/${dest.destinationState}`)
+                                      .join(' • ')
                                   : `${freight.destination}/${freight.destinationState}`
                                 }
                               </p>

@@ -395,6 +395,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
     console.log("hasMultipleDestinations:", data.hasMultipleDestinations);
     console.log("Payload completo:", payloadData);
     console.log("Destinations no payload:", payloadData.destinations);
+    console.log("Estado atual de destinations antes do envio:", destinations.length, destinations);
     
     try {
       let response;
