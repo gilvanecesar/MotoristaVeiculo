@@ -636,8 +636,11 @@ export default function FreightsPage() {
                             <TableCell>{freight.origin}, {freight.originState}</TableCell>
                             <TableCell>
                               {freight.destinations && freight.destinations.length > 0 
-                                ? freight.destinations.map(dest => `${dest.destination}, ${dest.destinationState}`).join(' • ')
-                                : `${freight.destination}, ${freight.destinationState}`
+                                ? freight.destinations
+                                    .filter(dest => dest.destination && dest.destinationState)
+                                    .map(dest => `${dest.destination}/${dest.destinationState}`)
+                                    .join(' - ')
+                                : `${freight.destination}/${freight.destinationState}`
                               }
                             </TableCell>
                             <TableCell>{getVehicleCategory(freight.vehicleType)}</TableCell>
@@ -693,8 +696,11 @@ export default function FreightsPage() {
                               <p className="text-xs text-slate-500">Destino:</p>
                               <p className="text-sm">
                                 {freight.destinations && freight.destinations.length > 0 
-                                  ? freight.destinations.map(dest => `${dest.destination}, ${dest.destinationState}`).join(' • ')
-                                  : `${freight.destination}, ${freight.destinationState}`
+                                  ? freight.destinations
+                                      .filter(dest => dest.destination && dest.destinationState)
+                                      .map(dest => `${dest.destination}/${dest.destinationState}`)
+                                      .join(' - ')
+                                  : `${freight.destination}/${freight.destinationState}`
                                 }
                               </p>
                             </div>
