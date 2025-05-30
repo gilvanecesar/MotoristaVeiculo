@@ -48,6 +48,7 @@ import PaymentHistoryPage from "@/pages/user/payment-history";
 import ProfileSelectionPage from "@/pages/profile-selection";
 import ResetPasswordPage from "@/pages/reset-password";
 import SettingsPage from "@/pages/settings";
+import PublicFreight from "@/pages/public-freight";
 
 function Router() {
   return (

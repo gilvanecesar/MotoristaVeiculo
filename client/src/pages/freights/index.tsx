@@ -312,10 +312,10 @@ export default function FreightsPage() {
     const clientFound = clients.find((client: Client) => client.id === freight.clientId);
     const clientName = clientFound ? clientFound.name : "Cliente não encontrado";
     
-    // URL fixa do sistema QUERO FRETES
-    const baseUrl = "https://querofretes.com.br";
-    // URL específica do frete (mantendo a estrutura de URL atual)
-    const freightUrl = `${window.location.origin}/freights/${freight.id}`;
+    // URL do sistema atual
+    const baseUrl = window.location.origin;
+    // URL específica do frete
+    const freightUrl = `${window.location.origin}/freight/${freight.id}`;
     
     return encodeURIComponent(`
 🚛 *FRETE DISPONÍVEL* 🚛

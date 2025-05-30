@@ -2269,6 +2269,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Rota pública para visualizar um frete específico (sem autenticação)
+  app.get("/api/public/freights/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const freight = await storage.getFreight(id);
+      
+      if (!freight) {
+        return res.status(404).json({ message: "Frete não encontrado" });
+      }
+      
+      // Verificar se o frete está ativo (não expirado)
+      if (freight.status !== 'active') {
+        return res.status(403).json({ message: "Este frete não está mais disponível" });
+      }
+      
+      res.json(freight);
+    } catch (error) {
+      console.error("Erro ao obter frete público:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
