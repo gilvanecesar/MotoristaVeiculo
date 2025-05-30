@@ -112,8 +112,8 @@ const LocationInput: React.FC<LocationInputProps> = ({
   // Manipular a mudança direta no input
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
-    onChange(newValue);
     setSearchTerm(newValue);
+    onChange(newValue);
     
     if (newValue.length >= 3) {
       searchCities(newValue);
@@ -262,7 +262,7 @@ const LocationInput: React.FC<LocationInputProps> = ({
               <Input
                 ref={inputRef}
                 type="text"
-                value={value}
+                value={searchTerm || value}
                 onChange={handleInputChange}
                 placeholder={placeholder}
                 disabled={disabled || readOnly}
