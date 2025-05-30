@@ -394,10 +394,10 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
     // Para destinos múltiplos, usar os campos destination1 e destination2 diretamente
     const payloadData = {
       ...data,
-      destination1: data.hasMultipleDestinations && destinations[0] ? destinations[0].destination : null,
-      destinationState1: data.hasMultipleDestinations && destinations[0] ? destinations[0].destinationState : null,
-      destination2: data.hasMultipleDestinations && destinations[1] ? destinations[1].destination : null,
-      destinationState2: data.hasMultipleDestinations && destinations[1] ? destinations[1].destinationState : null,
+      destination1: destinations.length > 0 && destinations[0] ? destinations[0].destination : null,
+      destinationState1: destinations.length > 0 && destinations[0] ? destinations[0].destinationState : null,
+      destination2: destinations.length > 1 && destinations[1] ? destinations[1].destination : null,
+      destinationState2: destinations.length > 1 && destinations[1] ? destinations[1].destinationState : null,
     };
     
     console.log("Destinos no payload:", {

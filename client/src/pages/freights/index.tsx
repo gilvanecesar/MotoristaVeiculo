@@ -636,21 +636,19 @@ export default function FreightsPage() {
                             <TableCell>{freight.origin}, {freight.originState}</TableCell>
                             <TableCell>
                               {freight.destination1 || freight.destination2 ? (
-                                <>
-                                  {freight.destination && `${freight.destination}/${freight.destinationState}`}
+                                <div className="space-y-1">
+                                  <div>{freight.destination}/{freight.destinationState}</div>
                                   {freight.destination1 && (
-                                    <>
-                                      {freight.destination && ' • '}
-                                      Destino 1: {freight.destination1}/{freight.destinationState1}
-                                    </>
+                                    <div className="text-xs text-blue-600">
+                                      + {freight.destination1}/{freight.destinationState1}
+                                    </div>
                                   )}
                                   {freight.destination2 && (
-                                    <>
-                                      {(freight.destination || freight.destination1) && ' • '}
-                                      Destino 2: {freight.destination2}/{freight.destinationState2}
-                                    </>
+                                    <div className="text-xs text-blue-600">
+                                      + {freight.destination2}/{freight.destinationState2}
+                                    </div>
                                   )}
-                                </>
+                                </div>
                               ) : (
                                 `${freight.destination}/${freight.destinationState}`
                               )}
@@ -708,21 +706,19 @@ export default function FreightsPage() {
                               <p className="text-xs text-slate-500">Destino:</p>
                               <p className="text-sm">
                                 {freight.destination1 || freight.destination2 ? (
-                                  <>
-                                    {freight.destination && `${freight.destination}/${freight.destinationState}`}
+                                  <div className="space-y-1">
+                                    <div>{freight.destination}/{freight.destinationState}</div>
                                     {freight.destination1 && (
-                                      <>
-                                        {freight.destination && ' • '}
-                                        Destino 1: {freight.destination1}/{freight.destinationState1}
-                                      </>
+                                      <div className="text-xs text-blue-600">
+                                        + {freight.destination1}/{freight.destinationState1}
+                                      </div>
                                     )}
                                     {freight.destination2 && (
-                                      <>
-                                        {(freight.destination || freight.destination1) && ' • '}
-                                        Destino 2: {freight.destination2}/{freight.destinationState2}
-                                      </>
+                                      <div className="text-xs text-blue-600">
+                                        + {freight.destination2}/{freight.destinationState2}
+                                      </div>
                                     )}
-                                  </>
+                                  </div>
                                 ) : (
                                   `${freight.destination}/${freight.destinationState}`
                                 )}
@@ -951,8 +947,16 @@ export default function FreightsPage() {
                   </div>
                   
                   <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-slate-500">Destino</h4>
-                    <p>{selectedFreight.destination}, {selectedFreight.destinationState}</p>
+                    <h4 className="text-sm font-medium text-slate-500">Destino(s)</h4>
+                    <div>
+                      <p>{selectedFreight.destination}, {selectedFreight.destinationState}</p>
+                      {selectedFreight.destination1 && (
+                        <p className="text-sm text-blue-600 mt-1">+ {selectedFreight.destination1}, {selectedFreight.destinationState1}</p>
+                      )}
+                      {selectedFreight.destination2 && (
+                        <p className="text-sm text-blue-600 mt-1">+ {selectedFreight.destination2}, {selectedFreight.destinationState2}</p>
+                      )}
+                    </div>
                   </div>
                   
                   <div className="space-y-2">
