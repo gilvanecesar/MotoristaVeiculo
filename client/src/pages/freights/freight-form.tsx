@@ -445,8 +445,12 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
         response = await apiRequest("POST", "/api/freights", payloadData);
       }
 
+      console.log("Resposta da API recebida:", response.status, response.ok);
+      
       if (response.ok) {
+        console.log("Resposta OK, fazendo parse do JSON...");
         freightResponse = await response.json();
+        console.log("JSON parsado com sucesso:", freightResponse);
         
         // Se é multidestinos e tem destinos, salva os destinos
         console.log("Verificando se precisa salvar destinos múltiplos:", {
