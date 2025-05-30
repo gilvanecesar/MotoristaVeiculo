@@ -635,13 +635,25 @@ export default function FreightsPage() {
                             <TableCell>{clientFound?.name || "Cliente não encontrado"}</TableCell>
                             <TableCell>{freight.origin}, {freight.originState}</TableCell>
                             <TableCell>
-                              {freight.destinations && freight.destinations.length > 0 
-                                ? freight.destinations
-                                    .filter(dest => dest.destination && dest.destinationState)
-                                    .map((dest, index) => `Destino ${index + 1}: ${dest.destination}/${dest.destinationState}`)
-                                    .join(' • ')
-                                : `${freight.destination}/${freight.destinationState}`
-                              }
+                              {freight.destination1 || freight.destination2 ? (
+                                <>
+                                  {freight.destination && `${freight.destination}/${freight.destinationState}`}
+                                  {freight.destination1 && (
+                                    <>
+                                      {freight.destination && ' • '}
+                                      Destino 1: {freight.destination1}/{freight.destinationState1}
+                                    </>
+                                  )}
+                                  {freight.destination2 && (
+                                    <>
+                                      {(freight.destination || freight.destination1) && ' • '}
+                                      Destino 2: {freight.destination2}/{freight.destinationState2}
+                                    </>
+                                  )}
+                                </>
+                              ) : (
+                                `${freight.destination}/${freight.destinationState}`
+                              )}
                             </TableCell>
                             <TableCell>{getVehicleCategory(freight.vehicleType)}</TableCell>
                             <TableCell>{formatMultipleVehicleTypes(freight)}</TableCell>
@@ -695,13 +707,25 @@ export default function FreightsPage() {
                             <div className="flex-1">
                               <p className="text-xs text-slate-500">Destino:</p>
                               <p className="text-sm">
-                                {freight.destinations && freight.destinations.length > 0 
-                                  ? freight.destinations
-                                      .filter(dest => dest.destination && dest.destinationState)
-                                      .map((dest, index) => `Destino ${index + 1}: ${dest.destination}/${dest.destinationState}`)
-                                      .join(' • ')
-                                  : `${freight.destination}/${freight.destinationState}`
-                                }
+                                {freight.destination1 || freight.destination2 ? (
+                                  <>
+                                    {freight.destination && `${freight.destination}/${freight.destinationState}`}
+                                    {freight.destination1 && (
+                                      <>
+                                        {freight.destination && ' • '}
+                                        Destino 1: {freight.destination1}/{freight.destinationState1}
+                                      </>
+                                    )}
+                                    {freight.destination2 && (
+                                      <>
+                                        {(freight.destination || freight.destination1) && ' • '}
+                                        Destino 2: {freight.destination2}/{freight.destinationState2}
+                                      </>
+                                    )}
+                                  </>
+                                ) : (
+                                  `${freight.destination}/${freight.destinationState}`
+                                )}
                               </p>
                             </div>
                           </div>
