@@ -235,6 +235,9 @@ const LocationInput: React.FC<LocationInputProps> = ({
     // Chamar o callback com o valor formatado
     onChange(formattedValue);
     
+    // Atualizar o searchTerm para que o campo mostre o valor correto
+    setSearchTerm(formattedValue);
+    
     // Fechar o popover
     setOpen(false);
     
