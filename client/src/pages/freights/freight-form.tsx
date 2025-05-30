@@ -391,14 +391,21 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
       data.freightValue = data.freightValue.replace(/\./g, '').replace(',', '.');
     }
     
-    // Incluir destinos múltiplos no payload principal
-    const destinationsToSend = data.hasMultipleDestinations ? destinations : [];
+    // Para destinos múltiplos, usar os campos destination1 e destination2 diretamente
     const payloadData = {
       ...data,
-      destinations: destinationsToSend
+      destination1: data.hasMultipleDestinations && destinations[0] ? destinations[0].destination : null,
+      destinationState1: data.hasMultipleDestinations && destinations[0] ? destinations[0].destinationState : null,
+      destination2: data.hasMultipleDestinations && destinations[1] ? destinations[1].destination : null,
+      destinationState2: data.hasMultipleDestinations && destinations[1] ? destinations[1].destinationState : null,
     };
     
-    console.log("Destinos a serem enviados:", destinationsToSend);
+    console.log("Destinos no payload:", {
+      destination1: payloadData.destination1,
+      destinationState1: payloadData.destinationState1,
+      destination2: payloadData.destination2,
+      destinationState2: payloadData.destinationState2
+    });
     
     // Mostra erros de desenvolvimento
     console.log("Form data:", data);
@@ -452,38 +459,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
         freightResponse = await response.json();
         console.log("JSON parsado com sucesso:", freightResponse);
         
-        // Se é multidestinos e tem destinos, salva os destinos
-        console.log("Verificando se precisa salvar destinos múltiplos:", {
-          hasMultipleDestinations: data.hasMultipleDestinations,
-          destinationsCount: destinations.length,
-          destinations: destinations
-        });
-        
-        if (data.hasMultipleDestinations && destinations.length > 0) {
-          console.log("Iniciando salvamento de destinos múltiplos...");
-          // Primeiro, remove destinos antigos se estiver editando
-          if (isEditing) {
-            await Promise.all(
-              freightDestinations.map(async (dest) => {
-                await apiRequest("DELETE", `/api/freight-destinations/${dest.id}`);
-              })
-            );
-          }
-          
-          // Depois adiciona os novos
-          await Promise.all(
-            destinations.map(async (dest, index) => {
-              if (dest.destination && dest.destinationState) {
-                await apiRequest("POST", "/api/freight-destinations", {
-                  freightId: freightResponse.id,
-                  destination: dest.destination,
-                  destinationState: dest.destinationState,
-                  order: index + 1,
-                });
-              }
-            })
-          );
-        }
+        // Os destinos múltiplos agora são salvos diretamente nos campos destination1 e destination2
 
         queryClient.invalidateQueries({queryKey: ["/api/freights"]});
 

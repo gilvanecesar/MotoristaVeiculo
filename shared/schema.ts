@@ -161,6 +161,10 @@ export const freights = pgTable("freights", {
   originState: text("origin_state").notNull(),
   destination: text("destination").notNull(),
   destinationState: text("destination_state").notNull(),
+  destination1: text("destination1"),
+  destinationState1: text("destination_state1"),
+  destination2: text("destination2"),
+  destinationState2: text("destination_state2"),
   cargoType: text("cargo_type").notNull(), // completa ou complemento
   needsTarp: text("needs_tarp").notNull(), // sim ou não
   productType: text("product_type").notNull(),
