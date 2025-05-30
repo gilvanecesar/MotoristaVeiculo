@@ -12,10 +12,10 @@ interface FreightData {
   originState: string;
   destination: string;
   destinationState: string;
+  destination1?: string;
+  destinationState1?: string;
   destination2?: string;
   destinationState2?: string;
-  destination3?: string;
-  destinationState3?: string;
   cargoType: string;
   cargoWeight: string;
   vehicleType: string;
