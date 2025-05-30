@@ -172,9 +172,13 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
       ...destinations,
       { destinationState: "", destination: "" },
     ];
-    console.log("Adicionando destino. Estado atual:", destinations);
-    console.log("Novo estado será:", newDestinations);
+    console.log("🚀 ADICIONANDO DESTINO - Estado atual:", destinations);
+    console.log("🚀 ADICIONANDO DESTINO - Novo estado será:", newDestinations);
     setDestinations(newDestinations);
+    // Forçar re-render
+    setTimeout(() => {
+      console.log("🚀 APÓS TIMEOUT - Destinations:", destinations.length);
+    }, 100);
   };
 
   // Criar uma função para atualizar um destino
