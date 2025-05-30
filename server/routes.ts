@@ -2253,7 +2253,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Verificar se o frete está ativo (não expirado)
-      if (freight.status !== 'active') {
+      if (freight.status !== 'active' && freight.status !== 'aberto') {
         return res.status(403).json({ message: "Este frete não está mais disponível" });
       }
       
