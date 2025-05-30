@@ -691,58 +691,51 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                   <div>
                     <FormField
                       control={form.control}
-                      name="hasMultipleDestinations"
+                      name="destination"
                       render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 mb-4">
+                        <FormItem>
+                          <FormLabel>Cidade de Destino</FormLabel>
                           <FormControl>
-                            <input
-                              type="checkbox"
-                              disabled={isViewingInReadOnlyMode}
-                              checked={field.value}
-                              onChange={(e) => field.onChange(e.target.checked)}
-                              className="h-4 w-4 rounded-sm border border-primary"
+                            <LocationInput
+                              readOnly={isViewingInReadOnlyMode}
+                              value={field.value || ""}
+                              onChange={field.onChange}
+                              stateField="destinationState"
+                              stateValue={form.watch("destinationState")}
+                              onStateChange={(state) =>
+                                form.setValue("destinationState", state)
+                              }
                             />
                           </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel>Múltiplos destinos</FormLabel>
-                            <FormDescription>
-                              Marque esta opção para adicionar mais de um destino para este frete
-                            </FormDescription>
-                          </div>
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
-                    
-                    {!hasMultipleDestinations && (
-                      <FormField
-                        control={form.control}
-                        name="destination"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Cidade de Destino</FormLabel>
-                            <FormControl>
-                              <LocationInput
-                                readOnly={isViewingInReadOnlyMode}
-                                value={field.value || ""}
-                                onChange={field.onChange}
-                                stateField="destinationState"
-                                stateValue={form.watch("destinationState")}
-                                onStateChange={(state) =>
-                                  form.setValue("destinationState", state)
-                                }
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+
+                    {/* Botão para adicionar mais destinos */}
+                    {!isViewingInReadOnlyMode && destinations.length < 2 && (
+                      <div className="flex justify-center mt-4">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            addDestination();
+                            form.setValue("hasMultipleDestinations", true);
+                          }}
+                          className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Deseja adicionar mais um destino?
+                        </Button>
+                      </div>
                     )}
                     
-                    {hasMultipleDestinations && (
-                      <div className="space-y-3">
+                    {destinations.length > 0 && (
+                      <div className="space-y-3 mt-4">
                         <div className="flex items-center justify-between">
-                          <FormLabel className="text-base">Destinos</FormLabel>
-                          {!isViewingInReadOnlyMode && (
+                          <FormLabel className="text-base">Destinos Adicionais</FormLabel>
+                          {!isViewingInReadOnlyMode && destinations.length < 2 && (
                             <Button
                               type="button"
                               variant="outline"
@@ -750,7 +743,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                               onClick={addDestination}
                             >
                               <Plus className="h-4 w-4 mr-1" />
-                              Adicionar Destino
+                              Adicionar Mais Um
                             </Button>
                           )}
                         </div>
@@ -765,7 +758,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                               <div key={`destination-${index}`} className="flex gap-2 items-start p-3 border rounded-md">
                                 <div className="flex-1">
                                   <div className="mb-2">
-                                    <FormLabel className="text-xs">Cidade</FormLabel>
+                                    <FormLabel className="text-xs">Destino {index + 2} - Cidade</FormLabel>
                                     <LocationInput
                                       key={`location-${index}-${dest.destination}`}
                                       readOnly={isViewingInReadOnlyMode}
