@@ -128,8 +128,6 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
   const [isLoadingFreight, setIsLoadingFreight] = useState(isEditing);
   const [clients, setClients] = useState<any[]>([]);
   const [isLoadingClients, setIsLoadingClients] = useState(true);
-  const [freightDestinations, setFreightDestinations] = useState<any[]>([]);
-  const [destinations, setDestinations] = useState<DestinationFormValues[]>([]);
   const [selectedVehicleTypes, setSelectedVehicleTypes] = useState<string[]>([]);
   const [selectedBodyTypes, setSelectedBodyTypes] = useState<string[]>([]);
 
@@ -153,6 +151,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
     status: "",
     contactName: "",
     contactPhone: "",
+    hasMultipleDestinations: false,
   };
 
   const form = useForm<FreightFormValues>({
@@ -351,12 +350,9 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
       return;
     }
     
-    // Filtrar destinos válidos (com cidade e estado preenchidos)
-    const validDestinations = destinations.filter(dest => dest.destination && dest.destinationState);
-    
-    console.log("🎯 SUBMISSÃO - Destinos antes da filtragem:", destinations);
-    console.log("🎯 SUBMISSÃO - Destinos válidos após filtragem:", validDestinations);
-    console.log("🎯 SUBMISSÃO - hasMultipleDestinations:", data.hasMultipleDestinations);
+    console.log("🎯 SUBMISSÃO - Dados do formulário:", data);
+    console.log("🎯 SUBMISSÃO - destination1:", data.destination1);
+    console.log("🎯 SUBMISSÃO - destination2:", data.destination2);
 
     // Define status inicial como aberto
     data.status = "aberto";
@@ -380,13 +376,9 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
       data.freightValue = data.freightValue.replace(/\./g, '').replace(',', '.');
     }
     
-    // Para destinos múltiplos, usar apenas os destinos válidos
+    // Os campos destination1 e destination2 já estão no data do formulário
     const payloadData = {
       ...data,
-      destination1: validDestinations.length > 0 ? validDestinations[0].destination : null,
-      destinationState1: validDestinations.length > 0 ? validDestinations[0].destinationState : null,
-      destination2: validDestinations.length > 1 ? validDestinations[1].destination : null,
-      destinationState2: validDestinations.length > 1 ? validDestinations[1].destinationState : null,
     };
     
     console.log("Destinos no payload:", {
@@ -395,14 +387,6 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
       destination2: payloadData.destination2,
       destinationState2: payloadData.destinationState2
     });
-    
-    // Mostra erros de desenvolvimento
-    console.log("Form data:", data);
-    console.log("Destinations state:", destinations);
-    console.log("hasMultipleDestinations:", data.hasMultipleDestinations);
-    console.log("Payload completo:", payloadData);
-    console.log("Destinations no payload:", payloadData.destinations);
-    console.log("Estado atual de destinations antes do envio:", destinations.length, destinations);
     
     try {
       let response;
@@ -701,74 +685,52 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                       )}
                     />
 
-                    {/* Botão para adicionar mais destinos */}
-                    {!isViewingInReadOnlyMode && destinations.length < 2 && (
-                      <div className="flex justify-center mt-4">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            addDestination();
-                            form.setValue("hasMultipleDestinations", true);
-                          }}
-                          className="text-blue-600 border-blue-200 hover:bg-blue-50"
-                        >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Deseja adicionar mais um destino?
-                        </Button>
+                    {/* Campos diretos para destinos adicionais */}
+                    <div className="space-y-4 mt-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="destination1"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Cidade de Destino 2 (Opcional)</FormLabel>
+                              <FormControl>
+                                <LocationInput
+                                  readOnly={isViewingInReadOnlyMode}
+                                  value={field.value || ""}
+                                  onChange={field.onChange}
+                                  stateField="destinationState1"
+                                  stateValue={form.watch("destinationState1") || ""}
+                                  onStateChange={(state) => form.setValue("destinationState1", state)}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="destination2"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Cidade de Destino 3 (Opcional)</FormLabel>
+                              <FormControl>
+                                <LocationInput
+                                  readOnly={isViewingInReadOnlyMode}
+                                  value={field.value || ""}
+                                  onChange={field.onChange}
+                                  stateField="destinationState2"
+                                  stateValue={form.watch("destinationState2") || ""}
+                                  onStateChange={(state) => form.setValue("destinationState2", state)}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                       </div>
-                    )}
-                    
-                    {destinations.length > 0 && (
-                      <div className="space-y-3 mt-4">
-                        
-                        {destinations.length === 0 ? (
-                          <div className="p-4 border border-dashed rounded-md text-center text-muted-foreground">
-                            Nenhum destino adicionado. Clique em "Adicionar Destino".
-                          </div>
-                        ) : (
-                          <div className="space-y-3">
-                            {destinations.map((dest, index) => (
-                              <div key={`destination-${index}`} className="flex gap-2 items-start p-3 border rounded-md">
-                                <div className="flex-1">
-                                  <div className="mb-2">
-                                    <FormLabel className="text-xs">Destino {index + 2} - Cidade</FormLabel>
-                                    <LocationInput
-                                      key={`location-${index}-${dest.destination}`}
-                                      readOnly={isViewingInReadOnlyMode}
-                                      value={dest.destination || ""}
-                                      onChange={(value) => {
-                                        // Se o valor contém " - ", extrair apenas o nome da cidade
-                                        const cityName = value.includes(" - ") ? value.split(" - ")[0] : value;
-                                        console.log("🏙️ CITY CHANGE - Valor original:", value, "Cidade extraída:", cityName);
-                                        updateDestination(index, "destination", cityName);
-                                      }}
-                                      stateField={`destination-state-${index}`}
-                                      stateValue={dest.destinationState || ""}
-                                      onStateChange={(state) => {
-                                        console.log("🗺️ STATE CHANGE - Estado:", state);
-                                        updateDestination(index, "destinationState", state);
-                                      }}
-                                    />
-                                  </div>
-                                </div>
-                                {!isViewingInReadOnlyMode && (
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => removeDestination(index)}
-                                  >
-                                    <Trash className="h-4 w-4 text-destructive" />
-                                  </Button>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
+                    </div>
                   </div>
                 </div>
               </CardContent>
