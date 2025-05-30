@@ -738,10 +738,18 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                                       key={`location-${index}-${dest.destination}`}
                                       readOnly={isViewingInReadOnlyMode}
                                       value={dest.destination || ""}
-                                      onChange={(value) => updateDestination(index, "destination", value)}
+                                      onChange={(value) => {
+                                        // Se o valor contém " - ", extrair apenas o nome da cidade
+                                        const cityName = value.includes(" - ") ? value.split(" - ")[0] : value;
+                                        console.log("🏙️ CITY CHANGE - Valor original:", value, "Cidade extraída:", cityName);
+                                        updateDestination(index, "destination", cityName);
+                                      }}
                                       stateField={`destination-state-${index}`}
                                       stateValue={dest.destinationState || ""}
-                                      onStateChange={(state) => updateDestination(index, "destinationState", state)}
+                                      onStateChange={(state) => {
+                                        console.log("🗺️ STATE CHANGE - Estado:", state);
+                                        updateDestination(index, "destinationState", state);
+                                      }}
                                     />
                                   </div>
                                 </div>
