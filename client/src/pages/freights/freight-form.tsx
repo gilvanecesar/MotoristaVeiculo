@@ -346,18 +346,11 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
       return;
     }
     
-    // Se houver destinos adicionais, verifica se estão completos
-    if (destinations.length > 0) {
-      const invalidDestinations = destinations.filter(dest => !dest.destination || !dest.destinationState);
-      if (invalidDestinations.length > 0) {
-        toast({
-          title: "Aviso",
-          description: "Complete todos os destinos adicionais (cidade e estado) ou remova os campos vazios.",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
+    // Filtrar destinos válidos (com cidade e estado preenchidos)
+    const validDestinations = destinations.filter(dest => dest.destination && dest.destinationState);
+    
+    console.log("Destinos antes da filtragem:", destinations);
+    console.log("Destinos válidos após filtragem:", validDestinations);
 
     // Define status inicial como aberto
     data.status = "aberto";
@@ -381,13 +374,13 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
       data.freightValue = data.freightValue.replace(/\./g, '').replace(',', '.');
     }
     
-    // Para destinos múltiplos, usar os campos destination1 e destination2 diretamente
+    // Para destinos múltiplos, usar apenas os destinos válidos
     const payloadData = {
       ...data,
-      destination1: destinations.length > 0 && destinations[0] ? destinations[0].destination : null,
-      destinationState1: destinations.length > 0 && destinations[0] ? destinations[0].destinationState : null,
-      destination2: destinations.length > 1 && destinations[1] ? destinations[1].destination : null,
-      destinationState2: destinations.length > 1 && destinations[1] ? destinations[1].destinationState : null,
+      destination1: validDestinations.length > 0 ? validDestinations[0].destination : null,
+      destinationState1: validDestinations.length > 0 ? validDestinations[0].destinationState : null,
+      destination2: validDestinations.length > 1 ? validDestinations[1].destination : null,
+      destinationState2: validDestinations.length > 1 ? validDestinations[1].destinationState : null,
     };
     
     console.log("Destinos no payload:", {
