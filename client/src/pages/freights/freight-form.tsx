@@ -161,6 +161,10 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
   });
 
   const hasMultipleDestinations = form.watch("hasMultipleDestinations");
+  
+  // Log para debug do estado dos destinos
+  console.log("Estado atual dos destinos:", destinations);
+  console.log("hasMultipleDestinations:", hasMultipleDestinations);
 
   // Criar uma função para adicionar destinos
   const addDestination = () => {
