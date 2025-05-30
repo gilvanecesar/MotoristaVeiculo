@@ -603,6 +603,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Extrair destinos múltiplos se houver
       const destinations = freightData.destinations || [];
+      console.log("Destinos recebidos do frontend:", destinations);
+      console.log("Dados completos do frete:", freightData);
       delete freightData.destinations;
       
       // Formatar o valor do frete para o padrão do banco

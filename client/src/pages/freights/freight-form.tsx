@@ -383,9 +383,16 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
       data.freightValue = data.freightValue.replace(/\./g, '').replace(',', '.');
     }
     
+    // Incluir destinos múltiplos no payload principal
+    const payloadData = {
+      ...data,
+      destinations: data.hasMultipleDestinations ? destinations : []
+    };
+    
     // Mostra erros de desenvolvimento
     console.log("Form data:", data);
     console.log("Destinations:", destinations);
+    console.log("Payload completo:", payloadData);
     
     try {
       let response;
@@ -401,7 +408,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
         
         // Atualiza um frete existente - adicionando userId para garantir
         const updateData = {
-          ...data,
+          ...payloadData,
           userId: user?.id
         };
         
