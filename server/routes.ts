@@ -861,7 +861,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Se tiver múltiplos destinos, excluí-los primeiro
       if (freight.hasMultipleDestinations) {
-        await storage.deleteFreightDestinations(id);
+        const destinations = await storage.getFreightDestinations(id);
+        for (const dest of destinations) {
+          await storage.deleteFreightDestination(dest.id);
+        }
       }
       
       // Excluir frete
