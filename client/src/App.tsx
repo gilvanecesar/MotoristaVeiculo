@@ -54,6 +54,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={LandingPage} />
+      <Route path="/freight/:id" component={PublicFreight} />
       <ProtectedRoute path="/home" component={Home} />
       <Route path="/auth" component={LoginPage} />
       <Route path="/reset-password" component={ResetPasswordPage} />
