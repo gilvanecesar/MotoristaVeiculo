@@ -94,6 +94,13 @@ const LocationInput: React.FC<LocationInputProps> = ({
   // Referência para o input que podemos usar para foco
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Sincronizar searchTerm com value quando o value muda externamente
+  useEffect(() => {
+    if (value !== searchTerm) {
+      setSearchTerm(value);
+    }
+  }, [value]);
+
   // Extrair estado da localização atual (se existir)
   useEffect(() => {
     if (value && value.includes(" - ")) {
