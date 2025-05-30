@@ -164,10 +164,13 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
 
   // Criar uma função para adicionar destinos
   const addDestination = () => {
-    setDestinations([
+    const newDestinations = [
       ...destinations,
       { destinationState: "", destination: "" },
-    ]);
+    ];
+    console.log("Adicionando destino. Estado atual:", destinations);
+    console.log("Novo estado será:", newDestinations);
+    setDestinations(newDestinations);
   };
 
   // Criar uma função para atualizar um destino
