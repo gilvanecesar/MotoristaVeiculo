@@ -96,9 +96,7 @@ const LocationInput: React.FC<LocationInputProps> = ({
 
   // Sincronizar searchTerm com value quando o value muda externamente
   useEffect(() => {
-    if (value !== searchTerm) {
-      setSearchTerm(value);
-    }
+    setSearchTerm(value);
   }, [value]);
 
   // Extrair estado da localização atual (se existir)
@@ -237,8 +235,7 @@ const LocationInput: React.FC<LocationInputProps> = ({
     // Chamar o callback com o valor formatado
     onChange(formattedValue);
     
-    // Definir o termo de pesquisa como o nome completo para consistência
-    setSearchTerm(formattedValue);
+    // Fechar o popover
     setOpen(false);
     
     // Chamar callbacks específicos caso estejam definidos
