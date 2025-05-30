@@ -111,12 +111,23 @@ export default function FreightDetailPage() {
     // URL específica do frete
     const freightUrl = `${window.location.origin}/freights/${freight.id}`;
     
+    // Formatação dos destinos
+    let destinosText = `🏁 *Destino:* ${freight.destination}, ${freight.destinationState}`;
+    
+    if (freight.destination1) {
+      destinosText += `\n🏁 *Destino 2:* ${freight.destination1}, ${freight.destinationState1}`;
+    }
+    
+    if (freight.destination2) {
+      destinosText += `\n🏁 *Destino 3:* ${freight.destination2}, ${freight.destinationState2}`;
+    }
+    
     return encodeURIComponent(`
 🚛 *FRETE DISPONÍVEL* 🚛
 
 🏢 *${clientName}*
 📍 *Origem:* ${freight.origin}, ${freight.originState}
-🏁 *Destino:* ${freight.destination}, ${freight.destinationState}
+${destinosText}
 🚚 *Categoria:* ${getVehicleCategory(freight.vehicleType)}
 🚚 *Veículo:* ${formatMultipleVehicleTypes(freight)}
 🚐 *Carroceria:* ${formatMultipleBodyTypes(freight)}
