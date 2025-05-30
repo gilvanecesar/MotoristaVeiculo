@@ -601,9 +601,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         freightData.expirationDate = expirationDate;
       }
       
-      // Extrair destinos múltiplos se houver
-      const destinations = freightData.destinations || [];
-      console.log("Destinos recebidos do frontend:", destinations);
+      // Os destinos múltiplos são salvos separadamente via API específica
+      // Removemos destinations do payload se existir
       console.log("Dados completos do frete:", freightData);
       delete freightData.destinations;
       
@@ -641,34 +640,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Valor do frete formatado (criação):", freightData.freightValue);
       }
       
-      // Criar o frete principal
+      // Criar o frete
       const freight = await storage.createFreight(freightData);
-      
-      // Se houver destinos múltiplos, salvá-los
-      if (destinations.length > 0) {
-        console.log(`Salvando ${destinations.length} destinos para o frete ${freight.id}`);
-        for (let i = 0; i < destinations.length; i++) {
-          const dest = destinations[i];
-          console.log("Salvando destino:", dest);
-          if (dest.destination && dest.destinationState) {
-            await storage.createFreightDestination({
-              freightId: freight.id,
-              destination: dest.destination,
-              destinationState: dest.destinationState,
-              order: i + 1,
-            });
-            console.log("Destino salvo com sucesso");
-          } else {
-            console.log("Destino inválido, pulando:", dest);
-          }
-        }
-        
-        // Atualizar o frete para indicar que tem múltiplos destinos
-        await storage.updateFreight(freight.id, { hasMultipleDestinations: true });
-        console.log("Frete atualizado para múltiplos destinos");
-      } else {
-        console.log("Nenhum destino múltiplo para salvar");
-      }
       
       res.status(201).json(freight);
     } catch (error) {
