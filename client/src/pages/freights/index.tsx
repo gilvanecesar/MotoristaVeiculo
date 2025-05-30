@@ -344,7 +344,7 @@ ${destinosText}
 
 ℹ️ *Contato:* ${freight.contactName}
 📱 *Telefone:* ${freight.contactPhone}
-
+${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : ''}
 🔗 *Sistema QUERO FRETES:* ${baseUrl}
 🔗 *Link do frete:* ${freightUrl}
 `);
