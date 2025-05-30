@@ -186,12 +186,19 @@ export default function PublicFreight() {
                 <MapPin className="h-4 w-4 text-red-500 mt-1" />
                 <div>
                   <p className="text-sm text-slate-500">Destino:</p>
-                  <p className="font-medium">
-                    {freight.destinations && freight.destinations.length > 0 
-                      ? freight.destinations.map(dest => `${dest.destination}, ${dest.destinationState}`).join(' • ')
-                      : `${freight.destination}, ${freight.destinationState}`
-                    }
-                  </p>
+                  <div className="font-medium space-y-1">
+                    <div>{freight.destination}, {freight.destinationState}</div>
+                    {freight.destination1 && (
+                      <div className="text-sm text-blue-600">
+                        Destino 2: {freight.destination1}, {freight.destinationState1}
+                      </div>
+                    )}
+                    {freight.destination2 && (
+                      <div className="text-sm text-blue-600">
+                        Destino 3: {freight.destination2}, {freight.destinationState2}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
