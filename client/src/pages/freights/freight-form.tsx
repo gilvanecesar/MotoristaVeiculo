@@ -449,12 +449,13 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
           
           // Depois adiciona os novos
           await Promise.all(
-            destinations.map(async (dest) => {
+            destinations.map(async (dest, index) => {
               if (dest.destination && dest.destinationState) {
                 await apiRequest("POST", "/api/freight-destinations", {
                   freightId: freightResponse.id,
                   destination: dest.destination,
                   destinationState: dest.destinationState,
+                  order: index + 1,
                 });
               }
             })
