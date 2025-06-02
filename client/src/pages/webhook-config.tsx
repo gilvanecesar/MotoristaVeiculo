@@ -38,7 +38,9 @@ export default function WebhookConfig() {
 
   // Verificar se o usuário tem permissão (admin ou embarcador com assinatura)
   const hasPermission = user?.profileType === 'administrador' || 
-    (user?.profileType === 'embarcador' && user?.subscriptionActive);
+    user?.profileType === 'admin' ||
+    (user?.profileType === 'embarcador' && user?.subscriptionActive) ||
+    (user?.profileType === 'shipper' && user?.subscriptionActive);
 
   useEffect(() => {
     if (hasPermission) {
