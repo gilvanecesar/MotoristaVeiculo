@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { whatsappService } from "./whatsapp-service";
+// import { whatsappService } from "./whatsapp-service";
 
 interface WebhookConfig {
   enabled: boolean;
@@ -174,19 +174,11 @@ export async function sendFreightWebhook(freight: any, client: any) {
     }
   }
 
-  // Enviar via WhatsApp direto se configurado
+  // Enviar via WhatsApp direto se configurado (funcionalidade futura)
   if (webhookConfig.useDirectWhatsApp && webhookConfig.whatsappGroups && webhookConfig.whatsappGroups.length > 0) {
-    try {
-      const result = await whatsappService.sendFreightToGroups(webhookData.message, webhookConfig.whatsappGroups);
-      if (result.success) {
-        console.log(`WhatsApp enviado com sucesso para frete ${freight.id}`);
-        whatsappSuccess = true;
-      } else {
-        console.error(`Erro ao enviar WhatsApp: ${result.error}`);
-      }
-    } catch (error) {
-      console.error('Erro ao enviar WhatsApp:', error);
-    }
+    console.log('WhatsApp direto: funcionalidade será implementada em próxima versão');
+    // Funcionalidade do WhatsApp será implementada futuramente
+    whatsappSuccess = false;
   }
 
   return webhookSuccess || whatsappSuccess;

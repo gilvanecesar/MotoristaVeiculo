@@ -19,6 +19,8 @@ interface WebhookConfig {
   groupIds: string[];
   minFreightValue?: number;
   allowedRoutes?: string[];
+  useDirectWhatsApp?: boolean;
+  whatsappGroups?: string[];
 }
 
 export default function WebhookConfig() {
@@ -30,13 +32,17 @@ export default function WebhookConfig() {
     url: "",
     groupIds: [],
     minFreightValue: 0,
-    allowedRoutes: []
+    allowedRoutes: [],
+    useDirectWhatsApp: false,
+    whatsappGroups: []
   });
   
   const [groupIdsText, setGroupIdsText] = useState("");
   const [allowedRoutesText, setAllowedRoutesText] = useState("");
+  const [whatsappGroupsText, setWhatsappGroupsText] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
+  const [whatsappStatus, setWhatsappStatus] = useState('disconnected');
 
   // Verificar se o usuário tem permissão (admin ou embarcador com assinatura)
   const hasPermission = user?.profileType === 'administrador' || 
@@ -157,20 +163,34 @@ export default function WebhookConfig() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Webhook className="h-8 w-8" />
-          Configuração do WhatsApp
+    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8 max-w-6xl">
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
+          <MessageCircle className="h-6 w-6 sm:h-8 sm:w-8" />
+          WhatsApp Config
         </h1>
-        <p className="text-muted-foreground mt-2">
-          Configure o envio automático de fretes para grupos do WhatsApp via Zapier ou Make
+        <p className="text-sm sm:text-base text-muted-foreground mt-2">
+          Configure automatic freight posting to WhatsApp groups
         </p>
       </div>
 
-      <div className="grid gap-6">
-        {/* Card principal de configuração */}
-        <Card>
+      <Tabs defaultValue="webhook" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsTrigger value="webhook" className="flex items-center gap-2">
+            <Webhook className="h-4 w-4" />
+            <span className="hidden sm:inline">Zapier/Make</span>
+            <span className="sm:hidden">Webhook</span>
+          </TabsTrigger>
+          <TabsTrigger value="direct" className="flex items-center gap-2">
+            <MessageCircle className="h-4 w-4" />
+            <span className="hidden sm:inline">Direct WhatsApp</span>
+            <span className="sm:hidden">Direct</span>
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Webhook Integration Tab */}
+        <TabsContent value="webhook" className="space-y-6">
+          <Card>
           <CardHeader>
             <CardTitle>Configurações Gerais</CardTitle>
             <CardDescription>

@@ -62,7 +62,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   setupWebhookRoutes(app);
   
   // Configurar rotas do WhatsApp
-  setupWhatsAppRoutes(app);
+  // setupWhatsAppRoutes(app);
   
   // Rota para solicitar redefinição de senha
   app.post("/api/forgot-password", async (req: Request, res: Response) => {
