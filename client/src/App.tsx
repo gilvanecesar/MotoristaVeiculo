@@ -92,6 +92,7 @@ function Router() {
       <ProtectedRoute path="/admin/finance/settings" component={FinanceSettings} />
       <ProtectedRoute path="/admin/users" component={AdminUsersPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
+      <ProtectedRoute path="/webhook-config" component={WebhookConfig} />
       <ProtectedRoute path="/home" component={Home} />
       <Route component={NotFound} />
     </Switch>

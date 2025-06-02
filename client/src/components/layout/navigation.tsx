@@ -3,7 +3,7 @@ import { useState } from "react";
 import { 
   LayoutDashboard, Users, Car, BarChart3, Menu, X, Moon, Sun, Truck, 
   Building2, Home, DollarSign, UserCog, Settings, User, CreditCard,
-  Receipt, CalendarClock, AlertCircle, Bell
+  Receipt, CalendarClock, AlertCircle, Bell, Webhook
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -115,6 +115,12 @@ export default function Navigation() {
     icon: UserCog
   };
   
+  const webhookMenuItem = {
+    label: "WhatsApp Config",
+    path: "/webhook-config",
+    icon: Webhook
+  };
+  
   // Items do menu com base nas permissões
   let menuItems = [];
   
@@ -145,7 +151,7 @@ export default function Navigation() {
       // Admins veem tudo
       menuItems = [...navItems];
       // Adicionamos os menus administrativos
-      menuItems.push(financeMenuItem, usersMenuItem);
+      menuItems.push(financeMenuItem, usersMenuItem, webhookMenuItem);
     } 
     // Se tiver um cliente cadastrado, liberar todos os menus (condição nova)
     else if (hasClient) {
@@ -158,6 +164,11 @@ export default function Navigation() {
         navItems[5],  // Clientes
         navItems[6]   // Relatórios
       ];
+      
+      // Se for embarcador com assinatura ativa, adicionar configuração do webhook
+      if (isShipper && user.subscriptionActive) {
+        menuItems.push(webhookMenuItem);
+      }
     }
     // Se não tiver assinatura ativa (exceto motoristas), mostra apenas o menu home
     else if (!hasActiveSubscription) {
