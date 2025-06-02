@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { whatsappService } from "./whatsapp-service";
 
 interface WebhookConfig {
   enabled: boolean;
@@ -6,6 +7,8 @@ interface WebhookConfig {
   groupIds: string[];
   minFreightValue?: number;
   allowedRoutes?: string[];
+  useDirectWhatsApp?: boolean;
+  whatsappGroups?: string[];
 }
 
 // Configuração padrão do webhook (será salva no banco posteriormente)
@@ -14,7 +17,9 @@ let webhookConfig: WebhookConfig = {
   url: "",
   groupIds: [],
   minFreightValue: 0,
-  allowedRoutes: []
+  allowedRoutes: [],
+  useDirectWhatsApp: false,
+  whatsappGroups: []
 };
 
 /**
@@ -129,11 +134,11 @@ ${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : '
 }
 
 /**
- * Envia webhook para Zapier/Make após cadastro de frete
+ * Envia webhook e/ou WhatsApp direto após cadastro de frete
  */
 export async function sendFreightWebhook(freight: any, client: any) {
-  if (!webhookConfig.enabled || !webhookConfig.url) {
-    console.log('Webhook desabilitado ou URL não configurada');
+  if (!webhookConfig.enabled) {
+    console.log('Envio automático desabilitado');
     return false;
   }
 
@@ -143,28 +148,48 @@ export async function sendFreightWebhook(freight: any, client: any) {
     return false;
   }
 
-  try {
-    const webhookData = formatFreightForWebhook(freight, client);
-    
-    const response = await fetch(webhookConfig.url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(webhookData)
-    });
+  const webhookData = formatFreightForWebhook(freight, client);
+  let webhookSuccess = false;
+  let whatsappSuccess = false;
 
-    if (response.ok) {
-      console.log(`Webhook enviado com sucesso para frete ${freight.id}`);
-      return true;
-    } else {
-      console.error(`Erro ao enviar webhook: ${response.status} ${response.statusText}`);
-      return false;
+  // Enviar via webhook (Zapier/Make) se configurado
+  if (webhookConfig.url) {
+    try {
+      const response = await fetch(webhookConfig.url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(webhookData)
+      });
+
+      if (response.ok) {
+        console.log(`Webhook enviado com sucesso para frete ${freight.id}`);
+        webhookSuccess = true;
+      } else {
+        console.error(`Erro ao enviar webhook: ${response.status} ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error('Erro ao enviar webhook:', error);
     }
-  } catch (error) {
-    console.error('Erro ao enviar webhook:', error);
-    return false;
   }
+
+  // Enviar via WhatsApp direto se configurado
+  if (webhookConfig.useDirectWhatsApp && webhookConfig.whatsappGroups && webhookConfig.whatsappGroups.length > 0) {
+    try {
+      const result = await whatsappService.sendFreightToGroups(webhookData.message, webhookConfig.whatsappGroups);
+      if (result.success) {
+        console.log(`WhatsApp enviado com sucesso para frete ${freight.id}`);
+        whatsappSuccess = true;
+      } else {
+        console.error(`Erro ao enviar WhatsApp: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Erro ao enviar WhatsApp:', error);
+    }
+  }
+
+  return webhookSuccess || whatsappSuccess;
 }
 
 /**

@@ -9,7 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Webhook, TestTube, Save, ExternalLink, CheckCircle } from "lucide-react";
+import { Webhook, TestTube, Save, ExternalLink, CheckCircle, MessageCircle, QrCode, Wifi, WifiOff } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface WebhookConfig {
   enabled: boolean;

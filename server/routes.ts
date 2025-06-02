@@ -49,6 +49,7 @@ import { sendSubscriptionEmail, sendPaymentReminderEmail } from "./email-service
 import { format } from "date-fns";
 import { setupMercadoPagoRoutes } from "./mercadopago-routes";
 import { setupWebhookRoutes, sendFreightWebhook } from "./webhook-service";
+// import { setupWhatsAppRoutes } from "./whatsapp-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configurar autenticação
@@ -59,6 +60,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Configurar rotas do webhook
   setupWebhookRoutes(app);
+  
+  // Configurar rotas do WhatsApp
+  setupWhatsAppRoutes(app);
   
   // Rota para solicitar redefinição de senha
   app.post("/api/forgot-password", async (req: Request, res: Response) => {
