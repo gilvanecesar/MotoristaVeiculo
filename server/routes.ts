@@ -48,6 +48,7 @@ import { eq } from "drizzle-orm";
 import { sendSubscriptionEmail, sendPaymentReminderEmail } from "./email-service";
 import { format } from "date-fns";
 import { setupMercadoPagoRoutes } from "./mercadopago-routes";
+import { setupWebhookRoutes, sendFreightWebhook } from "./webhook-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configurar autenticação
@@ -55,6 +56,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Configurar rotas do Mercado Pago
   setupMercadoPagoRoutes(app);
+  
+  // Configurar rotas do webhook
+  setupWebhookRoutes(app);
   
   // Rota para solicitar redefinição de senha
   app.post("/api/forgot-password", async (req: Request, res: Response) => {
@@ -645,6 +649,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Criar o frete
       const freight = await storage.createFreight(freightData);
+      
+      // Enviar webhook após criação do frete
+      try {
+        const client = await storage.getClient(freight.clientId);
+        await sendFreightWebhook(freight, client);
+        console.log(`Webhook enviado para frete ${freight.id}`);
+      } catch (webhookError) {
+        console.error('Erro ao enviar webhook:', webhookError);
+        // Não falhar a criação do frete por causa do webhook
+      }
       
       res.status(201).json(freight);
     } catch (error) {

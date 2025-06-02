@@ -49,6 +49,7 @@ import ProfileSelectionPage from "@/pages/profile-selection";
 import ResetPasswordPage from "@/pages/reset-password";
 import SettingsPage from "@/pages/settings";
 import PublicFreight from "@/pages/public-freight";
+import WebhookConfig from "@/pages/webhook-config";
 
 function Router() {
   return (
