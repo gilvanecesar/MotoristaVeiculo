@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { LogIn, LogOut, User, ChevronDown, Package, RotateCcw, Clock, MapPin, Calendar, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -34,6 +35,7 @@ import {
 export function ClientSelector() {
   const { user, loginMutation, logoutMutation, isLoading } = useAuth();
   const queryClient = useQueryClient();
+  const [, navigate] = useLocation();
   
   // Para debug
   useEffect(() => {
@@ -347,7 +349,7 @@ export function ClientSelector() {
                           variant="outline"
                           onClick={() => {
                             setFreightsDialogOpen(false);
-                            window.location.href = `/freights/edit/${freight.id}`;
+                            navigate(`/freights/${freight.id}/edit`);
                           }}
                         >
                           <Edit className="h-4 w-4 mr-2" />
