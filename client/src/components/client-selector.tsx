@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { LogIn, LogOut, User, ChevronDown, Package, RotateCcw, Clock, MapPin, Calendar } from "lucide-react";
+import { LogIn, LogOut, User, ChevronDown, Package, RotateCcw, Clock, MapPin, Calendar, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
@@ -321,26 +321,39 @@ export function ClientSelector() {
                         </div>
                       </div>
                       
-                      {(isExpired(freight.expirationDate) || freight.status === 'expired') && (
+                      <div className="ml-4 flex flex-col gap-2">
+                        {(isExpired(freight.expirationDate) || freight.status === 'expired') && (
+                          <Button
+                            size="sm"
+                            onClick={() => reactivateFreightMutation.mutate(freight.id)}
+                            disabled={reactivateFreightMutation.isPending}
+                          >
+                            {reactivateFreightMutation.isPending ? (
+                              <span className="flex items-center">
+                                <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-t-transparent"></div>
+                                Reativando...
+                              </span>
+                            ) : (
+                              <span className="flex items-center">
+                                <RotateCcw className="h-4 w-4 mr-2" />
+                                Reativar
+                              </span>
+                            )}
+                          </Button>
+                        )}
+                        
                         <Button
                           size="sm"
-                          onClick={() => reactivateFreightMutation.mutate(freight.id)}
-                          disabled={reactivateFreightMutation.isPending}
-                          className="ml-4"
+                          variant="outline"
+                          onClick={() => {
+                            setFreightsDialogOpen(false);
+                            window.location.href = `/freights/edit/${freight.id}`;
+                          }}
                         >
-                          {reactivateFreightMutation.isPending ? (
-                            <span className="flex items-center">
-                              <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-t-transparent"></div>
-                              Reativando...
-                            </span>
-                          ) : (
-                            <span className="flex items-center">
-                              <RotateCcw className="h-4 w-4 mr-2" />
-                              Reativar
-                            </span>
-                          )}
+                          <Edit className="h-4 w-4 mr-2" />
+                          Editar
                         </Button>
-                      )}
+                      </div>
                     </div>
                   </div>
                 ))}
