@@ -191,27 +191,30 @@ export default function WebhookConfig() {
         {/* Webhook Integration Tab */}
         <TabsContent value="webhook" className="space-y-6">
           <Card>
-          <CardHeader>
-            <CardTitle>Configurações Gerais</CardTitle>
-            <CardDescription>
-              Configure a URL do webhook e ative o envio automático
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Switch para ativar/desativar */}
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label htmlFor="webhook-enabled">Envio automático ativo</Label>
-                <p className="text-sm text-muted-foreground">
-                  Quando ativado, fretes serão enviados automaticamente após o cadastro
-                </p>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Webhook className="h-5 w-5" />
+                Webhook Configuration
+              </CardTitle>
+              <CardDescription>
+                Configure automatic freight posting via Zapier or Make
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Switch para ativar/desativar */}
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label htmlFor="webhook-enabled">Enable automatic posting</Label>
+                  <p className="text-sm text-muted-foreground">
+                    When enabled, freights will be sent automatically after registration
+                  </p>
+                </div>
+                <Switch
+                  id="webhook-enabled"
+                  checked={config.enabled}
+                  onCheckedChange={(checked) => setConfig(prev => ({ ...prev, enabled: checked }))}
+                />
               </div>
-              <Switch
-                id="webhook-enabled"
-                checked={config.enabled}
-                onCheckedChange={(checked) => setConfig(prev => ({ ...prev, enabled: checked }))}
-              />
-            </div>
 
             {/* URL do webhook */}
             <div className="space-y-2">
@@ -364,6 +367,112 @@ export default function WebhookConfig() {
             </div>
           </CardContent>
         </Card>
+        </TabsContent>
+
+        {/* Direct WhatsApp Tab */}
+        <TabsContent value="direct" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageCircle className="h-5 w-5" />
+                Direct WhatsApp Integration
+              </CardTitle>
+              <CardDescription>
+                Connect directly to WhatsApp Web for automatic message sending
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+                <div className="flex items-start gap-3">
+                  <QrCode className="h-5 w-5 text-yellow-600 mt-0.5" />
+                  <div>
+                    <h4 className="font-medium text-yellow-800">Coming Soon</h4>
+                    <p className="text-sm text-yellow-700 mt-1">
+                      Direct WhatsApp integration will be available in the next version. 
+                      For now, please use the Webhook + Zapier/Make option.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <Label>Direct WhatsApp</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Enable direct WhatsApp Web integration
+                    </p>
+                  </div>
+                  <Switch
+                    checked={config.useDirectWhatsApp}
+                    onCheckedChange={(checked) => setConfig(prev => ({ ...prev, useDirectWhatsApp: checked }))}
+                    disabled
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="whatsapp-groups">WhatsApp Group IDs</Label>
+                  <Textarea
+                    id="whatsapp-groups"
+                    placeholder="Group ID 1, Group ID 2, Group ID 3..."
+                    value={whatsappGroupsText}
+                    onChange={(e) => setWhatsappGroupsText(e.target.value)}
+                    disabled
+                    className="min-h-[80px]"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Separate multiple group IDs with commas
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 p-3 border rounded-lg bg-muted/50">
+                  <WifiOff className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Status: Not Connected</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Save Button */}
+      <div className="mt-6 flex flex-col sm:flex-row gap-4">
+        <Button 
+          onClick={saveConfig} 
+          disabled={isSaving}
+          className="flex-1 sm:flex-none"
+        >
+          {isSaving ? (
+            <>
+              <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+              Saving...
+            </>
+          ) : (
+            <>
+              <Save className="h-4 w-4 mr-2" />
+              Save Configuration
+            </>
+          )}
+        </Button>
+        
+        <Button 
+          variant="outline" 
+          onClick={testWebhook} 
+          disabled={isTesting || !config.url}
+          className="flex-1 sm:flex-none"
+        >
+          {isTesting ? (
+            <>
+              <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2" />
+              Testing...
+            </>
+          ) : (
+            <>
+              <TestTube className="h-4 w-4 mr-2" />
+              Test Webhook
+            </>
+          )}
+        </Button>
       </div>
     </div>
   );
