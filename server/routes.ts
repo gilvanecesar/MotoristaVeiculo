@@ -651,6 +651,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Valor do frete formatado (criação):", freightData.freightValue);
       }
       
+      // Formatar o peso da carga para o padrão do banco
+      if (freightData.cargoWeight) {
+        // Garantir que o peso seja tratado como uma string para manipulação
+        let weightStr = String(freightData.cargoWeight);
+        
+        // Remover pontos de milhares e substituir vírgula por ponto
+        weightStr = weightStr.replace(/\./g, '').replace(',', '.');
+        
+        // Converter para número decimal
+        let weightValue = parseFloat(weightStr);
+        
+        // Se não é um número válido, usar 0
+        if (isNaN(weightValue)) {
+          weightValue = 0;
+        }
+        
+        // Para manter o formato com 2 casas decimais como string
+        freightData.cargoWeight = weightValue.toFixed(2);
+        
+        console.log("Peso da carga formatado (criação):", freightData.cargoWeight);
+      }
+      
       // Criar o frete
       const freight = await storage.createFreight(freightData);
       
@@ -730,6 +752,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         freightData.freightValue = numValue.toFixed(2);
         
         console.log("Valor do frete formatado:", freightData.freightValue);
+      }
+      
+      // Formatar o peso da carga para o padrão do banco
+      if (freightData.cargoWeight) {
+        // Garantir que o peso seja tratado como uma string para manipulação
+        let weightStr = String(freightData.cargoWeight);
+        
+        // Remover pontos de milhares e substituir vírgula por ponto
+        weightStr = weightStr.replace(/\./g, '').replace(',', '.');
+        
+        // Converter para número decimal
+        let weightValue = parseFloat(weightStr);
+        
+        // Se não é um número válido, usar 0
+        if (isNaN(weightValue)) {
+          weightValue = 0;
+        }
+        
+        // Para manter o formato com 2 casas decimais como string
+        freightData.cargoWeight = weightValue.toFixed(2);
+        
+        console.log("Peso da carga formatado (atualização):", freightData.cargoWeight);
       }
       
       // Remover campos que podem causar problemas na atualização
