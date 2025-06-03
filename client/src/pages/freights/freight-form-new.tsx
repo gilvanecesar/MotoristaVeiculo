@@ -1057,7 +1057,18 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                         <Input
                           readOnly={isViewingInReadOnlyMode}
                           placeholder="Ex: (11) 98765-4321"
-                          {...field}
+                          inputMode="tel"
+                          autoComplete="tel"
+                          onBlur={(e) => {
+                            // Prevenir fechamento do app no mobile ao perder foco
+                            e.preventDefault();
+                            field.onBlur();
+                          }}
+                          onChange={(e) => {
+                            // Garantir que onChange funcione corretamente no mobile
+                            field.onChange(e.target.value);
+                          }}
+                          value={field.value || ""}
                         />
                       </FormControl>
                       <FormMessage />

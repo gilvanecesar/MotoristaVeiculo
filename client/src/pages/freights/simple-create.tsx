@@ -190,6 +190,12 @@ export default function SimpleCreateFreight() {
                     value={contactPhone}
                     onChange={(e) => setContactPhone(e.target.value)}
                     placeholder="(00) 00000-0000"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    onBlur={(e) => {
+                      // Prevenir fechamento do app no mobile ao perder foco
+                      e.preventDefault();
+                    }}
                   />
                 </div>
               </div>
