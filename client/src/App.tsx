@@ -52,6 +52,7 @@ import ProfileSelectionPage from "@/pages/profile-selection";
 import ResetPasswordPage from "@/pages/reset-password";
 import SettingsPage from "@/pages/settings";
 import PublicFreight from "@/pages/public-freight";
+import PublicComplement from "@/pages/public/complement";
 import WebhookConfig from "@/pages/webhook-config";
 
 function Router() {
@@ -59,6 +60,7 @@ function Router() {
     <Switch>
       <Route path="/" component={LandingPage} />
       <Route path="/freight/:id" component={PublicFreight} />
+      <Route path="/public/complements/:id" component={PublicComplement} />
       <ProtectedRoute path="/home" component={Home} />
       <Route path="/auth" component={LoginPage} />
       <Route path="/reset-password" component={ResetPasswordPage} />
