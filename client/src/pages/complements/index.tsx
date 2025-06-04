@@ -580,90 +580,84 @@ ${complement.observations ? `\n📝 *Observações:* ${complement.observations}\
             </div>
 
             {/* Mobile View */}
-            <div className="md:hidden space-y-4 p-4">
+            <div className="md:hidden space-y-4">
               {filteredComplements.map((complement) => (
-                <Card key={complement.id} className="hover:shadow-md transition-shadow">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-lg uppercase">{complement.contactName}</CardTitle>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (complement.contactPhone) {
-                              window.open(`https://wa.me/55${complement.contactPhone.replace(/\D/g, '')}`, '_blank');
-                            }
-                          }}
-                          className="text-sm text-green-600 hover:text-green-700 hover:underline cursor-pointer"
-                          title="Clique para chamar no WhatsApp"
-                        >
-                          {complement.contactPhone}
-                        </button>
-                      </div>
-                      <Badge variant="secondary">#{complement.id}</Badge>
+                <div 
+                  key={complement.id} 
+                  className="border border-slate-200 dark:border-slate-700 rounded-md overflow-hidden"
+                  onClick={() => navigate(`/complements/${complement.id}`)}
+                >
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800 flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <Package className="h-4 w-4 text-slate-500" />
+                      <span className="font-medium text-sm uppercase">{complement.contactName}</span>
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <p className="text-muted-foreground">Peso</p>
-                          <p className="font-semibold">{formatWeight(complement.weight)}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">Volumes</p>
-                          <p className="font-semibold">{complement.volumeQuantity}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">Metros Cúbicos</p>
-                          <p className="font-semibold">{complement.cubicMeters} m³</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">Valor Frete</p>
-                          <p className="font-semibold">{formatCurrency(complement.freightValue)}</p>
-                        </div>
+                    <Badge variant={complement.status === 'active' ? 'default' : 'secondary'}>
+                      {complement.status === 'active' ? 'Ativo' : 'Inativo'}
+                    </Badge>
+                  </div>
+                  
+                  <div className="p-3 space-y-2">
+                    <div className="flex items-start gap-2">
+                      <MapPin className="h-4 w-4 text-slate-500 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-xs text-slate-500">Origem:</p>
+                        <p className="text-sm">{complement.origin}</p>
                       </div>
+                    </div>
+                    
+                    <div className="flex items-start gap-2">
+                      <MapPin className="h-4 w-4 text-slate-500 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-xs text-slate-500">Destino:</p>
+                        <p className="text-sm">{complement.destination}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start gap-2">
+                      <Package className="h-4 w-4 text-slate-500 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-xs text-slate-500">Peso:</p>
+                        <p className="text-sm">{complement.cargoWeight} Kg</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start gap-2">
+                      <DollarSign className="h-4 w-4 text-slate-500 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-xs text-slate-500">Valor:</p>
+                        <p className="text-sm font-medium">{formatCurrency(complement.freightValue)}</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="p-2 border-t border-slate-100 dark:border-slate-700 flex justify-between">
+                    <div className="flex space-x-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/complements/${complement.id}`);
+                        }}
+                        title="Visualizar"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
                       
-                      {(complement.origin || complement.destination) && (
-                        <div className="border-t pt-3 mt-3">
-                          <div className="flex items-center gap-2 mb-2">
-                            <MapPin className="h-4 w-4 text-primary" />
-                            <p className="text-muted-foreground text-sm font-medium">Rota</p>
-                          </div>
-                          <div className="text-sm">
-                            {complement.origin && (
-                              <p><span className="font-medium">De:</span> {complement.origin}</p>
-                            )}
-                            {complement.destination && (
-                              <p><span className="font-medium">Para:</span> {complement.destination}</p>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex gap-2 mt-4">
                       <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openComplementPage(complement)}
-                        className="flex-1"
-                      >
-                        <ExternalLink className="h-4 w-4 mr-1" />
-                        Visualizar
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
+                        variant="ghost"
+                        size="icon"
                         onClick={(e) => shareViaWhatsApp(e, complement)}
-                        className="flex-1 text-green-600 hover:text-green-700 hover:bg-green-50"
+                        className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                        title="Compartilhar no WhatsApp"
                       >
-                        <FaWhatsapp className="h-4 w-4 mr-1" />
-                        Compartilhar
+                        <FaWhatsapp className="h-4 w-4" />
                       </Button>
+                      
                       <Button
-                        variant="outline"
-                        size="sm"
+                        variant="ghost"
+                        size="icon"
                         onClick={(e) => {
                           e.stopPropagation();
                           if (complement.contactPhone) {
@@ -671,52 +665,76 @@ ${complement.observations ? `\n📝 *Observações:* ${complement.observations}\
                           }
                         }}
                         disabled={!complement.contactPhone}
-                        className="flex-1 text-green-600 hover:text-green-700 hover:bg-green-50"
+                        className="text-green-600 hover:text-green-700 hover:bg-green-50"
                         title="Contatar via WhatsApp"
                       >
-                        <PhoneCall className="h-4 w-4 mr-1" />
-                        Chamar
+                        <PhoneCall className="h-4 w-4" />
                       </Button>
-                    </div>
-
-                    {/* Botões de edição/exclusão apenas para usuários autorizados */}
-                    {isComplementAuthorized(complement.clientId, complement.userId) && (
-                      <div className="flex gap-2 mt-2">
-                        <Button variant="outline" size="sm" className="flex-1" asChild>
-                          <Link href={`/complements/${complement.id}/edit`}>
-                            <Edit className="h-4 w-4 mr-1" />
-                            Editar
-                          </Link>
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="outline" size="sm" className="flex-1 text-red-600 hover:text-red-700">
-                              <Trash2 className="h-4 w-4 mr-1" />
-                              Excluir
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Tem certeza que deseja excluir este complemento? Esta ação não pode ser desfeita.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => deleteMutation.mutate(complement.id)}
-                                className="bg-red-600 hover:bg-red-700"
+                      
+                      {/* Botões para usuários autorizados */}
+                      {isComplementAuthorized(complement.clientId, complement.userId) && (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/complements/${complement.id}/edit`);
+                            }}
+                            title="Editar"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-red-600 hover:text-red-700"
+                                onClick={(e) => e.stopPropagation()}
+                                title="Excluir"
                               >
-                                Excluir
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Tem certeza que deseja excluir este complemento? Esta ação não pode ser desfeita.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => deleteMutation.mutate(complement.id)}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  Excluir
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center text-xs text-slate-500">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (complement.contactPhone) {
+                            window.open(`https://wa.me/55${complement.contactPhone.replace(/\D/g, '')}`, '_blank');
+                          }
+                        }}
+                        className="text-green-600 hover:text-green-700 hover:underline"
+                        title="Clique para chamar no WhatsApp"
+                      >
+                        {complement.contactPhone}
+                      </button>
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
           </CardContent>
