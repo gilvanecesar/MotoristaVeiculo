@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Eye, Edit, Trash2, Package, Calculator } from "lucide-react";
+import { Plus, Search, Eye, Edit, Trash2, Package, Calculator, Share2 } from "lucide-react";
 import { Link } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { type Complement } from "@shared/schema";
@@ -291,6 +291,30 @@ export default function ComplementsPage() {
                       </div>
                     </DialogContent>
                   </Dialog>
+
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => {
+                      const shareUrl = `${window.location.origin}/public/complements/${complement.id}`;
+                      navigator.clipboard.writeText(shareUrl).then(() => {
+                        toast({
+                          title: "Link copiado!",
+                          description: "O link do complemento foi copiado para a área de transferência.",
+                        });
+                      }).catch(() => {
+                        toast({
+                          title: "Erro",
+                          description: "Não foi possível copiar o link.",
+                          variant: "destructive",
+                        });
+                      });
+                    }}
+                  >
+                    <Share2 className="h-4 w-4 mr-1" />
+                    Compartilhar
+                  </Button>
 
                   <Button asChild variant="outline" size="sm" className="flex-1">
                     <Link href={`/complements/${complement.id}/edit`}>

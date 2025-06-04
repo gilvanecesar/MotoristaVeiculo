@@ -2329,6 +2329,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Rota pública para visualizar um complemento específico (sem autenticação)
+  app.get("/api/public/complements/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const complement = await storage.getComplement(id);
+      
+      if (!complement) {
+        return res.status(404).json({ message: "Complemento não encontrado" });
+      }
+      
+      // Verificar se o complemento está ativo
+      if (complement.status !== 'active') {
+        return res.status(403).json({ message: "Este complemento não está mais disponível" });
+      }
+      
+      // Buscar informações do cliente se existir
+      let client = null;
+      if (complement.clientId) {
+        client = await storage.getClient(complement.clientId);
+      }
+
+      res.json({
+        ...complement,
+        client,
+        // Remover informações sensíveis para compartilhamento público
+        userId: undefined
+      });
+    } catch (error) {
+      console.error("Erro ao obter complemento público:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
   // ==================== COMPLEMENTOS ====================
   // Obter todos complementos
   app.get("/api/complements", isAuthenticated, async (req: Request, res: Response) => {
