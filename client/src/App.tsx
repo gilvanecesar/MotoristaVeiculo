@@ -31,6 +31,9 @@ import DirectFreightEdit from "@/pages/freights/direct-edit";
 import BasicCreateFreight from "@/pages/freights/basic-create";
 import ClientsPage from "@/pages/clients/index";
 import ClientForm from "@/pages/clients/client-form";
+import ComplementsPage from "@/pages/complements/index";
+import CreateComplementPage from "@/pages/complements/create";
+import EditComplementPage from "@/pages/complements/[id]/edit";
 import AdminPage from "@/pages/admin/index";
 import FinanceDashboard from "@/pages/admin/finance/index";
 import FinanceSettings from "@/pages/admin/finance/settings";
@@ -86,6 +89,9 @@ function Router() {
       <ProtectedRoute path="/clients" component={ClientsPage} />
       <ProtectedRoute path="/clients/new" component={ClientForm} />
       <ProtectedRoute path="/clients/:id" component={ClientForm} />
+      <ProtectedRoute path="/complements" component={ComplementsPage} />
+      <ProtectedRoute path="/complements/create" component={CreateComplementPage} />
+      <ProtectedRoute path="/complements/:id/edit" component={EditComplementPage} />
       <ProtectedRoute path="/reports" component={ReportsPage} />
       <ProtectedRoute path="/admin" component={AdminPage} />
       <ProtectedRoute path="/admin/finance" component={FinanceDashboard} />
