@@ -63,7 +63,9 @@ export default function ComplementsPage() {
   const filteredComplements = complements.filter((complement) =>
     complement.contactName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     complement.contactPhone.includes(searchTerm) ||
-    (complement.observations && complement.observations.toLowerCase().includes(searchTerm.toLowerCase()))
+    (complement.observations && complement.observations.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (complement.origin && complement.origin.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (complement.destination && complement.destination.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const formatCurrency = (value: string) => {
@@ -298,6 +300,22 @@ export default function ComplementsPage() {
                             <p className="font-semibold text-sm">Valor do Frete</p>
                             <p>{formatCurrency(complement.freightValue)}</p>
                           </div>
+                          {(complement.origin || complement.destination) && (
+                            <>
+                              {complement.origin && (
+                                <div>
+                                  <p className="font-semibold text-sm">Origem</p>
+                                  <p>{complement.origin}</p>
+                                </div>
+                              )}
+                              {complement.destination && (
+                                <div>
+                                  <p className="font-semibold text-sm">Destino</p>
+                                  <p>{complement.destination}</p>
+                                </div>
+                              )}
+                            </>
+                          )}
                         </div>
                         {complement.observations && (
                           <div>

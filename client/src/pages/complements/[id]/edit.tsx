@@ -25,7 +25,7 @@ export default function EditComplementPage() {
   const { user } = useAuth();
   const [cubicMeters, setCubicMeters] = useState<string>("0.000");
 
-  const complementId = params?.id ? parseInt(params.id) : 0;
+  const complementId = params?.id ? parseInt(params.id) : null;
 
   // Buscar complemento
   const { data: complement, isLoading: complementLoading } = useQuery<Complement>({

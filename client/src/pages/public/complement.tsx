@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useRoute } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Package, Phone, User, Weight, Box, Calculator, FileText } from "lucide-react";
+import { Package, Phone, User, Weight, Box, Calculator, FileText, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 
@@ -10,6 +10,10 @@ interface PublicComplement {
   id: number;
   contactName: string;
   contactPhone: string;
+  origin?: string;
+  originState?: string;
+  destination?: string;
+  destinationState?: string;
   weight: string;
   volumeQuantity: number;
   volumeLength: string;
@@ -214,6 +218,32 @@ export default function PublicComplementPage() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Origem e Destino */}
+              {(complement.origin || complement.destination) && (
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <MapPin className="h-5 w-5 text-primary" />
+                      <h3 className="font-semibold">Rota</h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {complement.origin && (
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">Origem</p>
+                          <p className="text-lg font-semibold">{complement.origin}</p>
+                        </div>
+                      )}
+                      {complement.destination && (
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">Destino</p>
+                          <p className="text-lg font-semibold">{complement.destination}</p>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Valores */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
