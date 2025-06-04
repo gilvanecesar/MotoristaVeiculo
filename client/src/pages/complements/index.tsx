@@ -25,6 +25,7 @@ import { Link } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { type Complement } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import {
   Dialog,
   DialogContent,
@@ -58,11 +59,38 @@ export default function ComplementsPage() {
     contactName: ""
   });
   const { toast } = useToast();
+  const { user } = useAuth();
 
   // Buscar complementos
   const { data: complements = [], isLoading } = useQuery<Complement[]>({
     queryKey: ["/api/complements"],
   });
+
+  // Função para verificar autorização baseado no usuário que criou o complemento
+  const isComplementAuthorized = (clientId: number | null, complementUserId?: number | null) => {
+    // Motoristas não podem editar/excluir complementos
+    if (user?.profileType === 'motorista' || user?.profileType === 'driver') {
+      return false;
+    }
+    
+    // Administradores têm acesso total
+    if (user?.profileType === 'admin' || user?.profileType === 'administrador') {
+      return true;
+    }
+    
+    // Verificação primária: o usuário é o criador do complemento?
+    if (complementUserId && user?.id === complementUserId) {
+      return true;
+    }
+    
+    // Verificação secundária para compatibilidade: cliente associado
+    // Se não houver userId no complemento, usa a regra do cliente
+    if (!complementUserId && user?.clientId === clientId) {
+      return true;
+    }
+    
+    return false;
+  };
 
   // Função para filtrar complementos
   const filterComplements = (data: Complement[]) => {
@@ -492,35 +520,41 @@ ${complement.observations ? `\n📝 *Observações:* ${complement.observations}\
                           >
                             <PhoneCall className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm" asChild>
-                            <Link href={`/complements/${complement.id}/edit`}>
-                              <Edit className="h-4 w-4" />
-                            </Link>
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
-                                <Trash2 className="h-4 w-4" />
+                          
+                          {/* Botões para usuários autorizados (criador do complemento ou admin) */}
+                          {isComplementAuthorized(complement.clientId, complement.userId) && (
+                            <>
+                              <Button variant="ghost" size="sm" asChild>
+                                <Link href={`/complements/${complement.id}/edit`}>
+                                  <Edit className="h-4 w-4" />
+                                </Link>
                               </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Tem certeza que deseja excluir este complemento? Esta ação não pode ser desfeita.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => deleteMutation.mutate(complement.id)}
-                                  className="bg-red-600 hover:bg-red-700"
-                                >
-                                  Excluir
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Tem certeza que deseja excluir este complemento? Esta ação não pode ser desfeita.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => deleteMutation.mutate(complement.id)}
+                                      className="bg-red-600 hover:bg-red-700"
+                                    >
+                                      Excluir
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -629,39 +663,42 @@ ${complement.observations ? `\n📝 *Observações:* ${complement.observations}\
                       </Button>
                     </div>
 
-                    <div className="flex gap-2 mt-2">
-                      <Button variant="outline" size="sm" className="flex-1" asChild>
-                        <Link href={`/complements/${complement.id}/edit`}>
-                          <Edit className="h-4 w-4 mr-1" />
-                          Editar
-                        </Link>
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="outline" size="sm" className="flex-1 text-red-600 hover:text-red-700">
-                            <Trash2 className="h-4 w-4 mr-1" />
-                            Excluir
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Tem certeza que deseja excluir este complemento? Esta ação não pode ser desfeita.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => deleteMutation.mutate(complement.id)}
-                              className="bg-red-600 hover:bg-red-700"
-                            >
+                    {/* Botões de edição/exclusão apenas para usuários autorizados */}
+                    {isComplementAuthorized(complement.clientId, complement.userId) && (
+                      <div className="flex gap-2 mt-2">
+                        <Button variant="outline" size="sm" className="flex-1" asChild>
+                          <Link href={`/complements/${complement.id}/edit`}>
+                            <Edit className="h-4 w-4 mr-1" />
+                            Editar
+                          </Link>
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="flex-1 text-red-600 hover:text-red-700">
+                              <Trash2 className="h-4 w-4 mr-1" />
                               Excluir
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tem certeza que deseja excluir este complemento? Esta ação não pode ser desfeita.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => deleteMutation.mutate(complement.id)}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Excluir
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               ))}
