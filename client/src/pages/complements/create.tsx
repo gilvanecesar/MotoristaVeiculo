@@ -15,10 +15,12 @@ import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { complementValidator, type Client } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function CreateComplementPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [cubicMeters, setCubicMeters] = useState<string>("0.000");
 
   // Buscar clientes
@@ -29,7 +31,7 @@ export default function CreateComplementPage() {
   const form = useForm({
     resolver: zodResolver(complementValidator),
     defaultValues: {
-      clientId: "",
+      clientId: user?.clientId?.toString() || "",
       weight: "",
       volumeQuantity: 1,
       volumeLength: "",

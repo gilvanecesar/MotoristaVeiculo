@@ -15,11 +15,13 @@ import { Link } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { complementValidator, type Client, type Complement } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function EditComplementPage() {
   const [, params] = useRoute("/complements/:id/edit");
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [cubicMeters, setCubicMeters] = useState<string>("0.000");
 
   const complementId = params?.id ? parseInt(params.id) : 0;
