@@ -530,14 +530,24 @@ ${complement.observations ? `\n📝 *Observações:* ${complement.observations}\
                           {/* Botões para usuários autorizados (criador do complemento ou admin) */}
                           {isComplementAuthorized(complement.clientId, complement.userId) && (
                             <>
-                              <Button variant="ghost" size="sm" asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                asChild
+                                onClick={(e) => e.stopPropagation()}
+                              >
                                 <Link href={`/complements/${complement.id}/edit`}>
                                   <Edit className="h-4 w-4" />
                                 </Link>
                               </Button>
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                  <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="text-red-600 hover:text-red-700"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
                                 </AlertDialogTrigger>
