@@ -33,6 +33,10 @@ export default function CreateComplementPage() {
     resolver: zodResolver(complementValidator),
     defaultValues: {
       clientId: user?.clientId?.toString() || "",
+      origin: "",
+      originState: "",
+      destination: "",
+      destinationState: "",
       weight: "",
       volumeQuantity: 1,
       volumeLength: "",
@@ -142,6 +146,71 @@ export default function CreateComplementPage() {
                   </FormItem>
                 )}
               />
+
+              {/* Origem e Destino */}
+              <div>
+                <Label className="text-base font-semibold flex items-center gap-2 mb-4">
+                  <MapPin className="h-5 w-5 text-primary" />
+                  Origem e Destino
+                </Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="origin"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Origem *</FormLabel>
+                        <FormControl>
+                          <LocationInput
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="Digite a cidade de origem..."
+                            onStateChange={(state) => {
+                              form.setValue("originState", state);
+                            }}
+                            onCityChange={(city) => {
+                              const currentValue = form.getValues("origin");
+                              if (currentValue.includes(" - ")) {
+                                const state = currentValue.split(" - ")[1];
+                                form.setValue("origin", `${city} - ${state}`);
+                              }
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="destination"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Destino *</FormLabel>
+                        <FormControl>
+                          <LocationInput
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="Digite a cidade de destino..."
+                            onStateChange={(state) => {
+                              form.setValue("destinationState", state);
+                            }}
+                            onCityChange={(city) => {
+                              const currentValue = form.getValues("destination");
+                              if (currentValue.includes(" - ")) {
+                                const state = currentValue.split(" - ")[1];
+                                form.setValue("destination", `${city} - ${state}`);
+                              }
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
 
               {/* Peso e Quantidade */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

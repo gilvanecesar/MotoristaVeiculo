@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Eye, Edit, Trash2, Package, Calculator, Share2 } from "lucide-react";
+import { Plus, Search, Eye, Edit, Trash2, Package, Calculator, Share2, MapPin } from "lucide-react";
 import { Link } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { type Complement } from "@shared/schema";
@@ -226,6 +226,23 @@ export default function ComplementsPage() {
                     <p className="text-muted-foreground text-sm">Valor NF</p>
                     <p className="font-semibold">{formatCurrency(complement.invoiceValue)}</p>
                   </div>
+
+                  {(complement.origin || complement.destination) && (
+                    <div className="border-t pt-3 mt-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <MapPin className="h-4 w-4 text-primary" />
+                        <p className="text-muted-foreground text-sm font-medium">Rota</p>
+                      </div>
+                      <div className="text-sm">
+                        {complement.origin && (
+                          <p><span className="font-medium">De:</span> {complement.origin}</p>
+                        )}
+                        {complement.destination && (
+                          <p><span className="font-medium">Para:</span> {complement.destination}</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   {complement.observations && (
                     <div>

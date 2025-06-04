@@ -10,12 +10,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { ArrowLeft, Package, Calculator } from "lucide-react";
+import { ArrowLeft, Package, Calculator, MapPin } from "lucide-react";
 import { Link } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { complementValidator, type Client, type Complement } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import LocationInput from "@/components/location/location-input";
 
 export default function EditComplementPage() {
   const [, params] = useRoute("/complements/:id/edit");
@@ -41,6 +42,10 @@ export default function EditComplementPage() {
     resolver: zodResolver(complementValidator),
     defaultValues: {
       clientId: "",
+      origin: "",
+      originState: "",
+      destination: "",
+      destinationState: "",
       weight: "",
       volumeQuantity: 1,
       volumeLength: "",
@@ -59,6 +64,10 @@ export default function EditComplementPage() {
     if (complement) {
       form.reset({
         clientId: complement.clientId.toString(),
+        origin: complement.origin || "",
+        originState: complement.originState || "",
+        destination: complement.destination || "",
+        destinationState: complement.destinationState || "",
         weight: complement.weight,
         volumeQuantity: complement.volumeQuantity,
         volumeLength: complement.volumeLength,
@@ -200,6 +209,71 @@ export default function EditComplementPage() {
                   </FormItem>
                 )}
               />
+
+              {/* Origem e Destino */}
+              <div>
+                <Label className="text-base font-semibold flex items-center gap-2 mb-4">
+                  <MapPin className="h-5 w-5 text-primary" />
+                  Origem e Destino
+                </Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="origin"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Origem *</FormLabel>
+                        <FormControl>
+                          <LocationInput
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="Digite a cidade de origem..."
+                            onStateChange={(state) => {
+                              form.setValue("originState", state);
+                            }}
+                            onCityChange={(city) => {
+                              const currentValue = form.getValues("origin");
+                              if (currentValue.includes(" - ")) {
+                                const state = currentValue.split(" - ")[1];
+                                form.setValue("origin", `${city} - ${state}`);
+                              }
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="destination"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Destino *</FormLabel>
+                        <FormControl>
+                          <LocationInput
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="Digite a cidade de destino..."
+                            onStateChange={(state) => {
+                              form.setValue("destinationState", state);
+                            }}
+                            onCityChange={(city) => {
+                              const currentValue = form.getValues("destination");
+                              if (currentValue.includes(" - ")) {
+                                const state = currentValue.split(" - ")[1];
+                                form.setValue("destination", `${city} - ${state}`);
+                              }
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
 
               {/* Peso e Quantidade */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
