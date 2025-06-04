@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Eye, Edit, Trash2, Package, Calculator, Share2, MapPin, ExternalLink, MessageSquare, PhoneCall } from "lucide-react";
+import { Plus, Search, Eye, Edit, Trash2, Package, Calculator, Share2, MapPin, ExternalLink, MessageSquare, PhoneCall, Filter, X } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 import {
   Table,
@@ -14,6 +14,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Link } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { type Complement } from "@shared/schema";
@@ -40,12 +47,81 @@ import {
 
 export default function ComplementsPage() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({
+    origin: "",
+    destination: "",
+    minWeight: "",
+    maxWeight: "",
+    minValue: "",
+    maxValue: "",
+    contactName: ""
+  });
   const { toast } = useToast();
 
   // Buscar complementos
   const { data: complements = [], isLoading } = useQuery<Complement[]>({
     queryKey: ["/api/complements"],
   });
+
+  // Função para filtrar complementos
+  const filterComplements = (data: Complement[]) => {
+    if (!data) return [];
+    
+    return data.filter(complement => {
+      // Filtro de busca por texto
+      if (searchTerm && !Object.values(complement).some(value => 
+        typeof value === 'string' && value.toLowerCase().includes(searchTerm.toLowerCase())
+      )) {
+        return false;
+      }
+      
+      // Filtros avançados
+      if (filters.origin && !complement.origin?.toLowerCase().includes(filters.origin.toLowerCase())) {
+        return false;
+      }
+      
+      if (filters.destination && !complement.destination?.toLowerCase().includes(filters.destination.toLowerCase())) {
+        return false;
+      }
+      
+      if (filters.contactName && !complement.contactName.toLowerCase().includes(filters.contactName.toLowerCase())) {
+        return false;
+      }
+      
+      if (filters.minWeight && parseFloat(complement.weight.toString()) < parseFloat(filters.minWeight)) {
+        return false;
+      }
+      
+      if (filters.maxWeight && parseFloat(complement.weight.toString()) > parseFloat(filters.maxWeight)) {
+        return false;
+      }
+      
+      if (filters.minValue && parseFloat(complement.freightValue.toString()) < parseFloat(filters.minValue)) {
+        return false;
+      }
+      
+      if (filters.maxValue && parseFloat(complement.freightValue.toString()) > parseFloat(filters.maxValue)) {
+        return false;
+      }
+      
+      return true;
+    });
+  };
+
+  // Função para limpar filtros
+  const resetFilters = () => {
+    setFilters({
+      origin: "",
+      destination: "",
+      minWeight: "",
+      maxWeight: "",
+      minValue: "",
+      maxValue: "",
+      contactName: ""
+    });
+    setSearchTerm("");
+  };
 
   // Mutation para deletar complemento
   const deleteMutation = useMutation({
@@ -68,14 +144,8 @@ export default function ComplementsPage() {
     },
   });
 
-  // Filtrar complementos baseado na pesquisa
-  const filteredComplements = complements.filter((complement) =>
-    complement.contactName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    complement.contactPhone.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (complement.observations && complement.observations.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (complement.origin && complement.origin.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (complement.destination && complement.destination.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  // Aplicar filtros aos complementos
+  const filteredComplements = filterComplements(complements);
 
   const formatCurrency = (value: string) => {
     const num = parseFloat(value);
