@@ -209,6 +209,12 @@ export const complements = pgTable("complements", {
   clientId: integer("client_id").references(() => clients.id).notNull(),
   userId: integer("user_id"), // Usuário que criou o complemento
   
+  // Origem e destino
+  origin: text("origin").notNull(), // Cidade de origem
+  originState: text("origin_state").notNull(), // Estado de origem
+  destination: text("destination").notNull(), // Cidade de destino
+  destinationState: text("destination_state").notNull(), // Estado de destino
+  
   // Informações da carga
   weight: decimal("weight", { precision: 10, scale: 2 }).notNull(), // Peso em kg
   volumeQuantity: integer("volume_quantity").notNull(), // Quantidade de volumes
@@ -372,6 +378,10 @@ export const freightDestinationValidator = insertFreightDestinationSchema.extend
 
 export const complementValidator = insertComplementSchema.extend({
   clientId: z.coerce.number().positive(),
+  origin: z.string().min(3, "Cidade de origem é obrigatória"),
+  originState: z.string().min(2, "Estado de origem é obrigatório"),
+  destination: z.string().min(3, "Cidade de destino é obrigatória"),
+  destinationState: z.string().min(2, "Estado de destino é obrigatório"),
   weight: z.string().min(1, "Peso é obrigatório"),
   volumeQuantity: z.coerce.number().int().positive("Quantidade de volumes deve ser um número positivo"),
   volumeLength: z.string().min(1, "Comprimento é obrigatório"),
