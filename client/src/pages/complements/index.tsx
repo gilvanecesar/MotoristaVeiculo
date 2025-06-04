@@ -116,8 +116,6 @@ ${complement.destination ? `📍 *Destino:* ${complement.destination}` : ''}
 💰 *Valor NF:* ${formatCurrency(complement.invoiceValue)}
 💵 *Valor Frete:* ${formatCurrency(complement.freightValue)}
 
-📅 *Publicado em:* ${complement.createdAt ? formatDate(complement.createdAt) : 'Data não disponível'}
-
 👤 *Contato:* ${complement.contactName}
 📞 *Telefone:* ${complement.contactPhone}
 ${complement.observations ? `\n📝 *Observações:* ${complement.observations}\n` : ''}
