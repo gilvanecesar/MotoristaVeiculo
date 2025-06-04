@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,6 +50,7 @@ import {
 export default function ComplementsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const [, navigate] = useLocation();
   const [filters, setFilters] = useState({
     origin: "",
     destination: "",
@@ -442,7 +444,11 @@ ${complement.observations ? `\n📝 *Observações:* ${complement.observations}\
                 </TableHeader>
                 <TableBody>
                   {filteredComplements.map((complement) => (
-                    <TableRow key={complement.id} className="cursor-pointer hover:bg-muted/50">
+                    <TableRow 
+                      key={complement.id} 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => navigate(`/complements/${complement.id}`)}
+                    >
                       <TableCell>
                         <div>
                           <p className="font-medium uppercase">{complement.contactName}</p>

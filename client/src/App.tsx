@@ -33,6 +33,7 @@ import ClientsPage from "@/pages/clients/index";
 import ClientForm from "@/pages/clients/client-form";
 import ComplementsPage from "@/pages/complements/index";
 import CreateComplementPage from "@/pages/complements/create";
+import ComplementDetailPage from "@/pages/complements/[id]";
 import EditComplementPage from "@/pages/complements/[id]/edit";
 import AdminPage from "@/pages/admin/index";
 import FinanceDashboard from "@/pages/admin/finance/index";
@@ -94,6 +95,7 @@ function Router() {
       <ProtectedRoute path="/complements" component={ComplementsPage} />
       <ProtectedRoute path="/complements/create" component={CreateComplementPage} />
       <ProtectedRoute path="/complements/:id/edit" component={EditComplementPage} />
+      <ProtectedRoute path="/complements/:id" component={ComplementDetailPage} />
       <ProtectedRoute path="/reports" component={ReportsPage} />
       <ProtectedRoute path="/admin" component={AdminPage} />
       <ProtectedRoute path="/admin/finance" component={FinanceDashboard} />
