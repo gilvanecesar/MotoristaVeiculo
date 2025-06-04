@@ -417,8 +417,19 @@ ${complement.observations ? `\n📝 *Observações:* ${complement.observations}\
                     <TableRow key={complement.id} className="cursor-pointer hover:bg-muted/50">
                       <TableCell>
                         <div>
-                          <p className="font-medium">{complement.contactName}</p>
-                          <p className="text-sm text-muted-foreground">{complement.contactPhone}</p>
+                          <p className="font-medium uppercase">{complement.contactName}</p>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (complement.contactPhone) {
+                                window.open(`https://wa.me/55${complement.contactPhone.replace(/\D/g, '')}`, '_blank');
+                              }
+                            }}
+                            className="text-sm text-green-600 hover:text-green-700 hover:underline cursor-pointer"
+                            title="Clique para chamar no WhatsApp"
+                          >
+                            {complement.contactPhone}
+                          </button>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -525,8 +536,19 @@ ${complement.observations ? `\n📝 *Observações:* ${complement.observations}\
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div>
-                        <CardTitle className="text-lg">{complement.contactName}</CardTitle>
-                        <p className="text-sm text-muted-foreground">{complement.contactPhone}</p>
+                        <CardTitle className="text-lg uppercase">{complement.contactName}</CardTitle>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (complement.contactPhone) {
+                              window.open(`https://wa.me/55${complement.contactPhone.replace(/\D/g, '')}`, '_blank');
+                            }
+                          }}
+                          className="text-sm text-green-600 hover:text-green-700 hover:underline cursor-pointer"
+                          title="Clique para chamar no WhatsApp"
+                        >
+                          {complement.contactPhone}
+                        </button>
                       </div>
                       <Badge variant="secondary">#{complement.id}</Badge>
                     </div>
