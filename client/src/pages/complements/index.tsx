@@ -59,19 +59,19 @@ export default function ComplementsPage() {
         description: "Complemento excluído com sucesso!",
       });
     },
-    onError: (error: Error) => {
+    onError: () => {
       toast({
         title: "Erro",
-        description: error.message,
+        description: "Erro ao excluir complemento.",
         variant: "destructive",
       });
     },
   });
 
-  // Filtrar complementos baseado na busca
+  // Filtrar complementos baseado na pesquisa
   const filteredComplements = complements.filter((complement) =>
     complement.contactName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    complement.contactPhone.includes(searchTerm) ||
+    complement.contactPhone.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (complement.observations && complement.observations.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (complement.origin && complement.origin.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (complement.destination && complement.destination.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -150,15 +150,11 @@ ${complement.observations ? `\n📝 *Observações:* ${complement.observations}\
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+      {/* Cabeçalho */}
+      <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Package className="h-8 w-8 text-primary" />
-            Complementos
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Gerencie cargas de complemento para fretes
-          </p>
+          <h1 className="text-3xl font-bold">Complementos</h1>
+          <p className="text-muted-foreground">Gerencie seus complementos de carga</p>
         </div>
         <Button asChild>
           <Link href="/complements/create">
@@ -460,199 +456,6 @@ ${complement.observations ? `\n📝 *Observações:* ${complement.observations}\
             </div>
           </CardContent>
         </Card>
-      )}
-    </div>
-  );
-}
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-muted-foreground">Peso</p>
-                      <p className="font-semibold">{formatWeight(complement.weight)}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Volumes</p>
-                      <p className="font-semibold">{complement.volumeQuantity}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Metros Cúbicos</p>
-                      <p className="font-semibold">{complement.cubicMeters} m³</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Valor Frete</p>
-                      <p className="font-semibold">{formatCurrency(complement.freightValue)}</p>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <p className="text-muted-foreground text-sm">Dimensões (cm)</p>
-                    <p className="font-semibold">
-                      {complement.volumeLength} × {complement.volumeWidth} × {complement.volumeHeight}
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-muted-foreground text-sm">Valor NF</p>
-                    <p className="font-semibold">{formatCurrency(complement.invoiceValue)}</p>
-                  </div>
-
-                  {(complement.origin || complement.destination) && (
-                    <div className="border-t pt-3 mt-3">
-                      <div className="flex items-center gap-2 mb-2">
-                        <MapPin className="h-4 w-4 text-primary" />
-                        <p className="text-muted-foreground text-sm font-medium">Rota</p>
-                      </div>
-                      <div className="text-sm">
-                        {complement.origin && (
-                          <p><span className="font-medium">De:</span> {complement.origin}</p>
-                        )}
-                        {complement.destination && (
-                          <p><span className="font-medium">Para:</span> {complement.destination}</p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {complement.observations && (
-                    <div>
-                      <p className="text-muted-foreground text-sm">Observações</p>
-                      <p className="text-sm truncate">{complement.observations}</p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex gap-2 mt-4">
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button variant="outline" size="sm" className="flex-1">
-                        <Eye className="h-4 w-4 mr-1" />
-                        Ver
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Detalhes do Complemento #{complement.id}</DialogTitle>
-                        <DialogDescription>
-                          Informações completas do complemento
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <p className="font-semibold text-sm">Contato</p>
-                            <p>{complement.contactName}</p>
-                            <p className="text-sm text-muted-foreground">{complement.contactPhone}</p>
-                          </div>
-                          <div>
-                            <p className="font-semibold text-sm">Peso</p>
-                            <p>{formatWeight(complement.weight)}</p>
-                          </div>
-                          <div>
-                            <p className="font-semibold text-sm">Quantidade Volumes</p>
-                            <p>{complement.volumeQuantity}</p>
-                          </div>
-                          <div>
-                            <p className="font-semibold text-sm">Metros Cúbicos</p>
-                            <p>{complement.cubicMeters} m³</p>
-                          </div>
-                          <div>
-                            <p className="font-semibold text-sm">Dimensões (cm)</p>
-                            <p>{complement.volumeLength} × {complement.volumeWidth} × {complement.volumeHeight}</p>
-                          </div>
-                          <div>
-                            <p className="font-semibold text-sm">Valor Nota Fiscal</p>
-                            <p>{formatCurrency(complement.invoiceValue)}</p>
-                          </div>
-                          <div className="col-span-2">
-                            <p className="font-semibold text-sm">Valor do Frete</p>
-                            <p>{formatCurrency(complement.freightValue)}</p>
-                          </div>
-                          {(complement.origin || complement.destination) && (
-                            <>
-                              {complement.origin && (
-                                <div>
-                                  <p className="font-semibold text-sm">Origem</p>
-                                  <p>{complement.origin}</p>
-                                </div>
-                              )}
-                              {complement.destination && (
-                                <div>
-                                  <p className="font-semibold text-sm">Destino</p>
-                                  <p>{complement.destination}</p>
-                                </div>
-                              )}
-                            </>
-                          )}
-                        </div>
-                        {complement.observations && (
-                          <div>
-                            <p className="font-semibold text-sm">Observações</p>
-                            <p>{complement.observations}</p>
-                          </div>
-                        )}
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="flex-1"
-                    onClick={() => {
-                      const shareUrl = `${window.location.origin}/public/complements/${complement.id}`;
-                      navigator.clipboard.writeText(shareUrl).then(() => {
-                        toast({
-                          title: "Link copiado!",
-                          description: "O link do complemento foi copiado para a área de transferência.",
-                        });
-                      }).catch(() => {
-                        toast({
-                          title: "Erro",
-                          description: "Não foi possível copiar o link.",
-                          variant: "destructive",
-                        });
-                      });
-                    }}
-                  >
-                    <Share2 className="h-4 w-4 mr-1" />
-                    Compartilhar
-                  </Button>
-
-                  <Button asChild variant="outline" size="sm" className="flex-1">
-                    <Link href={`/complements/${complement.id}/edit`}>
-                      <Edit className="h-4 w-4 mr-1" />
-                      Editar
-                    </Link>
-                  </Button>
-
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="destructive" size="sm">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Tem certeza que deseja excluir este complemento? Esta ação não pode ser desfeita.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => deleteMutation.mutate(complement.id)}
-                          disabled={deleteMutation.isPending}
-                        >
-                          {deleteMutation.isPending ? "Excluindo..." : "Excluir"}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
       )}
     </div>
   );
