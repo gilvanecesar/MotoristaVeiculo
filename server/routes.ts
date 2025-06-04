@@ -2329,6 +2329,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ==================== COMPLEMENTOS ====================
+  // Obter todos complementos
+  app.get("/api/complements", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const complements = await storage.getComplements();
+      res.json(complements);
+    } catch (error) {
+      console.error("Error fetching complements:", error);
+      res.status(500).json({ message: "Failed to fetch complements" });
+    }
+  });
+
+  // Obter complemento por ID
+  app.get("/api/complements/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const complement = await storage.getComplement(id);
+      
+      if (!complement) {
+        return res.status(404).json({ message: "Complement not found" });
+      }
+      
+      res.json(complement);
+    } catch (error) {
+      console.error("Error fetching complement:", error);
+      res.status(500).json({ message: "Failed to fetch complement" });
+    }
+  });
+
+  // Criar novo complemento
+  app.post("/api/complements", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const complementData = req.body;
+      
+      // Validar dados obrigatórios
+      if (!complementData.clientId || !complementData.weight || !complementData.volumeQuantity ||
+          !complementData.volumeLength || !complementData.volumeWidth || !complementData.volumeHeight ||
+          !complementData.invoiceValue || !complementData.freightValue || 
+          !complementData.contactName || !complementData.contactPhone) {
+        return res.status(400).json({ 
+          message: "Todos os campos obrigatórios devem ser preenchidos" 
+        });
+      }
+      
+      const complement = await storage.createComplement(complementData);
+      res.status(201).json(complement);
+    } catch (error) {
+      console.error("Error creating complement:", error);
+      res.status(500).json({ message: "Failed to create complement" });
+    }
+  });
+
+  // Atualizar complemento
+  app.put("/api/complements/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const complementUpdate = req.body;
+      
+      const complement = await storage.updateComplement(id, complementUpdate);
+      
+      if (!complement) {
+        return res.status(404).json({ message: "Complement not found" });
+      }
+      
+      res.json(complement);
+    } catch (error) {
+      console.error("Error updating complement:", error);
+      res.status(500).json({ message: "Failed to update complement" });
+    }
+  });
+
+  // Deletar complemento
+  app.delete("/api/complements/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      const success = await storage.deleteComplement(id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Complement not found" });
+      }
+      
+      res.json({ message: "Complement deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting complement:", error);
+      res.status(500).json({ message: "Failed to delete complement" });
+    }
+  });
+
+  // Buscar complementos
+  app.get("/api/complements/search/:query", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const query = req.params.query;
+      const complements = await storage.searchComplements(query);
+      res.json(complements);
+    } catch (error) {
+      console.error("Error searching complements:", error);
+      res.status(500).json({ message: "Failed to search complements" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
