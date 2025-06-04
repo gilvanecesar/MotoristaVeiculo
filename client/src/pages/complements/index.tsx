@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Eye, Edit, Trash2, Package, Calculator, Share2, MapPin, ExternalLink, MessageSquare } from "lucide-react";
+import { Plus, Search, Eye, Edit, Trash2, Package, Calculator, Share2, MapPin, ExternalLink, MessageSquare, PhoneCall } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 import {
   Table,
@@ -305,6 +305,21 @@ ${complement.observations ? `\n📝 *Observações:* ${complement.observations}\
                           >
                             <FaWhatsapp className="h-4 w-4" />
                           </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (complement.contactPhone) {
+                                window.open(`https://wa.me/55${complement.contactPhone.replace(/\D/g, '')}`, '_blank');
+                              }
+                            }}
+                            title="Contatar via WhatsApp"
+                            disabled={!complement.contactPhone}
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                          >
+                            <PhoneCall className="h-4 w-4" />
+                          </Button>
                           <Button variant="ghost" size="sm" asChild>
                             <Link href={`/complements/${complement.id}/edit`}>
                               <Edit className="h-4 w-4" />
@@ -411,7 +426,23 @@ ${complement.observations ? `\n📝 *Observações:* ${complement.observations}\
                         className="flex-1 text-green-600 hover:text-green-700 hover:bg-green-50"
                       >
                         <FaWhatsapp className="h-4 w-4 mr-1" />
-                        WhatsApp
+                        Compartilhar
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (complement.contactPhone) {
+                            window.open(`https://wa.me/55${complement.contactPhone.replace(/\D/g, '')}`, '_blank');
+                          }
+                        }}
+                        disabled={!complement.contactPhone}
+                        className="flex-1 text-green-600 hover:text-green-700 hover:bg-green-50"
+                        title="Contatar via WhatsApp"
+                      >
+                        <PhoneCall className="h-4 w-4 mr-1" />
+                        Chamar
                       </Button>
                     </div>
 
