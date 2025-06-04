@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Eye, Edit, Trash2, Package, Calculator, Share2, MapPin, ExternalLink, MessageSquare, PhoneCall, Filter, X } from "lucide-react";
+import { Plus, Search, Eye, Edit, Trash2, Package, Calculator, Share2, MapPin, ExternalLink, MessageSquare, PhoneCall, Filter, X, DollarSign } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 import {
   Table,
@@ -249,15 +249,16 @@ ${complement.observations ? `\n📝 *Observações:* ${complement.observations}\
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Cabeçalho */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Complementos</h1>
-          <p className="text-muted-foreground">Gerencie seus complementos de carga</p>
+          <h1 className="text-2xl sm:text-3xl font-bold">Complementos</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">Gerencie seus complementos de carga</p>
         </div>
-        <Button asChild>
+        <Button asChild size="sm" className="w-full sm:w-auto">
           <Link href="/complements/create">
             <Plus className="h-4 w-4 mr-2" />
-            Novo Complemento
+            <span className="hidden sm:inline">Novo Complemento</span>
+            <span className="sm:hidden">Novo</span>
           </Link>
         </Button>
       </div>
@@ -618,7 +619,7 @@ ${complement.observations ? `\n📝 *Observações:* ${complement.observations}\
                       <Package className="h-4 w-4 text-slate-500 mt-0.5" />
                       <div className="flex-1">
                         <p className="text-xs text-slate-500">Peso:</p>
-                        <p className="text-sm">{complement.cargoWeight} Kg</p>
+                        <p className="text-sm">{complement.weight} Kg</p>
                       </div>
                     </div>
                     
