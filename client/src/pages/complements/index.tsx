@@ -232,17 +232,108 @@ ${complement.observations ? `\n📝 *Observações:* ${complement.observations}\
         </Button>
       </div>
 
-      {/* Barra de pesquisa */}
-      <div className="mb-6">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input
-            placeholder="Buscar por contato, telefone ou observações..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
+      {/* Barra de pesquisa e filtros */}
+      <div className="mb-6 space-y-4">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input
+              placeholder="Buscar por contato, telefone ou observações..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-2"
+          >
+            <Filter className="h-4 w-4" />
+            Filtros
+            {showFilters && <X className="h-4 w-4" />}
+          </Button>
         </div>
+
+        {/* Filtros Avançados */}
+        {showFilters && (
+          <Card>
+            <CardContent className="p-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Origem</label>
+                  <Input 
+                    placeholder="Cidade de origem" 
+                    value={filters.origin} 
+                    onChange={(e) => setFilters({...filters, origin: e.target.value})}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Destino</label>
+                  <Input 
+                    placeholder="Cidade de destino" 
+                    value={filters.destination} 
+                    onChange={(e) => setFilters({...filters, destination: e.target.value})}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Contato</label>
+                  <Input 
+                    placeholder="Nome do contato" 
+                    value={filters.contactName} 
+                    onChange={(e) => setFilters({...filters, contactName: e.target.value})}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Peso Mínimo (kg)</label>
+                  <Input 
+                    type="number"
+                    placeholder="Peso Mínimo" 
+                    value={filters.minWeight} 
+                    onChange={(e) => setFilters({...filters, minWeight: e.target.value})}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Peso Máximo (kg)</label>
+                  <Input 
+                    type="number"
+                    placeholder="Peso Máximo" 
+                    value={filters.maxWeight} 
+                    onChange={(e) => setFilters({...filters, maxWeight: e.target.value})}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Valor Mínimo (R$)</label>
+                  <Input 
+                    type="number"
+                    placeholder="Valor Mínimo" 
+                    value={filters.minValue} 
+                    onChange={(e) => setFilters({...filters, minValue: e.target.value})}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Valor Máximo (R$)</label>
+                  <Input 
+                    type="number"
+                    placeholder="Valor Máximo" 
+                    value={filters.maxValue} 
+                    onChange={(e) => setFilters({...filters, maxValue: e.target.value})}
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-end gap-2 mt-4">
+                <Button variant="outline" onClick={resetFilters}>Limpar Filtros</Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Estatísticas */}
