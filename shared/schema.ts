@@ -377,6 +377,7 @@ export const complementValidator = insertComplementSchema.extend({
   volumeLength: z.string().min(1, "Comprimento é obrigatório"),
   volumeWidth: z.string().min(1, "Largura é obrigatória"), 
   volumeHeight: z.string().min(1, "Altura é obrigatória"),
+  cubicMeters: z.string().optional(),
   invoiceValue: z.string().min(1, "Valor da nota fiscal é obrigatório"),
   freightValue: z.string().min(1, "Valor do frete é obrigatório"),
   contactName: z.string().min(3, "Nome do contato deve ter pelo menos 3 caracteres"),
