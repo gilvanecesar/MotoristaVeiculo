@@ -4,6 +4,7 @@ import {
   clients,
   freights,
   freightDestinations,
+  complements,
   users,
   subscriptions,
   invoices,
@@ -24,6 +25,8 @@ import {
   type InsertFreight,
   type FreightDestination,
   type InsertFreightDestination,
+  type Complement,
+  type InsertComplement,
   type User,
   type InsertUser,
   type Subscription,
@@ -146,6 +149,17 @@ export interface IStorage {
     destination: InsertFreightDestination,
   ): Promise<FreightDestination>;
   deleteFreightDestination(id: number): Promise<boolean>;
+
+  // Complement operations
+  getComplements(): Promise<Complement[]>;
+  getComplement(id: number): Promise<Complement | undefined>;
+  createComplement(complement: InsertComplement): Promise<Complement>;
+  updateComplement(
+    id: number,
+    complement: Partial<InsertComplement>,
+  ): Promise<Complement | undefined>;
+  deleteComplement(id: number): Promise<boolean>;
+  searchComplements(query: string): Promise<Complement[]>;
 
   // Subscription operations
   getSubscriptions(): Promise<Subscription[]>;
@@ -1566,6 +1580,88 @@ export class DatabaseStorage implements IStorage {
     // podemos retornar as próprias configurações recebidas
     // Em uma implementação completa, isso salvaria em uma tabela de configurações
     return settings;
+  }
+
+  // Complementos operations
+  async getComplements(): Promise<Complement[]> {
+    return await db.select().from(complements).orderBy(desc(complements.createdAt));
+  }
+
+  async getComplement(id: number): Promise<Complement | undefined> {
+    const results = await db.select().from(complements).where(eq(complements.id, id));
+    return results[0];
+  }
+
+  async createComplement(complement: InsertComplement): Promise<Complement> {
+    // Calcular metros cúbicos automaticamente
+    const length = parseFloat(complement.volumeLength);
+    const width = parseFloat(complement.volumeWidth);
+    const height = parseFloat(complement.volumeHeight);
+    const quantity = complement.volumeQuantity;
+    
+    const cubicMeters = (length * width * height * quantity) / 1000000; // converter de cm³ para m³
+    
+    const complementWithCubicMeters = {
+      ...complement,
+      cubicMeters: cubicMeters.toFixed(3)
+    };
+
+    const results = await db.insert(complements).values(complementWithCubicMeters).returning();
+    return results[0];
+  }
+
+  async updateComplement(
+    id: number,
+    complementUpdate: Partial<InsertComplement>
+  ): Promise<Complement | undefined> {
+    // Se as dimensões forem atualizadas, recalcular metros cúbicos
+    let updateData = { ...complementUpdate };
+    
+    if (complementUpdate.volumeLength || complementUpdate.volumeWidth || 
+        complementUpdate.volumeHeight || complementUpdate.volumeQuantity) {
+      
+      // Buscar dados atuais para completar o cálculo
+      const currentComplement = await this.getComplement(id);
+      if (currentComplement) {
+        const length = parseFloat(complementUpdate.volumeLength || currentComplement.volumeLength);
+        const width = parseFloat(complementUpdate.volumeWidth || currentComplement.volumeWidth);
+        const height = parseFloat(complementUpdate.volumeHeight || currentComplement.volumeHeight);
+        const quantity = complementUpdate.volumeQuantity || currentComplement.volumeQuantity;
+        
+        const cubicMeters = (length * width * height * quantity) / 1000000;
+        updateData = {
+          ...updateData,
+          cubicMeters: cubicMeters.toFixed(3)
+        };
+      }
+    }
+
+    const results = await db
+      .update(complements)
+      .set(updateData)
+      .where(eq(complements.id, id))
+      .returning();
+    return results[0];
+  }
+
+  async deleteComplement(id: number): Promise<boolean> {
+    await db.delete(complements).where(eq(complements.id, id));
+    return true;
+  }
+
+  async searchComplements(query: string): Promise<Complement[]> {
+    const searchQuery = `%${query.toLowerCase()}%`;
+    return await db
+      .select()
+      .from(complements)
+      .where(
+        or(
+          ilike(complements.contactName, searchQuery),
+          ilike(complements.contactPhone, searchQuery),
+          ilike(complements.observations, searchQuery)
+        )
+      )
+      .orderBy(desc(complements.createdAt));
   }
 }
 

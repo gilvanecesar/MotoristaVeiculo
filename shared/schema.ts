@@ -203,6 +203,38 @@ export const freightDestinations = pgTable("freight_destinations", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Tabela de complementos (cargas de complemento)
+export const complements = pgTable("complements", {
+  id: serial("id").primaryKey(),
+  clientId: integer("client_id").references(() => clients.id).notNull(),
+  userId: integer("user_id"), // Usuário que criou o complemento
+  
+  // Informações da carga
+  weight: decimal("weight", { precision: 10, scale: 2 }).notNull(), // Peso em kg
+  volumeQuantity: integer("volume_quantity").notNull(), // Quantidade de volumes
+  volumeLength: decimal("volume_length", { precision: 8, scale: 2 }).notNull(), // Comprimento em metros
+  volumeWidth: decimal("volume_width", { precision: 8, scale: 2 }).notNull(), // Largura em metros
+  volumeHeight: decimal("volume_height", { precision: 8, scale: 2 }).notNull(), // Altura em metros
+  cubicMeters: decimal("cubic_meters", { precision: 10, scale: 3 }).notNull(), // Metragem cúbica calculada
+  
+  // Valores financeiros
+  invoiceValue: decimal("invoice_value", { precision: 12, scale: 2 }).notNull(), // Valor da nota fiscal
+  freightValue: decimal("freight_value", { precision: 10, scale: 2 }).notNull(), // Valor do frete complemento
+  
+  // Informações de contato
+  contactName: text("contact_name").notNull(),
+  contactPhone: text("contact_phone").notNull(),
+  
+  // Status
+  status: text("status").default("ativo").notNull(), // ativo, inativo, concluído
+  
+  // Observações
+  observations: text("observations"),
+  
+  // Metadata
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas using drizzle-zod
 export const insertDriverSchema = createInsertSchema(drivers)
   .omit({ id: true, createdAt: true });
@@ -218,6 +250,9 @@ export const insertFreightSchema = createInsertSchema(freights)
 
 export const insertFreightDestinationSchema = createInsertSchema(freightDestinations)
   .omit({ id: true, createdAt: true });
+
+export const insertComplementSchema = createInsertSchema(complements)
+  .omit({ id: true, createdAt: true, cubicMeters: true }); // cubicMeters será calculado automaticamente
 
 // Validator schemas with additional validation
 export const driverValidator = insertDriverSchema.extend({
@@ -335,6 +370,20 @@ export const freightDestinationValidator = insertFreightDestinationSchema.extend
   order: z.number().int().positive(),
 });
 
+export const complementValidator = insertComplementSchema.extend({
+  clientId: z.coerce.number().positive(),
+  weight: z.string().min(1, "Peso é obrigatório"),
+  volumeQuantity: z.coerce.number().int().positive("Quantidade de volumes deve ser um número positivo"),
+  volumeLength: z.string().min(1, "Comprimento é obrigatório"),
+  volumeWidth: z.string().min(1, "Largura é obrigatória"), 
+  volumeHeight: z.string().min(1, "Altura é obrigatória"),
+  invoiceValue: z.string().min(1, "Valor da nota fiscal é obrigatório"),
+  freightValue: z.string().min(1, "Valor do frete é obrigatório"),
+  contactName: z.string().min(3, "Nome do contato deve ter pelo menos 3 caracteres"),
+  contactPhone: z.string().min(10, "Telefone deve ter pelo menos 10 dígitos").max(15, "Telefone deve ter no máximo 15 dígitos"),
+  observations: z.string().optional().or(z.literal('')),
+});
+
 // Types
 export type Driver = typeof drivers.$inferSelect;
 export type InsertDriver = z.infer<typeof insertDriverSchema>;
@@ -346,6 +395,8 @@ export type Freight = typeof freights.$inferSelect;
 export type InsertFreight = z.infer<typeof insertFreightSchema>;
 export type FreightDestination = typeof freightDestinations.$inferSelect;
 export type InsertFreightDestination = z.infer<typeof insertFreightDestinationSchema>;
+export type Complement = typeof complements.$inferSelect;
+export type InsertComplement = z.infer<typeof insertComplementSchema>;
 
 // Types for forms
 // User profile types
