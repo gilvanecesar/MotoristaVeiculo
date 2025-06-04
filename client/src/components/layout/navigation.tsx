@@ -166,8 +166,9 @@ export default function Navigation() {
         navItems[2],  // Motoristas
         navItems[3],  // Veículos
         navItems[4],  // Fretes
+        navItems[6],  // Complementos
         navItems[5],  // Clientes
-        navItems[6]   // Relatórios
+        navItems[7]   // Relatórios
       ];
       
       // Se for embarcador com assinatura ativa, adicionar configuração do webhook
@@ -182,36 +183,39 @@ export default function Navigation() {
     }
     // Se for motorista, tem acesso específico
     else if (isDriver) {
-      // Motoristas veem home, fretes disponíveis, seus dados e seus veículos
+      // Motoristas veem home, fretes disponíveis, complementos, seus dados e seus veículos
       menuItems = [
         navItems[0],  // Home
         navItems[2],  // Motoristas (seus dados)
         navItems[3],  // Veículos
-        navItems[4]   // Fretes
+        navItems[4],  // Fretes
+        navItems[6]   // Complementos
       ];
     } 
     // Se for embarcador com assinatura ativa
     else if (isShipper && hasActiveSubscription) {
-      // Embarcadores podem criar e gerenciar fretes, ver motoristas, veículos
+      // Embarcadores podem criar e gerenciar fretes, complementos, ver motoristas, veículos
       menuItems = [
         navItems[0],  // Home
         navItems[2],  // Motoristas
         navItems[3],  // Veículos
         navItems[4],  // Fretes
+        navItems[6],  // Complementos
         navItems[5],  // Clientes
-        navItems[6]   // Relatórios
+        navItems[7]   // Relatórios
       ];
     } 
     // Se for agente com assinatura ativa
     else if (isAgent && hasActiveSubscription) {
-      // Transportadoras podem gerenciar motoristas, veículos e fretes
+      // Transportadoras podem gerenciar motoristas, veículos, fretes e complementos
       menuItems = [
         navItems[0],  // Home
         navItems[2],  // Motoristas
         navItems[3],  // Veículos
         navItems[4],  // Fretes
+        navItems[6],  // Complementos
         navItems[5],  // Clientes
-        navItems[6]   // Relatórios
+        navItems[7]   // Relatórios
       ];
     } 
     // Para qualquer outro caso que não se encaixe nas condições acima
