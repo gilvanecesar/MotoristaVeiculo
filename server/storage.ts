@@ -1584,7 +1584,7 @@ export class DatabaseStorage implements IStorage {
 
   // Complementos operations
   async getComplements(): Promise<Complement[]> {
-    return await db.select().from(complements).orderBy(desc(complements.created_at));
+    return await db.select().from(complements);
   }
 
   async getComplement(id: number): Promise<Complement | undefined> {
