@@ -15,7 +15,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { USER_TYPES } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Truck } from "lucide-react";
 
 // Google Icon Component
 const GoogleIcon = () => (
@@ -64,7 +64,7 @@ export default function AuthPage() {
   
   const { toast } = useToast();
   const { user, loginMutation, registerMutation } = useAuth();
-  const [_, navigate] = useLocation();
+  const [_, setLocation] = useLocation();
   const [__, params] = useRoute("/auth?subscription=:status");
   
   // Verifica se precisa mostrar o alerta de assinatura
@@ -89,7 +89,7 @@ export default function AuthPage() {
   if (user) {
     // Se o usuário tem assinatura ativa, redireciona para a página HOME
     if (user.subscriptionActive) {
-      navigate("/home");
+      setLocation("/home");
       return null;
     }
     
@@ -130,7 +130,7 @@ export default function AuthPage() {
           window.location.href = "https://querofretes.com.br/subscribe/fixed";
         } else if (!userData.clientId) {
           // Se tem assinatura mas não tem cliente associado, redireciona para página de cadastro de cliente
-          navigate("/clients/new");
+          setLocation("/clients/new");
         } else {
           // Se já tem assinatura e cliente, vai para o dashboard
           navigate("/dashboard");
@@ -272,6 +272,31 @@ export default function AuthPage() {
             </div>
           ) : (
             <>
+              {/* Card especial para motoristas - Página de Auth */}
+              <Card className="mb-6 border-2 border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 dark:border-green-700">
+                <CardHeader className="text-center pb-3">
+                  <CardTitle className="text-lg sm:text-xl flex items-center justify-center gap-2 text-green-700 dark:text-green-400">
+                    <Truck className="h-5 w-5 sm:h-6 sm:w-6" />
+                    MOTORISTA NÃO PAGA
+                  </CardTitle>
+                  <CardDescription className="text-green-600 dark:text-green-300 text-sm sm:text-base">
+                    Se você é motorista, cadastre-se gratuitamente!
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="text-center pt-0">
+                  <p className="text-xs sm:text-sm text-green-700 dark:text-green-300 mb-4 px-2">
+                    Motoristas têm acesso gratuito ao sistema para gerenciar seus veículos e consultar fretes disponíveis.
+                  </p>
+                  <Button 
+                    className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto px-4 sm:px-8 py-2 text-sm sm:text-base font-semibold"
+                    onClick={() => setLocation("/profile-selection")}
+                  >
+                    <span className="block sm:hidden">Sou motorista, CLIQUE AQUI</span>
+                    <span className="hidden sm:block">Se você é motorista, CLIQUE AQUI</span>
+                  </Button>
+                </CardContent>
+              </Card>
+
               {/* Mensagem informativa sobre a plataforma */}
               <div className="mb-10">
                 <h2 className="text-2xl font-bold text-center mb-4">QUERO FRETES</h2>
