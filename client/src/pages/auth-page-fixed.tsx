@@ -277,7 +277,10 @@ export default function AuthPage() {
                   </p>
                   <Button 
                     className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto px-4 sm:px-8 py-2 text-sm sm:text-base font-semibold"
-                    onClick={() => setLocation("/profile-selection")}
+                    onClick={() => {
+                      setSelectedRole(USER_TYPES.DRIVER);
+                      setActiveTab("register");
+                    }}
                   >
                     <span className="block sm:hidden">Sou motorista, CLIQUE AQUI</span>
                     <span className="hidden sm:block">Se você é motorista, CLIQUE AQUI</span>
