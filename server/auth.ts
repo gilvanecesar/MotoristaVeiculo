@@ -167,25 +167,31 @@ export function setupAuth(app: Express) {
 
       // Cria novo usuário
       const hashedPassword = await hashPassword(password);
-      let userSubscriptionType = req.body.subscriptionType || "trial";
       
-      // Configura data de expiração da assinatura para teste gratuito
-      let subscriptionExpiresAt = null;
+      // Configura assinatura baseada no tipo de perfil
+      let userSubscriptionType: string;
+      let subscriptionExpiresAt: Date | null = null;
       let subscriptionActive = false;
       
-      if (userSubscriptionType === "trial") {
-        // Para teste gratuito, a assinatura expira em 7 dias
-        const expirationDate = new Date();
-        expirationDate.setDate(expirationDate.getDate() + 7);
-        subscriptionExpiresAt = expirationDate;
-        subscriptionActive = true;
-      }
+      console.log(`Criando usuário com profileType: ${profileType}`);
       
-      // Configura valor para motoristas (acesso gratuito)
-      if (profileType === USER_TYPES.DRIVER) {
+      // Prioridade para motoristas (acesso gratuito permanente)
+      if (profileType === "driver") {
         userSubscriptionType = "driver_free";
         subscriptionActive = true;
-        subscriptionExpiresAt = null; // Sem data de expiração para motoristas
+        subscriptionExpiresAt = null;
+        console.log("Configurando acesso gratuito para motorista");
+      } else {
+        // Para outros perfis, usa o tipo especificado ou padrão trial
+        userSubscriptionType = req.body.subscriptionType || "trial";
+        if (userSubscriptionType === "trial") {
+          // Para teste gratuito, a assinatura expira em 7 dias
+          const expirationDate = new Date();
+          expirationDate.setDate(expirationDate.getDate() + 7);
+          subscriptionExpiresAt = expirationDate;
+          subscriptionActive = true;
+          console.log("Configurando período de teste de 7 dias");
+        }
       }
       
       const newUser = await storage.createUser({
