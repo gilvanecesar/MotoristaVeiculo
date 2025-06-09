@@ -8,9 +8,7 @@ async function throwIfResNotOk(res: Response) {
     
     if (contentType && contentType.includes('application/json')) {
       try {
-        // Clona a resposta para poder ler o corpo como JSON
-        const clonedRes = res.clone();
-        errorData = await clonedRes.json();
+        errorData = await res.json();
         
         // Se temos uma mensagem específica do servidor, usamos ela
         if (errorData && errorData.message) {
@@ -23,8 +21,12 @@ async function throwIfResNotOk(res: Response) {
     }
     
     // Tratamento padrão se não conseguirmos extrair JSON ou se não tiver mensagem
-    const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    try {
+      const text = await res.text();
+      throw new Error(`${res.status}: ${text || res.statusText}`);
+    } catch (textError) {
+      throw new Error(`${res.status}: ${res.statusText}`);
+    }
   }
 }
 
