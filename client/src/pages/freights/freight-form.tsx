@@ -54,21 +54,41 @@ import { useAuth } from "@/hooks/use-auth";
 import ClientSelector from "@/components/clients/client-selector";
 import { FreightDetailModal } from "@/components/freights/freight-detail-modal";
 
-// Schema para validação do formulário de frete
-const freightSchema = insertFreightSchema.extend({
-  clientId: z.union([z.number(), z.null()]),
-  cargoWeight: z.string().min(1, "Peso da carga é obrigatório"),
+// Schema simplificado para evitar crashes em mobile
+const freightSchema = z.object({
+  clientId: z.union([z.number(), z.null()]).optional(),
+  cargoWeight: z.string().optional(),
   destination: z.string().optional(),
   destinationState: z.string().optional(),
-  origin: z.string().min(1, "Origem é obrigatória"),
-  originState: z.string().min(1, "Estado de origem é obrigatório"),
-  // Campos calculados ou definidos internamente
-  userId: z.number().optional(),
+  origin: z.string().optional(),
+  originState: z.string().optional(),
+  cargoType: z.string().optional(),
+  needsTarp: z.string().optional(),
+  productType: z.string().optional(),
   vehicleCategory: z.string().optional(),
+  vehicleType: z.string().optional(),
+  bodyType: z.string().optional(),
+  freightValue: z.string().optional(),
+  tollOption: z.string().optional(),
+  paymentMethod: z.string().optional(),
+  observations: z.string().optional(),
+  status: z.string().optional(),
+  contactName: z.string().optional(),
+  contactPhone: z.string().optional(),
+  userId: z.number().optional(),
   vehicleTypesSelected: z.string().optional(),
   bodyTypesSelected: z.string().optional(),
-  // Campo para multidestinos
   hasMultipleDestinations: z.boolean().optional().default(false),
+  destination1: z.string().optional(),
+  destinationState1: z.string().optional(),
+  destination2: z.string().optional(),
+  destinationState2: z.string().optional(),
+  destination3: z.string().optional(),
+  destinationState3: z.string().optional(),
+  destination4: z.string().optional(),
+  destinationState4: z.string().optional(),
+  destination5: z.string().optional(),
+  destinationState5: z.string().optional(),
 });
 
 // Schema para validação dos destinos
@@ -157,6 +177,8 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
   const form = useForm<FreightFormValues>({
     resolver: zodResolver(freightSchema),
     defaultValues,
+    mode: "onSubmit", // Evita validação em tempo real que pode causar crashes em mobile
+    reValidateMode: "onSubmit",
   });
 
   // Campos diretos para destinos agora - sem arrays complexos
@@ -442,7 +464,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
     });
   };
 
-  // Manipulador para formatar valor do frete
+  // Manipulador para formatar valor do frete com debounce
   const handleFreightValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const valor = e.target.value;
     
@@ -454,6 +476,16 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
     
     const valorFormatado = formatarValorReal(valor);
     form.setValue("freightValue", valorFormatado);
+  };
+
+  // Manipulador otimizado para peso da carga
+  const handleCargoWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    
+    // Validação simples para evitar problemas em mobile
+    if (value === "" || /^\d+$/.test(value)) {
+      form.setValue("cargoWeight", value);
+    }
   };
 
   return (
@@ -804,7 +836,11 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                         <Input
                           readOnly={isViewingInReadOnlyMode}
                           placeholder="Ex: Grãos, Bebidas, Eletrônicos..."
-                          {...field}
+                          value={field.value || ""}
+                          onChange={field.onChange}
+                          onBlur={field.onBlur}
+                          name={field.name}
+                          ref={field.ref}
                         />
                       </FormControl>
                       <FormMessage />
@@ -845,10 +881,15 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                       <FormControl>
                         <Input
                           readOnly={isViewingInReadOnlyMode}
-                          type="number"
-                          min="1"
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
                           placeholder="Ex: 25000"
-                          {...field}
+                          value={field.value || ""}
+                          onChange={handleCargoWeightChange}
+                          onBlur={field.onBlur}
+                          name={field.name}
+                          ref={field.ref}
                         />
                       </FormControl>
                       <FormDescription>
