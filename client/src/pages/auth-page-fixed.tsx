@@ -103,18 +103,18 @@ export default function AuthPage() {
           if (!user.subscriptionActive || user.subscriptionType !== "driver_free") {
             apiRequest("POST", "/api/activate-driver-access", {})
               .then(() => {
-                navigate("/freights");
+                setLocation("/freights");
               })
               .catch((error) => {
                 console.error("Erro ao ativar acesso de motorista:", error);
-                navigate("/auth?subscription=required");
+                setLocation("/auth?subscription=required");
               });
           } else {
-            navigate("/freights");
+            setLocation("/freights");
           }
         } else if (user.subscriptionActive) {
           // Se já tem assinatura ativa, vai para a página inicial
-          navigate("/");
+          setLocation("/");
         } else {
           // Se não tem assinatura ativa e não é motorista, mostra página de planos
           setShowPlans(true);
@@ -155,7 +155,7 @@ export default function AuthPage() {
         queryClient.fetchQuery({queryKey: ["/api/user"]})
           .then(() => {
             // Redireciona diretamente para a página de fretes após atualizar o cache
-            navigate("/freights");
+            setLocation("/freights");
           });
         
         return; // Importante adicionar o return para não continuar o código
@@ -189,7 +189,9 @@ export default function AuthPage() {
   const onRegisterSubmit = (data: RegisterFormValues) => {
     // Adiciona o profileType selecionado
     const registerData = {
-      ...data,
+      email: data.email,
+      name: data.name,
+      password: data.password!,
       profileType: selectedRole,
     };
 
@@ -206,7 +208,7 @@ export default function AuthPage() {
                   description: "Seu acesso gratuito foi ativado! Você pode acessar fretes, veículos e motoristas.",
                 });
                 // Redireciona diretamente para a página de fretes
-                navigate("/freights");
+                setLocation("/freights");
               } else {
                 throw new Error("Erro ao ativar acesso de motorista");
               }
