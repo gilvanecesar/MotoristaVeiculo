@@ -63,7 +63,7 @@ export default function VehicleForm() {
   const [isLoadingDrivers, setIsLoadingDrivers] = useState(true);
 
   const form = useForm<VehicleFormValues>({
-    resolver: zodResolver(insertVehicleSchema.omit({ id: true })),
+    resolver: zodResolver(vehicleFormSchema),
     defaultValues: {
       driverId: 0,
       plate: "",
