@@ -99,6 +99,30 @@ export default function Home() {
         </p>
       </div>
 
+      {/* Card especial para motoristas */}
+      <Card className="mb-6 border-2 border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 dark:border-green-700">
+        <CardHeader className="text-center">
+          <CardTitle className="text-xl flex items-center justify-center gap-2 text-green-700 dark:text-green-400">
+            <Truck className="h-6 w-6" />
+            MOTORISTA NÃO PAGA
+          </CardTitle>
+          <CardDescription className="text-green-600 dark:text-green-300">
+            Se você é motorista, cadastre-se gratuitamente e tenha acesso ao sistema!
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="text-center">
+          <p className="text-sm text-green-700 dark:text-green-300 mb-4">
+            Motoristas têm acesso gratuito ao sistema para gerenciar seus veículos e consultar fretes disponíveis.
+          </p>
+          <Button 
+            className="bg-green-600 hover:bg-green-700 text-white px-8 py-2"
+            onClick={() => setLocation("/profile-selection")}
+          >
+            Se você é motorista, CLIQUE AQUI
+          </Button>
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="hover:shadow-lg transition-shadow duration-300">
           <CardHeader className="pb-2 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-t-lg">
