@@ -99,30 +99,7 @@ export default function Home() {
         </p>
       </div>
 
-      {/* Card especial para motoristas - Otimizado para mobile */}
-      <Card className="mb-6 border-2 border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 dark:border-green-700">
-        <CardHeader className="text-center pb-3">
-          <CardTitle className="text-lg sm:text-xl flex items-center justify-center gap-2 text-green-700 dark:text-green-400">
-            <Truck className="h-5 w-5 sm:h-6 sm:w-6" />
-            MOTORISTA NÃO PAGA
-          </CardTitle>
-          <CardDescription className="text-green-600 dark:text-green-300 text-sm sm:text-base">
-            Se você é motorista, cadastre-se gratuitamente!
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="text-center pt-0">
-          <p className="text-xs sm:text-sm text-green-700 dark:text-green-300 mb-4 px-2">
-            Motoristas têm acesso gratuito ao sistema para gerenciar seus veículos e consultar fretes disponíveis.
-          </p>
-          <Button 
-            className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto px-4 sm:px-8 py-2 text-sm sm:text-base font-semibold"
-            onClick={() => setLocation("/profile-selection")}
-          >
-            <span className="block sm:hidden">Sou motorista, CLIQUE AQUI</span>
-            <span className="hidden sm:block">Se você é motorista, CLIQUE AQUI</span>
-          </Button>
-        </CardContent>
-      </Card>
+
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="hover:shadow-lg transition-shadow duration-300">

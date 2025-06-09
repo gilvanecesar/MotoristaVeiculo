@@ -133,7 +133,7 @@ export default function AuthPage() {
           setLocation("/clients/new");
         } else {
           // Se já tem assinatura e cliente, vai para o dashboard
-          navigate("/dashboard");
+          setLocation("/dashboard");
         }
       },
     });
@@ -222,7 +222,7 @@ export default function AuthPage() {
         });
         
         // Redireciona para a página de cadastro de cliente
-        navigate("/clients/new");
+        setLocation("/clients/new");
       },
     });
   };
