@@ -65,6 +65,7 @@ function Router() {
       <Route path="/public/complements/:id" component={PublicComplement} />
       <ProtectedRoute path="/home" component={Home} />
       <Route path="/auth" component={LoginPage} />
+      <Route path="/login" component={LoginPage} />
       <Route path="/reset-password" component={ResetPasswordPage} />
       <Route path="/payment-success" component={PaymentSuccessPage} />
       <Route path="/payment-cancel" component={PaymentCancelPage} />
