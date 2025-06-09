@@ -226,9 +226,21 @@ export default function LoginPage() {
                 onClick={() => {
                   setSelectedRole(USER_TYPES.DRIVER);
                   setActiveTab("register");
+                  
+                  // Para mobile, rola suavemente até o formulário de cadastro
+                  setTimeout(() => {
+                    const registerForm = document.querySelector('[data-testid="register-form"]');
+                    if (registerForm) {
+                      registerForm.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'start',
+                        inline: 'nearest'
+                      });
+                    }
+                  }, 100);
                 }}
               >
-                <span className="block sm:hidden">Sou motorista, CLIQUE AQUI</span>
+                <span className="block sm:hidden">SOU MOTORISTA, CLIQUE AQUI</span>
                 <span className="hidden sm:block">Se você é motorista, CLIQUE AQUI</span>
               </Button>
             </CardContent>
@@ -435,15 +447,40 @@ export default function LoginPage() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="register">
+            <TabsContent value="register" data-testid="register-form">
               <Card>
                 <CardHeader>
-                  <CardTitle>Criar conta</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    {selectedRole === USER_TYPES.DRIVER && (
+                      <Icons.truck className="h-5 w-5 text-green-600" />
+                    )}
+                    {selectedRole === USER_TYPES.DRIVER ? "Cadastro de Motorista - GRATUITO" : "Criar conta"}
+                  </CardTitle>
                   <CardDescription>
-                    Preencha os campos abaixo para se cadastrar na plataforma.
+                    {selectedRole === USER_TYPES.DRIVER 
+                      ? "Complete seu cadastro gratuito como motorista e tenha acesso imediato ao sistema!"
+                      : "Preencha os campos abaixo para se cadastrar na plataforma."
+                    }
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
+                  {/* Seção especial para motoristas no mobile */}
+                  {selectedRole === USER_TYPES.DRIVER && (
+                    <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg block sm:hidden">
+                      <h4 className="text-sm font-semibold text-green-700 dark:text-green-400 mb-2 flex items-center gap-1">
+                        <Icons.check className="h-4 w-4" />
+                        Benefícios do Motorista
+                      </h4>
+                      <ul className="text-xs text-green-600 dark:text-green-300 space-y-1">
+                        <li>• Acesso 100% gratuito ao sistema</li>
+                        <li>• Consulte fretes disponíveis</li>
+                        <li>• Gerencie seus veículos</li>
+                        <li>• Sem taxas ou mensalidades</li>
+                        <li>• Cadastro rápido em 2 minutos</li>
+                      </ul>
+                    </div>
+                  )}
+                  
                   <div className="mb-6">
                     <h3 className="text-sm font-medium mb-3">Selecione seu perfil:</h3>
                     <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -536,16 +573,25 @@ export default function LoginPage() {
 
                       <Button
                         type="submit"
-                        className="w-full"
+                        className={`w-full ${selectedRole === USER_TYPES.DRIVER ? 'bg-green-600 hover:bg-green-700' : ''}`}
                         disabled={registerMutation.isPending}
                       >
                         {registerMutation.isPending ? (
                           <>
                             <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-                            Processando...
+                            {selectedRole === USER_TYPES.DRIVER ? "Ativando acesso gratuito..." : "Processando..."}
                           </>
                         ) : (
-                          "Cadastrar"
+                          <>
+                            {selectedRole === USER_TYPES.DRIVER ? (
+                              <>
+                                <Icons.truck className="mr-2 h-4 w-4" />
+                                Cadastrar Motorista - GRÁTIS
+                              </>
+                            ) : (
+                              "Cadastrar"
+                            )}
+                          </>
                         )}
                       </Button>
                     </form>
