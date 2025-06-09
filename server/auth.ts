@@ -173,14 +173,11 @@ export function setupAuth(app: Express) {
       let subscriptionExpiresAt: Date | null = null;
       let subscriptionActive = false;
       
-      console.log(`Criando usuário com profileType: ${profileType}`);
-      
       // Prioridade para motoristas (acesso gratuito permanente)
       if (profileType === "driver") {
         userSubscriptionType = "driver_free";
         subscriptionActive = true;
         subscriptionExpiresAt = null;
-        console.log("Configurando acesso gratuito para motorista");
       } else {
         // Para outros perfis, usa o tipo especificado ou padrão trial
         userSubscriptionType = req.body.subscriptionType || "trial";
@@ -190,7 +187,6 @@ export function setupAuth(app: Express) {
           expirationDate.setDate(expirationDate.getDate() + 7);
           subscriptionExpiresAt = expirationDate;
           subscriptionActive = true;
-          console.log("Configurando período de teste de 7 dias");
         }
       }
       
