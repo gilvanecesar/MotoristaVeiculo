@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -7,7 +7,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Save, CreditCard, UserCog, AlertTriangle } from "lucide-react";
+import { Loader2, Save, CreditCard, UserCog, AlertTriangle, Settings, Mail } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -15,6 +15,7 @@ import { ptBR } from "date-fns/locale";
 export default function SettingsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [_, navigate] = useLocation();
   const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
   
   // Verificar se o usuário possui uma assinatura ativa
@@ -102,7 +103,7 @@ export default function SettingsPage() {
         </div>
 
         <Tabs defaultValue="subscription" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className={`grid w-full ${user?.profileType === 'admin' ? 'grid-cols-3' : 'grid-cols-2'}`}>
             <TabsTrigger value="subscription" className="flex items-center gap-2">
               <CreditCard className="h-4 w-4" />
               <span>Assinatura</span>
@@ -111,6 +112,12 @@ export default function SettingsPage() {
               <UserCog className="h-4 w-4" />
               <span>Conta</span>
             </TabsTrigger>
+            {user?.profileType === 'admin' && (
+              <TabsTrigger value="admin" className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                <span>Administração</span>
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="subscription" className="space-y-4 mt-4">
@@ -259,6 +266,71 @@ export default function SettingsPage() {
               </CardFooter>
             </Card>
           </TabsContent>
+
+          {user?.profileType === 'admin' && (
+            <TabsContent value="admin" className="space-y-4 mt-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Ferramentas de Administração</CardTitle>
+                  <CardDescription>
+                    Acesse rapidamente as principais ferramentas administrativas do sistema
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <Button 
+                      onClick={() => navigate("/admin/email")} 
+                      variant="outline" 
+                      className="flex items-center gap-2 h-auto p-4 justify-start"
+                    >
+                      <Mail className="h-5 w-5 text-blue-600" />
+                      <div className="text-left">
+                        <div className="font-medium">Configurar Email</div>
+                        <div className="text-sm text-muted-foreground">Configurações SMTP e testes de email</div>
+                      </div>
+                    </Button>
+                    
+                    <Button 
+                      onClick={() => navigate("/admin/finance")} 
+                      variant="outline" 
+                      className="flex items-center gap-2 h-auto p-4 justify-start"
+                    >
+                      <CreditCard className="h-5 w-5 text-green-600" />
+                      <div className="text-left">
+                        <div className="font-medium">Gestão Financeira</div>
+                        <div className="text-sm text-muted-foreground">Assinaturas e pagamentos</div>
+                      </div>
+                    </Button>
+                    
+                    <Button 
+                      onClick={() => navigate("/admin")} 
+                      variant="outline" 
+                      className="flex items-center gap-2 h-auto p-4 justify-start"
+                    >
+                      <UserCog className="h-5 w-5 text-purple-600" />
+                      <div className="text-left">
+                        <div className="font-medium">Painel Admin</div>
+                        <div className="text-sm text-muted-foreground">Gerenciar usuários e sistema</div>
+                      </div>
+                    </Button>
+                    
+                    <Button 
+                      onClick={() => navigate("/settings")} 
+                      variant="outline" 
+                      className="flex items-center gap-2 h-auto p-4 justify-start"
+                      disabled
+                    >
+                      <Settings className="h-5 w-5 text-gray-400" />
+                      <div className="text-left">
+                        <div className="font-medium">Configurações Gerais</div>
+                        <div className="text-sm text-muted-foreground">Você já está aqui</div>
+                      </div>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
         </Tabs>
       </div>
 
