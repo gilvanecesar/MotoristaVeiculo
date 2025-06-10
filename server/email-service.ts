@@ -65,30 +65,54 @@ export async function initEmailService() {
       // Configurações específicas por provedor
       switch (process.env.EMAIL_SERVICE.toLowerCase()) {
         case 'gmail':
+        case 'smtp.gmail.com':
           emailConfig.service = 'gmail';
-          emailConfig.secure = true;
+          emailConfig.host = 'smtp.gmail.com';
+          emailConfig.port = 587;
+          emailConfig.secure = false; // Use STARTTLS
           break;
         case 'outlook':
         case 'hotmail':
+        case 'smtp-mail.outlook.com':
           emailConfig.service = 'hotmail';
-          emailConfig.secure = true;
+          emailConfig.host = 'smtp-mail.outlook.com';
+          emailConfig.port = 587;
+          emailConfig.secure = false; // Use STARTTLS
           break;
         case 'yahoo':
+        case 'smtp.mail.yahoo.com':
           emailConfig.service = 'yahoo';
-          emailConfig.secure = true;
+          emailConfig.host = 'smtp.mail.yahoo.com';
+          emailConfig.port = 587;
+          emailConfig.secure = false; // Use STARTTLS
           break;
         case 'sendgrid':
+        case 'smtp.sendgrid.net':
           emailConfig.host = 'smtp.sendgrid.net';
+          emailConfig.port = 587;
+          emailConfig.secure = false;
+          break;
+        case 'hostinger':
+        case 'smtp.hostinger.com':
+          emailConfig.host = 'smtp.hostinger.com';
           emailConfig.port = 587;
           emailConfig.secure = false;
           break;
         default:
           // Configuração SMTP genérica
-          emailConfig.host = process.env.EMAIL_HOST || 'smtp.gmail.com';
+          emailConfig.host = process.env.EMAIL_HOST || process.env.EMAIL_SERVICE || 'smtp.gmail.com';
           emailConfig.port = parseInt(process.env.EMAIL_PORT || '587');
           emailConfig.secure = process.env.EMAIL_SECURE === 'true';
           break;
       }
+
+      console.log(`[EMAIL-CONFIG] Configuração SMTP:`, {
+        host: emailConfig.host,
+        port: emailConfig.port,
+        secure: emailConfig.secure,
+        service: emailConfig.service || 'custom',
+        user: process.env.EMAIL_USER
+      });
       
       transporter = nodemailer.createTransport(emailConfig);
       
