@@ -3,7 +3,7 @@ import { useLocation, useParams, useRoute } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
-import { X } from "lucide-react";
+import { X, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -649,24 +649,37 @@ export default function DriverForm() {
               
               {/* Vehicles */}
               <div>
-                <div className="flex justify-between items-center">
-                  <h3 className="text-md font-semibold text-slate-800 mb-4 pb-2 border-b border-slate-200">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-md font-semibold text-slate-800 pb-2 border-b border-slate-200 flex-1">
                     Veículos
                   </h3>
                   <Button 
                     type="button" 
-                    variant="link" 
+                    variant="default"
+                    size="sm"
                     onClick={addVehicle} 
-                    className="text-sm font-medium text-primary hover:text-primary/80"
+                    className="ml-4 bg-blue-600 hover:bg-blue-700 text-white shadow-md font-medium"
                   >
-                    + Adicionar Veículo
+                    <Plus className="h-4 w-4 mr-1" />
+                    Adicionar Veículo
                   </Button>
                 </div>
                 
                 <div>
                   {fields.length === 0 ? (
-                    <div className="text-sm text-slate-500 italic mb-4">
-                      Nenhum veículo cadastrado. Clique em "Adicionar Veículo" para cadastrar.
+                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-6 text-center">
+                      <div className="text-slate-500 mb-3">
+                        Nenhum veículo cadastrado ainda
+                      </div>
+                      <Button 
+                        type="button" 
+                        variant="outline"
+                        onClick={addVehicle}
+                        className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                      >
+                        <Plus className="h-4 w-4 mr-1" />
+                        Cadastrar Primeiro Veículo
+                      </Button>
                     </div>
                   ) : (
                     <div className="space-y-4">
@@ -678,6 +691,19 @@ export default function DriverForm() {
                           onRemove={() => remove(index)}
                         />
                       ))}
+                      
+                      {/* Botão adicional no final da lista */}
+                      <div className="flex justify-center pt-4">
+                        <Button 
+                          type="button" 
+                          variant="outline"
+                          onClick={addVehicle}
+                          className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                        >
+                          <Plus className="h-4 w-4 mr-1" />
+                          Adicionar Outro Veículo
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </div>
