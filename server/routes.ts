@@ -36,6 +36,7 @@ import {
   isAdminOrSelf, 
   hasClientAccess, 
   hasDriverAccess, 
+  canEditDriver,
   hasFreightAccess, 
   hasVehicleAccess 
 } from "./middlewares";
@@ -274,7 +275,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Atualizar motorista existente
-  app.put("/api/drivers/:id", hasDriverAccess, async (req: Request, res: Response) => {
+  app.put("/api/drivers/:id", canEditDriver, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       const driverData = req.body;
@@ -293,7 +294,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Excluir motorista
-  app.delete("/api/drivers/:id", hasDriverAccess, async (req: Request, res: Response) => {
+  app.delete("/api/drivers/:id", canEditDriver, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       

@@ -205,7 +205,7 @@ export function hasClientAccess(req: Request, res: Response, next: NextFunction)
   res.status(403).json({ message: "Acesso não autorizado" });
 }
 
-// Middleware para verificar se o usuário tem permissão para acessar um motorista
+// Middleware para verificar se o usuário tem permissão para acessar um motorista (apenas leitura)
 export function hasDriverAccess(req: Request, res: Response, next: NextFunction) {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ message: "Não autenticado" });
@@ -237,6 +237,52 @@ export function hasDriverAccess(req: Request, res: Response, next: NextFunction)
   
   console.log(`Acesso negado ao motorista ${driverId}. User ID: ${req.user?.id}, User driverId: ${req.user?.driverId}, User profileType: ${req.user?.profileType}`);
   res.status(403).json({ message: "Acesso não autorizado" });
+}
+
+// Middleware para verificar se o usuário pode editar/excluir um motorista
+export async function canEditDriver(req: Request, res: Response, next: NextFunction) {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Não autenticado" });
+  }
+
+  const driverId = parseInt(req.params.id, 10);
+  
+  // Log para diagnóstico
+  console.log(`Verificando permissão de edição para motorista: ID motorista=${driverId}, User ID=${req.user?.id}, Profile=${req.user?.profileType}`);
+  
+  // Administrador pode editar qualquer motorista
+  if (req.user?.profileType?.toLowerCase() === "administrador" || req.user?.profileType?.toLowerCase() === "admin") {
+    console.log(`Permissão de edição concedida ao administrador (${req.user?.id}) para o motorista ${driverId}`);
+    return next();
+  }
+  
+  try {
+    // Buscar o motorista para verificar se pertence ao usuário
+    const driver = await storage.getDriver(driverId);
+    
+    if (!driver) {
+      return res.status(404).json({ message: "Motorista não encontrado" });
+    }
+    
+    // Verificar se o motorista pertence ao usuário logado
+    if (driver.userId === req.user?.id) {
+      console.log(`Permissão de edição concedida ao usuário (${req.user?.id}) para seu próprio motorista ${driverId}`);
+      return next();
+    }
+    
+    // Se for motorista, só pode editar seu próprio perfil
+    if (req.user?.profileType?.toLowerCase() === "motorista" && req.user?.driverId === driverId) {
+      console.log(`Permissão de edição concedida ao motorista (${req.user?.id}) para seu próprio cadastro ${driverId}`);
+      return next();
+    }
+    
+    console.log(`Permissão de edição negada para motorista ${driverId}. User ID: ${req.user?.id}, Driver userId: ${driver.userId}, User profileType: ${req.user?.profileType}`);
+    res.status(403).json({ message: "Você só pode editar seus próprios dados" });
+    
+  } catch (error) {
+    console.error("Erro ao verificar permissões do motorista:", error);
+    res.status(500).json({ message: "Erro interno do servidor" });
+  }
 }
 
 // Middleware para verificar se o usuário tem permissão para acessar um frete
