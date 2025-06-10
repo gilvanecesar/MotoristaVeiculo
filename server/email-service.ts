@@ -47,43 +47,68 @@ async function createEtherealAccount(): Promise<boolean> {
 
 // Função para inicializar o serviço de email
 export async function initEmailService() {
-  const isDevelopment = process.env.NODE_ENV === 'development';
+  console.log('Inicializando serviço de email...');
   
-  // Em ambiente de desenvolvimento, sempre usar Ethereal para testes de email
-  if (isDevelopment) {
-    await createEtherealAccount();
-    return;
-  }
-  
-  // Em produção, verificar credenciais
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-    console.warn('Atenção: Credenciais de email não configuradas. Funcionalidade de envio de emails desativada.');
-    // Tentar criar um fallback com Ethereal mesmo em produção como último recurso
-    await createEtherealAccount();
-    return;
+  // Tentar configurar com as credenciais reais primeiro
+  if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD && process.env.EMAIL_SERVICE) {
+    try {
+      console.log(`Configurando email com serviço: ${process.env.EMAIL_SERVICE}`);
+      
+      // Configuração para diferentes provedores
+      let emailConfig: any = {
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASSWORD
+        }
+      };
+
+      // Configurações específicas por provedor
+      switch (process.env.EMAIL_SERVICE.toLowerCase()) {
+        case 'gmail':
+          emailConfig.service = 'gmail';
+          emailConfig.secure = true;
+          break;
+        case 'outlook':
+        case 'hotmail':
+          emailConfig.service = 'hotmail';
+          emailConfig.secure = true;
+          break;
+        case 'yahoo':
+          emailConfig.service = 'yahoo';
+          emailConfig.secure = true;
+          break;
+        case 'sendgrid':
+          emailConfig.host = 'smtp.sendgrid.net';
+          emailConfig.port = 587;
+          emailConfig.secure = false;
+          break;
+        default:
+          // Configuração SMTP genérica
+          emailConfig.host = process.env.EMAIL_HOST || 'smtp.gmail.com';
+          emailConfig.port = parseInt(process.env.EMAIL_PORT || '587');
+          emailConfig.secure = process.env.EMAIL_SECURE === 'true';
+          break;
+      }
+      
+      transporter = nodemailer.createTransport(emailConfig);
+      
+      // Verificar conexão
+      await transporter.verify();
+      console.log('✓ Serviço de email configurado e verificado com sucesso');
+      return;
+      
+    } catch (error) {
+      console.error('Erro ao configurar serviço de email principal:', error);
+      console.log('Usando conta Ethereal como alternativa...');
+    }
+  } else {
+    console.log('Credenciais de email não configuradas completamente');
   }
 
-  // Em produção, criar transportador com as configurações do serviço de email
-  try {
-    const emailConfig = {
-      service: process.env.EMAIL_SERVICE,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD
-      }
-    };
-    
-    transporter = nodemailer.createTransport(emailConfig);
-    
-    // Verificar conexão com o serviço de email
-    const verifyResult = await transporter.verify();
-    console.log('Serviço de email configurado com sucesso');
-  } catch (error) {
-    console.error('Erro ao configurar serviço de email:', error);
-    console.warn('Tentando criar conta Ethereal como fallback...');
-    
-    // Se falhar a configuração normal, tentar criar uma conta Ethereal como fallback
-    await createEtherealAccount();
+  // Usar Ethereal como alternativa
+  const etherealSuccess = await createEtherealAccount();
+  if (!etherealSuccess) {
+    console.error('Falha ao configurar qualquer serviço de email');
   }
 }
 
@@ -280,6 +305,69 @@ export async function sendSubscriptionExpirationEmail(
     return false;
   }
   return true;
+}
+
+// Função para testar a conectividade do email
+export async function testEmailConnection(): Promise<{ success: boolean; message: string; service?: string }> {
+  if (!transporter) {
+    return { success: false, message: "Serviço de email não configurado" };
+  }
+
+  try {
+    await transporter.verify();
+    const service = process.env.EMAIL_SERVICE || 'Ethereal';
+    return { 
+      success: true, 
+      message: `Conexão com ${service} estabelecida com sucesso`,
+      service: service
+    };
+  } catch (error) {
+    return { 
+      success: false, 
+      message: `Erro de conexão: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+    };
+  }
+}
+
+// Função para enviar email de teste
+export async function sendTestEmail(targetEmail: string): Promise<{ success: boolean; message: string }> {
+  if (!transporter) {
+    return { success: false, message: "Serviço de email não configurado" };
+  }
+
+  try {
+    const testMailOptions = {
+      from: `"QUERO FRETES - Teste" <${process.env.EMAIL_USER || 'noreply@querofretes.com'}>`,
+      to: targetEmail,
+      subject: 'Teste de Configuração de Email - QUERO FRETES',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+          <h2 style="color: #4a6cf7;">Teste de Email - QUERO FRETES</h2>
+          <p>Este é um email de teste para verificar se a configuração está funcionando corretamente.</p>
+          <div style="background-color: #f0f8ff; padding: 15px; border-radius: 5px; margin: 15px 0;">
+            <p><strong>Data/Hora:</strong> ${new Date().toLocaleString('pt-BR')}</p>
+            <p><strong>Serviço:</strong> ${process.env.EMAIL_SERVICE || 'Ethereal'}</p>
+            <p><strong>Status:</strong> ✅ Configuração funcionando corretamente</p>
+          </div>
+          <p>Se você recebeu este email, significa que o sistema de envio está operacional.</p>
+          <p style="margin-top: 30px; font-size: 12px; color: #666; text-align: center;">
+            QUERO FRETES © ${new Date().getFullYear()}
+          </p>
+        </div>
+      `
+    };
+
+    await transporter.sendMail(testMailOptions);
+    return { 
+      success: true, 
+      message: `Email de teste enviado com sucesso para ${targetEmail}` 
+    };
+  } catch (error) {
+    return { 
+      success: false, 
+      message: `Erro ao enviar email de teste: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+    };
+  }
 }
 
 /**

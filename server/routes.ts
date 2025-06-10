@@ -2,7 +2,7 @@ import express, { type Express, Request, Response, NextFunction } from "express"
 import { createServer, type Server } from "http";
 import { setupAuth, hashPassword } from "./auth";
 import { storage } from "./storage";
-import { sendPasswordResetEmail } from "./email-service";
+import { sendPasswordResetEmail, testEmailConnection, sendTestEmail } from "./email-service";
 
 // Vamos criar um mockup do Stripe para resolver erros de compilação
 // até que todas as referências possam ser removidas
@@ -2472,6 +2472,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error searching complements:", error);
       res.status(500).json({ message: "Failed to search complements" });
+    }
+  });
+
+  // ==================== ADMINISTRAÇÃO DE EMAIL ====================
+  // Verificar status do serviço de email
+  app.get("/api/admin/email/status", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const connectionTest = await testEmailConnection();
+      
+      res.json({
+        configured: !!process.env.EMAIL_USER && !!process.env.EMAIL_PASSWORD && !!process.env.EMAIL_SERVICE,
+        service: process.env.EMAIL_SERVICE || 'Ethereal',
+        user: process.env.EMAIL_USER ? process.env.EMAIL_USER.substring(0, 3) + '***' : 'Não configurado',
+        connection: connectionTest
+      });
+    } catch (error) {
+      console.error("Erro ao verificar status do email:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  // Enviar email de teste
+  app.post("/api/admin/email/test", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ message: "Email é obrigatório" });
+      }
+
+      const testResult = await sendTestEmail(email);
+      
+      if (testResult.success) {
+        res.json({ success: true, message: testResult.message });
+      } else {
+        res.status(400).json({ success: false, message: testResult.message });
+      }
+    } catch (error) {
+      console.error("Erro ao enviar email de teste:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
     }
   });
 
