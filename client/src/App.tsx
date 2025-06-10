@@ -57,6 +57,7 @@ import SettingsPage from "@/pages/settings";
 import PublicFreight from "@/pages/public-freight";
 import PublicComplement from "@/pages/public/complement";
 import WebhookConfig from "@/pages/webhook-config";
+import GPSTrackingPage from "@/pages/gps-tracking";
 
 function Router() {
   return (
@@ -102,6 +103,7 @@ function Router() {
       <ProtectedRoute path="/complements/:id/edit" component={EditComplementPage} />
       <ProtectedRoute path="/complements/:id" component={ComplementDetailPage} />
       <ProtectedRoute path="/reports" component={ReportsPage} />
+      <ProtectedRoute path="/gps-tracking" component={GPSTrackingPage} />
       <ProtectedRoute path="/admin" component={AdminPage} />
       <ProtectedRoute path="/admin/finance" component={FinanceDashboard} />
       <ProtectedRoute path="/admin/finance/settings" component={FinanceSettings} />

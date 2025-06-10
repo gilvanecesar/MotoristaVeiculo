@@ -3,7 +3,7 @@ import { useState } from "react";
 import { 
   LayoutDashboard, Users, Car, BarChart3, Menu, X, Moon, Sun, Truck, 
   Building2, Home, DollarSign, UserCog, Settings, User, CreditCard,
-  Receipt, CalendarClock, AlertCircle, Bell, Webhook, Package
+  Receipt, CalendarClock, AlertCircle, Bell, Webhook, Package, Navigation
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
