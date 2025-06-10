@@ -96,7 +96,17 @@ export default function AdminPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <h3 className="font-medium mb-2">Configuração de Email</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Configure e teste o serviço de envio de emails do sistema.
+                  </p>
+                  <Button onClick={() => navigate("/admin/email")}>
+                    <Icons.mail className="mr-2 h-4 w-4" />
+                    Configurar Email
+                  </Button>
+                </div>
                 <div>
                   <h3 className="font-medium mb-2">Backup do Banco de Dados</h3>
                   <p className="text-sm text-muted-foreground mb-4">
