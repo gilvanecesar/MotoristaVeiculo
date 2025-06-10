@@ -27,10 +27,28 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { formatCPF, formatPhone, formatCEP } from "@/lib/utils/masks";
 import { VehicleForm } from "@/components/drivers/vehicle-form";
+import LocationInput from "@/components/location/location-input";
 import { z } from "zod";
 
-// Combined schema for driver with vehicles
+// Combined schema for driver with vehicles with required fields
 const driverWithVehiclesSchema = driverValidator.extend({
+  // Tornar CNH obrigatória
+  cnh: z.string().min(1, "CNH é obrigatória"),
+  cnhCategory: z.string().min(1, "Categoria da CNH é obrigatória"),
+  cnhExpiration: z.string().min(1, "Data de vencimento da CNH é obrigatória"),
+  cnhIssueDate: z.string().min(1, "Data de emissão da CNH é obrigatória"),
+  
+  // Tornar WhatsApp obrigatório
+  whatsapp: z.string().min(1, "WhatsApp é obrigatório"),
+  
+  // Tornar endereço obrigatório
+  street: z.string().min(1, "Rua é obrigatória"),
+  number: z.string().min(1, "Número é obrigatório"),
+  neighborhood: z.string().min(1, "Bairro é obrigatório"),
+  city: z.string().min(1, "Cidade é obrigatória"),
+  state: z.string().min(1, "Estado é obrigatório"),
+  zipcode: z.string().min(1, "CEP é obrigatório"),
+  
   vehicles: z.array(
     vehicleValidator.omit({ driverId: true })
   ).optional(),
@@ -312,7 +330,14 @@ export default function DriverForm() {
                           Nome Completo
                         </FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input 
+                            {...field} 
+                            onChange={(e) => {
+                              const upperValue = e.target.value.toUpperCase();
+                              field.onChange(upperValue);
+                            }}
+                            style={{ textTransform: 'uppercase' }}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -585,7 +610,23 @@ export default function DriverForm() {
                           Cidade
                         </FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <LocationInput 
+                            value={field.value}
+                            onChange={(value) => {
+                              field.onChange(value);
+                              // Se o valor contiver um estado (formato: "Cidade - UF")
+                              if (value.includes(" - ")) {
+                                const state = value.split(" - ")[1];
+                                // Atualiza o campo de estado automaticamente
+                                form.setValue("state", state);
+                              }
+                            }}
+                            placeholder="Digite a cidade (ex: São Paulo - SP)"
+                            errorMessage={form.formState.errors.city?.message as string}
+                            onStateChange={(state) => {
+                              form.setValue("state", state);
+                            }}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
