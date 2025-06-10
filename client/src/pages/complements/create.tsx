@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -32,7 +32,7 @@ export default function CreateComplementPage() {
   const form = useForm({
     resolver: zodResolver(complementValidator),
     defaultValues: {
-      clientId: user?.clientId?.toString() || "",
+      clientId: "",
       origin: "",
       originState: "",
       destination: "",
@@ -49,6 +49,17 @@ export default function CreateComplementPage() {
       observations: "",
     },
   });
+
+  // Selecionar cliente automaticamente baseado no usuário
+  useEffect(() => {
+    if (user?.clientId && clients.length > 0) {
+      // Encontra o cliente associado ao usuário
+      const userClient = clients.find(client => client.id === user.clientId);
+      if (userClient) {
+        form.setValue("clientId", userClient.id.toString());
+      }
+    }
+  }, [user, clients, form]);
 
   // Mutation para criar complemento
   const createMutation = useMutation({
@@ -121,30 +132,29 @@ export default function CreateComplementPage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Cliente */}
+              {/* Cliente - Seleção automática */}
               <FormField
                 control={form.control}
                 name="clientId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cliente *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                render={({ field }) => {
+                  const selectedClient = clients.find(client => client.id.toString() === field.value);
+                  return (
+                    <FormItem>
+                      <FormLabel>Cliente</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione um cliente" />
-                        </SelectTrigger>
+                        <Input
+                          value={selectedClient ? selectedClient.name : "Cliente não encontrado"}
+                          disabled
+                          className="bg-muted"
+                        />
                       </FormControl>
-                      <SelectContent>
-                        {clients.map((client) => (
-                          <SelectItem key={client.id} value={client.id.toString()}>
-                            {client.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                      <p className="text-sm text-muted-foreground">
+                        Cliente selecionado automaticamente baseado no seu usuário
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
 
               {/* Origem e Destino */}

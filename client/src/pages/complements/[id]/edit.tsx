@@ -60,10 +60,21 @@ export default function EditComplementPage() {
     },
   });
 
+  // Selecionar cliente automaticamente baseado no usuário
+  useEffect(() => {
+    if (user?.clientId && clients.length > 0) {
+      // Encontra o cliente associado ao usuário
+      const userClient = clients.find(client => client.id === user.clientId);
+      if (userClient) {
+        form.setValue("clientId", userClient.id.toString());
+      }
+    }
+  }, [user, clients, form]);
+
   // Preencher formulário quando complemento for carregado
   useEffect(() => {
     if (complement) {
-      // Usar setValue para cada campo individualmente
+      // Para edição, manter o cliente original do complemento (não alterar)
       form.setValue("clientId", complement.clientId ? complement.clientId.toString() : "");
       form.setValue("origin", complement.origin || "");
       form.setValue("originState", complement.originState || "");
@@ -199,30 +210,29 @@ export default function EditComplementPage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={handleFormSubmit} className="space-y-6">
-              {/* Cliente */}
+              {/* Cliente - Seleção automática */}
               <FormField
                 control={form.control}
                 name="clientId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cliente *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                render={({ field }) => {
+                  const selectedClient = clients.find(client => client.id.toString() === field.value);
+                  return (
+                    <FormItem>
+                      <FormLabel>Cliente</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione um cliente" />
-                        </SelectTrigger>
+                        <Input
+                          value={selectedClient ? selectedClient.name : "Cliente não encontrado"}
+                          disabled
+                          className="bg-muted"
+                        />
                       </FormControl>
-                      <SelectContent>
-                        {clients.map((client) => (
-                          <SelectItem key={client.id} value={client.id.toString()}>
-                            {client.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                      <p className="text-sm text-muted-foreground">
+                        Cliente selecionado automaticamente baseado no seu usuário
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
 
               {/* Origem e Destino */}
