@@ -2,6 +2,7 @@ import express, { type Express, Request, Response, NextFunction } from "express"
 import { createServer, type Server } from "http";
 import { setupAuth, hashPassword } from "./auth";
 import { storage } from "./storage";
+import { sendPasswordResetEmail } from "./email-service";
 
 // Vamos criar um mockup do Stripe para resolver erros de compilação
 // até que todas as referências possam ser removidas
@@ -80,11 +81,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(200).json({ message: "Se o email estiver registrado, você receberá instruções para redefinir sua senha." });
       }
       
-      // Em um ambiente real, enviar email com o token
-      // Aqui apenas retornamos o token para teste
+      // Enviar email de recuperação de senha
+      try {
+        const emailSent = await sendPasswordResetEmail(email, result.token, result.user.name);
+        
+        if (emailSent) {
+          console.log(`Email de recuperação de senha enviado para ${email}`);
+        } else {
+          console.warn(`Falha ao enviar email de recuperação de senha para ${email}`);
+        }
+      } catch (emailError) {
+        console.error("Erro ao enviar email de recuperação:", emailError);
+        // Não falhar a requisição mesmo se o email não for enviado
+      }
+      
       res.status(200).json({ 
-        message: "Se o email estiver registrado, você receberá instruções para redefinir sua senha.",
-        token: result.token, // Remover isso em produção
+        message: "Se o email estiver registrado, você receberá instruções para redefinir sua senha."
       });
     } catch (error) {
       console.error("Erro ao solicitar redefinição de senha:", error);
