@@ -156,45 +156,41 @@ export default function EmailAdminPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="test-email">Email de teste:</Label>
-              <Input
+              <input
                 id="test-email"
                 type="email"
                 placeholder="exemplo@email.com"
                 value={testEmail}
                 onChange={(e) => {
-                  console.log("Input change:", e.target.value);
+                  console.log("Native input change:", e.target.value);
                   setTestEmail(e.target.value);
                 }}
-                onKeyPress={(e) => {
+                onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     console.log("Enter pressed, sending test email");
                     handleTestEmail();
                   }
                 }}
-                className="w-full"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                style={{ pointerEvents: 'auto', userSelect: 'text' }}
               />
             </div>
 
-            <Button
+            <button
               onClick={() => {
-                console.log("Button clicked!", { testEmail, isTestingEmail });
+                console.log("Native button clicked!", { testEmail, isTestingEmail });
                 handleTestEmail();
               }}
               disabled={isTestingEmail || !testEmail}
-              className="w-full"
+              className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+              style={{ pointerEvents: 'auto' }}
             >
               {isTestingEmail ? (
-                <>
-                  <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-                  Enviando...
-                </>
+                "Enviando..."
               ) : (
-                <>
-                  <Send className="mr-2 h-4 w-4" />
-                  Enviar Teste
-                </>
+                "Enviar Teste"
               )}
-            </Button>
+            </button>
 
             <div className="bg-muted p-3 rounded-lg">
               <div className="flex items-start gap-2">
