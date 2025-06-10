@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLocation, useParams } from "wouter";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { insertVehicleSchema, VEHICLE_TYPES, BODY_TYPES } from "@shared/schema";
 import { z } from "zod";
@@ -55,6 +56,7 @@ type VehicleFormValues = z.infer<typeof vehicleFormSchema>;
 export default function VehicleForm() {
   const params = useParams();
   const [, navigate] = useLocation();
+  const { user } = useAuth();
   const isEditing = Boolean(params.id);
   const vehicleId = params.id;
 
@@ -148,7 +150,13 @@ export default function VehicleForm() {
       const url = isEditing ? `/api/vehicles/${vehicleId}` : "/api/vehicles";
       const method = isEditing ? "PUT" : "POST";
 
-      const response = await apiRequest(method, url, data);
+      // Incluir userId automaticamente para vincular o veículo ao usuário logado
+      const vehicleData = {
+        ...data,
+        userId: user?.id
+      };
+
+      const response = await apiRequest(method, url, vehicleData);
 
       if (response.ok) {
         toast({
