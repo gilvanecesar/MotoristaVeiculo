@@ -86,26 +86,35 @@ export default function VehicleForm() {
   const loadDrivers = async () => {
     setIsLoadingDrivers(true);
     try {
-      const response = await apiRequest("GET", "/api/drivers");
+      const response = await fetch("/api/drivers", {
+        credentials: "include",
+      });
+      
       if (response.ok) {
         const driversData = await response.json();
         setDrivers(driversData);
+        console.log("Motoristas carregados:", driversData);
         
         // Verificar se existe um motorista para o usuário logado
         if (user) {
           const userDriver = driversData.find((driver: any) => 
-            driver.email === user.email || driver.name.toLowerCase() === user.name.toLowerCase()
+            driver.email === user.email || driver.name.toLowerCase().includes(user.name.toLowerCase())
           );
+          
+          console.log("Motorista do usuário encontrado:", userDriver);
           
           // Pré-selecionar o motorista do usuário logado se existir
           if (userDriver && !isEditing) {
             form.setValue("driverId", userDriver.id);
+            console.log("Campo motorista preenchido automaticamente com:", userDriver.name);
           }
         }
       } else {
+        const errorText = await response.text();
+        console.error("Erro na resposta:", response.status, errorText);
         toast({
           title: "Erro",
-          description: "Não foi possível carregar os motoristas.",
+          description: `Não foi possível carregar os motoristas. Status: ${response.status}`,
           variant: "destructive",
         });
       }
