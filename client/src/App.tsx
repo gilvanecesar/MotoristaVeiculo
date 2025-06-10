@@ -20,8 +20,7 @@ import LoginPage from "@/pages/login-page";
 import LandingPage from "@/pages/landing/index";
 import DriversPage from "@/pages/drivers/index";
 import DriverForm from "@/pages/drivers/driver-form";
-import VehiclesPage from "@/pages/vehicles/index";
-import VehicleForm from "@/pages/vehicles/vehicle-form";
+
 import ReportsPage from "@/pages/reports";
 import FreightsPage from "@/pages/freights/index";
 import FreightForm from "@/pages/freights/freight-form";
