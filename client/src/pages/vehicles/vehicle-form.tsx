@@ -82,7 +82,7 @@ export default function VehicleForm() {
     },
   });
 
-  // Carregar motoristas
+  // Carregar motoristas e criar/encontrar motorista do usuário logado
   const loadDrivers = async () => {
     setIsLoadingDrivers(true);
     try {
@@ -90,6 +90,36 @@ export default function VehicleForm() {
       if (response.ok) {
         const driversData = await response.json();
         setDrivers(driversData);
+        
+        // Verificar se existe um motorista para o usuário logado
+        if (user) {
+          let userDriver = driversData.find((driver: any) => 
+            driver.email === user.email || driver.name === user.name
+          );
+          
+          // Se não existir, criar um motorista para o usuário
+          if (!userDriver) {
+            const createResponse = await apiRequest("POST", "/api/drivers", {
+              name: user.name,
+              email: user.email,
+              phone: "", // Campo obrigatório, mas pode estar vazio inicialmente
+              cpf: "", // Campo obrigatório, mas pode estar vazio inicialmente
+              cnh: "", // Campo obrigatório, mas pode estar vazio inicialmente
+              cnhCategory: "B", // Categoria padrão
+              cnhExpiry: new Date(new Date().setFullYear(new Date().getFullYear() + 5)).toISOString().split('T')[0]
+            });
+            
+            if (createResponse.ok) {
+              userDriver = await createResponse.json();
+              setDrivers([...driversData, userDriver]);
+            }
+          }
+          
+          // Pré-selecionar o motorista do usuário logado
+          if (userDriver && !isEditing) {
+            form.setValue("driverId", userDriver.id);
+          }
+        }
       } else {
         toast({
           title: "Erro",
