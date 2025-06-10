@@ -87,12 +87,15 @@ export default function EditComplementPage() {
   // Mutation para atualizar complemento
   const updateMutation = useMutation({
     mutationFn: async (data: any) => {
+      console.log("Enviando requisição PUT para:", `/api/complements/${complementId}`);
+      console.log("Com dados:", data);
       const response = await apiRequest("PUT", `/api/complements/${complementId}`, data);
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      console.log("Atualização bem-sucedida:", result);
       queryClient.invalidateQueries({ queryKey: ["/api/complements"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/complements", complementId] });
+      queryClient.invalidateQueries({ queryKey: [`/api/complements/${complementId}`] });
       toast({
         title: "Sucesso",
         description: "Complemento atualizado com sucesso!",
@@ -100,6 +103,7 @@ export default function EditComplementPage() {
       setLocation("/complements");
     },
     onError: (error: Error) => {
+      console.error("Erro na atualização:", error);
       toast({
         title: "Erro",
         description: error.message,
@@ -120,7 +124,17 @@ export default function EditComplementPage() {
   };
 
   const onSubmit = (data: any) => {
+    console.log("Formulário submetido!");
+    console.log("Dados enviados para atualização:", data);
+    console.log("ID do complemento:", complementId);
+    console.log("Erros do formulário:", form.formState.errors);
     updateMutation.mutate(data);
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    console.log("handleFormSubmit chamado");
+    e.preventDefault();
+    form.handleSubmit(onSubmit)(e);
   };
 
   // Watch para recalcular metros cúbicos quando as dimensões mudarem
@@ -184,7 +198,7 @@ export default function EditComplementPage() {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={handleFormSubmit} className="space-y-6">
               {/* Cliente */}
               <FormField
                 control={form.control}
