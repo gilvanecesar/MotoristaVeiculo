@@ -4,6 +4,7 @@ import { Link, useLocation } from "wouter";
 import { Search, Plus, Edit, Eye, Trash, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DriverTable } from "@/components/drivers/driver-table";
+import { DriverDetails } from "@/components/drivers/driver-details";
 import { Input } from "@/components/ui/input";
 import { 
   Dialog, 
@@ -23,6 +24,7 @@ export default function DriversPage() {
   const [, navigate] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [driverToDelete, setDriverToDelete] = useState<DriverWithVehicles | null>(null);
+  const [driverToView, setDriverToView] = useState<DriverWithVehicles | null>(null);
   const { toast } = useToast();
 
   const { data: drivers = [], isLoading } = useQuery<DriverWithVehicles[]>({
@@ -51,7 +53,7 @@ export default function DriversPage() {
   };
 
   const handleView = (driver: DriverWithVehicles) => {
-    navigate(`/drivers/${driver.id}`);
+    setDriverToView(driver);
   };
 
   const handleDelete = (driver: DriverWithVehicles) => {
@@ -137,6 +139,13 @@ export default function DriversPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de detalhes do motorista */}
+      <DriverDetails
+        driver={driverToView}
+        open={!!driverToView}
+        onOpenChange={(open) => !open && setDriverToView(null)}
+      />
     </div>
   );
 }

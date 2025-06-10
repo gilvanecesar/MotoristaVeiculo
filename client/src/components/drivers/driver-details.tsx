@@ -43,21 +43,18 @@ export function DriverDetails({ driver, open, onOpenChange }: DriverDetailsProps
     return colors[index];
   };
 
-  const formatWhatsAppLink = (phone: string) => {
+  const formatWhatsAppLink = (phone: string | null) => {
     if (!phone) return "";
     const numericPhone = phone.replace(/\D/g, "");
     return `https://wa.me/${numericPhone}`;
   };
 
   const getVehicleCategory = (vehicle: Vehicle): string => {
-    const typeKey = vehicle.type as keyof typeof VEHICLE_TYPES;
-    return VEHICLE_TYPES[typeKey] || vehicle.type;
+    const typeKey = vehicle.vehicleType as keyof typeof VEHICLE_TYPES;
+    return VEHICLE_TYPES[typeKey] || vehicle.vehicleType;
   };
 
   const getSpecificVehicleType = (vehicle: Vehicle): string => {
-    if (vehicle.specificType) {
-      return vehicle.specificType;
-    }
     return getVehicleCategory(vehicle);
   };
 
@@ -216,9 +213,9 @@ export function DriverDetails({ driver, open, onOpenChange }: DriverDetailsProps
               <div className="flex items-center gap-3">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 <div>
-                  <p className="text-sm font-medium">Validade CNH</p>
+                  <p className="text-sm font-medium">Categoria CNH</p>
                   <p className="text-sm text-muted-foreground">
-                    {driver.cnhExpiry ? format(new Date(driver.cnhExpiry), 'dd/MM/yyyy') : "Não informado"}
+                    Não informado
                   </p>
                 </div>
               </div>
@@ -273,7 +270,7 @@ export function DriverDetails({ driver, open, onOpenChange }: DriverDetailsProps
                       </div>
                       <div>
                         <p className="font-medium">Chassi</p>
-                        <p className="text-muted-foreground">{vehicle.chassis || "Não informado"}</p>
+                        <p className="text-muted-foreground">{vehicle.chassi || "Não informado"}</p>
                       </div>
                     </div>
 
