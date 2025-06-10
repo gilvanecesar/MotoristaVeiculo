@@ -2493,6 +2493,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Obter variáveis de ambiente de email
+  app.get("/api/admin/email/env", isAdmin, async (req: Request, res: Response) => {
+    try {
+      res.json({
+        EMAIL_SERVICE: process.env.EMAIL_SERVICE || 'não configurado',
+        EMAIL_USER: process.env.EMAIL_USER || 'não configurado',
+        EMAIL_PASSWORD: process.env.EMAIL_PASSWORD ? '****configurado****' : 'não configurado'
+      });
+    } catch (error) {
+      console.error("Erro ao obter variáveis de ambiente:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
   // Enviar email de teste
   app.post("/api/admin/email/test", isAdmin, async (req: Request, res: Response) => {
     try {

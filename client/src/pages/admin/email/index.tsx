@@ -35,6 +35,15 @@ export default function EmailAdminPage() {
   });
   const [isUpdatingConfig, setIsUpdatingConfig] = useState(false);
 
+  // Buscar variáveis de ambiente
+  const { data: envVars } = useQuery<{
+    EMAIL_SERVICE: string;
+    EMAIL_USER: string;
+    EMAIL_PASSWORD: string;
+  }>({
+    queryKey: ["/api/admin/email/env"],
+  });
+
   // Buscar status do email
   const { data: emailStatus, isLoading, refetch } = useQuery<EmailStatus>({
     queryKey: ["/api/admin/email/status"],
@@ -344,11 +353,26 @@ export default function EmailAdminPage() {
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label className="text-sm font-semibold">Variáveis de Ambiente:</Label>
+              <Label className="text-sm font-semibold">Variáveis de Ambiente Atuais:</Label>
               <div className="bg-muted p-3 rounded-lg font-mono text-sm">
-                <div>EMAIL_SERVICE=gmail</div>
-                <div>EMAIL_USER=seu@email.com</div>
-                <div>EMAIL_PASSWORD=sua_senha_app</div>
+                <div>
+                  <span className="text-blue-600 dark:text-blue-400">EMAIL_SERVICE</span>=
+                  <span className="text-green-600 dark:text-green-400">
+                    {envVars?.EMAIL_SERVICE || 'carregando...'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-blue-600 dark:text-blue-400">EMAIL_USER</span>=
+                  <span className="text-green-600 dark:text-green-400">
+                    {envVars?.EMAIL_USER || 'carregando...'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-blue-600 dark:text-blue-400">EMAIL_PASSWORD</span>=
+                  <span className="text-green-600 dark:text-green-400">
+                    {envVars?.EMAIL_PASSWORD || 'carregando...'}
+                  </span>
+                </div>
               </div>
             </div>
 
