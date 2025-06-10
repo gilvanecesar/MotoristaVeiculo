@@ -57,6 +57,13 @@ export function DriverMobileView({ drivers, isLoading, onEdit, onView, onDelete 
   };
 
   const canEdit = (driver: DriverWithVehicles) => {
+    console.log("CanEdit check:", {
+      user: user,
+      userId: user?.id,
+      driver: driver.name,
+      driverUserId: driver.userId,
+      canEdit: user && driver.userId === user.id
+    });
     return user && driver.userId === user.id;
   };
 
