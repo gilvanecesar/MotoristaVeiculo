@@ -83,9 +83,7 @@ function Router() {
       <ProtectedRoute path="/drivers" component={DriversPage} />
       <ProtectedRoute path="/drivers/new" component={DriverForm} />
       <ProtectedRoute path="/drivers/:id" component={DriverForm} />
-      <ProtectedRoute path="/vehicles" component={VehiclesPage} />
-      <ProtectedRoute path="/vehicles/new" component={VehicleForm} />
-      <ProtectedRoute path="/vehicles/:id" component={VehicleForm} />
+
       <ProtectedRoute path="/freights" component={FreightsPage} />
       <ProtectedRoute path="/freights/new" component={FreightForm} />
       <ProtectedRoute path="/freights/:id/edit" component={() => <FreightForm isEditMode={true} />} />
