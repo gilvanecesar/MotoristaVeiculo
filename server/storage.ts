@@ -112,7 +112,10 @@ export interface IStorage {
   // Vehicle operations
   getVehicles(): Promise<Vehicle[]>;
   getVehiclesByDriver(driverId: number): Promise<Vehicle[]>;
+  getVehiclesByUser(userId: number): Promise<Vehicle[]>;
+  getVehiclesByDriverAndUser(driverId: number, userId: number): Promise<Vehicle[]>;
   getVehicle(id: number): Promise<Vehicle | undefined>;
+  getVehicleByIdAndUser(id: number, userId: number): Promise<Vehicle | undefined>;
   createVehicle(vehicle: InsertVehicle): Promise<Vehicle>;
   updateVehicle(
     id: number,

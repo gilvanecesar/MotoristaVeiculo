@@ -318,17 +318,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ==================== VEHICLES ====================
-  // Obter todos veículos
+  // Obter todos veículos do usuário logado
   app.get("/api/vehicles", hasActiveSubscription, async (req: Request, res: Response) => {
     try {
+      const userId = req.user!.id;
       let vehicles: Vehicle[];
       
-      // Se um ID de motorista for especificado, filtrar por esse motorista
+      // Se um ID de motorista for especificado, filtrar por esse motorista (mas ainda do usuário logado)
       if (req.query.driverId) {
         const driverId = parseInt(req.query.driverId as string);
-        vehicles = await storage.getVehiclesByDriver(driverId);
+        vehicles = await storage.getVehiclesByDriverAndUser(driverId, userId);
       } else {
-        vehicles = await storage.getVehicles();
+        // Retornar apenas veículos do usuário logado
+        vehicles = await storage.getVehiclesByUser(userId);
       }
       
       res.json(vehicles);
@@ -338,14 +340,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Obter veículo por ID
+  // Obter veículo por ID (apenas se pertencer ao usuário logado)
   app.get("/api/vehicles/:id", hasActiveSubscription, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
-      const vehicle = await storage.getVehicle(id);
+      const userId = req.user!.id;
+      const vehicle = await storage.getVehicleByIdAndUser(id, userId);
       
       if (!vehicle) {
-        return res.status(404).json({ message: "Vehicle not found" });
+        return res.status(404).json({ message: "Vehicle not found or access denied" });
       }
       
       res.json(vehicle);
@@ -355,10 +358,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Criar novo veículo
+  // Criar novo veículo (automaticamente vinculado ao usuário logado)
   app.post("/api/vehicles", hasActiveSubscription, async (req: Request, res: Response) => {
     try {
-      const vehicleData = req.body;
+      const vehicleData = {
+        ...req.body,
+        userId: req.user!.id // Garantir que o veículo seja vinculado ao usuário logado
+      };
       
       const vehicle = await storage.createVehicle(vehicleData);
       res.status(201).json(vehicle);
