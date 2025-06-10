@@ -31,10 +31,16 @@ export default function AdminPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight">Painel do Administrador</h2>
-        <Button onClick={() => navigate("/admin/finance")} className="flex items-center gap-2">
-          <Icons.dollarSign className="h-4 w-4" />
-          Gestão Financeira
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => navigate("/admin/email")} variant="outline" className="flex items-center gap-2">
+            <Icons.settings className="h-4 w-4" />
+            Configurar Email
+          </Button>
+          <Button onClick={() => navigate("/admin/finance")} className="flex items-center gap-2">
+            <Icons.dollarSign className="h-4 w-4" />
+            Gestão Financeira
+          </Button>
+        </div>
       </div>
 
       <Tabs value={tab} onValueChange={setTab} className="space-y-4">
@@ -97,12 +103,12 @@ export default function AdminPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <h3 className="font-medium mb-2">Configuração de Email</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
+                <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                  <h3 className="font-medium mb-2 text-blue-900 dark:text-blue-100">Configuração de Email</h3>
+                  <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">
                     Configure e teste o serviço de envio de emails do sistema.
                   </p>
-                  <Button onClick={() => navigate("/admin/email")}>
+                  <Button onClick={() => navigate("/admin/email")} className="bg-blue-600 hover:bg-blue-700">
                     <Icons.settings className="mr-2 h-4 w-4" />
                     Configurar Email
                   </Button>
