@@ -2515,6 +2515,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Configurar credenciais de email
+  app.post("/api/admin/email/config", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const { service, user, password } = req.body;
+      
+      if (!service || !user || !password) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Todos os campos são obrigatórios" 
+        });
+      }
+
+      // Mapear serviços para configurações SMTP
+      const serviceMap: Record<string, string> = {
+        gmail: "smtp.gmail.com",
+        outlook: "smtp-mail.outlook.com", 
+        yahoo: "smtp.mail.yahoo.com",
+        hostinger: "smtp.hostinger.com"
+      };
+
+      const smtpHost = serviceMap[service] || service;
+
+      // Atualizar variáveis de ambiente
+      process.env.EMAIL_SERVICE = smtpHost;
+      process.env.EMAIL_USER = user;
+      process.env.EMAIL_PASSWORD = password;
+
+      console.log(`Configurações de email atualizadas: ${smtpHost} com usuário ${user}`);
+
+      // Reinicializar o serviço de email com as novas configurações
+      const { initEmailService } = await import("./email-service");
+      await initEmailService();
+
+      res.json({ 
+        success: true, 
+        message: "Configurações de email atualizadas com sucesso" 
+      });
+    } catch (error: any) {
+      console.error("Erro ao atualizar configurações de email:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: error.message || "Erro interno do servidor" 
+      });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

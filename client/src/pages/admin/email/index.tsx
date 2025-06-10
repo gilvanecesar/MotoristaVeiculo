@@ -26,9 +26,17 @@ export default function EmailAdminPage() {
   const { toast } = useToast();
   const [testEmail, setTestEmail] = useState("");
   const [isTestingEmail, setIsTestingEmail] = useState(false);
+  
+  // Estados para configuração de email
+  const [emailConfig, setEmailConfig] = useState({
+    service: "",
+    user: "",
+    password: ""
+  });
+  const [isUpdatingConfig, setIsUpdatingConfig] = useState(false);
 
   // Buscar status do email
-  const { data: emailStatus, isLoading } = useQuery<EmailStatus>({
+  const { data: emailStatus, isLoading, refetch } = useQuery<EmailStatus>({
     queryKey: ["/api/admin/email/status"],
   });
 
@@ -58,6 +66,30 @@ export default function EmailAdminPage() {
     },
   });
 
+  // Mutation para atualizar configuração de email
+  const updateConfigMutation = useMutation({
+    mutationFn: async (config: { service: string; user: string; password: string }) => {
+      const response = await apiRequest("POST", "/api/admin/email/config", config);
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Configuração atualizada",
+        description: "As configurações de email foram salvas com sucesso",
+        variant: "default",
+      });
+      refetch(); // Recarregar status
+      setEmailConfig({ service: "", user: "", password: "" }); // Limpar formulário
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao salvar",
+        description: error.message || "Falha ao atualizar configurações",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleTestEmail = async () => {
     if (!testEmail || !testEmail.includes("@")) {
       toast({
@@ -73,6 +105,24 @@ export default function EmailAdminPage() {
       await sendTestEmailMutation.mutateAsync(testEmail);
     } finally {
       setIsTestingEmail(false);
+    }
+  };
+
+  const handleUpdateConfig = async () => {
+    if (!emailConfig.service || !emailConfig.user || !emailConfig.password) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha todos os campos",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUpdatingConfig(true);
+    try {
+      await updateConfigMutation.mutateAsync(emailConfig);
+    } finally {
+      setIsUpdatingConfig(false);
     }
   };
 
@@ -100,7 +150,86 @@ export default function EmailAdminPage() {
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+        {/* Configurar Credenciais */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              Configurar Credenciais
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Serviço de Email:</label>
+              <select
+                value={emailConfig.service}
+                onChange={(e) => {
+                  console.log("Service changed:", e.target.value);
+                  setEmailConfig(prev => ({ ...prev, service: e.target.value }));
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Selecione um serviço</option>
+                <option value="gmail">Gmail (smtp.gmail.com)</option>
+                <option value="outlook">Outlook (smtp-mail.outlook.com)</option>
+                <option value="yahoo">Yahoo (smtp.mail.yahoo.com)</option>
+                <option value="hostinger">Hostinger (smtp.hostinger.com)</option>
+                <option value="custom">Personalizado</option>
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Email/Usuário:</label>
+              <input
+                type="email"
+                value={emailConfig.user}
+                onChange={(e) => {
+                  console.log("User changed:", e.target.value);
+                  setEmailConfig(prev => ({ ...prev, user: e.target.value }));
+                }}
+                placeholder="seu@email.com"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Senha:</label>
+              <input
+                type="password"
+                value={emailConfig.password}
+                onChange={(e) => {
+                  console.log("Password changed: [HIDDEN]");
+                  setEmailConfig(prev => ({ ...prev, password: e.target.value }));
+                }}
+                placeholder="Senha ou senha de aplicativo"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <button
+              onClick={() => {
+                console.log("Update config clicked:", { service: emailConfig.service, user: emailConfig.user });
+                handleUpdateConfig();
+              }}
+              disabled={isUpdatingConfig || !emailConfig.service || !emailConfig.user || !emailConfig.password}
+              className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+              {isUpdatingConfig ? "Salvando..." : "Salvar Configuração"}
+            </button>
+
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5" />
+                <div className="text-sm text-yellow-800">
+                  <p className="font-medium mb-1">Importante:</p>
+                  <p>Para Gmail, use uma senha de aplicativo em vez da senha normal. Ative a autenticação de 2 fatores e gere uma senha específica para aplicativos.</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Status do Serviço */}
         <Card>
           <CardHeader>
