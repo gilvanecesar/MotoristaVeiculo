@@ -381,6 +381,12 @@ export async function sendTestEmail(targetEmail: string): Promise<{ success: boo
       passwordConfigured: !!process.env.EMAIL_PASSWORD
     });
 
+    // Verificar se o EMAIL_USER é um email válido
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(process.env.EMAIL_USER || '')) {
+      throw new Error(`EMAIL_USER inválido: ${process.env.EMAIL_USER}. Deve ser um endereço de email válido.`);
+    }
+
     const testMailOptions = {
       from: `"QUERO FRETES - Teste" <${process.env.EMAIL_USER || 'noreply@querofretes.com'}>`,
       to: targetEmail,
