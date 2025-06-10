@@ -262,12 +262,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Criar novo motorista
   app.post("/api/drivers", hasActiveSubscription, async (req: Request, res: Response) => {
     try {
+      console.log("DEBUG: Creating driver with user:", {
+        userId: req.user?.id,
+        user: req.user,
+        requestBody: req.body
+      });
+      
       const driverData: InsertDriver = {
         ...req.body,
         userId: req.user?.id!  // Vincula o motorista ao usuário logado
       };
       
+      console.log("DEBUG: Driver data to be saved:", driverData);
+      
       const driver = await storage.createDriver(driverData);
+      
+      console.log("DEBUG: Driver created with result:", driver);
+      
       res.status(201).json(driver);
     } catch (error) {
       console.error("Error creating driver:", error);

@@ -57,14 +57,15 @@ export function DriverMobileView({ drivers, isLoading, onEdit, onView, onDelete 
   };
 
   const canEdit = (driver: DriverWithVehicles) => {
-    console.log("CanEdit check:", {
-      user: user,
-      userId: user?.id,
-      driver: driver.name,
-      driverUserId: driver.userId,
-      canEdit: user && driver.userId === user.id
-    });
-    return user && driver.userId === user.id;
+    if (!user) return false;
+    
+    // Administradores podem editar qualquer motorista
+    if (user.profileType?.toLowerCase() === "administrador" || user.profileType?.toLowerCase() === "admin") {
+      return true;
+    }
+    
+    // Usuários podem editar motoristas que eles criaram
+    return driver.userId === user.id;
   };
 
   if (isLoading) {

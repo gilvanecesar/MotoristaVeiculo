@@ -143,15 +143,6 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
 
   // Verificar se o usuário pode editar o motorista
   const canEditDriver = (driver: DriverWithVehicles) => {
-    console.log("CanEditDriver check (desktop):", {
-      user: user,
-      userId: user?.id,
-      userProfileType: user?.profileType,
-      driver: driver.name,
-      driverUserId: driver.userId,
-      canEdit: user && (user.profileType?.toLowerCase() === "administrador" || user.profileType?.toLowerCase() === "admin" || driver.userId === user.id)
-    });
-    
     if (!user) return false;
     
     // Administrador pode editar qualquer motorista

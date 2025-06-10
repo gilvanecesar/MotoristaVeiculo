@@ -232,10 +232,6 @@ export default function DriverForm() {
 
   // Form submission
   const onSubmit = (data: FormValues) => {
-    console.log("Form submitted with data:", data);
-    console.log("Form validation errors:", form.formState.errors);
-    console.log("Form is valid:", form.formState.isValid);
-    
     if (isEditing) {
       updateDriver.mutate(data);
     } else {
@@ -299,14 +295,7 @@ export default function DriverForm() {
       <Card>
         <CardContent className="p-6">
           <Form {...form}>
-            <form 
-              onSubmit={(e) => {
-                console.log("Form submit event triggered");
-                e.preventDefault();
-                form.handleSubmit(onSubmit)(e);
-              }} 
-              className="space-y-6"
-            >
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               {/* Personal Information */}
               <div>
                 <h3 className="text-md font-semibold text-slate-800 mb-4 pb-2 border-b border-slate-200">
@@ -731,11 +720,6 @@ export default function DriverForm() {
                 <Button 
                   type="submit"
                   disabled={createDriver.isPending || updateDriver.isPending || isLoading}
-                  onClick={() => {
-                    console.log("Submit button clicked");
-                    console.log("Form is submitting:", form.formState.isSubmitting);
-                    console.log("Button disabled state:", createDriver.isPending || updateDriver.isPending || isLoading);
-                  }}
                 >
                   {createDriver.isPending || updateDriver.isPending
                     ? "Salvando..."
