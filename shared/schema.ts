@@ -68,6 +68,7 @@ export type TollOption = typeof TOLL_OPTIONS[keyof typeof TOLL_OPTIONS];
 // Driver schema
 export const drivers = pgTable("drivers", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id), // Vincula motorista ao usuário que o criou
   name: text("name").notNull(),
   email: text("email").notNull(),
   cpf: text("cpf").notNull().unique(),

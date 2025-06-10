@@ -263,7 +263,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/drivers", hasActiveSubscription, async (req: Request, res: Response) => {
     try {
       const driverData: InsertDriver = {
-        ...req.body
+        ...req.body,
+        userId: req.user?.id!  // Vincula o motorista ao usuário logado
       };
       
       const driver = await storage.createDriver(driverData);
