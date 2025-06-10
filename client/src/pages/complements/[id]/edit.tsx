@@ -29,7 +29,7 @@ export default function EditComplementPage() {
 
   // Buscar complemento
   const { data: complement, isLoading: complementLoading } = useQuery<Complement>({
-    queryKey: ["/api/complements", complementId],
+    queryKey: [`/api/complements/${complementId}`],
     enabled: !!complementId,
   });
 
@@ -40,6 +40,7 @@ export default function EditComplementPage() {
 
   const form = useForm({
     resolver: zodResolver(complementValidator),
+    mode: "onChange",
     defaultValues: {
       clientId: "",
       origin: "",
@@ -62,23 +63,23 @@ export default function EditComplementPage() {
   // Preencher formulário quando complemento for carregado
   useEffect(() => {
     if (complement) {
-      form.reset({
-        clientId: complement.clientId ? complement.clientId.toString() : "",
-        origin: complement.origin || "",
-        originState: complement.originState || "",
-        destination: complement.destination || "",
-        destinationState: complement.destinationState || "",
-        weight: complement.weight || "",
-        volumeQuantity: complement.volumeQuantity || 1,
-        volumeLength: complement.volumeLength || "",
-        volumeWidth: complement.volumeWidth || "",
-        volumeHeight: complement.volumeHeight || "",
-        invoiceValue: complement.invoiceValue || "",
-        freightValue: complement.freightValue || "",
-        contactName: complement.contactName || "",
-        contactPhone: complement.contactPhone || "",
-        observations: complement.observations || "",
-      });
+      // Usar setValue para cada campo individualmente
+      form.setValue("clientId", complement.clientId ? complement.clientId.toString() : "");
+      form.setValue("origin", complement.origin || "");
+      form.setValue("originState", complement.originState || "");
+      form.setValue("destination", complement.destination || "");
+      form.setValue("destinationState", complement.destinationState || "");
+      form.setValue("weight", complement.weight || "");
+      form.setValue("volumeQuantity", complement.volumeQuantity || 1);
+      form.setValue("volumeLength", complement.volumeLength || "");
+      form.setValue("volumeWidth", complement.volumeWidth || "");
+      form.setValue("volumeHeight", complement.volumeHeight || "");
+      form.setValue("invoiceValue", complement.invoiceValue || "");
+      form.setValue("freightValue", complement.freightValue || "");
+      form.setValue("contactName", complement.contactName || "");
+      form.setValue("contactPhone", complement.contactPhone || "");
+      form.setValue("observations", complement.observations || "");
+      
       setCubicMeters(complement.cubicMeters || "0.000");
     }
   }, [complement, form]);
