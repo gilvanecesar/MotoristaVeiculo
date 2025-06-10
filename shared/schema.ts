@@ -90,8 +90,27 @@ export const drivers = pgTable("drivers", {
   state: text("state").notNull(),
   zipcode: text("zipcode").notNull(),
   
+  // GPS Location tracking
+  currentLatitude: decimal("current_latitude", { precision: 10, scale: 7 }),
+  currentLongitude: decimal("current_longitude", { precision: 10, scale: 7 }),
+  lastLocationUpdate: timestamp("last_location_update"),
+  locationEnabled: boolean("location_enabled").default(false),
+  
   // Metadata
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Driver Location History schema
+export const driverLocationHistory = pgTable("driver_location_history", {
+  id: serial("id").primaryKey(),
+  driverId: integer("driver_id").notNull().references(() => drivers.id, { onDelete: 'cascade' }),
+  latitude: decimal("latitude", { precision: 10, scale: 7 }).notNull(),
+  longitude: decimal("longitude", { precision: 10, scale: 7 }).notNull(),
+  accuracy: decimal("accuracy", { precision: 6, scale: 2 }), // GPS accuracy in meters
+  speed: decimal("speed", { precision: 6, scale: 2 }), // Speed in km/h
+  heading: decimal("heading", { precision: 6, scale: 2 }), // Direction in degrees
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+  freightId: integer("freight_id").references(() => freights.id), // Optional: associate with freight
 });
 
 // Vehicle schema
@@ -244,6 +263,9 @@ export const complements = pgTable("complements", {
 // Insert schemas using drizzle-zod
 export const insertDriverSchema = createInsertSchema(drivers)
   .omit({ id: true, createdAt: true });
+
+export const insertDriverLocationHistorySchema = createInsertSchema(driverLocationHistory)
+  .omit({ id: true, timestamp: true });
 
 export const insertVehicleSchema = createInsertSchema(vehicles)
   .omit({ id: true, createdAt: true });
@@ -637,8 +659,13 @@ export type SubscriptionStatus = typeof SUBSCRIPTION_STATUS[keyof typeof SUBSCRI
 export type InvoiceStatus = typeof INVOICE_STATUS[keyof typeof INVOICE_STATUS];
 export type PlanType = typeof PLAN_TYPES[keyof typeof PLAN_TYPES];
 
+// Tipos para histórico de localização
+export type DriverLocationHistory = typeof driverLocationHistory.$inferSelect;
+export type InsertDriverLocationHistory = z.infer<typeof insertDriverLocationHistorySchema>;
+
 // Tipos para relacionamentos
 export type DriverWithVehicles = Driver & { vehicles: Vehicle[] };
+export type DriverWithLocation = Driver & { currentLocation?: { latitude: string; longitude: string } };
 export type FreightWithDestinations = Freight & { destinations?: FreightDestination[] };
 export type ClientWithSubscriptions = Client & { subscriptions?: Subscription[] };
 export type SubscriptionWithInvoices = Subscription & { invoices?: Invoice[] };
