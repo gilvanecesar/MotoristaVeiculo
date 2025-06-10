@@ -64,6 +64,11 @@ export function DriverMobileView({ drivers, isLoading, onEdit, onView, onDelete 
       return true;
     }
     
+    // Para tipo "shipper" com clientId, pode editar qualquer motorista do mesmo cliente
+    if (user.profileType?.toLowerCase() === "shipper" && user.clientId) {
+      return true;
+    }
+    
     // Usuários podem editar motoristas que eles criaram
     return driver.userId === user.id;
   };
