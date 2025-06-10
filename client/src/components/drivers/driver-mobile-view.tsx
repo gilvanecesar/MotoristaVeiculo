@@ -161,8 +161,8 @@ export function DriverMobileView({ drivers, isLoading, onEdit, onView, onDelete 
                       <span className="ml-2 text-gray-600">{driver.cpf || "Não informado"}</span>
                     </div>
                     <div>
-                      <span className="font-medium text-gray-700">Endereço:</span>
-                      <span className="ml-2 text-gray-600">{driver.address || "Não informado"}</span>
+                      <span className="font-medium text-gray-700">Estado:</span>
+                      <span className="ml-2 text-gray-600">{driver.state || "Não informado"}</span>
                     </div>
                     <div>
                       <span className="font-medium text-gray-700">Cadastrado em:</span>

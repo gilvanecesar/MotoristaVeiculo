@@ -88,7 +88,7 @@ export function DriverDetails({ driver, open, onOpenChange }: DriverDetailsProps
           </DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mt-6">
           {/* Informações Pessoais */}
           <Card>
             <CardHeader>
