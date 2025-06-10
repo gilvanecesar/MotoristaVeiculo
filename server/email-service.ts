@@ -336,6 +336,13 @@ export async function sendTestEmail(targetEmail: string): Promise<{ success: boo
   }
 
   try {
+    console.log(`[EMAIL-TEST] Iniciando envio de teste para: ${targetEmail}`);
+    console.log(`[EMAIL-TEST] Configuração atual:`, {
+      service: process.env.EMAIL_SERVICE,
+      user: process.env.EMAIL_USER,
+      passwordConfigured: !!process.env.EMAIL_PASSWORD
+    });
+
     const testMailOptions = {
       from: `"QUERO FRETES - Teste" <${process.env.EMAIL_USER || 'noreply@querofretes.com'}>`,
       to: targetEmail,
@@ -357,12 +364,34 @@ export async function sendTestEmail(targetEmail: string): Promise<{ success: boo
       `
     };
 
-    await transporter.sendMail(testMailOptions);
+    console.log(`[EMAIL-TEST] Opções do email:`, {
+      from: testMailOptions.from,
+      to: testMailOptions.to,
+      subject: testMailOptions.subject
+    });
+
+    const result = await transporter.sendMail(testMailOptions);
+    
+    console.log(`[EMAIL-TEST] Email enviado com sucesso!`);
+    console.log(`[EMAIL-TEST] MessageId:`, result.messageId);
+    console.log(`[EMAIL-TEST] Response:`, result.response);
+    
+    // Se estiver usando Ethereal, mostrar preview URL
+    if (result.messageId && process.env.EMAIL_SERVICE?.includes('ethereal')) {
+      const previewUrl = nodemailer.getTestMessageUrl(result);
+      console.log(`[EMAIL-TEST] Preview URL (Ethereal):`, previewUrl);
+      return { 
+        success: true, 
+        message: `Email de teste enviado! MessageID: ${result.messageId}. Preview: ${previewUrl}` 
+      };
+    }
+    
     return { 
       success: true, 
-      message: `Email de teste enviado com sucesso para ${targetEmail}` 
+      message: `Email de teste enviado com sucesso para ${targetEmail}. MessageID: ${result.messageId}` 
     };
   } catch (error) {
+    console.error(`[EMAIL-TEST] Erro detalhado:`, error);
     return { 
       success: false, 
       message: `Erro ao enviar email de teste: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
