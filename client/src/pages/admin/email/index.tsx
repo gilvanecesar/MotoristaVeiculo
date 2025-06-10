@@ -32,6 +32,9 @@ export default function EmailAdminPage() {
     queryKey: ["/api/admin/email/status"],
   });
 
+  // Log para debug
+  console.log("Renderizando EmailAdminPage", { testEmail, isTestingEmail, emailStatus });
+
   // Mutation para enviar email de teste
   const sendTestEmailMutation = useMutation({
     mutationFn: async (email: string) => {
@@ -80,6 +83,10 @@ export default function EmailAdminPage() {
       </div>
     );
   }
+
+  console.log("EmailAdminPage - emailStatus:", emailStatus);
+  console.log("EmailAdminPage - testEmail:", testEmail);
+  console.log("EmailAdminPage - isTestingEmail:", isTestingEmail);
 
   return (
     <div className="container mx-auto p-6">
@@ -154,17 +161,25 @@ export default function EmailAdminPage() {
                 type="email"
                 placeholder="exemplo@email.com"
                 value={testEmail}
-                onChange={(e) => setTestEmail(e.target.value)}
+                onChange={(e) => {
+                  console.log("Input change:", e.target.value);
+                  setTestEmail(e.target.value);
+                }}
                 onKeyPress={(e) => {
                   if (e.key === "Enter") {
+                    console.log("Enter pressed, sending test email");
                     handleTestEmail();
                   }
                 }}
+                className="w-full"
               />
             </div>
 
             <Button
-              onClick={handleTestEmail}
+              onClick={() => {
+                console.log("Button clicked!", { testEmail, isTestingEmail });
+                handleTestEmail();
+              }}
               disabled={isTestingEmail || !testEmail}
               className="w-full"
             >

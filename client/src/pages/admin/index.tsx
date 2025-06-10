@@ -103,7 +103,7 @@ export default function AdminPage() {
                     Configure e teste o serviço de envio de emails do sistema.
                   </p>
                   <Button onClick={() => navigate("/admin/email")}>
-                    <Icons.mail className="mr-2 h-4 w-4" />
+                    <Icons.settings className="mr-2 h-4 w-4" />
                     Configurar Email
                   </Button>
                 </div>
