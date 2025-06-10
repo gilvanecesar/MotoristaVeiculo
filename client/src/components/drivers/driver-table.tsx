@@ -8,6 +8,7 @@ import { Edit, Eye, Trash, Users, ChevronDown, ChevronRight, Phone, Car } from "
 import { format } from "date-fns";
 import { useState } from "react";
 import { Pagination } from "@/components/ui/pagination";
+import { useAuth } from "@/hooks/use-auth";
 
 interface DriverTableProps {
   drivers: DriverWithVehicles[];
@@ -18,6 +19,7 @@ interface DriverTableProps {
 }
 
 export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: DriverTableProps) {
+  const { user } = useAuth();
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
@@ -137,6 +139,19 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
         return [...prev, driverId];
       }
     });
+  };
+
+  // Verificar se o usuário pode editar o motorista
+  const canEditDriver = (driver: DriverWithVehicles) => {
+    if (!user) return false;
+    
+    // Administrador pode editar qualquer motorista
+    if (user.profileType?.toLowerCase() === "administrador" || user.profileType?.toLowerCase() === "admin") {
+      return true;
+    }
+    
+    // Usuário só pode editar motoristas que ele criou
+    return driver.userId === user.id;
   };
 
   return (
@@ -281,15 +296,17 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-8 w-8 text-primary"
-                              title="Editar"
-                              onClick={() => onEdit(driver)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
+                            {canEditDriver(driver) && (
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 text-primary"
+                                title="Editar"
+                                onClick={() => onEdit(driver)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            )}
                             <Button 
                               variant="ghost" 
                               size="icon" 
@@ -299,15 +316,17 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-8 w-8 text-red-500"
-                              title="Excluir"
-                              onClick={() => onDelete(driver)}
-                            >
-                              <Trash className="h-4 w-4" />
-                            </Button>
+                            {canEditDriver(driver) && (
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 text-red-500"
+                                title="Excluir"
+                                onClick={() => onDelete(driver)}
+                              >
+                                <Trash className="h-4 w-4" />
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
