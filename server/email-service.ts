@@ -355,7 +355,7 @@ export async function sendPasswordResetEmail(
   }
 
   // URL base da aplicação
-  const appUrl = process.env.APP_URL || 'https://querofretes.com.br';
+  const appUrl = process.env.APP_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : 'https://querofretes.com.br');
   
   // Link de recuperação de senha
   const resetLink = `${appUrl}/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
