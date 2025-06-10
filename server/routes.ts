@@ -3,13 +3,6 @@ import { createServer, type Server } from "http";
 import { setupAuth, hashPassword } from "./auth";
 import { storage } from "./storage";
 import { sendPasswordResetEmail, testEmailConnection, sendTestEmail } from "./email-service";
-import { 
-  updateDriverLocation, 
-  getDriverLocation, 
-  getDriverLocationHistory, 
-  toggleDriverLocationTracking,
-  getAllDriversWithLocations 
-} from "./gps-tracking";
 
 // Vamos criar um mockup do Stripe para resolver erros de compilação
 // até que todas as referências possam ser removidas
@@ -2632,22 +2625,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-
-  // ==================== GPS TRACKING ====================
-  // Atualizar localização do motorista
-  app.post("/api/drivers/:driverId/location", isAuthenticated, updateDriverLocation);
-
-  // Obter localização atual do motorista
-  app.get("/api/drivers/:driverId/location", isAuthenticated, getDriverLocation);
-
-  // Obter histórico de localização do motorista
-  app.get("/api/drivers/:driverId/location/history", isAuthenticated, getDriverLocationHistory);
-
-  // Habilitar/desabilitar rastreamento GPS
-  app.put("/api/drivers/:driverId/location/toggle", hasDriverAccess, toggleDriverLocationTracking);
-
-  // Obter todos os motoristas com localização ativa
-  app.get("/api/drivers/locations", isAuthenticated, getAllDriversWithLocations);
 
   const httpServer = createServer(app);
 

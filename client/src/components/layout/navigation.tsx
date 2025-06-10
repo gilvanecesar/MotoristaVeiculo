@@ -3,7 +3,7 @@ import { useState } from "react";
 import { 
   LayoutDashboard, Users, Car, BarChart3, Menu, X, Moon, Sun, Truck, 
   Building2, Home, DollarSign, UserCog, Settings, User, CreditCard,
-  Receipt, CalendarClock, AlertCircle, Bell, Webhook, Package, Navigation as NavigationIcon
+  Receipt, CalendarClock, AlertCircle, Bell, Webhook, Package
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -65,11 +65,6 @@ const navItems = [
     label: "Relatórios", 
     path: "/reports",
     icon: BarChart3
-  },
-  { 
-    label: "GPS Tracking", 
-    path: "/gps-tracking",
-    icon: NavigationIcon
   },
 ];
 
