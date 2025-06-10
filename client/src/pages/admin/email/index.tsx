@@ -31,9 +31,17 @@ export default function EmailAdminPage() {
   const [emailConfig, setEmailConfig] = useState({
     service: "",
     user: "",
-    password: ""
+    password: "",
+    host: "",
+    port: "587",
+    secure: false,
+    requireTLS: true,
+    connectionTimeout: "60000",
+    greetingTimeout: "30000",
+    socketTimeout: "60000"
   });
   const [isUpdatingConfig, setIsUpdatingConfig] = useState(false);
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
 
   // Buscar variáveis de ambiente
   const { data: envVars } = useQuery<{
@@ -88,7 +96,7 @@ export default function EmailAdminPage() {
         variant: "default",
       });
       refetch(); // Recarregar status
-      setEmailConfig({ service: "", user: "", password: "" }); // Limpar formulário
+      setEmailConfig(prev => ({ ...prev, password: "" })); // Limpar apenas senha por segurança
     },
     onError: (error: any) => {
       toast({
@@ -160,79 +168,208 @@ export default function EmailAdminPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-        {/* Configurar Credenciais */}
+        {/* Configurações Completas de Email */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Settings className="h-5 w-5" />
-              Configurar Credenciais
+              Configurações de Email
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Serviço de Email:</label>
-              <select
-                value={emailConfig.service}
-                onChange={(e) => {
-                  console.log("Service changed:", e.target.value);
-                  setEmailConfig(prev => ({ ...prev, service: e.target.value }));
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Selecione um serviço</option>
-                <option value="gmail">Gmail (smtp.gmail.com)</option>
-                <option value="outlook">Outlook (smtp-mail.outlook.com)</option>
-                <option value="yahoo">Yahoo (smtp.mail.yahoo.com)</option>
-                <option value="hostinger">Hostinger (smtp.hostinger.com)</option>
-                <option value="custom">Personalizado</option>
-              </select>
+          <CardContent className="space-y-6">
+            {/* Configurações Básicas */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Configurações Básicas</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Serviço de Email:</label>
+                  <select
+                    value={emailConfig.service}
+                    onChange={(e) => {
+                      const service = e.target.value;
+                      let newConfig = { ...emailConfig, service };
+                      
+                      // Auto-configurar host e porta baseado no serviço
+                      switch (service) {
+                        case 'gmail':
+                          newConfig = { ...newConfig, host: 'smtp.gmail.com', port: '587', secure: false };
+                          break;
+                        case 'outlook':
+                          newConfig = { ...newConfig, host: 'smtp-mail.outlook.com', port: '587', secure: false };
+                          break;
+                        case 'yahoo':
+                          newConfig = { ...newConfig, host: 'smtp.mail.yahoo.com', port: '587', secure: false };
+                          break;
+                        case 'hostinger':
+                          newConfig = { ...newConfig, host: 'smtp.hostinger.com', port: '587', secure: false };
+                          break;
+                        case 'sendgrid':
+                          newConfig = { ...newConfig, host: 'smtp.sendgrid.net', port: '587', secure: false };
+                          break;
+                        default:
+                          newConfig = { ...newConfig, host: '', port: '587', secure: false };
+                      }
+                      
+                      setEmailConfig(newConfig);
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Serviço Personalizado</option>
+                    <option value="gmail">Gmail</option>
+                    <option value="outlook">Outlook</option>
+                    <option value="yahoo">Yahoo</option>
+                    <option value="hostinger">Hostinger</option>
+                    <option value="sendgrid">SendGrid</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Email:</label>
+                  <input
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={emailConfig.user}
+                    onChange={(e) => setEmailConfig(prev => ({ ...prev, user: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-sm font-medium">Senha:</label>
+                  <input
+                    type="password"
+                    placeholder="Para Gmail, use senha de aplicativo"
+                    value={emailConfig.password}
+                    onChange={(e) => setEmailConfig(prev => ({ ...prev, password: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Email/Usuário:</label>
-              <input
-                type="email"
-                value={emailConfig.user}
-                onChange={(e) => {
-                  console.log("User changed:", e.target.value);
-                  setEmailConfig(prev => ({ ...prev, user: e.target.value }));
-                }}
-                placeholder="seu@email.com"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+            {/* Configurações SMTP */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Configurações SMTP</h3>
+                <button
+                  onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
+                  className="text-sm text-blue-600 hover:text-blue-800"
+                >
+                  {showAdvancedSettings ? 'Ocultar' : 'Mostrar'} Avançadas
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Host SMTP:</label>
+                  <input
+                    type="text"
+                    placeholder="smtp.gmail.com"
+                    value={emailConfig.host}
+                    onChange={(e) => setEmailConfig(prev => ({ ...prev, host: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Porta:</label>
+                  <select
+                    value={emailConfig.port}
+                    onChange={(e) => setEmailConfig(prev => ({ ...prev, port: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="25">25 (SMTP padrão)</option>
+                    <option value="587">587 (STARTTLS)</option>
+                    <option value="465">465 (SSL/TLS)</option>
+                    <option value="2525">2525 (Alternativo)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Segurança:</label>
+                  <div className="flex items-center space-x-4">
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={emailConfig.secure}
+                        onChange={(e) => setEmailConfig(prev => ({ ...prev, secure: e.target.checked }))}
+                        className="mr-2"
+                      />
+                      SSL/TLS
+                    </label>
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={emailConfig.requireTLS}
+                        onChange={(e) => setEmailConfig(prev => ({ ...prev, requireTLS: e.target.checked }))}
+                        className="mr-2"
+                      />
+                      Require TLS
+                    </label>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Senha:</label>
-              <input
-                type="password"
-                value={emailConfig.password}
-                onChange={(e) => {
-                  console.log("Password changed: [HIDDEN]");
-                  setEmailConfig(prev => ({ ...prev, password: e.target.value }));
-                }}
-                placeholder="Senha ou senha de aplicativo"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+            {/* Configurações Avançadas */}
+            {showAdvancedSettings && (
+              <div className="space-y-4 border-t pt-4">
+                <h3 className="text-lg font-semibold">Configurações Avançadas</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Timeout de Conexão (ms):</label>
+                    <input
+                      type="number"
+                      value={emailConfig.connectionTimeout}
+                      onChange={(e) => setEmailConfig(prev => ({ ...prev, connectionTimeout: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Timeout de Greeting (ms):</label>
+                    <input
+                      type="number"
+                      value={emailConfig.greetingTimeout}
+                      onChange={(e) => setEmailConfig(prev => ({ ...prev, greetingTimeout: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Timeout de Socket (ms):</label>
+                    <input
+                      type="number"
+                      value={emailConfig.socketTimeout}
+                      onChange={(e) => setEmailConfig(prev => ({ ...prev, socketTimeout: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
 
             <button
-              onClick={() => {
-                console.log("Update config clicked:", { service: emailConfig.service, user: emailConfig.user });
-                handleUpdateConfig();
-              }}
-              disabled={isUpdatingConfig || !emailConfig.service || !emailConfig.user || !emailConfig.password}
+              onClick={handleUpdateConfig}
+              disabled={isUpdatingConfig || !emailConfig.user || !emailConfig.password}
               className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
               {isUpdatingConfig ? "Salvando..." : "Salvar Configuração"}
             </button>
 
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
               <div className="flex items-start gap-2">
-                <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5" />
-                <div className="text-sm text-yellow-800">
-                  <p className="font-medium mb-1">Importante:</p>
-                  <p>Para Gmail, use uma senha de aplicativo em vez da senha normal. Ative a autenticação de 2 fatores e gere uma senha específica para aplicativos.</p>
+                <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5" />
+                <div className="text-sm text-blue-800">
+                  <p className="font-medium mb-1">Dicas de Configuração:</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Para Gmail: Use porta 587 com STARTTLS e senha de aplicativo</li>
+                    <li>Para Outlook: Use porta 587 com STARTTLS</li>
+                    <li>Para serviços SSL: Use porta 465 com SSL habilitado</li>
+                    <li>Timeouts padrão: 60s conexão, 30s greeting, 60s socket</li>
+                  </ul>
                 </div>
               </div>
             </div>

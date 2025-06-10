@@ -2532,31 +2532,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Configurar credenciais de email
   app.post("/api/admin/email/config", isAdmin, async (req: Request, res: Response) => {
     try {
-      const { service, user, password } = req.body;
+      const { 
+        service, 
+        user, 
+        password, 
+        host, 
+        port, 
+        secure, 
+        requireTLS, 
+        connectionTimeout, 
+        greetingTimeout, 
+        socketTimeout 
+      } = req.body;
       
-      if (!service || !user || !password) {
+      if (!user || !password) {
         return res.status(400).json({ 
           success: false, 
-          message: "Todos os campos são obrigatórios" 
+          message: "Email e senha são obrigatórios" 
         });
       }
 
-      // Mapear serviços para configurações SMTP
-      const serviceMap: Record<string, string> = {
-        gmail: "smtp.gmail.com",
-        outlook: "smtp-mail.outlook.com", 
-        yahoo: "smtp.mail.yahoo.com",
-        hostinger: "smtp.hostinger.com"
-      };
+      // Determinar configurações baseadas no serviço ou usar customizadas
+      let finalHost = host;
+      let finalPort = port || "587";
+      
+      if (service && !host) {
+        // Mapear serviços para configurações SMTP padrão
+        const serviceMap: Record<string, { host: string; port: string }> = {
+          gmail: { host: "smtp.gmail.com", port: "587" },
+          outlook: { host: "smtp-mail.outlook.com", port: "587" }, 
+          yahoo: { host: "smtp.mail.yahoo.com", port: "587" },
+          hostinger: { host: "smtp.hostinger.com", port: "587" },
+          sendgrid: { host: "smtp.sendgrid.net", port: "587" }
+        };
 
-      const smtpHost = serviceMap[service] || service;
+        const serviceConfig = serviceMap[service];
+        if (serviceConfig) {
+          finalHost = serviceConfig.host;
+          finalPort = serviceConfig.port;
+        }
+      }
 
-      // Atualizar variáveis de ambiente
-      process.env.EMAIL_SERVICE = smtpHost;
+      // Atualizar variáveis de ambiente principais
+      process.env.EMAIL_SERVICE = finalHost || service || "smtp.gmail.com";
       process.env.EMAIL_USER = user;
       process.env.EMAIL_PASSWORD = password;
+      
+      // Configurações avançadas
+      if (finalHost && finalHost !== process.env.EMAIL_SERVICE) {
+        process.env.EMAIL_HOST = finalHost;
+      }
+      if (finalPort) {
+        process.env.EMAIL_PORT = finalPort;
+      }
+      if (secure !== undefined) {
+        process.env.EMAIL_SECURE = secure.toString();
+      }
+      if (requireTLS !== undefined) {
+        process.env.EMAIL_REQUIRE_TLS = requireTLS.toString();
+      }
+      if (connectionTimeout) {
+        process.env.EMAIL_CONNECTION_TIMEOUT = connectionTimeout;
+      }
+      if (greetingTimeout) {
+        process.env.EMAIL_GREETING_TIMEOUT = greetingTimeout;
+      }
+      if (socketTimeout) {
+        process.env.EMAIL_SOCKET_TIMEOUT = socketTimeout;
+      }
 
-      console.log(`Configurações de email atualizadas: ${smtpHost} com usuário ${user}`);
+      console.log(`Configurações de email atualizadas:`, {
+        host: finalHost,
+        port: finalPort,
+        user: user,
+        secure: secure,
+        requireTLS: requireTLS
+      });
 
       // Reinicializar o serviço de email com as novas configurações
       const { initEmailService } = await import("./email-service");

@@ -106,6 +106,20 @@ export async function initEmailService() {
           break;
       }
 
+      // Aplicar configurações avançadas se disponíveis
+      if (process.env.EMAIL_REQUIRE_TLS === 'true') {
+        emailConfig.requireTLS = true;
+      }
+      if (process.env.EMAIL_CONNECTION_TIMEOUT) {
+        emailConfig.connectionTimeout = parseInt(process.env.EMAIL_CONNECTION_TIMEOUT);
+      }
+      if (process.env.EMAIL_GREETING_TIMEOUT) {
+        emailConfig.greetingTimeout = parseInt(process.env.EMAIL_GREETING_TIMEOUT);
+      }
+      if (process.env.EMAIL_SOCKET_TIMEOUT) {
+        emailConfig.socketTimeout = parseInt(process.env.EMAIL_SOCKET_TIMEOUT);
+      }
+
       console.log(`[EMAIL-CONFIG] Configuração SMTP:`, {
         host: emailConfig.host,
         port: emailConfig.port,
