@@ -63,20 +63,20 @@ export default function EditComplementPage() {
   useEffect(() => {
     if (complement) {
       form.reset({
-        clientId: complement.clientId.toString(),
+        clientId: complement.clientId ? complement.clientId.toString() : "",
         origin: complement.origin || "",
         originState: complement.originState || "",
         destination: complement.destination || "",
         destinationState: complement.destinationState || "",
-        weight: complement.weight,
-        volumeQuantity: complement.volumeQuantity,
-        volumeLength: complement.volumeLength,
-        volumeWidth: complement.volumeWidth,
-        volumeHeight: complement.volumeHeight,
-        invoiceValue: complement.invoiceValue,
-        freightValue: complement.freightValue,
-        contactName: complement.contactName,
-        contactPhone: complement.contactPhone,
+        weight: complement.weight || "",
+        volumeQuantity: complement.volumeQuantity || 1,
+        volumeLength: complement.volumeLength || "",
+        volumeWidth: complement.volumeWidth || "",
+        volumeHeight: complement.volumeHeight || "",
+        invoiceValue: complement.invoiceValue || "",
+        freightValue: complement.freightValue || "",
+        contactName: complement.contactName || "",
+        contactPhone: complement.contactPhone || "",
         observations: complement.observations || "",
       });
       setCubicMeters(complement.cubicMeters || "0.000");
