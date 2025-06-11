@@ -694,9 +694,7 @@ export default function DriverForm() {
                   </h3>
                   <Button 
                     type="button" 
-                    variant="link" 
-                    onClick={addVehicle} 
-                    className="text-sm font-medium text-primary hover:text-primary/80"
+                    onClick={addVehicle}
                   >
                     + Adicionar Veículo
                   </Button>
