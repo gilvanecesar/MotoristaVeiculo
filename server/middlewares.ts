@@ -329,11 +329,19 @@ export async function canEditDriver(req: Request, res: Response, next: NextFunct
   }
 
   const driverId = parseInt(req.params.id, 10);
+  
+  // Log detalhado para diagnóstico
+  console.log(`[canEditDriver] Verificando permissões para editar motorista ${driverId}`);
+  console.log(`[canEditDriver] Usuário: ${req.user?.id}, Perfil: ${req.user?.profileType}, DriverId: ${req.user?.driverId}, ClientId: ${req.user?.clientId}, Subscription: ${req.user?.subscriptionActive}`);
+  
   const driver = await storage.getDriver(driverId);
   
   if (!driver) {
+    console.log(`[canEditDriver] Motorista ${driverId} não encontrado`);
     return res.status(404).json({ message: "Motorista não encontrado" });
   }
+  
+  console.log(`[canEditDriver] Dados do motorista: userId=${driver.userId}, clientId=${driver.clientId}`);
   
   // Administrador tem acesso total
   if (req.user?.profileType?.toLowerCase() === "administrador" || req.user?.profileType?.toLowerCase() === "admin") {
@@ -353,7 +361,16 @@ export async function canEditDriver(req: Request, res: Response, next: NextFunct
     return next();
   }
   
-  console.log(`[canEditDriver] Acesso negado para usuário ${req.user.id} editar motorista ${driverId}. Driver userId: ${driver.userId}`);
+  // Embarcador/Agente com assinatura pode editar motoristas do seu cliente
+  if ((req.user?.profileType?.toLowerCase() === "embarcador" || req.user?.profileType?.toLowerCase() === "agente") && 
+      req.user?.subscriptionActive && 
+      req.user?.clientId && 
+      driver.clientId === req.user?.clientId) {
+    console.log(`[canEditDriver] ${req.user?.profileType} ${req.user.id} com assinatura autorizado a editar motorista ${driverId} do cliente ${driver.clientId}`);
+    return next();
+  }
+  
+  console.log(`[canEditDriver] Acesso negado para usuário ${req.user.id} editar motorista ${driverId}. Driver userId: ${driver.userId}, Driver clientId: ${driver.clientId}`);
   res.status(403).json({ message: "Você só pode editar/excluir seus próprios cadastros" });
 }
 
