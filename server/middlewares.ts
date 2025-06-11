@@ -370,6 +370,13 @@ export async function canEditDriver(req: Request, res: Response, next: NextFunct
     return next();
   }
   
+  // Embarcador/Agente com assinatura pode editar qualquer motorista se não tem clientId específico
+  if ((req.user?.profileType?.toLowerCase() === "embarcador" || req.user?.profileType?.toLowerCase() === "agente") && 
+      req.user?.subscriptionActive) {
+    console.log(`[canEditDriver] ${req.user?.profileType} ${req.user.id} com assinatura autorizado a editar motorista ${driverId} (acesso geral)`);
+    return next();
+  }
+  
   console.log(`[canEditDriver] Acesso negado para usuário ${req.user.id} editar motorista ${driverId}. Driver userId: ${driver.userId}, Driver clientId: ${driver.clientId}`);
   res.status(403).json({ message: "Você só pode editar/excluir seus próprios cadastros" });
 }
