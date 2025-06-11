@@ -275,50 +275,72 @@ const LocationInput: React.FC<LocationInputProps> = ({
           </FormControl>
         </PopoverTrigger>
         <PopoverContent className="w-[350px] p-0" align="start">
-          <Command>
-            <CommandInput
-              placeholder="Digite pelo menos 3 letras para buscar..."
-              value={searchTerm}
-              onValueChange={setSearchTerm}
-            />
-            <CommandList>
-              {loading && <div className="p-2 text-center">Buscando...</div>}
+          <div className="border rounded-md bg-background">
+            <div className="p-2 border-b">
+              <input
+                type="text"
+                placeholder="Digite pelo menos 3 letras para buscar..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  handleInputChange(e);
+                }}
+                className="w-full px-2 py-1 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+            
+            <div className="max-h-[300px] overflow-y-auto">
+              {loading && (
+                <div className="p-3 text-center text-sm text-muted-foreground">
+                  Buscando cidades...
+                </div>
+              )}
               
-              <CommandEmpty>Nenhuma cidade encontrada</CommandEmpty>
+              {!loading && citySuggestions.length === 0 && searchTerm.length >= 3 && (
+                <div className="p-3 text-center text-sm text-muted-foreground">
+                  Nenhuma cidade encontrada
+                </div>
+              )}
               
               {citySuggestions.length > 0 && (
-                <CommandGroup heading="Cidades">
+                <div>
+                  <div className="px-2 py-1 text-xs font-medium text-muted-foreground bg-muted">
+                    Cidades encontradas
+                  </div>
                   {citySuggestions.map((suggestion) => (
-                    <CommandItem
+                    <div
                       key={`${suggestion.id}-${suggestion.name}-${suggestion.state}`}
-                      value={suggestion.displayText}
-                      onSelect={() => {
-                        console.log("CommandItem selecionado:", suggestion);
-                        selectSuggestion(suggestion);
-                      }}
+                      className="flex items-center px-3 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground border-b border-border/50 last:border-b-0"
                       onClick={() => {
-                        console.log("CommandItem clicado:", suggestion);
+                        console.log("Cidade clicada:", suggestion);
                         selectSuggestion(suggestion);
                       }}
-                      className="cursor-pointer hover:bg-accent"
+                      onMouseDown={(e) => {
+                        e.preventDefault(); // Previne que o input perca o foco
+                        console.log("Mouse down na cidade:", suggestion);
+                        selectSuggestion(suggestion);
+                      }}
                     >
-                      <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <div className="flex items-center">
-                        <span>{suggestion.name}</span>
-                        <span className="ml-1 text-muted-foreground"> - {suggestion.state}</span>
+                      <MapPin className="h-4 w-4 mr-2 text-muted-foreground flex-shrink-0" />
+                      <div className="flex-1">
+                        <span className="font-medium">{suggestion.name}</span>
+                        <span className="ml-1 text-muted-foreground">- {suggestion.state}</span>
                       </div>
-                    </CommandItem>
+                    </div>
                   ))}
-                </CommandGroup>
+                </div>
               )}
               
               {citySuggestions.length === 0 && searchTerm.length < 3 && (
-                <CommandGroup heading="Estados">
-                  {BRAZILIAN_STATES.map((state) => (
-                    <CommandItem
+                <div>
+                  <div className="px-2 py-1 text-xs font-medium text-muted-foreground bg-muted">
+                    Estados disponíveis
+                  </div>
+                  {BRAZILIAN_STATES.slice(0, 10).map((state) => (
+                    <div
                       key={state.value}
-                      value={state.value}
-                      onSelect={() => {
+                      className="flex items-center px-3 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground border-b border-border/50 last:border-b-0"
+                      onClick={() => {
                         const cityName = searchTerm || "Cidade";
                         const suggestion: CitySuggestion = {
                           id: 0,
@@ -327,22 +349,23 @@ const LocationInput: React.FC<LocationInputProps> = ({
                           state: state.value,
                           displayText: `${cityName} - ${state.value}`
                         };
+                        console.log("Estado clicado:", suggestion);
                         selectSuggestion(suggestion);
                       }}
                     >
                       <Check
                         className={cn(
-                          "mr-2 h-4 w-4",
+                          "mr-2 h-4 w-4 flex-shrink-0",
                           value.endsWith(` - ${state.value}`) ? "opacity-100" : "opacity-0"
                         )}
                       />
-                      {state.label} - {state.value}
-                    </CommandItem>
+                      <span>{state.label} - {state.value}</span>
+                    </div>
                   ))}
-                </CommandGroup>
+                </div>
               )}
-            </CommandList>
-          </Command>
+            </div>
+          </div>
         </PopoverContent>
       </Popover>
       {errorMessage && (
