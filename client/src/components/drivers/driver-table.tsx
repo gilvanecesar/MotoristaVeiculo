@@ -150,11 +150,6 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
       return true;
     }
     
-    // Para tipo "shipper" com clientId, pode editar qualquer motorista do mesmo cliente
-    if (user.profileType?.toLowerCase() === "shipper" && user.clientId) {
-      return true;
-    }
-    
     // Usuário só pode editar motoristas que ele criou
     return driver.userId === user.id;
   };

@@ -227,7 +227,7 @@ export async function hasDriverAccess(req: Request, res: Response, next: NextFun
   }
   
   // Buscar informações do usuário que criou o motorista
-  const driverCreator = await storage.getUser(driver.userId);
+  const driverCreator = await storage.getUserById(driver.userId);
   
   // Se motorista foi criado por usuário sem cliente (clientId null/0), qualquer usuário autenticado pode acessar
   if (!driverCreator?.clientId || driverCreator.clientId === 0) {
