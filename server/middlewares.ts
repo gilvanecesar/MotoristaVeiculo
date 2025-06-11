@@ -258,8 +258,10 @@ export async function canEditDriver(req: Request, res: Response, next: NextFunct
     return next();
   }
   
-  // Usuário tipo "shipper" com clientId pode editar qualquer motorista
-  if (req.user?.profileType?.toLowerCase() === "shipper" && req.user?.clientId) {
+  // Para exclusão, shipper só pode excluir motoristas que ele mesmo criou
+  const isDeleteOperation = req.method === 'DELETE';
+  
+  if (req.user?.profileType?.toLowerCase() === "shipper" && req.user?.clientId && !isDeleteOperation) {
     console.log(`Permissão de edição concedida ao shipper (${req.user?.id}) com clientId para o motorista ${driverId}`);
     return next();
   }
@@ -274,8 +276,19 @@ export async function canEditDriver(req: Request, res: Response, next: NextFunct
     
     // Verificar se o motorista pertence ao usuário logado
     if (driver.userId === req.user?.id) {
-      console.log(`Permissão de edição concedida ao usuário (${req.user?.id}) para seu próprio motorista ${driverId}`);
+      console.log(`Permissão concedida ao usuário (${req.user?.id}) para ${isDeleteOperation ? 'excluir' : 'editar'} seu próprio motorista ${driverId}`);
       return next();
+    }
+    
+    // Para shippers em operações de exclusão, verificar se o motorista foi criado por ele
+    if (req.user?.profileType?.toLowerCase() === "shipper" && req.user?.clientId && isDeleteOperation) {
+      if (driver.userId === req.user?.id) {
+        console.log(`Permissão de exclusão concedida ao shipper (${req.user?.id}) para motorista ${driverId} que ele criou`);
+        return next();
+      } else {
+        console.log(`Permissão de exclusão negada para shipper (${req.user?.id}). Motorista ${driverId} foi criado por usuário ${driver.userId}`);
+        return res.status(403).json({ message: "Você só pode excluir motoristas que você mesmo cadastrou" });
+      }
     }
     
     // Se for motorista, só pode editar seu próprio perfil
@@ -284,8 +297,8 @@ export async function canEditDriver(req: Request, res: Response, next: NextFunct
       return next();
     }
     
-    console.log(`Permissão de edição negada para motorista ${driverId}. User ID: ${req.user?.id}, Driver userId: ${driver.userId}, User profileType: ${req.user?.profileType}`);
-    res.status(403).json({ message: "Você só pode editar seus próprios dados" });
+    console.log(`Permissão ${isDeleteOperation ? 'de exclusão' : 'de edição'} negada para motorista ${driverId}. User ID: ${req.user?.id}, Driver userId: ${driver.userId}, User profileType: ${req.user?.profileType}`);
+    res.status(403).json({ message: isDeleteOperation ? "Você só pode excluir motoristas que você mesmo cadastrou" : "Você só pode editar seus próprios dados" });
     
   } catch (error) {
     console.error("Erro ao verificar permissões do motorista:", error);
