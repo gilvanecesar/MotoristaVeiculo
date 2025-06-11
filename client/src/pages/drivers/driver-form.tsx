@@ -253,6 +253,8 @@ export default function DriverForm() {
   const onSubmit = (data: FormValues) => {
     console.log("Submitting form:", { isEditing, data });
     console.log("Form errors:", form.formState.errors);
+    console.log("Form valid:", form.formState.isValid);
+    console.log("Vehicles data:", data.vehicles);
     
     if (isEditing) {
       console.log("Calling updateDriver.mutate");
@@ -261,6 +263,16 @@ export default function DriverForm() {
       console.log("Calling createDriver.mutate");
       createDriver.mutate(data);
     }
+  };
+
+  // Add button click handler for debugging
+  const handleSubmitClick = () => {
+    console.log("Submit button clicked!");
+    console.log("Form state:", {
+      isValid: form.formState.isValid,
+      isSubmitting: form.formState.isSubmitting,
+      errors: form.formState.errors
+    });
   };
 
   const addVehicle = () => {
@@ -721,6 +733,7 @@ export default function DriverForm() {
                 <Button 
                   type="submit"
                   disabled={createDriver.isPending || updateDriver.isPending || isLoading}
+                  onClick={handleSubmitClick}
                 >
                   {createDriver.isPending || updateDriver.isPending
                     ? "Salvando..."
