@@ -263,6 +263,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const driverData: InsertDriver = {
         ...req.body,
+        name: req.body.name?.toUpperCase() || "",  // Nome em maiúsculo
         userId: req.user?.id!  // Vincula o motorista ao usuário logado
       };
       
@@ -278,7 +279,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/drivers/:id", hasDriverAccess, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
-      const driverData = req.body;
+      const driverData = {
+        ...req.body,
+        // Se o nome está sendo atualizado, aplicar maiúsculo
+        ...(req.body.name && { name: req.body.name.toUpperCase() })
+      };
       
       const updatedDriver = await storage.updateDriver(id, driverData);
       
