@@ -95,7 +95,9 @@ export default function DriverForm() {
 
   // Auto-fill user data for new drivers
   useEffect(() => {
+    console.log("Auto-fill effect - isEditing:", isEditing, "user:", user);
     if (!isEditing && user && form.getValues("name") !== user.name) {
+      console.log("Preenchendo campos automaticamente:", user.name, user.email);
       form.setValue("name", user.name || "");
       form.setValue("email", user.email || "");
     }
