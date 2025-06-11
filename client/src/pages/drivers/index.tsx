@@ -1,11 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { Search, Plus, Edit, Eye, Trash, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DriverTable } from "@/components/drivers/driver-table";
-import { DriverMobileView } from "@/components/drivers/driver-mobile-view";
-import { DriverDetails } from "@/components/drivers/driver-details";
 import { Input } from "@/components/ui/input";
 import { 
   Dialog, 
@@ -25,21 +23,7 @@ export default function DriversPage() {
   const [, navigate] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [driverToDelete, setDriverToDelete] = useState<DriverWithVehicles | null>(null);
-  const [driverToView, setDriverToView] = useState<DriverWithVehicles | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
   const { toast } = useToast();
-
-  // Detectar tamanho da tela
-  useEffect(() => {
-    const checkIsMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    checkIsMobile();
-    window.addEventListener('resize', checkIsMobile);
-
-    return () => window.removeEventListener('resize', checkIsMobile);
-  }, []);
 
   const { data: drivers = [], isLoading } = useQuery<DriverWithVehicles[]>({
     queryKey: ["/api/drivers", searchQuery],
@@ -67,7 +51,7 @@ export default function DriversPage() {
   };
 
   const handleView = (driver: DriverWithVehicles) => {
-    setDriverToView(driver);
+    navigate(`/drivers/${driver.id}`);
   };
 
   const handleDelete = (driver: DriverWithVehicles) => {
@@ -122,24 +106,13 @@ export default function DriversPage() {
         </div>
       </div>
 
-      {/* Visualização responsiva */}
-      {isMobile ? (
-        <DriverMobileView
-          drivers={drivers}
-          isLoading={isLoading}
-          onEdit={handleEdit}
-          onView={handleView}
-          onDelete={handleDelete}
-        />
-      ) : (
-        <DriverTable
-          drivers={drivers}
-          isLoading={isLoading}
-          onEdit={handleEdit}
-          onView={handleView}
-          onDelete={handleDelete}
-        />
-      )}
+      <DriverTable
+        drivers={drivers}
+        isLoading={isLoading}
+        onEdit={handleEdit}
+        onView={handleView}
+        onDelete={handleDelete}
+      />
 
       <Dialog open={!!driverToDelete} onOpenChange={(open) => !open && setDriverToDelete(null)}>
         <DialogContent>
@@ -164,13 +137,6 @@ export default function DriversPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Modal de detalhes do motorista */}
-      <DriverDetails
-        driver={driverToView}
-        open={!!driverToView}
-        onOpenChange={(open) => !open && setDriverToView(null)}
-      />
     </div>
   );
 }

@@ -6,9 +6,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Edit, Eye, Trash, Users, ChevronDown, ChevronRight, Phone, Car } from "lucide-react";
 import { format } from "date-fns";
-import React, { useState } from "react";
+import { useState } from "react";
 import { Pagination } from "@/components/ui/pagination";
-import { useAuth } from "@/hooks/use-auth";
 
 interface DriverTableProps {
   drivers: DriverWithVehicles[];
@@ -19,153 +18,126 @@ interface DriverTableProps {
 }
 
 export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: DriverTableProps) {
-  const [expandedRows, setExpandedRows] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-  const { user } = useAuth();
+  const [expandedRows, setExpandedRows] = useState<number[]>([]);
 
-  const toggleRowExpansion = (driverId: number) => {
-    setExpandedRows(prev => 
-      prev.includes(driverId) 
-        ? prev.filter(id => id !== driverId)
-        : [...prev, driverId]
-    );
+  // Pagination logic
+  const totalPages = Math.ceil(drivers.length / itemsPerPage);
+  const paginatedDrivers = drivers.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Generate initials from name
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
   };
 
-  const formatWhatsAppLink = (whatsapp: string) => {
-    if (!whatsapp) return "#";
-    
-    const cleanNumber = whatsapp.replace(/\D/g, '');
-    
-    if (cleanNumber.length === 11 && cleanNumber.startsWith('55')) {
-      return `https://wa.me/${cleanNumber}`;
-    }
-    
-    if (cleanNumber.length === 11) {
-      return `https://wa.me/55${cleanNumber}`;
-    }
-    
-    if (cleanNumber.length === 10) {
-      return `https://wa.me/55${cleanNumber}`;
-    }
-    
-    return `https://wa.me/${cleanNumber}`;
+  // Get avatar color based on name
+  const getAvatarColor = (name: string) => {
+    const colors = ["primary", "blue", "green", "yellow", "red", "purple"];
+    const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return colors[hash % colors.length];
   };
 
+  // Format vehicle info
   const formatVehicleInfo = (driver: DriverWithVehicles) => {
-    if (!driver.vehicles || driver.vehicles.length === 0) {
-      return "Nenhum veículo";
+    const vehicles = driver.vehicles || [];
+    if (vehicles.length === 0) {
+      return { count: "0 veículos", plates: "Nenhum veículo cadastrado" };
     }
-
-    if (driver.vehicles.length === 1) {
-      const vehicle = driver.vehicles[0];
-      return `${vehicle.brand} ${vehicle.model} - ${vehicle.plate}`;
-    }
-
-    return `${driver.vehicles.length} veículos`;
+    
+    const count = `${vehicles.length} ${vehicles.length === 1 ? 'veículo' : 'veículos'}`;
+    const plates = vehicles.map(v => v.plate).join(', ');
+    
+    return { count, plates };
   };
-
+  
+  // Obter categoria do veículo (leve, médio, pesado)
   const getVehicleCategory = (vehicle: Vehicle): string => {
-    const type = vehicle.vehicleType;
-    
-    if (type?.startsWith('leve')) return 'Leve';
-    if (type?.startsWith('medio')) return 'Médio';
-    if (type?.startsWith('pesado')) return 'Pesado';
-    if (type === VEHICLE_TYPES.MOTO) return 'Moto';
-    if (type === VEHICLE_TYPES.VARIOS) return 'Vários';
-    
-    return 'Não especificado';
-  };
-
-  const getSpecificVehicleType = (vehicle: Vehicle): string => {
-    const type = vehicle.vehicleType;
+    if (!vehicle) return "Desconhecido";
     
     // Leves
-    if (type === VEHICLE_TYPES.LEVE_TODOS) return "Todos";
-    if (type === VEHICLE_TYPES.LEVE_FIORINO) return "Fiorino";
-    if (type === VEHICLE_TYPES.LEVE_TOCO) return "Toco";
-    if (type === VEHICLE_TYPES.LEVE_TURBO) return "Turbo";
-    if (type === VEHICLE_TYPES.LEVE_CHAPEIRO) return "Chapeiro";
-    if (type === VEHICLE_TYPES.LEVE_VAN) return "Van";
-    if (type === VEHICLE_TYPES.LEVE_UTILITARIO) return "Utilitário";
+    if (vehicle.vehicleType.startsWith("leve_")) return "Leve";
     
     // Médios
-    if (type === VEHICLE_TYPES.MEDIO_TOCO) return "Toco";
-    if (type === VEHICLE_TYPES.MEDIO_CHAPEIRO) return "Chapeiro";
-    if (type === VEHICLE_TYPES.MEDIO_TURBO) return "Turbo";
+    if (vehicle.vehicleType.startsWith("medio_")) return "Médio";
     
     // Pesados
-    if (type === VEHICLE_TYPES.PESADO_TOCO) return "Toco";
-    if (type === VEHICLE_TYPES.PESADO_TRUCADO) return "Trucado";
-    if (type === VEHICLE_TYPES.PESADO_CARRETA_LS) return "Carreta LS";
-    if (type === VEHICLE_TYPES.PESADO_CARRETA_2E) return "Carreta 2E";
-    if (type === VEHICLE_TYPES.PESADO_CARRETA_3E) return "Carreta 3E";
-    if (type === VEHICLE_TYPES.PESADO_BITREM) return "Bitrem";
-    if (type === VEHICLE_TYPES.PESADO_RODOTREM) return "Rodotrem";
+    if (vehicle.vehicleType.startsWith("pesado_")) return "Pesado";
     
-    // Outros
-    if (type === VEHICLE_TYPES.MOTO) return "Motocicleta";
-    if (type === VEHICLE_TYPES.VARIOS) return "Vários";
-    
-    return "Não especificado";
+    return "Desconhecido";
   };
 
+  // Obter o tipo específico do veículo
+  const getSpecificVehicleType = (vehicle: Vehicle): string => {
+    if (!vehicle) return "Não definido";
+    
+    // Leves
+    if (vehicle.vehicleType === VEHICLE_TYPES.LEVE_TODOS) return "Todos";
+    if (vehicle.vehicleType === VEHICLE_TYPES.LEVE_FIORINO) return "Fiorino";
+    if (vehicle.vehicleType === VEHICLE_TYPES.LEVE_TOCO) return "Toco";
+    if (vehicle.vehicleType === VEHICLE_TYPES.LEVE_VLC) return "VLC";
+    
+    // Médios
+    if (vehicle.vehicleType === VEHICLE_TYPES.MEDIO_TODOS) return "Todos";
+    if (vehicle.vehicleType === VEHICLE_TYPES.MEDIO_BITRUCK) return "Bitruck";
+    if (vehicle.vehicleType === VEHICLE_TYPES.MEDIO_TRUCK) return "Truck";
+    
+    // Pesados
+    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_TODOS) return "Todos";
+    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_BITREM) return "Bitrem";
+    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_CARRETA) return "Carreta";
+    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_CARRETA_LS) return "Carreta LS";
+    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_RODOTREM) return "Rodotrem";
+    if (vehicle.vehicleType === VEHICLE_TYPES.PESADO_VANDERLEIA) return "Vanderléia";
+    
+    return "Desconhecido";
+  };
+  
+  // Formatar o tipo de carroceria para exibição
   const getBodyTypeDisplay = (vehicle: Vehicle) => {
-    const bodyType = vehicle.bodyType;
+    if (!vehicle) return "Não definido";
     
-    switch (bodyType) {
-      case BODY_TYPES.BAU: return "Baú";
-      case BODY_TYPES.GRANELEIRA: return "Graneleira";
-      case BODY_TYPES.BASCULANTE: return "Basculante";
-      case BODY_TYPES.PLATAFORMA: return "Plataforma";
-      case BODY_TYPES.TANQUE: return "Tanque";
-      case BODY_TYPES.FRIGORIFICA: return "Frigorífica";
-      case BODY_TYPES.CEGONHEIRA: return "Cegonheira";
-      case BODY_TYPES.SIDER: return "Sider";
-      case BODY_TYPES.CACAMBA: return "Caçamba";
-      case BODY_TYPES.FECHADA: return "Fechada";
-      default: return "Não especificado";
-    }
+    if (vehicle.bodyType === BODY_TYPES.BAU) return "Baú";
+    if (vehicle.bodyType === BODY_TYPES.GRANELEIRA) return "Graneleira";
+    if (vehicle.bodyType === BODY_TYPES.BASCULANTE) return "Basculante";
+    if (vehicle.bodyType === BODY_TYPES.PLATAFORMA) return "Plataforma";
+    if (vehicle.bodyType === BODY_TYPES.TANQUE) return "Tanque";
+    if (vehicle.bodyType === BODY_TYPES.FRIGORIFICA) return "Frigorífica";
+    if (vehicle.bodyType === BODY_TYPES.PORTA_CONTEINER) return "Porta Contêiner";
+    if (vehicle.bodyType === BODY_TYPES.SIDER) return "Sider";
+    if (vehicle.bodyType === BODY_TYPES.CACAMBA) return "Caçamba";
+    if (vehicle.bodyType === BODY_TYPES.ABERTA) return "Aberta";
+    if (vehicle.bodyType === BODY_TYPES.FECHADA) return "Fechada";
+    
+    return "Desconhecido";
   };
-
-  const canEditDriver = (driver: DriverWithVehicles) => {
-    if (!user) return false;
-    return user.id === driver.userId;
+  
+  // Function to format WhatsApp number for the wa.me link
+  const formatWhatsAppLink = (phone: string | null) => {
+    if (!phone) return null;
+    // Remove all non-numeric characters
+    const numericPhone = phone.replace(/\D/g, '');
+    return `https://wa.me/${numericPhone}`;
   };
-
-  if (isLoading) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-center h-32">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-              <p className="text-sm text-slate-600">Carregando motoristas...</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (drivers.length === 0) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="text-center py-8">
-            <Users className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-slate-900 mb-2">Nenhum motorista encontrado</h3>
-            <p className="text-slate-600">Cadastre seu primeiro motorista para começar.</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const totalPages = Math.ceil(drivers.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentPageDrivers = drivers.slice(startIndex, endIndex);
+  
+  // Toggle expanded row
+  const toggleExpandRow = (driverId: number) => {
+    setExpandedRows(prev => {
+      if (prev.includes(driverId)) {
+        return prev.filter(id => id !== driverId);
+      } else {
+        return [...prev, driverId];
+      }
+    });
+  };
 
   return (
     <Card>
@@ -173,269 +145,296 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="bg-slate-50 dark:bg-slate-800">
-                <TableHead className="w-12 text-center"></TableHead>
-                <TableHead className="font-semibold">Motorista</TableHead>
-                <TableHead className="font-semibold">Contato</TableHead>
-                <TableHead className="font-semibold">CNH</TableHead>
-                <TableHead className="font-semibold">Veículos</TableHead>
-                <TableHead className="font-semibold">Cidade</TableHead>
-                <TableHead className="font-semibold">Data de Cadastro</TableHead>
-                <TableHead className="w-32 text-center font-semibold">Ações</TableHead>
+              <TableRow>
+                <TableHead></TableHead>
+                <TableHead>Nome</TableHead>
+                <TableHead>CNH</TableHead>
+                <TableHead>WhatsApp</TableHead>
+                <TableHead>Veículos</TableHead>
+                <TableHead>Categoria</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Carroceria</TableHead>
+                <TableHead>Cadastrado em</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {currentPageDrivers.map((driver) => {
-                const createdDate = driver.createdAt ? new Date(driver.createdAt) : new Date();
-                const isExpanded = expandedRows.includes(driver.id);
-                const whatsappLink = formatWhatsAppLink(driver.whatsapp);
-                
-                return (
-                  <React.Fragment key={driver.id}>
-                    <TableRow className="hover:bg-slate-50">
-                      <TableCell className="p-2 align-middle text-center">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => toggleRowExpansion(driver.id)}
-                          className="h-8 w-8"
-                        >
-                          {isExpanded ? (
-                            <ChevronDown className="h-4 w-4" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </TableCell>
-                      
-                      <TableCell className="p-4 align-middle">
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-10 w-10">
-                            <AvatarFallback className="bg-primary/10 text-primary font-medium">
-                              {driver.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="font-medium text-slate-900 dark:text-slate-100">
-                              {driver.name}
-                            </div>
-                            <div className="text-sm text-slate-600 dark:text-slate-400">
-                              {driver.email}
-                            </div>
-                          </div>
-                        </div>
-                      </TableCell>
-                      
-                      <TableCell className="p-4 align-middle">
-                        <div className="space-y-1">
-                          {driver.whatsapp && (
-                            <div className="flex items-center gap-2">
-                              <Phone className="h-4 w-4 text-green-600" />
-                              <a 
-                                href={whatsappLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-sm text-green-600 hover:text-green-700 hover:underline"
-                              >
-                                {driver.whatsapp}
-                              </a>
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      
-                      <TableCell className="p-4 align-middle">
-                        <div className="space-y-1">
-                          {driver.cnhNumber && (
-                            <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                              {driver.cnhCategory || 'N/A'}
-                            </div>
-                          )}
-                          {driver.cnhExpiration && (
-                            <div className="text-xs text-slate-600 dark:text-slate-400">
-                              Exp: {format(new Date(driver.cnhExpiration), "dd/MM/yyyy")}
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      
-                      <TableCell className="p-4 align-middle">
-                        <div className="space-y-1">
-                          <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                            {formatVehicleInfo(driver)}
-                          </div>
-                          {driver.vehicles && driver.vehicles.length > 0 && (
-                            <div className="flex flex-wrap gap-1">
-                              {driver.vehicles.slice(0, 2).map((vehicle) => (
-                                <Badge 
-                                  key={vehicle.id}
-                                  variant="secondary" 
-                                  className="text-xs"
-                                >
-                                  {getVehicleCategory(vehicle)}
-                                </Badge>
-                              ))}
-                              {driver.vehicles.length > 2 && (
-                                <Badge variant="outline" className="text-xs">
-                                  +{driver.vehicles.length - 2}
-                                </Badge>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      
-                      <TableCell className="p-4 align-middle">
-                        <div className="text-sm text-slate-900 dark:text-slate-100">
-                          {driver.city || "Não informado"}
-                        </div>
-                        {driver.state && (
-                          <div className="text-xs text-slate-600 dark:text-slate-400">
-                            {driver.state}
-                          </div>
-                        )}
-                      </TableCell>
-                      
-                      <TableCell className="p-4 align-middle">
-                        <div className="text-sm text-slate-900 dark:text-slate-100">
-                          {format(createdDate, "dd/MM/yyyy")}
-                        </div>
-                        <div className="text-xs text-slate-600 dark:text-slate-400">
-                          {format(createdDate, "HH:mm")}
-                        </div>
-                      </TableCell>
-                      
-                      <TableCell className="p-4 align-middle">
-                        <div className="flex items-center justify-center gap-1">
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={10} className="text-center py-4">
+                    Carregando motoristas...
+                  </TableCell>
+                </TableRow>
+              ) : paginatedDrivers.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={10} className="text-center py-4">
+                    <div className="flex flex-col items-center py-4 text-slate-500">
+                      <Users className="h-12 w-12 mb-2 text-slate-300" />
+                      <p className="mb-1">Nenhum motorista encontrado</p>
+                      <p className="text-sm">
+                        Cadastre o primeiro motorista clicando em "Novo Motorista"
+                      </p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                paginatedDrivers.map((driver) => {
+                  const initials = getInitials(driver.name);
+                  const color = getAvatarColor(driver.name);
+                  const vehicleInfo = formatVehicleInfo(driver);
+                  const createdDate = driver.createdAt ? new Date(driver.createdAt) : new Date();
+                  const isExpanded = expandedRows.includes(driver.id);
+                  const whatsappLink = formatWhatsAppLink(driver.whatsapp);
+                  
+                  return (
+                    <>
+                      <TableRow key={driver.id} className="hover:bg-slate-50">
+                        <TableCell className="p-2 align-middle text-center">
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => onView(driver)}
-                            className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                            title="Visualizar motorista"
+                            className="h-8 w-8"
+                            onClick={() => toggleExpandRow(driver.id)}
+                            title={isExpanded ? "Recolher detalhes" : "Expandir detalhes"}
                           >
-                            <Eye className="h-4 w-4" />
+                            {isExpanded ? (
+                              <ChevronDown className="h-5 w-5 text-slate-500" />
+                            ) : (
+                              <ChevronRight className="h-5 w-5 text-slate-500" />
+                            )}
                           </Button>
-                          
-                          {canEditDriver(driver) && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center">
+                            <Avatar className="h-8 w-8">
+                              <AvatarFallback className={`bg-${color}/10 text-${color}`}>
+                                {initials}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-slate-900">{driver.name}</div>
+                              <div className="text-xs text-slate-500">{driver.email}</div>
+                            </div>
+                          </div>
+                        </TableCell>
+
+                        <TableCell>
+                          <div className="text-sm text-slate-900">{driver.cnh}</div>
+                          <div className="text-xs text-slate-500">Categoria {driver.cnhCategory}</div>
+                        </TableCell>
+                        <TableCell>
+                          {whatsappLink ? (
+                            <a 
+                              href={whatsappLink} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="flex items-center text-primary hover:underline"
+                              title="Contatar via WhatsApp"
+                            >
+                              <Phone className="h-4 w-4 mr-1" />
+                              {driver.phone}
+                            </a>
+                          ) : (
+                            <span className="text-slate-500">{driver.phone || 'Não informado'}</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm text-slate-900">{vehicleInfo.count}</div>
+                          <div className="text-xs text-slate-500">{vehicleInfo.plates}</div>
+                        </TableCell>
+                        <TableCell>
+                          {driver.vehicles.length > 0 ? (
+                            <Badge 
+                              variant="secondary" 
+                              className="font-medium text-xs"
+                            >
+                              {getVehicleCategory(driver.vehicles[0])}
+                            </Badge>
+                          ) : (
+                            <div className="text-xs text-slate-500">Sem veículo</div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {driver.vehicles.length > 0 ? (
+                            <div className="text-sm text-slate-900">
+                              {getSpecificVehicleType(driver.vehicles[0])}
+                            </div>
+                          ) : (
+                            <div className="text-xs text-slate-500">Sem veículo</div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {driver.vehicles.length > 0 ? (
+                            <div>
+                              <Badge variant="outline" className="font-normal text-xs h-5 px-1.5">
+                                {getBodyTypeDisplay(driver.vehicles[0])}
+                              </Badge>
+                            </div>
+                          ) : (
+                            <div className="text-xs text-slate-500">Sem veículo</div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm text-slate-500">
+                            {format(createdDate, 'dd/MM/yyyy')}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 text-primary"
+                              title="Editar"
                               onClick={() => onEdit(driver)}
-                              className="h-8 w-8 text-slate-600 hover:text-slate-700 hover:bg-slate-50"
-                              title="Editar motorista"
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
-                          )}
-                          
-                          {canEditDriver(driver) && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 text-slate-500"
+                              title="Ver detalhes"
+                              onClick={() => onView(driver)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 text-red-500"
+                              title="Excluir"
                               onClick={() => onDelete(driver)}
-                              className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                              title="Excluir motorista"
                             >
                               <Trash className="h-4 w-4" />
                             </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                    
-                    {isExpanded && (
-                      <TableRow className="bg-slate-50/50">
-                        <TableCell colSpan={8} className="p-0">
-                          <div className="p-6 space-y-4 border-t border-slate-200">
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                              <div>
-                                <h3 className="text-md font-semibold mb-3 text-slate-800 dark:text-slate-200">Informações Pessoais</h3>
-                                <div className="space-y-2 text-sm">
-                                  <p><span className="font-medium text-slate-600 dark:text-slate-400">Email:</span> {driver.email}</p>
-                                  <p><span className="font-medium text-slate-600 dark:text-slate-400">WhatsApp:</span> {driver.whatsapp}</p>
-                                  <p><span className="font-medium text-slate-600 dark:text-slate-400">Data de Nascimento:</span> {driver.birthDate ? format(new Date(driver.birthDate), "dd/MM/yyyy") : "Não informado"}</p>
-                                  <p><span className="font-medium text-slate-600 dark:text-slate-400">RG:</span> {driver.rg || "Não informado"}</p>
-                                  <p><span className="font-medium text-slate-600 dark:text-slate-400">CPF:</span> {driver.cpf || "Não informado"}</p>
-                                </div>
-                              </div>
-                              
-                              <div>
-                                <h3 className="text-md font-semibold mb-3 text-slate-800 dark:text-slate-200">CNH</h3>
-                                <div className="space-y-2 text-sm">
-                                  <p><span className="font-medium text-slate-600 dark:text-slate-400">Número:</span> {driver.cnhNumber || "Não informado"}</p>
-                                  <p><span className="font-medium text-slate-600 dark:text-slate-400">Categoria:</span> {driver.cnhCategory || "Não informada"}</p>
-                                  <p><span className="font-medium text-slate-600 dark:text-slate-400">Validade:</span> {driver.cnhExpiration ? format(new Date(driver.cnhExpiration), "dd/MM/yyyy") : "Não informada"}</p>
-                                  <p><span className="font-medium text-slate-600 dark:text-slate-400">Data de Emissão:</span> {driver.cnhIssueDate ? format(new Date(driver.cnhIssueDate), "dd/MM/yyyy") : "Não informada"}</p>
-                                </div>
-                              </div>
-                              
-                              <div>
-                                <h3 className="text-md font-semibold mb-3 text-slate-800 dark:text-slate-200">Endereço</h3>
-                                <div className="space-y-2 text-sm">
-                                  <p><span className="font-medium text-slate-600 dark:text-slate-400">Rua:</span> {driver.street || "Não informado"}</p>
-                                  <p><span className="font-medium text-slate-600 dark:text-slate-400">Número:</span> {driver.number || "Não informado"}</p>
-                                  <p><span className="font-medium text-slate-600 dark:text-slate-400">Complemento:</span> {driver.complement || "Não informado"}</p>
-                                  <p><span className="font-medium text-slate-600 dark:text-slate-400">Bairro:</span> {driver.neighborhood || "Não informado"}</p>
-                                  <p><span className="font-medium text-slate-600 dark:text-slate-400">Cidade:</span> {driver.city || "Não informado"}</p>
-                                  <p><span className="font-medium text-slate-600 dark:text-slate-400">Estado:</span> {driver.state || "Não informado"}</p>
-                                  <p><span className="font-medium text-slate-600 dark:text-slate-400">CEP:</span> {driver.zipcode || "Não informado"}</p>
-                                </div>
-                              </div>
-                            </div>
-                            
-                            {driver.vehicles.length > 0 && (
-                              <div>
-                                <h3 className="text-md font-semibold mb-2 text-slate-800 dark:text-slate-200">Veículos</h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                  {driver.vehicles.map((vehicle: any) => (
-                                    <div key={vehicle.id} className="p-3 bg-white dark:bg-slate-700 rounded border border-slate-200 dark:border-slate-600">
-                                      <div className="flex items-center gap-2 mb-2">
-                                        <Car className="h-4 w-4 text-primary" />
-                                        <h4 className="text-sm font-medium">{vehicle.brand} {vehicle.model}</h4>
-                                      </div>
-                                      <div className="grid grid-cols-2 gap-2 text-xs">
-                                        <div>
-                                          <p className="text-slate-500 dark:text-slate-400">Placa</p>
-                                          <p className="font-medium">{vehicle.plate}</p>
-                                        </div>
-                                        <div>
-                                          <p className="text-slate-500 dark:text-slate-400">Ano</p>
-                                          <p className="font-medium">{vehicle.year}</p>
-                                        </div>
-                                        <div>
-                                          <p className="text-slate-500 dark:text-slate-400">Cor</p>
-                                          <p className="font-medium">{vehicle.color}</p>
-                                        </div>
-                                        {vehicle.renavam && (
-                                          <div>
-                                            <p className="text-slate-500 dark:text-slate-400">Renavam</p>
-                                            <p className="font-medium">{vehicle.renavam}</p>
-                                          </div>
-                                        )}
-                                        <div>
-                                          <p className="text-slate-500 dark:text-slate-400">Tipo</p>
-                                          <p className="font-medium">
-                                            {getVehicleCategory(vehicle)} - {getSpecificVehicleType(vehicle)}
-                                          </p>
-                                        </div>
-                                        <div>
-                                          <p className="text-slate-500 dark:text-slate-400">Carroceria</p>
-                                          <p className="font-medium">{getBodyTypeDisplay(vehicle)}</p>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
                           </div>
                         </TableCell>
                       </TableRow>
-                    )}
-                  </React.Fragment>
-                );
-              })}
+                      
+                      {/* Linha de detalhes expandida */}
+                      {isExpanded && (
+                        <TableRow>
+                          <TableCell colSpan={10}>
+                            <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                  <h3 className="text-md font-semibold mb-2 text-slate-800 dark:text-slate-200">Informações do Motorista</h3>
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                      <p className="text-xs text-slate-500 dark:text-slate-400">Data de Nascimento</p>
+                                      <p className="text-sm">{format(driver.birthdate ? new Date(driver.birthdate) : new Date(), 'dd/MM/yyyy')}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-xs text-slate-500 dark:text-slate-400">Telefone</p>
+                                      <p className="text-sm">{driver.phone}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-xs text-slate-500 dark:text-slate-400">CNH Validade</p>
+                                      <p className="text-sm">{format(driver.cnhExpiration ? new Date(driver.cnhExpiration) : new Date(), 'dd/MM/yyyy')}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-xs text-slate-500 dark:text-slate-400">CNH Emissão</p>
+                                      <p className="text-sm">{format(driver.cnhIssueDate ? new Date(driver.cnhIssueDate) : new Date(), 'dd/MM/yyyy')}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                                
+                                <div>
+                                  <h3 className="text-md font-semibold mb-2 text-slate-800 dark:text-slate-200">Endereço</h3>
+                                  <p className="text-sm mb-1">
+                                    {driver.street}, {driver.number}
+                                    {driver.complement && ` - ${driver.complement}`}
+                                  </p>
+                                  <p className="text-sm mb-1">
+                                    {driver.neighborhood}, {driver.city} - {driver.state}
+                                  </p>
+                                  <p className="text-sm">{driver.zipcode}</p>
+                                </div>
+                              </div>
+                              
+                              {driver.vehicles.length > 0 && (
+                                <div>
+                                  <h3 className="text-md font-semibold mb-2 text-slate-800 dark:text-slate-200">Veículos</h3>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                    {driver.vehicles.map((vehicle) => (
+                                      <div key={vehicle.id} className="p-3 bg-white dark:bg-slate-700 rounded border border-slate-200 dark:border-slate-600">
+                                        <div className="flex items-center gap-2 mb-2">
+                                          <Car className="h-4 w-4 text-primary" />
+                                          <h4 className="text-sm font-medium">{vehicle.brand} {vehicle.model}</h4>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-2 text-xs">
+                                          <div>
+                                            <p className="text-slate-500 dark:text-slate-400">Placa</p>
+                                            <p className="font-medium">{vehicle.plate}</p>
+                                          </div>
+                                          <div>
+                                            <p className="text-slate-500 dark:text-slate-400">Ano</p>
+                                            <p className="font-medium">{vehicle.year}</p>
+                                          </div>
+                                          <div>
+                                            <p className="text-slate-500 dark:text-slate-400">Cor</p>
+                                            <p className="font-medium">{vehicle.color}</p>
+                                          </div>
+                                          {vehicle.renavam && (
+                                            <div>
+                                              <p className="text-slate-500 dark:text-slate-400">Renavam</p>
+                                              <p className="font-medium">{vehicle.renavam}</p>
+                                            </div>
+                                          )}
+                                          <div>
+                                            <p className="text-slate-500 dark:text-slate-400">Tipo</p>
+                                            <p className="font-medium">
+                                              {/* Leves */}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.LEVE_TODOS && "Leve (Todos)"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.LEVE_FIORINO && "Leve (Fiorino)"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.LEVE_TOCO && "Leve (Toco)"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.LEVE_VLC && "Leve (VLC)"}
+                                              
+                                              {/* Médios */}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.MEDIO_TODOS && "Médio (Todos)"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.MEDIO_BITRUCK && "Médio (Bitruck)"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.MEDIO_TRUCK && "Médio (Truck)"}
+                                              
+                                              {/* Pesados */}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.PESADO_TODOS && "Pesado (Todos)"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.PESADO_BITREM && "Pesado (Bitrem)"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.PESADO_CARRETA && "Pesado (Carreta)"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.PESADO_CARRETA_LS && "Pesado (Carreta LS)"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.PESADO_RODOTREM && "Pesado (Rodotrem)"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.PESADO_VANDERLEIA && "Pesado (Vanderléia)"}
+                                            </p>
+                                          </div>
+                                          <div>
+                                            <p className="text-slate-500 dark:text-slate-400">Carroceria</p>
+                                            <Badge variant="outline" className="font-normal text-xs h-5 px-1.5">
+                                              {vehicle.bodyType === BODY_TYPES.BAU && "Baú"}
+                                              {vehicle.bodyType === BODY_TYPES.GRANELEIRA && "Graneleira"}
+                                              {vehicle.bodyType === BODY_TYPES.BASCULANTE && "Basculante"}
+                                              {vehicle.bodyType === BODY_TYPES.PLATAFORMA && "Plataforma"}
+                                              {vehicle.bodyType === BODY_TYPES.TANQUE && "Tanque"}
+                                              {vehicle.bodyType === BODY_TYPES.FRIGORIFICA && "Frigorífica"}
+                                              {vehicle.bodyType === BODY_TYPES.PORTA_CONTEINER && "Porta Contêiner"}
+                                              {vehicle.bodyType === BODY_TYPES.SIDER && "Sider"}
+                                              {vehicle.bodyType === BODY_TYPES.CACAMBA && "Caçamba"}
+                                              {vehicle.bodyType === BODY_TYPES.ABERTA && "Aberta"}
+                                              {vehicle.bodyType === BODY_TYPES.FECHADA && "Fechada"}
+                                            </Badge>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </>
+                  );
+                })
+              )}
             </TableBody>
           </Table>
         </div>

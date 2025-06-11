@@ -3,7 +3,7 @@ import { useLocation, useParams, useRoute } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
-import { X, Plus } from "lucide-react";
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -27,37 +27,10 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { formatCPF, formatPhone, formatCEP } from "@/lib/utils/masks";
 import { VehicleForm } from "@/components/drivers/vehicle-form";
-import LocationInput from "@/components/location/location-input";
 import { z } from "zod";
 
-// Combined schema for driver with vehicles with required fields
+// Combined schema for driver with vehicles
 const driverWithVehiclesSchema = driverValidator.extend({
-  // Tornar CNH obrigatória
-  cnh: z.string().min(1, "CNH é obrigatória"),
-  cnhCategory: z.string().min(1, "Categoria da CNH é obrigatória"),
-  
-  // Manter validação de data como coerce para compatibilidade com backend
-  cnhExpiration: z.coerce.date({
-    errorMap: () => ({ message: "Data de vencimento da CNH é obrigatória" })
-  }),
-  cnhIssueDate: z.coerce.date({
-    errorMap: () => ({ message: "Data de emissão da CNH é obrigatória" })
-  }),
-  birthdate: z.coerce.date({
-    errorMap: () => ({ message: "Data de nascimento é obrigatória" })
-  }),
-  
-  // Tornar WhatsApp obrigatório
-  whatsapp: z.string().min(1, "WhatsApp é obrigatório"),
-  
-  // Tornar endereço obrigatório
-  street: z.string().min(1, "Rua é obrigatória"),
-  number: z.string().min(1, "Número é obrigatório"),
-  neighborhood: z.string().min(1, "Bairro é obrigatório"),
-  city: z.string().min(1, "Cidade é obrigatória"),
-  state: z.string().min(1, "Estado é obrigatório"),
-  zipcode: z.string().min(1, "CEP é obrigatório"),
-  
   vehicles: z.array(
     vehicleValidator.omit({ driverId: true })
   ).optional(),
@@ -84,11 +57,11 @@ export default function DriverForm() {
       cpf: "",
       phone: "",
       whatsapp: "",
-      birthdate: new Date(),
+      birthdate: "",
       cnh: "",
       cnhCategory: "",
-      cnhExpiration: new Date(),
-      cnhIssueDate: new Date(),
+      cnhExpiration: "",
+      cnhIssueDate: "",
       street: "",
       number: "",
       complement: "",
@@ -140,12 +113,25 @@ export default function DriverForm() {
   // Create driver mutation
   const createDriver = useMutation({
     mutationFn: async (data: FormValues) => {
-      console.log("Form data being submitted:", data);
-      
       const { vehicles, ...driverData } = data;
       
-      // First create the driver (schema will handle date conversion)
-      const driverRes = await apiRequest("POST", "/api/drivers", driverData);
+      // Format dates properly for the API
+      const formattedData = {
+        ...driverData,
+        // Convert dates to ISO string format for API
+        birthdate: driverData.birthdate instanceof Date 
+          ? driverData.birthdate.toISOString() 
+          : new Date(driverData.birthdate).toISOString(),
+        cnhExpiration: driverData.cnhExpiration instanceof Date 
+          ? driverData.cnhExpiration.toISOString() 
+          : new Date(driverData.cnhExpiration).toISOString(),
+        cnhIssueDate: driverData.cnhIssueDate instanceof Date 
+          ? driverData.cnhIssueDate.toISOString() 
+          : new Date(driverData.cnhIssueDate).toISOString(),
+      };
+      
+      // First create the driver
+      const driverRes = await apiRequest("POST", "/api/drivers", formattedData);
       const newDriver = await driverRes.json();
       
       // Then create vehicles if any
@@ -246,14 +232,9 @@ export default function DriverForm() {
 
   // Form submission
   const onSubmit = (data: FormValues) => {
-    console.log("Form submission started with data:", data);
-    console.log("Form errors:", form.formState.errors);
-    
     if (isEditing) {
-      console.log("Updating driver with ID:", driverId);
       updateDriver.mutate(data);
     } else {
-      console.log("Creating new driver");
       createDriver.mutate(data);
     }
   };
@@ -331,14 +312,7 @@ export default function DriverForm() {
                           Nome Completo
                         </FormLabel>
                         <FormControl>
-                          <Input 
-                            {...field} 
-                            onChange={(e) => {
-                              const upperValue = e.target.value.toUpperCase();
-                              field.onChange(upperValue);
-                            }}
-                            style={{ textTransform: 'uppercase' }}
-                          />
+                          <Input {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -611,23 +585,7 @@ export default function DriverForm() {
                           Cidade
                         </FormLabel>
                         <FormControl>
-                          <LocationInput 
-                            value={field.value}
-                            onChange={(value) => {
-                              field.onChange(value);
-                              // Se o valor contiver um estado (formato: "Cidade - UF")
-                              if (value.includes(" - ")) {
-                                const state = value.split(" - ")[1];
-                                // Atualiza o campo de estado automaticamente
-                                form.setValue("state", state);
-                              }
-                            }}
-                            placeholder="Digite a cidade (ex: São Paulo - SP)"
-                            errorMessage={form.formState.errors.city?.message as string}
-                            onStateChange={(state) => {
-                              form.setValue("state", state);
-                            }}
-                          />
+                          <Input {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -691,37 +649,24 @@ export default function DriverForm() {
               
               {/* Vehicles */}
               <div>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-md font-semibold text-slate-800 pb-2 border-b border-slate-200 flex-1">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-md font-semibold text-slate-800 mb-4 pb-2 border-b border-slate-200">
                     Veículos
                   </h3>
                   <Button 
                     type="button" 
-                    variant="default"
-                    size="sm"
+                    variant="link" 
                     onClick={addVehicle} 
-                    className="ml-4 bg-blue-600 hover:bg-blue-700 text-white shadow-md font-medium"
+                    className="text-sm font-medium text-primary hover:text-primary/80"
                   >
-                    <Plus className="h-4 w-4 mr-1" />
-                    Adicionar Veículo
+                    + Adicionar Veículo
                   </Button>
                 </div>
                 
                 <div>
                   {fields.length === 0 ? (
-                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-6 text-center">
-                      <div className="text-slate-500 mb-3">
-                        Nenhum veículo cadastrado ainda
-                      </div>
-                      <Button 
-                        type="button" 
-                        variant="outline"
-                        onClick={addVehicle}
-                        className="border-blue-600 text-blue-600 hover:bg-blue-50"
-                      >
-                        <Plus className="h-4 w-4 mr-1" />
-                        Cadastrar Primeiro Veículo
-                      </Button>
+                    <div className="text-sm text-slate-500 italic mb-4">
+                      Nenhum veículo cadastrado. Clique em "Adicionar Veículo" para cadastrar.
                     </div>
                   ) : (
                     <div className="space-y-4">
@@ -733,19 +678,6 @@ export default function DriverForm() {
                           onRemove={() => remove(index)}
                         />
                       ))}
-                      
-                      {/* Botão adicional no final da lista */}
-                      <div className="flex justify-center pt-4">
-                        <Button 
-                          type="button" 
-                          variant="outline"
-                          onClick={addVehicle}
-                          className="border-blue-600 text-blue-600 hover:bg-blue-50"
-                        >
-                          <Plus className="h-4 w-4 mr-1" />
-                          Adicionar Outro Veículo
-                        </Button>
-                      </div>
                     </div>
                   )}
                 </div>

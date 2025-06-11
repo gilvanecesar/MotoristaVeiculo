@@ -261,26 +261,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Criar novo motorista
   app.post("/api/drivers", hasActiveSubscription, async (req: Request, res: Response) => {
     try {
-      console.log("=== Iniciando criação de motorista ===");
-      console.log("Dados recebidos:", req.body);
-      console.log("Usuário logado:", req.user);
-      
       const driverData: InsertDriver = {
-        ...req.body,
-        name: req.body.name?.toUpperCase() || "",  // Nome em maiúsculo
-        userId: req.user?.id!  // Vincula o motorista ao usuário logado
+        ...req.body
       };
       
-      console.log("Dados formatados para criação:", driverData);
-      
       const driver = await storage.createDriver(driverData);
-      console.log("Motorista criado com sucesso:", driver);
-      
       res.status(201).json(driver);
     } catch (error) {
       console.error("Error creating driver:", error);
-      console.error("Stack trace:", error.stack);
-      res.status(500).json({ message: "Failed to create driver", error: error.message });
+      res.status(500).json({ message: "Failed to create driver" });
     }
   });
 
@@ -288,11 +277,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/drivers/:id", hasDriverAccess, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
-      const driverData = {
-        ...req.body,
-        // Se o nome está sendo atualizado, aplicar maiúsculo
-        ...(req.body.name && { name: req.body.name.toUpperCase() })
-      };
+      const driverData = req.body;
       
       const updatedDriver = await storage.updateDriver(id, driverData);
       
