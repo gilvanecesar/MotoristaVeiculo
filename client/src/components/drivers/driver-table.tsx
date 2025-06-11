@@ -4,9 +4,10 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Eye, Trash, Users, ChevronDown, ChevronRight, Phone, Car } from "lucide-react";
+import { Edit, Eye, Trash, Users, ChevronDown, ChevronRight, Phone, Car, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
+import { Link } from "wouter";
 import { Pagination } from "@/components/ui/pagination";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -379,9 +380,21 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
                                 </div>
                               </div>
                               
-                              {driver.vehicles.length > 0 && (
-                                <div>
-                                  <h3 className="text-md font-semibold mb-2 text-slate-800 dark:text-slate-200">Veículos</h3>
+                              <div>
+                                <div className="flex items-center justify-between mb-3">
+                                  <h3 className="text-md font-semibold text-slate-800 dark:text-slate-200">Veículos</h3>
+                                  {canEditDriver(driver) && (
+                                    <Link href={`/vehicles/new?driverId=${driver.id}`}>
+                                      <Button size="sm" className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white">
+                                        <Plus className="h-3 w-3" />
+                                        <span className="hidden sm:inline">Adicionar Veículo</span>
+                                        <span className="sm:hidden">Veículo</span>
+                                      </Button>
+                                    </Link>
+                                  )}
+                                </div>
+                                
+                                {driver.vehicles.length > 0 ? (
                                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                     {driver.vehicles.map((vehicle) => (
                                       <div key={vehicle.id} className="p-3 bg-white dark:bg-slate-700 rounded border border-slate-200 dark:border-slate-600">
@@ -451,8 +464,23 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
                                       </div>
                                     ))}
                                   </div>
-                                </div>
-                              )}
+                                ) : (
+                                  <div className="text-center py-6 bg-gray-50 dark:bg-slate-800 rounded-lg border-2 border-dashed border-gray-200 dark:border-slate-600">
+                                    <Car className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                                      Este motorista ainda não possui veículos cadastrados
+                                    </p>
+                                    {canEditDriver(driver) && (
+                                      <Link href={`/vehicles/new?driverId=${driver.id}`}>
+                                        <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">
+                                          <Plus className="h-3 w-3 mr-1" />
+                                          Cadastrar Primeiro Veículo
+                                        </Button>
+                                      </Link>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </TableCell>
                         </TableRow>
