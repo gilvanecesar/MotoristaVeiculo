@@ -35,8 +35,17 @@ const driverWithVehiclesSchema = driverValidator.extend({
   // Tornar CNH obrigatória
   cnh: z.string().min(1, "CNH é obrigatória"),
   cnhCategory: z.string().min(1, "Categoria da CNH é obrigatória"),
-  cnhExpiration: z.string().min(1, "Data de vencimento da CNH é obrigatória"),
-  cnhIssueDate: z.string().min(1, "Data de emissão da CNH é obrigatória"),
+  
+  // Manter validação de data como coerce para compatibilidade com backend
+  cnhExpiration: z.coerce.date({
+    errorMap: () => ({ message: "Data de vencimento da CNH é obrigatória" })
+  }),
+  cnhIssueDate: z.coerce.date({
+    errorMap: () => ({ message: "Data de emissão da CNH é obrigatória" })
+  }),
+  birthdate: z.coerce.date({
+    errorMap: () => ({ message: "Data de nascimento é obrigatória" })
+  }),
   
   // Tornar WhatsApp obrigatório
   whatsapp: z.string().min(1, "WhatsApp é obrigatório"),
@@ -75,11 +84,11 @@ export default function DriverForm() {
       cpf: "",
       phone: "",
       whatsapp: "",
-      birthdate: "",
+      birthdate: new Date(),
       cnh: "",
       cnhCategory: "",
-      cnhExpiration: "",
-      cnhIssueDate: "",
+      cnhExpiration: new Date(),
+      cnhIssueDate: new Date(),
       street: "",
       number: "",
       complement: "",
@@ -131,25 +140,12 @@ export default function DriverForm() {
   // Create driver mutation
   const createDriver = useMutation({
     mutationFn: async (data: FormValues) => {
+      console.log("Form data being submitted:", data);
+      
       const { vehicles, ...driverData } = data;
       
-      // Format dates properly for the API
-      const formattedData = {
-        ...driverData,
-        // Convert dates to ISO string format for API
-        birthdate: driverData.birthdate instanceof Date 
-          ? driverData.birthdate.toISOString() 
-          : new Date(driverData.birthdate).toISOString(),
-        cnhExpiration: driverData.cnhExpiration instanceof Date 
-          ? driverData.cnhExpiration.toISOString() 
-          : new Date(driverData.cnhExpiration).toISOString(),
-        cnhIssueDate: driverData.cnhIssueDate instanceof Date 
-          ? driverData.cnhIssueDate.toISOString() 
-          : new Date(driverData.cnhIssueDate).toISOString(),
-      };
-      
-      // First create the driver
-      const driverRes = await apiRequest("POST", "/api/drivers", formattedData);
+      // First create the driver (schema will handle date conversion)
+      const driverRes = await apiRequest("POST", "/api/drivers", driverData);
       const newDriver = await driverRes.json();
       
       // Then create vehicles if any
