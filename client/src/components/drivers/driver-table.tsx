@@ -36,6 +36,11 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
       return true;
     }
     
+    // Usuários que são donos do motorista (através de userId no driver)
+    if (driver.userId === user?.id) {
+      return true;
+    }
+    
     return false;
   };
 

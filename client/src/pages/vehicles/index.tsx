@@ -62,6 +62,12 @@ export default function VehiclesPage() {
       return true;
     }
     
+    // Verificar se o usuário é dono do motorista associado ao veículo
+    const driver = drivers.find((d: any) => d.id === vehicle.driverId);
+    if (driver && driver.userId === user?.id) {
+      return true;
+    }
+    
     return false;
   };
 

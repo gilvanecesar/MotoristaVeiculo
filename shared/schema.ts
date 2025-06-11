@@ -68,6 +68,7 @@ export type TollOption = typeof TOLL_OPTIONS[keyof typeof TOLL_OPTIONS];
 // Driver schema
 export const drivers = pgTable("drivers", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
   name: text("name").notNull(),
   email: text("email").notNull(),
   cpf: text("cpf").notNull().unique(),
@@ -89,6 +90,12 @@ export const drivers = pgTable("drivers", {
   city: text("city").notNull(),
   state: text("state").notNull(),
   zipcode: text("zipcode").notNull(),
+  
+  // Location tracking
+  currentLatitude: decimal("current_latitude", { precision: 10, scale: 8 }),
+  currentLongitude: decimal("current_longitude", { precision: 11, scale: 8 }),
+  lastLocationUpdate: timestamp("last_location_update"),
+  locationEnabled: boolean("location_enabled").default(false),
   
   // Metadata
   createdAt: timestamp("created_at").defaultNow(),
