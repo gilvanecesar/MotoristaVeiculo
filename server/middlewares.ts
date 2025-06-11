@@ -321,3 +321,56 @@ export async function hasVehicleAccess(req: Request, res: Response, next: NextFu
   
   res.status(403).json({ message: "Acesso não autorizado" });
 }
+
+// Middleware para controlar edição/exclusão de motoristas - apenas proprietário ou admin
+export async function canEditDriver(req: Request, res: Response, next: NextFunction) {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Não autenticado" });
+  }
+
+  const driverId = parseInt(req.params.id, 10);
+  
+  // Administrador tem acesso total
+  if (req.user?.profileType?.toLowerCase() === "administrador" || req.user?.profileType?.toLowerCase() === "admin") {
+    console.log(`[canEditDriver] Administrador ${req.user.id} autorizado a editar motorista ${driverId}`);
+    return next();
+  }
+  
+  // Verificar se é o próprio motorista editando seus dados
+  if (req.user?.profileType?.toLowerCase() === "motorista" && req.user?.driverId === driverId) {
+    console.log(`[canEditDriver] Motorista ${req.user.id} autorizado a editar próprio cadastro ${driverId}`);
+    return next();
+  }
+  
+  console.log(`[canEditDriver] Acesso negado para usuário ${req.user.id} editar motorista ${driverId}`);
+  res.status(403).json({ message: "Você só pode editar/excluir seus próprios cadastros" });
+}
+
+// Middleware para controlar edição/exclusão de veículos - apenas proprietário ou admin
+export async function canEditVehicle(req: Request, res: Response, next: NextFunction) {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Não autenticado" });
+  }
+
+  const vehicleId = parseInt(req.params.id, 10);
+  const vehicle = await storage.getVehicle(vehicleId);
+  
+  if (!vehicle) {
+    return res.status(404).json({ message: "Veículo não encontrado" });
+  }
+
+  // Administrador tem acesso total
+  if (req.user?.profileType?.toLowerCase() === "administrador" || req.user?.profileType?.toLowerCase() === "admin") {
+    console.log(`[canEditVehicle] Administrador ${req.user.id} autorizado a editar veículo ${vehicleId}`);
+    return next();
+  }
+  
+  // Verificar se é o motorista proprietário do veículo
+  if (req.user?.profileType?.toLowerCase() === "motorista" && req.user?.driverId === vehicle.driverId) {
+    console.log(`[canEditVehicle] Motorista ${req.user.id} autorizado a editar próprio veículo ${vehicleId}`);
+    return next();
+  }
+  
+  console.log(`[canEditVehicle] Acesso negado para usuário ${req.user.id} editar veículo ${vehicleId}`);
+  res.status(403).json({ message: "Você só pode editar/excluir veículos que cadastrou" });
+}
