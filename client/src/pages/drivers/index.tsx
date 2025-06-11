@@ -34,8 +34,11 @@ export default function DriversPage() {
       return true;
     }
     
-    // Embarcadores e agentes podem criar motoristas
-    if (user?.profileType?.toLowerCase() === "embarcador" || user?.profileType?.toLowerCase() === "agente") {
+    // Embarcadores (shipper) e agentes podem criar motoristas
+    if (user?.profileType?.toLowerCase() === "shipper" || 
+        user?.profileType?.toLowerCase() === "embarcador" || 
+        user?.profileType?.toLowerCase() === "agente" ||
+        user?.profileType?.toLowerCase() === "agent") {
       return true;
     }
     

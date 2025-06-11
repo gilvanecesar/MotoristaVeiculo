@@ -78,8 +78,11 @@ export default function VehiclesPage() {
       return true;
     }
     
-    // Embarcadores e agentes podem criar veículos
-    if (user?.profileType?.toLowerCase() === "embarcador" || user?.profileType?.toLowerCase() === "agente") {
+    // Embarcadores (shipper) e agentes podem criar veículos
+    if (user?.profileType?.toLowerCase() === "shipper" || 
+        user?.profileType?.toLowerCase() === "embarcador" || 
+        user?.profileType?.toLowerCase() === "agente" ||
+        user?.profileType?.toLowerCase() === "agent") {
       return true;
     }
     
