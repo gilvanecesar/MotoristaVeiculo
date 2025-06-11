@@ -46,11 +46,32 @@ const LocationInput: React.FC<LocationInputProps> = ({
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<NodeJS.Timeout>();
 
   // Sincronizar searchTerm com value
   useEffect(() => {
     setSearchTerm(value);
   }, [value]);
+
+  // Debounce para busca
+  useEffect(() => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    if (searchTerm.length >= 3) {
+      debounceRef.current = setTimeout(() => {
+        console.log("Executando busca com debounce para:", searchTerm);
+        searchCities(searchTerm);
+      }, 300);
+    }
+
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, [searchTerm]);
 
   // Buscar cidades usando a API do IBGE
   const searchCities = async (query: string) => {
@@ -80,8 +101,10 @@ const LocationInput: React.FC<LocationInputProps> = ({
       
       if (response.ok) {
         const cities = await response.json();
-        console.log("Cidades encontradas:", cities.length, cities);
-        setCitySuggestions(cities.slice(0, 10)); // Limitar a 10 resultados
+        console.log("Cidades encontradas:", cities.length);
+        const limitedCities = cities.slice(0, 10);
+        console.log("Definindo citySuggestions para:", limitedCities.length, "cidades");
+        setCitySuggestions(limitedCities);
       } else {
         console.log("Response não OK:", response.status, response.statusText);
         setCitySuggestions([]);
@@ -103,17 +126,10 @@ const LocationInput: React.FC<LocationInputProps> = ({
     
     console.log("Input change:", newValue);
     
-    // Debounce a busca
+    // Controlar popover baseado no tamanho da query
     if (newValue.length >= 3) {
-      console.log("Abrindo popover e iniciando busca");
+      console.log("Query suficiente, abrindo popover");
       setOpen(true);
-      
-      // Usar setTimeout para evitar muitas chamadas
-      setTimeout(() => {
-        if (newValue === searchTerm) { // Verificar se ainda é o mesmo valor
-          searchCities(newValue);
-        }
-      }, 500);
     } else {
       console.log("Query muito curta, fechando popover");
       setOpen(false);
@@ -169,45 +185,43 @@ const LocationInput: React.FC<LocationInputProps> = ({
             />
           </FormControl>
         </PopoverTrigger>
-        {citySuggestions.length > 0 && (
-          <PopoverContent className="w-[350px] p-0" align="start">
-            <Command>
-              <CommandInput
-                placeholder="Buscar cidade..."
-                value={searchTerm}
-                onValueChange={setSearchTerm}
-              />
-              <CommandList>
-                {loading && (
-                  <div className="p-4 text-center">
-                    <Loader2 className="h-4 w-4 animate-spin mx-auto" />
-                    <span className="text-sm text-muted-foreground">Buscando cidades...</span>
-                  </div>
-                )}
-                
-                <CommandEmpty>Nenhuma cidade encontrada</CommandEmpty>
-                
-                {citySuggestions.length > 0 && (
-                  <CommandGroup heading="Cidades encontradas">
-                    {citySuggestions.map((city) => (
-                      <CommandItem
-                        key={city.id}
-                        value={`${city.nome} - ${city.microrregiao?.mesorregiao?.UF?.sigla}`}
-                        onSelect={() => selectSuggestion(city)}
-                      >
-                        <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <span>{city.nome}</span>
-                        <span className="ml-1 text-muted-foreground">
-                          - {city.microrregiao?.mesorregiao?.UF?.sigla}
-                        </span>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                )}
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        )}
+        <PopoverContent className="w-[350px] p-0" align="start">
+          <Command>
+            <CommandInput
+              placeholder="Buscar cidade..."
+              value={searchTerm}
+              onValueChange={setSearchTerm}
+            />
+            <CommandList>
+              {loading ? (
+                <div className="p-4 text-center">
+                  <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+                  <span className="text-sm text-muted-foreground">Buscando cidades...</span>
+                </div>
+              ) : citySuggestions.length > 0 ? (
+                <CommandGroup heading="Cidades encontradas">
+                  {citySuggestions.map((city) => (
+                    <CommandItem
+                      key={city.id}
+                      value={`${city.nome} - ${city.microrregiao?.mesorregiao?.UF?.sigla}`}
+                      onSelect={() => selectSuggestion(city)}
+                    >
+                      <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <span>{city.nome}</span>
+                      <span className="ml-1 text-muted-foreground">
+                        - {city.microrregiao?.mesorregiao?.UF?.sigla}
+                      </span>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              ) : (
+                <CommandEmpty>
+                  {searchTerm.length < 3 ? "Digite pelo menos 3 caracteres" : "Nenhuma cidade encontrada"}
+                </CommandEmpty>
+              )}
+            </CommandList>
+          </Command>
+        </PopoverContent>
       </Popover>
       {errorMessage && (
         <div className="text-red-500 text-sm mt-1">{errorMessage}</div>
