@@ -32,7 +32,7 @@ import { z } from "zod";
 // Combined schema for driver with vehicles
 const driverWithVehiclesSchema = driverValidator.extend({
   vehicles: z.array(
-    vehicleValidator.omit({ driverId: true })
+    vehicleValidator.omit({ driverId: true, userId: true })
   ).optional(),
 });
 
