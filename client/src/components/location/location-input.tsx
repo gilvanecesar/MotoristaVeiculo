@@ -218,15 +218,6 @@ const LocationInput: React.FC<LocationInputProps> = ({
 
   // Selecionar uma sugestão
   const selectSuggestion = (suggestion: CitySuggestion) => {
-    // Certifique-se de que estamos definindo o valor do campo e do estado corretamente
-    if (!suggestion.name || !suggestion.state) {
-      // Se não tiver nome ou estado, vamos criar uma sugestão válida com o que temos
-      suggestion.name = suggestion.name || "Cidade";
-      suggestion.state = suggestion.state || "UF";
-      suggestion.fullName = `${suggestion.name} - ${suggestion.state}`;
-      suggestion.displayText = suggestion.fullName;
-    }
-    
     console.log("Selecionando cidade:", suggestion);
     
     // Garantir que o formato da cidade está correto (Nome - UF)
@@ -245,7 +236,7 @@ const LocationInput: React.FC<LocationInputProps> = ({
     if (onCityChange) onCityChange(suggestion.name);
     if (onStateChange) onStateChange(suggestion.state);
     
-    // Garantir que as sugestões sejam limpas após a seleção para evitar conflitos
+    // Limpar as sugestões após a seleção
     setCitySuggestions([]);
   };
 
@@ -299,13 +290,23 @@ const LocationInput: React.FC<LocationInputProps> = ({
                 <CommandGroup heading="Cidades">
                   {citySuggestions.map((suggestion) => (
                     <CommandItem
-                      key={suggestion.id}
-                      value={suggestion.fullName}
-                      onSelect={() => selectSuggestion(suggestion)}
+                      key={`${suggestion.id}-${suggestion.name}-${suggestion.state}`}
+                      value={suggestion.displayText}
+                      onSelect={() => {
+                        console.log("CommandItem selecionado:", suggestion);
+                        selectSuggestion(suggestion);
+                      }}
+                      onClick={() => {
+                        console.log("CommandItem clicado:", suggestion);
+                        selectSuggestion(suggestion);
+                      }}
+                      className="cursor-pointer hover:bg-accent"
                     >
                       <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <span>{suggestion.name}</span>
-                      <span className="ml-1 text-muted-foreground">{suggestion.state && ` - ${suggestion.state}`}</span>
+                      <div className="flex items-center">
+                        <span>{suggestion.name}</span>
+                        <span className="ml-1 text-muted-foreground"> - {suggestion.state}</span>
+                      </div>
                     </CommandItem>
                   ))}
                 </CommandGroup>
