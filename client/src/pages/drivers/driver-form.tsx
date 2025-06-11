@@ -98,11 +98,30 @@ export default function DriverForm() {
         return new Date(date).toISOString().split('T')[0];
       };
 
+      // Convert null values to empty strings
+      const sanitizeValue = (value: any) => {
+        return value === null || value === undefined ? "" : value;
+      };
+
       const formattedDriver = {
-        ...driver,
+        name: sanitizeValue(driver.name),
+        email: sanitizeValue(driver.email),
+        cpf: sanitizeValue(driver.cpf),
+        phone: sanitizeValue(driver.phone),
+        whatsapp: sanitizeValue(driver.whatsapp),
         birthdate: formatDate(driver.birthdate),
+        cnh: sanitizeValue(driver.cnh),
+        cnhCategory: sanitizeValue(driver.cnhCategory),
         cnhExpiration: formatDate(driver.cnhExpiration),
         cnhIssueDate: formatDate(driver.cnhIssueDate),
+        street: sanitizeValue(driver.street),
+        number: sanitizeValue(driver.number),
+        complement: sanitizeValue(driver.complement),
+        neighborhood: sanitizeValue(driver.neighborhood),
+        city: sanitizeValue(driver.city),
+        state: sanitizeValue(driver.state),
+        zipcode: sanitizeValue(driver.zipcode),
+        vehicles: driver.vehicles || [],
       };
       
       // Reset form with driver data
