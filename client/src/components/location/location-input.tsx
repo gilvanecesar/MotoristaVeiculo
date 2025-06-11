@@ -54,25 +54,36 @@ const LocationInput: React.FC<LocationInputProps> = ({
 
   // Buscar cidades usando a API do IBGE
   const searchCities = async (query: string) => {
+    console.log("searchCities chamada com query:", query);
+    
     if (query.length < 3) {
+      console.log("Query muito curta, ignorando busca");
       setCitySuggestions([]);
       return;
     }
 
+    console.log("Iniciando busca de cidades...");
     setLoading(true);
     try {
       // Remover " - UF" para buscar apenas pelo nome da cidade
       const searchQuery = query.includes(" - ") ? query.split(" - ")[0] : query;
       const encodedQuery = encodeURIComponent(searchQuery);
       
-      const response = await fetch(
-        `https://servicodados.ibge.gov.br/api/v1/localidades/municipios?nome=${encodedQuery}`
-      );
+      console.log("Buscando cidades para:", searchQuery, "encoded:", encodedQuery);
+      
+      const url = `https://servicodados.ibge.gov.br/api/v1/localidades/municipios?nome=${encodedQuery}`;
+      console.log("URL da API:", url);
+      
+      const response = await fetch(url);
+      
+      console.log("Response status:", response.status);
       
       if (response.ok) {
         const cities = await response.json();
+        console.log("Cidades encontradas:", cities.length, cities);
         setCitySuggestions(cities.slice(0, 10)); // Limitar a 10 resultados
       } else {
+        console.log("Response não OK:", response.status, response.statusText);
         setCitySuggestions([]);
       }
     } catch (error) {
@@ -80,21 +91,9 @@ const LocationInput: React.FC<LocationInputProps> = ({
       setCitySuggestions([]);
     } finally {
       setLoading(false);
+      console.log("Busca finalizada");
     }
   };
-
-  // Debounce para busca
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (searchTerm.length >= 3) {
-        searchCities(searchTerm);
-      } else {
-        setCitySuggestions([]);
-      }
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
 
   // Manipular mudança no input
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,8 +101,23 @@ const LocationInput: React.FC<LocationInputProps> = ({
     setSearchTerm(newValue);
     onChange(newValue);
     
+    console.log("Input change:", newValue);
+    
+    // Debounce a busca
     if (newValue.length >= 3) {
+      console.log("Abrindo popover e iniciando busca");
       setOpen(true);
+      
+      // Usar setTimeout para evitar muitas chamadas
+      setTimeout(() => {
+        if (newValue === searchTerm) { // Verificar se ainda é o mesmo valor
+          searchCities(newValue);
+        }
+      }, 500);
+    } else {
+      console.log("Query muito curta, fechando popover");
+      setOpen(false);
+      setCitySuggestions([]);
     }
 
     // Extrair cidade e estado se o formato for "Cidade - UF"
