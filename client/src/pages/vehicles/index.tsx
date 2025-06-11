@@ -335,10 +335,12 @@ export default function VehiclesPage() {
         onFilterChange={setFilterState}
       />
 
-      <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
+      {/* Layout Desktop - Tabela */}
+      <div className="hidden lg:block">
+        <Card>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead></TableHead>
@@ -607,6 +609,218 @@ export default function VehiclesPage() {
           )}
         </CardContent>
       </Card>
+      </div>
+
+      {/* Layout Mobile - Cards */}
+      <div className="lg:hidden space-y-4">
+        {isLoading ? (
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-center text-slate-500">Carregando veículos...</div>
+            </CardContent>
+          </Card>
+        ) : paginatedVehicles.length === 0 ? (
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex flex-col items-center py-4 text-slate-500">
+                <CarFront className="h-12 w-12 mb-2 text-slate-300" />
+                <p className="mb-1">Nenhum veículo encontrado</p>
+                <p className="text-sm text-center">
+                  {searchQuery ? "Tente uma busca diferente" : "Adicione o primeiro veículo ao cadastrar um motorista"}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          paginatedVehicles.map((vehicle) => {
+            const isExpanded = expandedRows.includes(vehicle.id);
+            const driver = Array.isArray(drivers) ? drivers.find((d: any) => d.id === vehicle.driverId) : null;
+            const createdDate = vehicle.createdAt ? new Date(vehicle.createdAt) : new Date();
+            
+            return (
+              <Card key={vehicle.id} className="overflow-hidden">
+                <CardContent className="p-4">
+                  {/* Header do Card */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-3 flex-1 min-w-0">
+                      <div className="flex-shrink-0">
+                        <Badge variant="outline" className="font-mono text-sm">
+                          {vehicle.plate}
+                        </Badge>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium text-slate-900 truncate">
+                          {vehicle.brand} {vehicle.model}
+                        </div>
+                        <div className="text-xs text-slate-500">{vehicle.year}</div>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => toggleExpandRow(vehicle.id)}
+                      className="flex-shrink-0"
+                    >
+                      {isExpanded ? (
+                        <ChevronDown className="h-4 w-4" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+
+                  {/* Informações principais */}
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div>
+                      <div className="text-xs text-slate-500 uppercase tracking-wide">Cor</div>
+                      <div className="flex items-center gap-2">
+                        <span 
+                          className="w-3 h-3 rounded-full" 
+                          style={{ 
+                            backgroundColor: vehicle.color.toLowerCase(),
+                            border: '1px solid #ccc'
+                          }}
+                        ></span>
+                        <span className="text-sm font-medium">{vehicle.color}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-slate-500 uppercase tracking-wide">Motorista</div>
+                      <div className="text-sm font-medium">{getDriverName(vehicle.driverId)}</div>
+                    </div>
+                  </div>
+
+                  {/* Categoria e tipo */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="secondary" className="text-xs">
+                        {getVehicleCategory(vehicle)}
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">
+                        {getBodyTypeDisplay(vehicle)}
+                      </Badge>
+                    </div>
+                    <div className="text-xs text-slate-500">
+                      {format(createdDate, "dd/MM/yyyy")}
+                    </div>
+                  </div>
+
+                  {/* Ações */}
+                  <div className="flex justify-end space-x-2">
+                    {canEditVehicle(vehicle) && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate(`/drivers/${vehicle.driverId}`)}
+                        title="Editar"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    )}
+                    {canEditVehicle(vehicle) && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setVehicleToDelete(vehicle)}
+                        title="Excluir"
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Seção expandida */}
+                  {isExpanded && (
+                    <div className="mt-4 pt-4 border-t border-slate-200">
+                      <div className="space-y-4">
+                        {/* Informações detalhadas do veículo */}
+                        <div>
+                          <h4 className="font-medium text-slate-800 mb-2">Informações do Veículo</h4>
+                          <div className="grid grid-cols-2 gap-3 text-sm">
+                            {vehicle.renavam && (
+                              <div>
+                                <span className="text-slate-500">RENAVAM:</span>
+                                <div className="font-medium">{vehicle.renavam}</div>
+                              </div>
+                            )}
+                            {vehicle.chassi && (
+                              <div>
+                                <span className="text-slate-500">Chassi:</span>
+                                <div className="font-medium">{vehicle.chassi}</div>
+                              </div>
+                            )}
+                            <div>
+                              <span className="text-slate-500">Tipo Específico:</span>
+                              <div className="font-medium">{getSpecificVehicleType(vehicle)}</div>
+                            </div>
+                            {vehicle.capacity && (
+                              <div>
+                                <span className="text-slate-500">Capacidade:</span>
+                                <div className="font-medium">{vehicle.capacity}</div>
+                              </div>
+                            )}
+                          </div>
+                          {vehicle.observations && (
+                            <div className="mt-3">
+                              <span className="text-slate-500">Observações:</span>
+                              <div className="text-sm mt-1 p-2 bg-slate-50 rounded">{vehicle.observations}</div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Informações do motorista */}
+                        {driver && (
+                          <div>
+                            <h4 className="font-medium text-slate-800 mb-2 flex items-center gap-2">
+                              <User className="h-4 w-4" />
+                              Motorista
+                            </h4>
+                            <div className="space-y-2 text-sm">
+                              <div>
+                                <span className="text-slate-500">Nome:</span>
+                                <div className="font-medium">{driver.name}</div>
+                              </div>
+                              <div>
+                                <span className="text-slate-500">CPF:</span>
+                                <div className="font-medium">{driver.cpf}</div>
+                              </div>
+                              {driver.phone && (
+                                <div>
+                                  <span className="text-slate-500">Telefone:</span>
+                                  <div className="font-medium">{driver.phone}</div>
+                                </div>
+                              )}
+                              {driver.email && (
+                                <div>
+                                  <span className="text-slate-500">Email:</span>
+                                  <div className="font-medium">{driver.email}</div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })
+        )}
+
+        {totalPages > 1 && (
+          <div className="flex justify-center pt-4">
+            <Pagination 
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={vehicles.length}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        )}
+      </div>
 
       <Dialog open={!!vehicleToDelete} onOpenChange={(open) => !open && setVehicleToDelete(null)}>
         <DialogContent>

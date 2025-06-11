@@ -70,7 +70,7 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
     }
 
     const primaryVehicle = driver.vehicles[0];
-    const vehicleTypes = Array.from(new Set(driver.vehicles.map((v: any) => v.vehicleType)));
+    const vehicleTypes = driver.vehicles.map(v => v.vehicleType).filter((type, index, arr) => arr.indexOf(type) === index);
 
     return {
       count: driver.vehicles.length,
@@ -80,7 +80,7 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
   };
 
   // WhatsApp link formatter
-  const formatWhatsAppLink = (whatsapp: string) => {
+  const formatWhatsAppLink = (whatsapp: string | null) => {
     if (!whatsapp) return null;
     const phone = whatsapp.replace(/\D/g, '');
     const numericPhone = phone.replace(/\D/g, '');
@@ -230,7 +230,7 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
                                 rel="noopener noreferrer"
                                 className="text-sm font-medium text-green-600 hover:text-green-700"
                               >
-                                {driver.whatsapp || driver.phone}
+                                {driver.whatsapp || driver.phone || ""}
                               </a>
                             ) : (
                               <div className="text-sm text-slate-400">Não informado</div>
@@ -412,7 +412,7 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
                         rel="noopener noreferrer"
                         className="text-sm font-medium text-green-600 hover:text-green-700"
                       >
-                        {driver.whatsapp || driver.phone}
+                        {driver.whatsapp || driver.phone || ""}
                       </a>
                     ) : (
                       <div className="text-sm text-slate-400">Não informado</div>
