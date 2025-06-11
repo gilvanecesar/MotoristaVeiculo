@@ -329,6 +329,11 @@ export async function canEditDriver(req: Request, res: Response, next: NextFunct
   }
 
   const driverId = parseInt(req.params.id, 10);
+  const driver = await storage.getDriver(driverId);
+  
+  if (!driver) {
+    return res.status(404).json({ message: "Motorista não encontrado" });
+  }
   
   // Administrador tem acesso total
   if (req.user?.profileType?.toLowerCase() === "administrador" || req.user?.profileType?.toLowerCase() === "admin") {
@@ -342,7 +347,13 @@ export async function canEditDriver(req: Request, res: Response, next: NextFunct
     return next();
   }
   
-  console.log(`[canEditDriver] Acesso negado para usuário ${req.user.id} editar motorista ${driverId}`);
+  // Verificar se o usuário é dono do motorista (através de userId no driver)
+  if (driver.userId === req.user?.id) {
+    console.log(`[canEditDriver] Usuário ${req.user.id} autorizado a editar motorista ${driverId} que cadastrou`);
+    return next();
+  }
+  
+  console.log(`[canEditDriver] Acesso negado para usuário ${req.user.id} editar motorista ${driverId}. Driver userId: ${driver.userId}`);
   res.status(403).json({ message: "Você só pode editar/excluir seus próprios cadastros" });
 }
 
