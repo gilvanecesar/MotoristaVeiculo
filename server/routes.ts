@@ -390,7 +390,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Excluir veículo
-  app.delete("/api/vehicles/:id", hasVehicleAccess, async (req: Request, res: Response) => {
+  app.delete("/api/vehicles/:id", canEditVehicle, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       

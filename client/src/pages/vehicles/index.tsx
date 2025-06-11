@@ -25,6 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { Pagination } from "@/components/ui/pagination";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/use-auth";
 import {
   Select,
   SelectContent,
@@ -35,6 +36,7 @@ import {
 import { AdvancedFilter, FilterOption, FilterState } from "@/components/shared/advanced-filter";
 
 export default function VehiclesPage() {
+  const { user } = useAuth();
   const [, navigate] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -47,6 +49,21 @@ export default function VehiclesPage() {
   });
   const { toast } = useToast();
   const itemsPerPage = 10;
+
+  // Verificar se o usuário pode editar/excluir um veículo específico
+  const canEditVehicle = (vehicle: Vehicle) => {
+    // Administradores podem editar qualquer veículo
+    if (user?.profileType?.toLowerCase() === "admin" || user?.profileType?.toLowerCase() === "administrador") {
+      return true;
+    }
+    
+    // Motoristas só podem editar seus próprios veículos
+    if (user?.profileType?.toLowerCase() === "motorista" && user?.driverId === vehicle.driverId) {
+      return true;
+    }
+    
+    return false;
+  };
 
   const { data: vehicles = [], isLoading } = useQuery<Vehicle[]>({
     queryKey: ["/api/vehicles", searchQuery],
@@ -400,15 +417,17 @@ export default function VehiclesPage() {
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-8 w-8 text-primary"
-                                title="Editar"
-                                onClick={() => navigate(`/drivers/${vehicle.driverId}`)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
+                              {canEditVehicle(vehicle) && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="h-8 w-8 text-primary"
+                                  title="Editar"
+                                  onClick={() => navigate(`/drivers/${vehicle.driverId}`)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              )}
                               <Button 
                                 variant="ghost" 
                                 size="icon" 
@@ -418,15 +437,17 @@ export default function VehiclesPage() {
                               >
                                 <Eye className="h-4 w-4" />
                               </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-8 w-8 text-red-500"
-                                title="Excluir"
-                                onClick={() => setVehicleToDelete(vehicle)}
-                              >
-                                <Trash className="h-4 w-4" />
-                              </Button>
+                              {canEditVehicle(vehicle) && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="h-8 w-8 text-red-500"
+                                  title="Excluir"
+                                  onClick={() => setVehicleToDelete(vehicle)}
+                                >
+                                  <Trash className="h-4 w-4" />
+                                </Button>
+                              )}
                             </div>
                           </TableCell>
                         </TableRow>
