@@ -163,6 +163,9 @@ const LocationInput: React.FC<LocationInputProps> = ({
     if (onStateChange) onStateChange(state);
   };
 
+  // Adicionar logs para debug do estado
+  console.log("LocationInput render - open:", open, "citySuggestions.length:", citySuggestions.length, "searchTerm:", searchTerm);
+
   return (
     <div className="w-full">
       <Popover open={open} onOpenChange={setOpen}>
@@ -178,7 +181,9 @@ const LocationInput: React.FC<LocationInputProps> = ({
               readOnly={readOnly}
               className={errorMessage ? "border-red-500" : ""}
               onClick={() => {
+                console.log("Input clicked, searchTerm.length:", searchTerm.length);
                 if (!readOnly && searchTerm.length >= 3) {
+                  console.log("Setting open to true");
                   setOpen(true);
                 }
               }}
