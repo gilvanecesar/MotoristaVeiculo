@@ -388,11 +388,19 @@ export async function canEditVehicle(req: Request, res: Response, next: NextFunc
   }
 
   const vehicleId = parseInt(req.params.id, 10);
+  
+  // Log detalhado para diagnóstico
+  console.log(`[canEditVehicle] Verificando permissões para editar veículo ${vehicleId}`);
+  console.log(`[canEditVehicle] Usuário: ${req.user?.id}, Perfil: ${req.user?.profileType}, DriverId: ${req.user?.driverId}, ClientId: ${req.user?.clientId}, Subscription: ${req.user?.subscriptionActive}`);
+  
   const vehicle = await storage.getVehicle(vehicleId);
   
   if (!vehicle) {
+    console.log(`[canEditVehicle] Veículo ${vehicleId} não encontrado`);
     return res.status(404).json({ message: "Veículo não encontrado" });
   }
+
+  console.log(`[canEditVehicle] Dados do veículo: userId=${vehicle.userId}, driverId=${vehicle.driverId}`);
 
   // Administrador tem acesso total
   if (req.user?.profileType?.toLowerCase() === "administrador" || req.user?.profileType?.toLowerCase() === "admin") {
@@ -406,6 +414,19 @@ export async function canEditVehicle(req: Request, res: Response, next: NextFunc
     return next();
   }
   
-  console.log(`[canEditVehicle] Acesso negado para usuário ${req.user.id} editar veículo ${vehicleId}`);
+  // Verificar se o usuário é dono do veículo (através de userId no vehicle)
+  if (vehicle.userId === req.user?.id) {
+    console.log(`[canEditVehicle] Usuário ${req.user.id} autorizado a editar veículo ${vehicleId} que cadastrou`);
+    return next();
+  }
+  
+  // Embarcador/Agente com assinatura pode editar veículos
+  if ((req.user?.profileType?.toLowerCase() === "embarcador" || req.user?.profileType?.toLowerCase() === "agente" || req.user?.profileType?.toLowerCase() === "shipper") && 
+      req.user?.subscriptionActive) {
+    console.log(`[canEditVehicle] ${req.user?.profileType} ${req.user.id} com assinatura autorizado a editar veículo ${vehicleId}`);
+    return next();
+  }
+  
+  console.log(`[canEditVehicle] Acesso negado para usuário ${req.user.id} editar veículo ${vehicleId}. Vehicle userId: ${vehicle.userId}, Vehicle driverId: ${vehicle.driverId}`);
   res.status(403).json({ message: "Você só pode editar/excluir veículos que cadastrou" });
 }
