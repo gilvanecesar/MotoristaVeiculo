@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { Search, Plus, Edit, Eye, Trash, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { DriverTable } from "@/components/drivers/driver-table";
+import { DriverTable } from "@/components/drivers/driver-table-mobile";
 import { Input } from "@/components/ui/input";
 import { 
   Dialog, 

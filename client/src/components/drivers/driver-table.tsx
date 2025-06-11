@@ -163,10 +163,13 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
   };
 
   return (
-    <Card>
-      <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <Table>
+    <>
+      {/* Layout Desktop - Tabela */}
+      <div className="hidden lg:block">
+        <Card>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <Table>
             <TableHeader>
               <TableRow>
                 <TableHead></TableHead>
@@ -504,5 +507,270 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
         )}
       </CardContent>
     </Card>
+      </div>
+
+      {/* Layout Mobile - Cards */}
+      <div className="lg:hidden space-y-4">
+        {isLoading ? (
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-center text-slate-500">Carregando motoristas...</div>
+            </CardContent>
+          </Card>
+        ) : paginatedDrivers.length === 0 ? (
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex flex-col items-center py-4 text-slate-500">
+                <Users className="h-12 w-12 mb-2 text-slate-300" />
+                <p className="mb-1">Nenhum motorista encontrado</p>
+                <p className="text-sm text-center">
+                  Cadastre o primeiro motorista clicando em "Novo Motorista"
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          paginatedDrivers.map((driver) => {
+            const initials = getInitials(driver.name);
+            const color = getAvatarColor(driver.name);
+            const vehicleInfo = formatVehicleInfo(driver);
+            const createdDate = driver.createdAt ? new Date(driver.createdAt) : new Date();
+            const isExpanded = expandedRows.includes(driver.id);
+            const whatsappLink = formatWhatsAppLink(driver.whatsapp);
+            
+            return (
+              <Card key={driver.id} className="overflow-hidden">
+                <CardContent className="p-4">
+                  {/* Header do Card */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-3 flex-1 min-w-0">
+                      <Avatar className="h-10 w-10 flex-shrink-0">
+                        <AvatarFallback className={`bg-${color}/10 text-${color}`}>
+                          {initials}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium text-slate-900 truncate">{driver.name}</div>
+                        <div className="text-xs text-slate-500 truncate">{driver.email}</div>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => toggleExpandRow(driver.id)}
+                      className="flex-shrink-0"
+                    >
+                      {isExpanded ? (
+                        <ChevronDown className="h-4 w-4" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+
+                  {/* Informações principais */}
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div>
+                      <div className="text-xs text-slate-500 uppercase tracking-wide">CNH</div>
+                      <div className="text-sm font-medium">{driver.cnh}</div>
+                      <div className="text-xs text-slate-500">Cat. {driver.cnhCategory}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-slate-500 uppercase tracking-wide">WhatsApp</div>
+                      {whatsappLink ? (
+                        <a 
+                          href={whatsappLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm font-medium text-green-600 hover:text-green-700"
+                        >
+                          {driver.whatsapp || driver.phone}
+                        </a>
+                      ) : (
+                        <div className="text-sm text-slate-400">Não informado</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Veículos resumo */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-2">
+                      <Car className="h-4 w-4 text-slate-400" />
+                      <span className="text-sm text-slate-600">
+                        {driver.vehicles.length} veículo{driver.vehicles.length !== 1 ? 's' : ''}
+                      </span>
+                      {vehicleInfo.primaryVehicle && (
+                        <Badge variant="outline" className="text-xs">
+                          {vehicleInfo.primaryVehicle.plate}
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="text-xs text-slate-500">
+                      {format(createdDate, "dd/MM/yyyy")}
+                    </div>
+                  </div>
+
+                  {/* Ações */}
+                  <div className="flex justify-end space-x-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onView(driver)}
+                      title="Visualizar"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    {canEditDriver(driver) && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onEdit(driver)}
+                        title="Editar"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    )}
+                    {canEditDriver(driver) && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onDelete(driver)}
+                        title="Excluir"
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Seção expandida */}
+                  {isExpanded && (
+                    <div className="mt-4 pt-4 border-t border-slate-200">
+                      <div className="space-y-4">
+                        {/* Informações detalhadas */}
+                        <div>
+                          <h4 className="font-medium text-slate-800 mb-2">Informações do Motorista</h4>
+                          <div className="grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                              <span className="text-slate-500">CPF:</span>
+                              <div className="font-medium">{driver.cpf}</div>
+                            </div>
+                            <div>
+                              <span className="text-slate-500">Telefone:</span>
+                              <div className="font-medium">{driver.phone}</div>
+                            </div>
+                            <div>
+                              <span className="text-slate-500">Nascimento:</span>
+                              <div className="font-medium">
+                                {driver.birthdate ? format(new Date(driver.birthdate), "dd/MM/yyyy") : "Não informado"}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-slate-500">Vencimento CNH:</span>
+                              <div className="font-medium">
+                                {driver.cnhExpiration ? format(new Date(driver.cnhExpiration), "dd/MM/yyyy") : "Não informado"}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Veículos detalhados */}
+                        <div>
+                          <h4 className="font-medium text-slate-800 mb-2 flex items-center gap-2">
+                            <Car className="h-4 w-4" />
+                            Veículos ({driver.vehicles.length})
+                          </h4>
+                          {driver.vehicles.length > 0 ? (
+                            <div className="space-y-3">
+                              {driver.vehicles.map((vehicle) => (
+                                <div key={vehicle.id} className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                                  <div className="flex justify-between items-start mb-2">
+                                    <div className="font-medium text-slate-800">{vehicle.plate}</div>
+                                    <Badge variant="outline" className="text-xs">
+                                      {/* Mostrar tipo do veículo */}
+                                      {vehicle.vehicleType === VEHICLE_TYPES.LEVE_TODOS && "Leve"}
+                                      {vehicle.vehicleType === VEHICLE_TYPES.LEVE_FIORINO && "Fiorino"}
+                                      {vehicle.vehicleType === VEHICLE_TYPES.LEVE_TOCO && "Toco"}
+                                      {vehicle.vehicleType === VEHICLE_TYPES.LEVE_VLC && "VLC"}
+                                      {vehicle.vehicleType === VEHICLE_TYPES.MEDIO_TODOS && "Médio"}
+                                      {vehicle.vehicleType === VEHICLE_TYPES.MEDIO_BITRUCK && "Bitruck"}
+                                      {vehicle.vehicleType === VEHICLE_TYPES.MEDIO_TRUCK && "Truck"}
+                                      {vehicle.vehicleType === VEHICLE_TYPES.PESADO_TODOS && "Pesado"}
+                                      {vehicle.vehicleType === VEHICLE_TYPES.PESADO_BITREM && "Bitrem"}
+                                      {vehicle.vehicleType === VEHICLE_TYPES.PESADO_CARRETA && "Carreta"}
+                                      {vehicle.vehicleType === VEHICLE_TYPES.PESADO_CARRETA_LS && "Carreta LS"}
+                                      {vehicle.vehicleType === VEHICLE_TYPES.PESADO_RODOTREM && "Rodotrem"}
+                                      {vehicle.vehicleType === VEHICLE_TYPES.PESADO_VANDERLEIA && "Vanderléia"}
+                                    </Badge>
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-2 text-sm text-slate-600">
+                                    <div>
+                                      <span className="text-slate-500">Marca/Modelo:</span>
+                                      <div className="font-medium">{vehicle.brand} {vehicle.model}</div>
+                                    </div>
+                                    <div>
+                                      <span className="text-slate-500">Ano:</span>
+                                      <div className="font-medium">{vehicle.year}</div>
+                                    </div>
+                                    <div>
+                                      <span className="text-slate-500">Cor:</span>
+                                      <div className="font-medium">{vehicle.color}</div>
+                                    </div>
+                                    <div>
+                                      <span className="text-slate-500">Carroceria:</span>
+                                      <div className="font-medium">
+                                        {vehicle.bodyType === BODY_TYPES.BAU && "Baú"}
+                                        {vehicle.bodyType === BODY_TYPES.GRANELEIRA && "Graneleira"}
+                                        {vehicle.bodyType === BODY_TYPES.BASCULANTE && "Basculante"}
+                                        {vehicle.bodyType === BODY_TYPES.PLATAFORMA && "Plataforma"}
+                                        {vehicle.bodyType === BODY_TYPES.TANQUE && "Tanque"}
+                                        {vehicle.bodyType === BODY_TYPES.FRIGORIFICA && "Frigorífica"}
+                                        {vehicle.bodyType === BODY_TYPES.PORTA_CONTEINER && "Porta Contêiner"}
+                                        {vehicle.bodyType === BODY_TYPES.SIDER && "Sider"}
+                                        {vehicle.bodyType === BODY_TYPES.CACAMBA && "Caçamba"}
+                                        {vehicle.bodyType === BODY_TYPES.ABERTA && "Aberta"}
+                                        {vehicle.bodyType === BODY_TYPES.FECHADA && "Fechada"}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-center py-4 text-slate-500 bg-slate-50 rounded-lg border border-slate-200">
+                              <p className="text-sm mb-2">Nenhum veículo cadastrado</p>
+                              {canEditDriver(driver) && (
+                                <Link href={`/vehicles/new?driverId=${driver.id}`}>
+                                  <Button variant="outline" size="sm" className="text-xs">
+                                    <Plus className="h-3 w-3 mr-1" />
+                                    Cadastrar Primeiro Veículo
+                                  </Button>
+                                </Link>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })
+        )}
+
+        {totalPages > 1 && (
+          <div className="flex justify-center pt-4">
+            <Pagination 
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={drivers.length}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        )}
+      </div>
+    </>
   );
 }
