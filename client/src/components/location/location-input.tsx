@@ -138,8 +138,26 @@ const LocationInput: React.FC<LocationInputProps> = ({
       console.log("Cidades encontradas:", cities);
       
       if (cities.length > 0) {
+        // Filtrar cidades que realmente começam com o termo buscado
+        const filteredCities = cities.filter(city => {
+          return city.nome.toLowerCase().includes(searchQuery.toLowerCase());
+        });
+        
+        // Ordenar por relevância: primeiro as que começam com o termo, depois as que contêm
+        const sortedCities = filteredCities.sort((a, b) => {
+          const aStartsWith = a.nome.toLowerCase().startsWith(searchQuery.toLowerCase());
+          const bStartsWith = b.nome.toLowerCase().startsWith(searchQuery.toLowerCase());
+          
+          if (aStartsWith && !bStartsWith) return -1;
+          if (!aStartsWith && bStartsWith) return 1;
+          return a.nome.localeCompare(b.nome);
+        });
+        
+        // Limitar a 10 resultados para melhor performance
+        const limitedCities = sortedCities.slice(0, 10);
+        
         // Formatar os resultados para exibição
-        const suggestions: CitySuggestion[] = cities.map(city => {
+        const suggestions: CitySuggestion[] = limitedCities.map(city => {
           try {
             const state = city.microrregiao?.mesorregiao?.UF?.sigla || "N/A";
             return {
@@ -161,56 +179,14 @@ const LocationInput: React.FC<LocationInputProps> = ({
           }
         });
         
-        console.log("Sugestões formatadas:", suggestions);
+        console.log("Sugestões filtradas e formatadas:", suggestions);
         setCitySuggestions(suggestions);
       } else {
-        // Se a API não retornar resultados, use o fallback
-        console.log("Usando sugestões populares como fallback");
-        
-        // Verificar se o termo de busca tem alguma correspondência com estados
-        const stateMatch = BRAZILIAN_STATES.find(
-          state => state.value.toLowerCase() === searchQuery.toLowerCase() || 
-                  state.label.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-        
-        if (stateMatch) {
-          // Se corresponder a um estado, mostrar cidades populares daquele estado
-          const popularCities = POPULAR_CITIES[stateMatch.value] || [];
-          const fallbackSuggestions: CitySuggestion[] = popularCities.map((cityName, index) => ({
-            id: index,
-            name: cityName,
-            fullName: `${cityName} - ${stateMatch.value}`,
-            state: stateMatch.value,
-            displayText: `${cityName} - ${stateMatch.value}`
-          }));
-          
-          setCitySuggestions(fallbackSuggestions);
-        } else {
-          // Se não corresponder a um estado, mostrar sugestão com o texto digitado
-          // para cada estado brasileiro
-          const fallbackSuggestions: CitySuggestion[] = BRAZILIAN_STATES.slice(0, 5).map(state => ({
-            id: 0,
-            name: searchQuery,
-            fullName: `${searchQuery} - ${state.value}`,
-            state: state.value,
-            displayText: `${searchQuery} - ${state.value}`
-          }));
-          
-          setCitySuggestions(fallbackSuggestions);
-        }
+        setCitySuggestions([]);
       }
     } catch (error) {
       console.error("Erro ao buscar cidades:", error);
-      // Usar fallback em caso de erro
-      const fallbackSuggestions: CitySuggestion[] = BRAZILIAN_STATES.slice(0, 5).map(state => ({
-        id: 0,
-        name: query,
-        fullName: `${query} - ${state.value}`,
-        state: state.value,
-        displayText: `${query} - ${state.value}`
-      }));
-      
-      setCitySuggestions(fallbackSuggestions);
+      setCitySuggestions([]);
     } finally {
       setLoading(false);
     }
