@@ -226,37 +226,19 @@ export async function hasDriverAccess(req: Request, res: Response, next: NextFun
     return res.status(404).json({ message: "Motorista não encontrado" });
   }
   
-  // Motoristas sem cliente associado ou clientId=0 podem ser editados por qualquer usuário autenticado
-  if (driver.clientId === null || driver.clientId === 0) {
-    console.log(`[hasDriverAccess] Motorista ${driverId} sem cliente associado ou clientId=0, acesso permitido para usuário ${req.user.id}`);
-    return next();
-  }
-  
-  // Verifica se o usuário tem um cliente associado
-  if (req.user?.clientId === null || req.user?.clientId === undefined) {
-    // Verifica se o usuário é o criador do motorista, mesmo sem cliente associado
-    if (driver.userId && driver.userId === req.user.id) {
-      console.log(`[hasDriverAccess] Usuário ${req.user.id} é o criador do motorista ${driverId}, acesso permitido`);
-      return next();
-    }
-    
-    console.log(`[hasDriverAccess] Usuário ${req.user.id} não tem cliente associado, negando acesso`);
-    return res.status(403).json({ message: "Você não tem um cliente associado ao seu perfil" });
-  }
-  
-  // Verifica se o motorista pertence ao cliente do usuário
-  if (req.user?.clientId === driver.clientId) {
-    console.log(`[hasDriverAccess] Motorista ${driverId} pertence ao cliente ${driver.clientId} do usuário ${req.user.id}, acesso permitido`);
-    return next();
-  }
-  
-  // Verificar se o usuário é o criador do motorista, mesmo que tenha cliente diferente
+  // Verificar se o usuário é o criador do motorista
   if (driver.userId && driver.userId === req.user.id) {
     console.log(`[hasDriverAccess] Usuário ${req.user.id} é o criador do motorista ${driverId}, acesso permitido`);
     return next();
   }
   
-  console.log(`[hasDriverAccess] Acesso negado para usuário ${req.user.id} ao motorista ${driverId} do cliente ${driver.clientId}`);
+  // Para usuários com cliente associado, permitir acesso a todos os motoristas
+  if (req.user?.clientId) {
+    console.log(`[hasDriverAccess] Usuário ${req.user.id} tem cliente ${req.user.clientId} associado, acesso permitido ao motorista ${driverId}`);
+    return next();
+  }
+  
+  console.log(`[hasDriverAccess] Acesso negado para usuário ${req.user.id} ao motorista ${driverId}. User não é criador nem tem cliente associado`);
   res.status(403).json({ message: "Acesso não autorizado" });
 }
 
