@@ -1,6 +1,9 @@
-import React, { ChangeEvent } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { FormControl } from "@/components/ui/form";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { MapPin, Loader2 } from "lucide-react";
 
 interface LocationInputProps {
   value: string;
@@ -15,6 +18,19 @@ interface LocationInputProps {
   stateValue?: string;
 }
 
+interface IBGECity {
+  id: number;
+  nome: string;
+  microrregiao: {
+    mesorregiao: {
+      UF: {
+        sigla: string;
+        nome: string;
+      }
+    }
+  }
+}
+
 const LocationInput: React.FC<LocationInputProps> = ({
   value,
   onChange,
@@ -25,11 +41,71 @@ const LocationInput: React.FC<LocationInputProps> = ({
   onStateChange,
   onCityChange
 }) => {
-  // Manipular a mudança direta no input
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const [citySuggestions, setCitySuggestions] = useState<IBGECity[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Sincronizar searchTerm com value
+  useEffect(() => {
+    setSearchTerm(value);
+  }, [value]);
+
+  // Buscar cidades usando a API do IBGE
+  const searchCities = async (query: string) => {
+    if (query.length < 3) {
+      setCitySuggestions([]);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Remover " - UF" para buscar apenas pelo nome da cidade
+      const searchQuery = query.includes(" - ") ? query.split(" - ")[0] : query;
+      const encodedQuery = encodeURIComponent(searchQuery);
+      
+      const response = await fetch(
+        `https://servicodados.ibge.gov.br/api/v1/localidades/municipios?nome=${encodedQuery}`
+      );
+      
+      if (response.ok) {
+        const cities = await response.json();
+        setCitySuggestions(cities.slice(0, 10)); // Limitar a 10 resultados
+      } else {
+        setCitySuggestions([]);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar cidades:", error);
+      setCitySuggestions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Debounce para busca
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchTerm.length >= 3) {
+        searchCities(searchTerm);
+      } else {
+        setCitySuggestions([]);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Manipular mudança no input
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
+    setSearchTerm(newValue);
     onChange(newValue);
     
+    if (newValue.length >= 3) {
+      setOpen(true);
+    }
+
     // Extrair cidade e estado se o formato for "Cidade - UF"
     if (newValue.includes(" - ")) {
       const parts = newValue.split(" - ");
@@ -43,19 +119,82 @@ const LocationInput: React.FC<LocationInputProps> = ({
     }
   };
 
+  // Selecionar uma sugestão
+  const selectSuggestion = (city: IBGECity) => {
+    const state = city.microrregiao?.mesorregiao?.UF?.sigla || "";
+    const formattedValue = `${city.nome} - ${state}`;
+    
+    onChange(formattedValue);
+    setSearchTerm(formattedValue);
+    setOpen(false);
+    setCitySuggestions([]);
+    
+    if (onCityChange) onCityChange(city.nome);
+    if (onStateChange) onStateChange(state);
+  };
+
   return (
     <div className="w-full">
-      <FormControl>
-        <Input
-          type="text"
-          value={value}
-          onChange={handleInputChange}
-          placeholder={placeholder}
-          disabled={disabled || readOnly}
-          readOnly={readOnly}
-          className={errorMessage ? "border-red-500" : ""}
-        />
-      </FormControl>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <FormControl>
+            <Input
+              ref={inputRef}
+              type="text"
+              value={searchTerm}
+              onChange={handleInputChange}
+              placeholder={placeholder}
+              disabled={disabled || readOnly}
+              readOnly={readOnly}
+              className={errorMessage ? "border-red-500" : ""}
+              onClick={() => {
+                if (!readOnly && searchTerm.length >= 3) {
+                  setOpen(true);
+                }
+              }}
+            />
+          </FormControl>
+        </PopoverTrigger>
+        {citySuggestions.length > 0 && (
+          <PopoverContent className="w-[350px] p-0" align="start">
+            <Command>
+              <CommandInput
+                placeholder="Buscar cidade..."
+                value={searchTerm}
+                onValueChange={setSearchTerm}
+              />
+              <CommandList>
+                {loading && (
+                  <div className="p-4 text-center">
+                    <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+                    <span className="text-sm text-muted-foreground">Buscando cidades...</span>
+                  </div>
+                )}
+                
+                <CommandEmpty>Nenhuma cidade encontrada</CommandEmpty>
+                
+                {citySuggestions.length > 0 && (
+                  <CommandGroup heading="Cidades encontradas">
+                    {citySuggestions.map((city) => (
+                      <CommandItem
+                        key={city.id}
+                        value={`${city.nome} - ${city.microrregiao?.mesorregiao?.UF?.sigla}`}
+                        onSelect={() => selectSuggestion(city)}
+                      >
+                        <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <span>{city.nome}</span>
+                        <span className="ml-1 text-muted-foreground">
+                          - {city.microrregiao?.mesorregiao?.UF?.sigla}
+                        </span>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                )}
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        )}
+      </Popover>
       {errorMessage && (
         <div className="text-red-500 text-sm mt-1">{errorMessage}</div>
       )}
