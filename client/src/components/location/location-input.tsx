@@ -138,26 +138,8 @@ const LocationInput: React.FC<LocationInputProps> = ({
       console.log("Cidades encontradas:", cities);
       
       if (cities.length > 0) {
-        // Filtrar cidades que realmente começam com o termo buscado
-        const filteredCities = cities.filter(city => {
-          return city.nome.toLowerCase().includes(searchQuery.toLowerCase());
-        });
-        
-        // Ordenar por relevância: primeiro as que começam com o termo, depois as que contêm
-        const sortedCities = filteredCities.sort((a, b) => {
-          const aStartsWith = a.nome.toLowerCase().startsWith(searchQuery.toLowerCase());
-          const bStartsWith = b.nome.toLowerCase().startsWith(searchQuery.toLowerCase());
-          
-          if (aStartsWith && !bStartsWith) return -1;
-          if (!aStartsWith && bStartsWith) return 1;
-          return a.nome.localeCompare(b.nome);
-        });
-        
-        // Limitar a 10 resultados para melhor performance
-        const limitedCities = sortedCities.slice(0, 10);
-        
         // Formatar os resultados para exibição
-        const suggestions: CitySuggestion[] = limitedCities.map(city => {
+        const suggestions: CitySuggestion[] = cities.map(city => {
           try {
             const state = city.microrregiao?.mesorregiao?.UF?.sigla || "N/A";
             return {
@@ -179,14 +161,56 @@ const LocationInput: React.FC<LocationInputProps> = ({
           }
         });
         
-        console.log("Sugestões filtradas e formatadas:", suggestions);
+        console.log("Sugestões formatadas:", suggestions);
         setCitySuggestions(suggestions);
       } else {
-        setCitySuggestions([]);
+        // Se a API não retornar resultados, use o fallback
+        console.log("Usando sugestões populares como fallback");
+        
+        // Verificar se o termo de busca tem alguma correspondência com estados
+        const stateMatch = BRAZILIAN_STATES.find(
+          state => state.value.toLowerCase() === searchQuery.toLowerCase() || 
+                  state.label.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        
+        if (stateMatch) {
+          // Se corresponder a um estado, mostrar cidades populares daquele estado
+          const popularCities = POPULAR_CITIES[stateMatch.value] || [];
+          const fallbackSuggestions: CitySuggestion[] = popularCities.map((cityName, index) => ({
+            id: index,
+            name: cityName,
+            fullName: `${cityName} - ${stateMatch.value}`,
+            state: stateMatch.value,
+            displayText: `${cityName} - ${stateMatch.value}`
+          }));
+          
+          setCitySuggestions(fallbackSuggestions);
+        } else {
+          // Se não corresponder a um estado, mostrar sugestão com o texto digitado
+          // para cada estado brasileiro
+          const fallbackSuggestions: CitySuggestion[] = BRAZILIAN_STATES.slice(0, 5).map(state => ({
+            id: 0,
+            name: searchQuery,
+            fullName: `${searchQuery} - ${state.value}`,
+            state: state.value,
+            displayText: `${searchQuery} - ${state.value}`
+          }));
+          
+          setCitySuggestions(fallbackSuggestions);
+        }
       }
     } catch (error) {
       console.error("Erro ao buscar cidades:", error);
-      setCitySuggestions([]);
+      // Usar fallback em caso de erro
+      const fallbackSuggestions: CitySuggestion[] = BRAZILIAN_STATES.slice(0, 5).map(state => ({
+        id: 0,
+        name: query,
+        fullName: `${query} - ${state.value}`,
+        state: state.value,
+        displayText: `${query} - ${state.value}`
+      }));
+      
+      setCitySuggestions(fallbackSuggestions);
     } finally {
       setLoading(false);
     }
@@ -194,6 +218,15 @@ const LocationInput: React.FC<LocationInputProps> = ({
 
   // Selecionar uma sugestão
   const selectSuggestion = (suggestion: CitySuggestion) => {
+    // Certifique-se de que estamos definindo o valor do campo e do estado corretamente
+    if (!suggestion.name || !suggestion.state) {
+      // Se não tiver nome ou estado, vamos criar uma sugestão válida com o que temos
+      suggestion.name = suggestion.name || "Cidade";
+      suggestion.state = suggestion.state || "UF";
+      suggestion.fullName = `${suggestion.name} - ${suggestion.state}`;
+      suggestion.displayText = suggestion.fullName;
+    }
+    
     console.log("Selecionando cidade:", suggestion);
     
     // Garantir que o formato da cidade está correto (Nome - UF)
@@ -212,7 +245,7 @@ const LocationInput: React.FC<LocationInputProps> = ({
     if (onCityChange) onCityChange(suggestion.name);
     if (onStateChange) onStateChange(suggestion.state);
     
-    // Limpar as sugestões após a seleção
+    // Garantir que as sugestões sejam limpas após a seleção para evitar conflitos
     setCitySuggestions([]);
   };
 
@@ -251,72 +284,40 @@ const LocationInput: React.FC<LocationInputProps> = ({
           </FormControl>
         </PopoverTrigger>
         <PopoverContent className="w-[350px] p-0" align="start">
-          <div className="border rounded-md bg-background">
-            <div className="p-2 border-b">
-              <input
-                type="text"
-                placeholder="Digite pelo menos 3 letras para buscar..."
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  handleInputChange(e);
-                }}
-                className="w-full px-2 py-1 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-            
-            <div className="max-h-[300px] overflow-y-auto">
-              {loading && (
-                <div className="p-3 text-center text-sm text-muted-foreground">
-                  Buscando cidades...
-                </div>
-              )}
+          <Command>
+            <CommandInput
+              placeholder="Digite pelo menos 3 letras para buscar..."
+              value={searchTerm}
+              onValueChange={setSearchTerm}
+            />
+            <CommandList>
+              {loading && <div className="p-2 text-center">Buscando...</div>}
               
-              {!loading && citySuggestions.length === 0 && searchTerm.length >= 3 && (
-                <div className="p-3 text-center text-sm text-muted-foreground">
-                  Nenhuma cidade encontrada
-                </div>
-              )}
+              <CommandEmpty>Nenhuma cidade encontrada</CommandEmpty>
               
               {citySuggestions.length > 0 && (
-                <div>
-                  <div className="px-2 py-1 text-xs font-medium text-muted-foreground bg-muted">
-                    Cidades encontradas
-                  </div>
+                <CommandGroup heading="Cidades">
                   {citySuggestions.map((suggestion) => (
-                    <div
-                      key={`${suggestion.id}-${suggestion.name}-${suggestion.state}`}
-                      className="flex items-center px-3 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground border-b border-border/50 last:border-b-0"
-                      onClick={() => {
-                        console.log("Cidade clicada:", suggestion);
-                        selectSuggestion(suggestion);
-                      }}
-                      onMouseDown={(e) => {
-                        e.preventDefault(); // Previne que o input perca o foco
-                        console.log("Mouse down na cidade:", suggestion);
-                        selectSuggestion(suggestion);
-                      }}
+                    <CommandItem
+                      key={suggestion.id}
+                      value={suggestion.fullName}
+                      onSelect={() => selectSuggestion(suggestion)}
                     >
-                      <MapPin className="h-4 w-4 mr-2 text-muted-foreground flex-shrink-0" />
-                      <div className="flex-1">
-                        <span className="font-medium">{suggestion.name}</span>
-                        <span className="ml-1 text-muted-foreground">- {suggestion.state}</span>
-                      </div>
-                    </div>
+                      <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <span>{suggestion.name}</span>
+                      <span className="ml-1 text-muted-foreground">{suggestion.state && ` - ${suggestion.state}`}</span>
+                    </CommandItem>
                   ))}
-                </div>
+                </CommandGroup>
               )}
               
               {citySuggestions.length === 0 && searchTerm.length < 3 && (
-                <div>
-                  <div className="px-2 py-1 text-xs font-medium text-muted-foreground bg-muted">
-                    Estados disponíveis
-                  </div>
-                  {BRAZILIAN_STATES.slice(0, 10).map((state) => (
-                    <div
+                <CommandGroup heading="Estados">
+                  {BRAZILIAN_STATES.map((state) => (
+                    <CommandItem
                       key={state.value}
-                      className="flex items-center px-3 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground border-b border-border/50 last:border-b-0"
-                      onClick={() => {
+                      value={state.value}
+                      onSelect={() => {
                         const cityName = searchTerm || "Cidade";
                         const suggestion: CitySuggestion = {
                           id: 0,
@@ -325,23 +326,22 @@ const LocationInput: React.FC<LocationInputProps> = ({
                           state: state.value,
                           displayText: `${cityName} - ${state.value}`
                         };
-                        console.log("Estado clicado:", suggestion);
                         selectSuggestion(suggestion);
                       }}
                     >
                       <Check
                         className={cn(
-                          "mr-2 h-4 w-4 flex-shrink-0",
+                          "mr-2 h-4 w-4",
                           value.endsWith(` - ${state.value}`) ? "opacity-100" : "opacity-0"
                         )}
                       />
-                      <span>{state.label} - {state.value}</span>
-                    </div>
+                      {state.label} - {state.value}
+                    </CommandItem>
                   ))}
-                </div>
+                </CommandGroup>
               )}
-            </div>
-          </div>
+            </CommandList>
+          </Command>
         </PopoverContent>
       </Popover>
       {errorMessage && (

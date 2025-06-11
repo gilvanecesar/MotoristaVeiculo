@@ -6,7 +6,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider as UserAuthProvider } from "@/hooks/use-auth";
 import { AuthProvider as ClientAuthProvider } from "@/lib/auth-context";
 import { ProtectedRoute } from "@/lib/protected-route";
-import { AdminRoute } from "@/lib/admin-route";
 import { ClientRegistrationCheck } from "@/components/client-registration-check";
 import { SubscriptionStatusBanner } from "@/components/ui/subscription-status-banner";
 
@@ -103,11 +102,11 @@ function Router() {
       <ProtectedRoute path="/complements/:id/edit" component={EditComplementPage} />
       <ProtectedRoute path="/complements/:id" component={ComplementDetailPage} />
       <ProtectedRoute path="/reports" component={ReportsPage} />
-      <AdminRoute path="/admin" component={AdminPage} />
-      <AdminRoute path="/admin/finance" component={FinanceDashboard} />
-      <AdminRoute path="/admin/finance/settings" component={FinanceSettings} />
-      <AdminRoute path="/admin/users" component={AdminUsersPage} />
-      <AdminRoute path="/admin/email" component={EmailAdminPage} />
+      <ProtectedRoute path="/admin" component={AdminPage} />
+      <ProtectedRoute path="/admin/finance" component={FinanceDashboard} />
+      <ProtectedRoute path="/admin/finance/settings" component={FinanceSettings} />
+      <ProtectedRoute path="/admin/users" component={AdminUsersPage} />
+      <ProtectedRoute path="/admin/email" component={EmailAdminPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
       <ProtectedRoute path="/webhook-config" component={WebhookConfig} />
       <ProtectedRoute path="/home" component={Home} />

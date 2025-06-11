@@ -27,7 +27,6 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { formatCPF, formatPhone, formatCEP } from "@/lib/utils/masks";
 import { VehicleForm } from "@/components/drivers/vehicle-form";
-
 import { z } from "zod";
 
 // Combined schema for driver with vehicles
@@ -586,7 +585,7 @@ export default function DriverForm() {
                           Cidade
                         </FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="Digite a cidade" />
+                          <Input {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

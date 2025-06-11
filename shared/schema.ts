@@ -97,7 +97,6 @@ export const drivers = pgTable("drivers", {
 // Vehicle schema
 export const vehicles = pgTable("vehicles", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id), // Vincula veículo ao usuário logado
   driverId: integer("driver_id").notNull().references(() => drivers.id),
   plate: text("plate").notNull().unique(),
   brand: text("brand").notNull(),
@@ -105,9 +104,6 @@ export const vehicles = pgTable("vehicles", {
   year: integer("year").notNull(),
   color: text("color").notNull(),
   renavam: text("renavam"),
-  chassi: text("chassi"),
-  capacity: text("capacity"),
-  observations: text("observations"),
   
   // Tipo de veículo e carroceria
   vehicleType: text("vehicle_type").notNull(),

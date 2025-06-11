@@ -306,7 +306,7 @@ export default function VehiclesPage() {
                   <TableHead>Marca / Modelo</TableHead>
                   <TableHead>Ano</TableHead>
                   <TableHead>Cor</TableHead>
-                  <TableHead>Proprietário</TableHead>
+                  <TableHead>Motorista</TableHead>
                   <TableHead>Categoria</TableHead>
                   <TableHead>Tipo</TableHead>
                   <TableHead>Carroceria</TableHead>
@@ -379,9 +379,7 @@ export default function VehiclesPage() {
                               {vehicle.color}
                             </div>
                           </TableCell>
-                          <TableCell>
-                            {driver ? driver.name : "Proprietário não encontrado"}
-                          </TableCell>
+                          <TableCell>{getDriverName(vehicle.driverId)}</TableCell>
                           <TableCell>
                             <Badge 
                               variant="secondary" 
@@ -491,7 +489,7 @@ export default function VehiclesPage() {
                                       <h3 className="text-md font-semibold mb-2 text-slate-800 dark:text-slate-200">
                                         <div className="flex items-center gap-2">
                                           <User className="h-4 w-4 text-primary" />
-                                          Proprietário
+                                          Motorista
                                         </div>
                                       </h3>
                                       <div className="space-y-2">

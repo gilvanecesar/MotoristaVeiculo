@@ -112,10 +112,7 @@ export interface IStorage {
   // Vehicle operations
   getVehicles(): Promise<Vehicle[]>;
   getVehiclesByDriver(driverId: number): Promise<Vehicle[]>;
-  getVehiclesByUser(userId: number): Promise<Vehicle[]>;
-  getVehiclesByDriverAndUser(driverId: number, userId: number): Promise<Vehicle[]>;
   getVehicle(id: number): Promise<Vehicle | undefined>;
-  getVehicleByIdAndUser(id: number, userId: number): Promise<Vehicle | undefined>;
   createVehicle(vehicle: InsertVehicle): Promise<Vehicle>;
   updateVehicle(
     id: number,
@@ -986,30 +983,8 @@ export class DatabaseStorage implements IStorage {
       .where(eq(vehicles.driverId, driverId));
   }
 
-  async getVehiclesByUser(userId: number): Promise<Vehicle[]> {
-    return await db
-      .select()
-      .from(vehicles)
-      .where(eq(vehicles.userId, userId));
-  }
-
-  async getVehiclesByDriverAndUser(driverId: number, userId: number): Promise<Vehicle[]> {
-    return await db
-      .select()
-      .from(vehicles)
-      .where(and(eq(vehicles.driverId, driverId), eq(vehicles.userId, userId)));
-  }
-
   async getVehicle(id: number): Promise<Vehicle | undefined> {
     const results = await db.select().from(vehicles).where(eq(vehicles.id, id));
-    return results[0];
-  }
-
-  async getVehicleByIdAndUser(id: number, userId: number): Promise<Vehicle | undefined> {
-    const results = await db
-      .select()
-      .from(vehicles)
-      .where(and(eq(vehicles.id, id), eq(vehicles.userId, userId)));
     return results[0];
   }
 

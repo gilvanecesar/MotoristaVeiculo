@@ -13,12 +13,9 @@ if (!process.env.DATABASE_URL) {
 // Configurações diferentes para desenvolvimento e produção
 const poolConfig = {
   connectionString: process.env.DATABASE_URL,
-  max: 10,
-  min: 2,
-  connectionTimeoutMillis: 30000,
-  idleTimeoutMillis: 300000,
-  keepAlive: true,
-  keepAliveInitialDelayMillis: 0,
+  max: 20,
+  connectionTimeoutMillis: 5000,
+  idleTimeoutMillis: 30000,
   // Em produção, pode ser necessário configurar SSL de maneira diferente
   ssl: {
     rejectUnauthorized: false

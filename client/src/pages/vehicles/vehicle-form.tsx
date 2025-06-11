@@ -3,7 +3,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLocation, useParams } from "wouter";
 import { toast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/use-auth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { insertVehicleSchema, VEHICLE_TYPES, BODY_TYPES } from "@shared/schema";
 import { z } from "zod";
@@ -56,7 +55,6 @@ type VehicleFormValues = z.infer<typeof vehicleFormSchema>;
 export default function VehicleForm() {
   const params = useParams();
   const [, navigate] = useLocation();
-  const { user } = useAuth();
   const isEditing = Boolean(params.id);
   const vehicleId = params.id;
 
@@ -82,39 +80,18 @@ export default function VehicleForm() {
     },
   });
 
-  // Carregar motoristas e pré-selecionar motorista do usuário logado se existir
+  // Carregar motoristas
   const loadDrivers = async () => {
     setIsLoadingDrivers(true);
     try {
-      const response = await fetch("/api/drivers", {
-        credentials: "include",
-      });
-      
+      const response = await apiRequest("GET", "/api/drivers");
       if (response.ok) {
         const driversData = await response.json();
         setDrivers(driversData);
-        console.log("Motoristas carregados:", driversData);
-        
-        // Verificar se existe um motorista para o usuário logado
-        if (user) {
-          const userDriver = driversData.find((driver: any) => 
-            driver.email === user.email || driver.name.toLowerCase().includes(user.name.toLowerCase())
-          );
-          
-          console.log("Motorista do usuário encontrado:", userDriver);
-          
-          // Pré-selecionar o motorista do usuário logado se existir
-          if (userDriver && !isEditing) {
-            form.setValue("driverId", userDriver.id);
-            console.log("Campo motorista preenchido automaticamente com:", userDriver.name);
-          }
-        }
       } else {
-        const errorText = await response.text();
-        console.error("Erro na resposta:", response.status, errorText);
         toast({
           title: "Erro",
-          description: `Não foi possível carregar os motoristas. Status: ${response.status}`,
+          description: "Não foi possível carregar os motoristas.",
           variant: "destructive",
         });
       }
@@ -171,13 +148,7 @@ export default function VehicleForm() {
       const url = isEditing ? `/api/vehicles/${vehicleId}` : "/api/vehicles";
       const method = isEditing ? "PUT" : "POST";
 
-      // Incluir userId automaticamente para vincular o veículo ao usuário logado
-      const vehicleData = {
-        ...data,
-        userId: user?.id
-      };
-
-      const response = await apiRequest(method, url, vehicleData);
+      const response = await apiRequest(method, url, data);
 
       if (response.ok) {
         toast({
