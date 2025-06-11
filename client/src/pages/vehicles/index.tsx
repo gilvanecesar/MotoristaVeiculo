@@ -65,6 +65,26 @@ export default function VehiclesPage() {
     return false;
   };
 
+  // Verificar se o usuário pode criar novos veículos
+  const canCreateVehicle = () => {
+    // Administradores podem criar veículos
+    if (user?.profileType?.toLowerCase() === "admin" || user?.profileType?.toLowerCase() === "administrador") {
+      return true;
+    }
+    
+    // Embarcadores e agentes podem criar veículos
+    if (user?.profileType?.toLowerCase() === "embarcador" || user?.profileType?.toLowerCase() === "agente") {
+      return true;
+    }
+    
+    // Motoristas podem criar seus próprios veículos
+    if (user?.profileType?.toLowerCase() === "motorista") {
+      return true;
+    }
+    
+    return false;
+  };
+
   const { data: vehicles = [], isLoading } = useQuery<Vehicle[]>({
     queryKey: ["/api/vehicles", searchQuery],
     queryFn: async () => {
@@ -247,12 +267,14 @@ export default function VehiclesPage() {
             />
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
           </form>
-          <Link href="/vehicles/new">
-            <Button className="flex gap-1 items-center">
-              <Plus className="h-4 w-4" />
-              <span>Novo Veículo</span>
-            </Button>
-          </Link>
+          {canCreateVehicle() && (
+            <Link href="/vehicles/new">
+              <Button className="flex gap-1 items-center">
+                <Plus className="h-4 w-4" />
+                <span>Novo Veículo</span>
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
 

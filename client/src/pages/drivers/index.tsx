@@ -17,13 +17,30 @@ import {
 } from "@/components/ui/dialog";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import { DriverWithVehicles } from "@shared/schema";
 
 export default function DriversPage() {
+  const { user } = useAuth();
   const [, navigate] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [driverToDelete, setDriverToDelete] = useState<DriverWithVehicles | null>(null);
   const { toast } = useToast();
+
+  // Verificar se o usuário pode criar novos motoristas
+  const canCreateDriver = () => {
+    // Administradores podem criar motoristas
+    if (user?.profileType?.toLowerCase() === "admin" || user?.profileType?.toLowerCase() === "administrador") {
+      return true;
+    }
+    
+    // Embarcadores e agentes podem criar motoristas
+    if (user?.profileType?.toLowerCase() === "embarcador" || user?.profileType?.toLowerCase() === "agente") {
+      return true;
+    }
+    
+    return false;
+  };
 
   const { data: drivers = [], isLoading } = useQuery<DriverWithVehicles[]>({
     queryKey: ["/api/drivers", searchQuery],
@@ -97,12 +114,14 @@ export default function DriversPage() {
             />
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
           </form>
-          <Link href="/drivers/new">
-            <Button className="flex gap-1 items-center">
-              <Plus className="h-4 w-4" />
-              <span>Novo Motorista</span>
-            </Button>
-          </Link>
+          {canCreateDriver() && (
+            <Link href="/drivers/new">
+              <Button className="flex gap-1 items-center">
+                <Plus className="h-4 w-4" />
+                <span>Novo Motorista</span>
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
 
