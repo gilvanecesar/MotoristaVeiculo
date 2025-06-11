@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Edit, Eye, Trash, Users, ChevronDown, ChevronRight, Phone, Car } from "lucide-react";
 import { format } from "date-fns";
-import { useState } from "react";
+import React, { useState } from "react";
 import { Pagination } from "@/components/ui/pagination";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -201,9 +201,8 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
                   const isExpanded = expandedRows.includes(driver.id);
                   const whatsappLink = formatWhatsAppLink(driver.whatsapp);
                   
-                  return (
-                    <>
-                      <TableRow key={driver.id} className="hover:bg-slate-50">
+                  return [
+                      <TableRow key={`row-${driver.id}`} className="hover:bg-slate-50">
                         <TableCell className="p-2 align-middle text-center">
                           <Button
                             variant="ghost"
@@ -448,10 +447,155 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
                               )}
                             </div>
                           </TableCell>
+                        </TableRow>,
+                      isExpanded && (
+                        <TableRow key={`expanded-${driver.id}`} className="bg-slate-50/50">
+                          <TableCell colSpan={10} className="p-0">
+                            <div className="p-6 space-y-4 border-t border-slate-200">
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div>
+                                  <h3 className="text-md font-semibold mb-3 text-slate-800 dark:text-slate-200">Informações Pessoais</h3>
+                                  <div className="space-y-2 text-sm">
+                                    <p><span className="font-medium text-slate-600 dark:text-slate-400">Email:</span> {driver.email}</p>
+                                    <p><span className="font-medium text-slate-600 dark:text-slate-400">WhatsApp:</span> {driver.whatsapp}</p>
+                                    <p><span className="font-medium text-slate-600 dark:text-slate-400">Data de Nascimento:</span> {driver.birthDate ? format(new Date(driver.birthDate), "dd/MM/yyyy") : "Não informado"}</p>
+                                    <p><span className="font-medium text-slate-600 dark:text-slate-400">RG:</span> {driver.rg || "Não informado"}</p>
+                                    <p><span className="font-medium text-slate-600 dark:text-slate-400">CPF:</span> {driver.cpf || "Não informado"}</p>
+                                  </div>
+                                </div>
+                                
+                                <div>
+                                  <h3 className="text-md font-semibold mb-3 text-slate-800 dark:text-slate-200">CNH</h3>
+                                  <div className="space-y-2 text-sm">
+                                    <p><span className="font-medium text-slate-600 dark:text-slate-400">Número:</span> {driver.cnhNumber || "Não informado"}</p>
+                                    <p><span className="font-medium text-slate-600 dark:text-slate-400">Categoria:</span> {driver.cnhCategory || "Não informada"}</p>
+                                    <p><span className="font-medium text-slate-600 dark:text-slate-400">Validade:</span> {driver.cnhExpiration ? format(new Date(driver.cnhExpiration), "dd/MM/yyyy") : "Não informada"}</p>
+                                    <p><span className="font-medium text-slate-600 dark:text-slate-400">Data de Emissão:</span> {driver.cnhIssueDate ? format(new Date(driver.cnhIssueDate), "dd/MM/yyyy") : "Não informada"}</p>
+                                  </div>
+                                </div>
+                                
+                                <div>
+                                  <h3 className="text-md font-semibold mb-3 text-slate-800 dark:text-slate-200">Endereço</h3>
+                                  <div className="space-y-2 text-sm">
+                                    <p><span className="font-medium text-slate-600 dark:text-slate-400">Rua:</span> {driver.street || "Não informado"}</p>
+                                    <p><span className="font-medium text-slate-600 dark:text-slate-400">Número:</span> {driver.number || "Não informado"}</p>
+                                    <p><span className="font-medium text-slate-600 dark:text-slate-400">Complemento:</span> {driver.complement || "Não informado"}</p>
+                                    <p><span className="font-medium text-slate-600 dark:text-slate-400">Bairro:</span> {driver.neighborhood || "Não informado"}</p>
+                                    <p><span className="font-medium text-slate-600 dark:text-slate-400">Cidade:</span> {driver.city || "Não informado"}</p>
+                                    <p><span className="font-medium text-slate-600 dark:text-slate-400">Estado:</span> {driver.state || "Não informado"}</p>
+                                    <p><span className="font-medium text-slate-600 dark:text-slate-400">CEP:</span> {driver.zipcode || "Não informado"}</p>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              {driver.vehicles.length > 0 && (
+                                <div>
+                                  <h3 className="text-md font-semibold mb-2 text-slate-800 dark:text-slate-200">Veículos</h3>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                    {driver.vehicles.map((vehicle: any) => (
+                                      <div key={vehicle.id} className="p-3 bg-white dark:bg-slate-700 rounded border border-slate-200 dark:border-slate-600">
+                                        <div className="flex items-center gap-2 mb-2">
+                                          <Car className="h-4 w-4 text-primary" />
+                                          <h4 className="text-sm font-medium">{vehicle.brand} {vehicle.model}</h4>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-2 text-xs">
+                                          <div>
+                                            <p className="text-slate-500 dark:text-slate-400">Placa</p>
+                                            <p className="font-medium">{vehicle.plate}</p>
+                                          </div>
+                                          <div>
+                                            <p className="text-slate-500 dark:text-slate-400">Ano</p>
+                                            <p className="font-medium">{vehicle.year}</p>
+                                          </div>
+                                          <div>
+                                            <p className="text-slate-500 dark:text-slate-400">Cor</p>
+                                            <p className="font-medium">{vehicle.color}</p>
+                                          </div>
+                                          {vehicle.renavam && (
+                                            <div>
+                                              <p className="text-slate-500 dark:text-slate-400">Renavam</p>
+                                              <p className="font-medium">{vehicle.renavam}</p>
+                                            </div>
+                                          )}
+                                          <div>
+                                            <p className="text-slate-500 dark:text-slate-400">Tipo</p>
+                                            <p className="font-medium">
+                                              {/* Leves */}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.LEVE_TODOS && "Leve (Todos)"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.LEVE_FIORINO && "Leve (Fiorino)"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.LEVE_TOCO && "Leve (Toco)"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.LEVE_TURBO && "Leve (Turbo)"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.LEVE_CHAPEIRO && "Leve (Chapeiro)"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.LEVE_VAN && "Leve (Van)"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.LEVE_UTILITARIO && "Leve (Utilitário)"}
+                                              
+                                              {/* Médios */}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.MEDIO_TOCO && "Médio (Toco)"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.MEDIO_CHAPEIRO && "Médio (Chapeiro)"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.MEDIO_TURBO && "Médio (Turbo)"}
+                                              
+                                              {/* Pesados */}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.PESADO_TOCO && "Pesado (Toco)"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.PESADO_TRUCADO && "Pesado (Trucado)"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.PESADO_CARRETA_LS && "Pesado (Carreta LS)"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.PESADO_CARRETA_2E && "Pesado (Carreta 2E)"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.PESADO_CARRETA_3E && "Pesado (Carreta 3E)"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.PESADO_BITREM && "Pesado (Bitrem)"}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.PESADO_RODOTREM && "Pesado (Rodotrem)"}
+                                              
+                                              {/* Motocicletas */}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.MOTO && "Motocicleta"}
+                                              
+                                              {/* Outros */}
+                                              {vehicle.vehicleType === VEHICLE_TYPES.VARIOS && "Vários"}
+                                              
+                                              {!Object.values(VEHICLE_TYPES).includes(vehicle.vehicleType) && "Tipo não especificado"}
+                                            </p>
+                                          </div>
+                                          <div>
+                                            <p className="text-slate-500 dark:text-slate-400">Carroceria</p>
+                                            <p className="font-medium">
+                                              {/* Fechadas */}
+                                              {vehicle.bodyType === BODY_TYPES.FECHADA_BAU && "Fechada (Baú)"}
+                                              {vehicle.bodyType === BODY_TYPES.FECHADA_BAU_REFRIGERADA && "Fechada (Baú Refrigerada)"}
+                                              {vehicle.bodyType === BODY_TYPES.FECHADA_SIDER && "Fechada (Sider)"}
+                                              {vehicle.bodyType === BODY_TYPES.FECHADA_GRANELEIRA && "Fechada (Graneleira)"}
+                                              {vehicle.bodyType === BODY_TYPES.FECHADA_TANQUE && "Fechada (Tanque)"}
+                                              {vehicle.bodyType === BODY_TYPES.FECHADA_ISOTERMICA && "Fechada (Isotérmica)"}
+                                              {vehicle.bodyType === BODY_TYPES.FECHADA_CEGONHEIRA && "Fechada (Cegonheira)"}
+                                              {vehicle.bodyType === BODY_TYPES.FECHADA_CONTAINER && "Fechada (Container)"}
+                                              
+                                              {/* Abertas */}
+                                              {vehicle.bodyType === BODY_TYPES.ABERTA_PLATAFORMA && "Aberta (Plataforma)"}
+                                              {vehicle.bodyType === BODY_TYPES.ABERTA_CARROCERIA && "Aberta (Carroceria)"}
+                                              {vehicle.bodyType === BODY_TYPES.ABERTA_CACAMBA && "Aberta (Caçamba)"}
+                                              {vehicle.bodyType === BODY_TYPES.ABERTA_REBOQUE && "Aberta (Reboque)"}
+                                              {vehicle.bodyType === BODY_TYPES.ABERTA_RANDON && "Aberta (Randon)"}
+                                              
+                                              {/* Especiais */}
+                                              {vehicle.bodyType === BODY_TYPES.ESPECIAL_BASCULANTE && "Especial (Basculante)"}
+                                              {vehicle.bodyType === BODY_TYPES.ESPECIAL_MUNK && "Especial (Munk)"}
+                                              {vehicle.bodyType === BODY_TYPES.ESPECIAL_GUINCHO && "Especial (Guincho)"}
+                                              {vehicle.bodyType === BODY_TYPES.ESPECIAL_GUINDASTE && "Especial (Guindaste)"}
+                                              {vehicle.bodyType === BODY_TYPES.ESPECIAL_BETONEIRA && "Especial (Betoneira)"}
+                                              
+                                              {/* Outros */}
+                                              {vehicle.bodyType === BODY_TYPES.OUTROS && "Outros"}
+                                              
+                                              {!Object.values(BODY_TYPES).includes(vehicle.bodyType) && "Tipo não especificado"}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
                         </TableRow>
-                      )}
-                    </>
-                  );
+                      )
+                    ].filter(Boolean);
                 })
               )}
             </TableBody>
