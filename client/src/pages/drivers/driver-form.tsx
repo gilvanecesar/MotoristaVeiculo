@@ -232,9 +232,14 @@ export default function DriverForm() {
 
   // Form submission
   const onSubmit = (data: FormValues) => {
+    console.log("Submitting form:", { isEditing, data });
+    console.log("Form errors:", form.formState.errors);
+    
     if (isEditing) {
+      console.log("Calling updateDriver.mutate");
       updateDriver.mutate(data);
     } else {
+      console.log("Calling createDriver.mutate");
       createDriver.mutate(data);
     }
   };
