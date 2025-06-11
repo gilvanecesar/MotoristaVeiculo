@@ -222,8 +222,10 @@ export function hasDriverAccess(req: Request, res: Response, next: NextFunction)
     return next();
   }
   
-  // Embarcador e Agente têm acesso com assinatura
-  if ((req.user?.profileType?.toLowerCase() === "embarcador" || req.user?.profileType?.toLowerCase() === "agente") && 
+  // Embarcador, Agente e Shipper têm acesso com assinatura
+  if ((req.user?.profileType?.toLowerCase() === "embarcador" || 
+       req.user?.profileType?.toLowerCase() === "agente" || 
+       req.user?.profileType?.toLowerCase() === "shipper") && 
       (req.user?.subscriptionActive === true || req.user?.subscriptionActive === 1 || req.user?.subscriptionActive === "1")) {
     console.log(`Acesso concedido ao ${req.user?.profileType} (${req.user?.id}) com assinatura ativa para o motorista ${driverId}`);
     return next();
@@ -253,6 +255,12 @@ export async function canEditDriver(req: Request, res: Response, next: NextFunct
   // Administrador pode editar qualquer motorista
   if (req.user?.profileType?.toLowerCase() === "administrador" || req.user?.profileType?.toLowerCase() === "admin") {
     console.log(`Permissão de edição concedida ao administrador (${req.user?.id}) para o motorista ${driverId}`);
+    return next();
+  }
+  
+  // Usuário tipo "shipper" com clientId pode editar qualquer motorista
+  if (req.user?.profileType?.toLowerCase() === "shipper" && req.user?.clientId) {
+    console.log(`Permissão de edição concedida ao shipper (${req.user?.id}) com clientId para o motorista ${driverId}`);
     return next();
   }
   
