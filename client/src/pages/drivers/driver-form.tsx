@@ -250,9 +250,14 @@ export default function DriverForm() {
 
   // Form submission
   const onSubmit = (data: FormValues) => {
+    console.log("Form submission started with data:", data);
+    console.log("Form errors:", form.formState.errors);
+    
     if (isEditing) {
+      console.log("Updating driver with ID:", driverId);
       updateDriver.mutate(data);
     } else {
+      console.log("Creating new driver");
       createDriver.mutate(data);
     }
   };
