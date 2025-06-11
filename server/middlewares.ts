@@ -205,106 +205,62 @@ export function hasClientAccess(req: Request, res: Response, next: NextFunction)
   res.status(403).json({ message: "Acesso não autorizado" });
 }
 
-// Middleware para verificar se o usuário tem permissão para acessar um motorista (apenas leitura)
-export function hasDriverAccess(req: Request, res: Response, next: NextFunction) {
+// Middleware para verificar se o usuário tem permissão para acessar um motorista
+export async function hasDriverAccess(req: Request, res: Response, next: NextFunction) {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ message: "Não autenticado" });
   }
 
-  const driverId = parseInt(req.params.id, 10);
-  
-  // Log para diagnóstico
-  console.log(`Verificando acesso ao motorista: ID motorista=${driverId}, User ID=${req.user?.id}, Profile=${req.user?.profileType}, DriverID=${req.user?.driverId}, Subscription=${req.user?.subscriptionActive}`);
-  
-  // Administrador tem acesso total
+  // Administrador sempre tem acesso
   if (req.user?.profileType?.toLowerCase() === "administrador" || req.user?.profileType?.toLowerCase() === "admin") {
-    console.log(`Acesso concedido ao administrador (${req.user?.id}) para o motorista ${driverId}`);
+    console.log(`[hasDriverAccess] Usuário administrador (${req.user.id}) com acesso autorizado`);
+    return next();
+  }
+
+  const driverId = parseInt(req.params.id, 10);
+  const driver = await storage.getDriver(driverId);
+  
+  // Se o motorista não existir, retorna 404
+  if (!driver) {
+    console.log(`[hasDriverAccess] Motorista ${driverId} não encontrado`);
+    return res.status(404).json({ message: "Motorista não encontrado" });
+  }
+  
+  // Motoristas sem cliente associado ou clientId=0 podem ser editados por qualquer usuário autenticado
+  if (driver.clientId === null || driver.clientId === 0) {
+    console.log(`[hasDriverAccess] Motorista ${driverId} sem cliente associado ou clientId=0, acesso permitido para usuário ${req.user.id}`);
     return next();
   }
   
-  // Embarcador, Agente e Shipper têm acesso com assinatura
-  if ((req.user?.profileType?.toLowerCase() === "embarcador" || 
-       req.user?.profileType?.toLowerCase() === "agente" || 
-       req.user?.profileType?.toLowerCase() === "shipper") && 
-      (req.user?.subscriptionActive === true || req.user?.subscriptionActive === 1 || req.user?.subscriptionActive === "1")) {
-    console.log(`Acesso concedido ao ${req.user?.profileType} (${req.user?.id}) com assinatura ativa para o motorista ${driverId}`);
+  // Verifica se o usuário tem um cliente associado
+  if (req.user?.clientId === null || req.user?.clientId === undefined) {
+    // Verifica se o usuário é o criador do motorista, mesmo sem cliente associado
+    if (driver.userId && driver.userId === req.user.id) {
+      console.log(`[hasDriverAccess] Usuário ${req.user.id} é o criador do motorista ${driverId}, acesso permitido`);
+      return next();
+    }
+    
+    console.log(`[hasDriverAccess] Usuário ${req.user.id} não tem cliente associado, negando acesso`);
+    return res.status(403).json({ message: "Você não tem um cliente associado ao seu perfil" });
+  }
+  
+  // Verifica se o motorista pertence ao cliente do usuário
+  if (req.user?.clientId === driver.clientId) {
+    console.log(`[hasDriverAccess] Motorista ${driverId} pertence ao cliente ${driver.clientId} do usuário ${req.user.id}, acesso permitido`);
     return next();
   }
   
-  // Motorista só tem acesso a seus próprios dados
-  if (req.user?.profileType?.toLowerCase() === "motorista" && req.user?.driverId === driverId) {
-    console.log(`Acesso concedido ao motorista (${req.user?.id}) para seu próprio cadastro ${driverId}`);
+  // Verificar se o usuário é o criador do motorista, mesmo que tenha cliente diferente
+  if (driver.userId && driver.userId === req.user.id) {
+    console.log(`[hasDriverAccess] Usuário ${req.user.id} é o criador do motorista ${driverId}, acesso permitido`);
     return next();
   }
   
-  console.log(`Acesso negado ao motorista ${driverId}. User ID: ${req.user?.id}, User driverId: ${req.user?.driverId}, User profileType: ${req.user?.profileType}`);
+  console.log(`[hasDriverAccess] Acesso negado para usuário ${req.user.id} ao motorista ${driverId} do cliente ${driver.clientId}`);
   res.status(403).json({ message: "Acesso não autorizado" });
 }
 
-// Middleware para verificar se o usuário pode editar/excluir um motorista
-export async function canEditDriver(req: Request, res: Response, next: NextFunction) {
-  if (!req.isAuthenticated()) {
-    return res.status(401).json({ message: "Não autenticado" });
-  }
 
-  const driverId = parseInt(req.params.id, 10);
-  
-  // Log para diagnóstico
-  console.log(`Verificando permissão de edição para motorista: ID motorista=${driverId}, User ID=${req.user?.id}, Profile=${req.user?.profileType}`);
-  
-  // Administrador pode editar qualquer motorista
-  if (req.user?.profileType?.toLowerCase() === "administrador" || req.user?.profileType?.toLowerCase() === "admin") {
-    console.log(`Permissão de edição concedida ao administrador (${req.user?.id}) para o motorista ${driverId}`);
-    return next();
-  }
-  
-  // Para exclusão, shipper só pode excluir motoristas que ele mesmo criou
-  const isDeleteOperation = req.method === 'DELETE';
-  
-  if (req.user?.profileType?.toLowerCase() === "shipper" && req.user?.clientId && !isDeleteOperation) {
-    console.log(`Permissão de edição concedida ao shipper (${req.user?.id}) com clientId para o motorista ${driverId}`);
-    return next();
-  }
-  
-  try {
-    // Buscar o motorista para verificar se pertence ao usuário
-    const driver = await storage.getDriver(driverId);
-    
-    if (!driver) {
-      return res.status(404).json({ message: "Motorista não encontrado" });
-    }
-    
-    // Verificar se o motorista pertence ao usuário logado
-    if (driver.userId === req.user?.id) {
-      console.log(`Permissão concedida ao usuário (${req.user?.id}) para ${isDeleteOperation ? 'excluir' : 'editar'} seu próprio motorista ${driverId}`);
-      return next();
-    }
-    
-    // Para shippers em operações de exclusão, verificar se o motorista foi criado por ele
-    if (req.user?.profileType?.toLowerCase() === "shipper" && req.user?.clientId && isDeleteOperation) {
-      if (driver.userId === req.user?.id) {
-        console.log(`Permissão de exclusão concedida ao shipper (${req.user?.id}) para motorista ${driverId} que ele criou`);
-        return next();
-      } else {
-        console.log(`Permissão de exclusão negada para shipper (${req.user?.id}). Motorista ${driverId} foi criado por usuário ${driver.userId}`);
-        return res.status(403).json({ message: "Você só pode excluir motoristas que você mesmo cadastrou" });
-      }
-    }
-    
-    // Se for motorista, só pode editar seu próprio perfil
-    if (req.user?.profileType?.toLowerCase() === "motorista" && req.user?.driverId === driverId) {
-      console.log(`Permissão de edição concedida ao motorista (${req.user?.id}) para seu próprio cadastro ${driverId}`);
-      return next();
-    }
-    
-    console.log(`Permissão ${isDeleteOperation ? 'de exclusão' : 'de edição'} negada para motorista ${driverId}. User ID: ${req.user?.id}, Driver userId: ${driver.userId}, User profileType: ${req.user?.profileType}`);
-    res.status(403).json({ message: isDeleteOperation ? "Você só pode excluir motoristas que você mesmo cadastrou" : "Você só pode editar seus próprios dados" });
-    
-  } catch (error) {
-    console.error("Erro ao verificar permissões do motorista:", error);
-    res.status(500).json({ message: "Erro interno do servidor" });
-  }
-}
 
 // Middleware para verificar se o usuário tem permissão para acessar um frete
 export async function hasFreightAccess(req: Request, res: Response, next: NextFunction) {
