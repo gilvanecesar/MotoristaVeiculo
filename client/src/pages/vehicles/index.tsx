@@ -258,7 +258,7 @@ export default function VehiclesPage() {
   };
 
   return (
-    <div>
+    <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
         <div>
           <h2 className="text-xl font-bold text-slate-800">Veículos</h2>
