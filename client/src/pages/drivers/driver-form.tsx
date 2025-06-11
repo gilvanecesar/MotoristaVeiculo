@@ -27,6 +27,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { formatCPF, formatPhone, formatCEP } from "@/lib/utils/masks";
 import { VehicleForm } from "@/components/drivers/vehicle-form";
+import { useAuth } from "@/hooks/use-auth";
 
 import { z } from "zod";
 
@@ -44,6 +45,7 @@ export default function DriverForm() {
   const params = useParams();
   const [match, routeParams] = useRoute("/drivers/:id");
   const { toast } = useToast();
+  const { user } = useAuth();
   
   // Usar routeParams ao invés de params
   const isEditing = match && routeParams?.id && routeParams.id !== "new";
@@ -53,8 +55,8 @@ export default function DriverForm() {
   const form = useForm<FormValues>({
     resolver: zodResolver(driverWithVehiclesSchema),
     defaultValues: {
-      name: "",
-      email: "",
+      name: user?.name || "",
+      email: user?.email || "",
       cpf: "",
       phone: "",
       whatsapp: "",
@@ -90,6 +92,14 @@ export default function DriverForm() {
     },
     enabled: !!isEditing && !!driverId,
   });
+
+  // Auto-fill user data for new drivers
+  useEffect(() => {
+    if (!isEditing && user && form.getValues("name") !== user.name) {
+      form.setValue("name", user.name || "");
+      form.setValue("email", user.email || "");
+    }
+  }, [user, isEditing, form]);
 
   // Load driver data into form when available
   useEffect(() => {
