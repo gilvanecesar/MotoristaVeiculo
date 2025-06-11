@@ -105,6 +105,7 @@ export const drivers = pgTable("drivers", {
 export const vehicles = pgTable("vehicles", {
   id: serial("id").primaryKey(),
   driverId: integer("driver_id").notNull().references(() => drivers.id),
+  userId: integer("user_id").notNull().references(() => users.id),
   plate: text("plate").notNull().unique(),
   brand: text("brand").notNull(),
   model: text("model").notNull(),
@@ -115,6 +116,11 @@ export const vehicles = pgTable("vehicles", {
   // Tipo de veículo e carroceria
   vehicleType: text("vehicle_type").notNull(),
   bodyType: text("body_type").notNull(),
+  
+  // Campos adicionais
+  chassi: text("chassi"),
+  capacity: text("capacity"),
+  observations: text("observations"),
   
   // Metadata
   createdAt: timestamp("created_at").defaultNow(),

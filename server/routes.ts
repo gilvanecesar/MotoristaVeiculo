@@ -360,7 +360,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Criar novo veículo
   app.post("/api/vehicles", hasActiveSubscription, async (req: Request, res: Response) => {
     try {
-      const vehicleData = req.body;
+      const vehicleData = {
+        ...req.body,
+        userId: req.user?.id // Adicionar o ID do usuário que está criando o veículo
+      };
       
       const vehicle = await storage.createVehicle(vehicleData);
       res.status(201).json(vehicle);
