@@ -273,6 +273,9 @@ export default function DriverForm() {
       renavam: "",
       vehicleType: VEHICLE_TYPES.LEVE_TODOS,
       bodyType: BODY_TYPES.FECHADA,
+      chassi: "",
+      capacity: "",
+      observations: "",
     });
   };
 
