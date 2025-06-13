@@ -728,6 +728,23 @@ export class MemStorage implements IStorage {
     // Em uma implementação completa, isso salvaria em uma tabela de configurações
     return settings;
   }
+
+  // Trial usage operations
+  async getTrialUsage(userId: number): Promise<TrialUsage | undefined> {
+    // Simular busca em memória - retorna undefined (não usado durante trial)
+    return undefined;
+  }
+
+  async createTrialUsage(trialUsage: InsertTrialUsage): Promise<TrialUsage> {
+    // Simular criação em memória
+    return {
+      id: Date.now(),
+      userId: trialUsage.userId,
+      startDate: trialUsage.startDate,
+      endDate: trialUsage.endDate,
+      createdAt: new Date()
+    };
+  }
 }
 
 const PostgresSessionStore = connectPg(session);
