@@ -41,6 +41,11 @@ import {
   type InvoiceWithPayments,
   type ClientWithSubscriptions,
 } from "@shared/schema";
+import {
+  trialUsages,
+  type TrialUsage,
+  type InsertTrialUsage,
+} from "@shared/mercadopago-schema";
 import { db, pool } from "./db";
 import { and, eq, ilike, or, sql, desc } from "drizzle-orm";
 import crypto from "crypto";
@@ -209,6 +214,10 @@ export interface IStorage {
   // Finance operations
   getFinanceStats(): Promise<any>;
   updateFinanceSettings(settings: any): Promise<any>;
+  
+  // Trial usage operations
+  getTrialUsage(userId: number): Promise<TrialUsage | undefined>;
+  createTrialUsage(trialUsage: InsertTrialUsage): Promise<TrialUsage>;
 }
 
 export class MemStorage implements IStorage {
@@ -1662,6 +1671,23 @@ export class DatabaseStorage implements IStorage {
         )
       )
       .orderBy(desc(complements.createdAt));
+  }
+
+  // Trial usage operations
+  async getTrialUsage(userId: number): Promise<TrialUsage | undefined> {
+    const [trialUsage] = await db
+      .select()
+      .from(trialUsages)
+      .where(eq(trialUsages.userId, userId));
+    return trialUsage || undefined;
+  }
+
+  async createTrialUsage(trialUsage: InsertTrialUsage): Promise<TrialUsage> {
+    const [newTrialUsage] = await db
+      .insert(trialUsages)
+      .values(trialUsage)
+      .returning();
+    return newTrialUsage;
   }
 }
 

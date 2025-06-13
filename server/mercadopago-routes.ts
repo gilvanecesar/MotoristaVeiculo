@@ -171,9 +171,35 @@ export function setupMercadoPagoRoutes(app: Express) {
         return res.status(400).json({ error: { message: 'Usuário já possui assinatura ativa' } });
       }
       
+      // Verificar se o usuário já utilizou o período de teste anteriormente
+      const existingTrialUsage = await storage.getTrialUsage(userId);
+      if (existingTrialUsage) {
+        return res.status(400).json({ 
+          error: { 
+            message: 'Período de teste já foi utilizado anteriormente. Para continuar usando o sistema, adquira uma assinatura mensal ou anual.' 
+          } 
+        });
+      }
+      
+      // Verificar se o usuário já teve assinatura paga anteriormente (subscriptionType diferente de null)
+      if (req.user.subscriptionType && req.user.subscriptionType !== 'trial') {
+        return res.status(400).json({ 
+          error: { 
+            message: 'Você já teve uma assinatura anteriormente. Para reativar o acesso, renove sua assinatura.' 
+          } 
+        });
+      }
+      
       // Configurar período de teste (7 dias)
       const now = new Date();
       const trialEndDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      
+      // Registrar o uso do período de teste
+      await storage.createTrialUsage({
+        userId: userId,
+        startDate: now,
+        endDate: trialEndDate
+      });
       
       // Atualizar informações de assinatura do usuário
       await storage.updateUser(userId, {
@@ -182,6 +208,8 @@ export function setupMercadoPagoRoutes(app: Express) {
         subscriptionExpiresAt: trialEndDate,
         paymentRequired: true
       });
+      
+      console.log(`[TRIAL] Período de teste ativado para usuário ${userId}, expira em ${trialEndDate}`);
       
       return res.json({
         message: 'Período de teste ativado com sucesso',
