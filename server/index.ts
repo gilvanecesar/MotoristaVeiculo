@@ -55,14 +55,25 @@ app.use((req, res, next) => {
       console.error("Erro ao inicializar serviço de email:", error);
     });
     
-    // Aplicar migrações do banco de dados
+    // Aplicar migrações do banco de dados com timeout
     log("Aplicando migrações do banco de dados...");
-    await migrate(db, { migrationsFolder: "./migrations" });
-    log("Migrações aplicadas com sucesso!");
+    try {
+      const migrationTimeout = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Migration timeout')), 15000)
+      );
+      
+      await Promise.race([
+        migrate(db, { migrationsFolder: "./migrations" }),
+        migrationTimeout
+      ]);
+      log("Migrações aplicadas com sucesso!");
+    } catch (migrationError) {
+      console.warn("Aviso: Não foi possível aplicar migrações:", migrationError.message);
+      console.warn("Servidor continuando sem aplicar migrações...");
+    }
   } catch (error) {
-    console.error("Erro ao aplicar migrações:", error);
-    console.error(error);
-    process.exit(1);
+    console.error("Erro durante inicialização:", error);
+    console.warn("Continuando com inicialização do servidor...");
   }
   
   // Configurar rotas da API
