@@ -172,13 +172,18 @@ export function setupMercadoPagoRoutes(app: Express) {
       }
       
       // Verificar se o usuário já utilizou o período de teste anteriormente
-      const existingTrialUsage = await storage.getTrialUsage(userId);
-      if (existingTrialUsage) {
-        return res.status(400).json({ 
-          error: { 
-            message: 'Período de teste já foi utilizado anteriormente. Para continuar usando o sistema, adquira uma assinatura mensal ou anual.' 
-          } 
-        });
+      try {
+        const existingTrialUsage = await storage.getTrialUsage(userId);
+        if (existingTrialUsage) {
+          return res.status(400).json({ 
+            error: { 
+              message: 'Período de teste já foi utilizado anteriormente. Para continuar usando o sistema, adquira uma assinatura mensal ou anual.' 
+            } 
+          });
+        }
+      } catch (error: any) {
+        console.warn('Erro ao verificar uso anterior do trial, continuando:', error);
+        // Em caso de erro, permite continuar (melhor experiência do usuário)
       }
       
       // Verificar se o usuário já teve assinatura paga anteriormente (subscriptionType diferente de null)
@@ -195,19 +200,33 @@ export function setupMercadoPagoRoutes(app: Express) {
       const trialEndDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
       
       // Registrar o uso do período de teste
-      await storage.createTrialUsage({
-        userId: userId,
-        startDate: now,
-        endDate: trialEndDate
-      });
+      try {
+        await storage.createTrialUsage({
+          userId: userId,
+          startDate: now,
+          endDate: trialEndDate
+        });
+      } catch (error: any) {
+        console.error('Erro ao registrar uso do trial:', error);
+        // Continua mesmo se falhar o registro, pois o importante é a ativação
+      }
       
       // Atualizar informações de assinatura do usuário
-      await storage.updateUser(userId, {
-        subscriptionActive: true,
-        subscriptionType: 'trial',
-        subscriptionExpiresAt: trialEndDate,
-        paymentRequired: true
-      });
+      try {
+        await storage.updateUser(userId, {
+          subscriptionActive: true,
+          subscriptionType: 'trial',
+          subscriptionExpiresAt: trialEndDate,
+          paymentRequired: true
+        });
+      } catch (error: any) {
+        console.error('Erro ao atualizar usuário durante ativação do trial:', error);
+        return res.status(500).json({ 
+          error: { 
+            message: 'Erro interno do servidor. Tente novamente em alguns instantes.' 
+          } 
+        });
+      }
       
       console.log(`[TRIAL] Período de teste ativado para usuário ${userId}, expira em ${trialEndDate}`);
       

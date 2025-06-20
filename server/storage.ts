@@ -47,6 +47,7 @@ import {
   type InsertTrialUsage,
 } from "@shared/mercadopago-schema";
 import { db, pool } from "./db";
+import { executeWithRetry, executeWithFallback, isConnectionError } from "./db-utils";
 import { and, eq, ilike, or, sql, desc } from "drizzle-orm";
 import crypto from "crypto";
 import session from "express-session";
