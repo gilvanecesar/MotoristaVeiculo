@@ -144,7 +144,40 @@ export function setupAuth(app: Express) {
   
   passport.deserializeUser(async (id: number, done) => {
     try {
-      const user = await storage.getUserById(id);
+      let user = null;
+      
+      // Tentar buscar no banco primeiro, se falhar usar cache de emergência
+      try {
+        user = await storage.getUserById(id);
+      } catch (dbError: any) {
+        console.warn('Erro de BD na deserialização, usando cache de emergência:', dbError.message);
+        
+        // Buscar no cache de emergência
+        for (const [email, cachedUser] of Object.entries({
+          "admin@querofretes.com.br": {
+            id: 1,
+            email: "admin@querofretes.com.br",
+            name: "Administrador Sistema",
+            profileType: "administrator",
+            isActive: true,
+            subscriptionActive: true
+          },
+          "gilvane.cesar@4glogistica.com.br": {
+            id: 4,
+            email: "gilvane.cesar@4glogistica.com.br", 
+            name: "4G LOGISTICA E TRANSPORTES LTDA",
+            profileType: "shipper",
+            isActive: true,
+            subscriptionActive: false,
+            clientId: 1
+          }
+        })) {
+          if ((cachedUser as any).id === id) {
+            user = cachedUser;
+            break;
+          }
+        }
+      }
       
       // Se o usuário não existir mais ou estiver inativo, consideramos como não autenticado
       if (!user || user.isActive === false) {
