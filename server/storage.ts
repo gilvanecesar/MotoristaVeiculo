@@ -788,10 +788,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   constructor() {
-    this.sessionStore = new PostgresSessionStore({
-      pool,
-      createTableIfMissing: true,
-    });
+    try {
+      this.sessionStore = new PostgresSessionStore({
+        pool,
+        createTableIfMissing: true,
+        schemaName: 'public',
+        tableName: 'session'
+      });
+    } catch (error) {
+      console.warn('Erro ao configurar session store PostgreSQL, usando MemoryStore como fallback:', error);
+      const MemoryStore = createMemoryStore(session);
+      this.sessionStore = new MemoryStore({
+        checkPeriod: 86400000,
+      });
+    }
   }
 
   // Usuários
@@ -800,8 +810,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserById(id: number): Promise<User | undefined> {
-    const results = await db.select().from(users).where(eq(users.id, id));
-    return results[0];
+    return await executeWithFallback(
+      async () => {
+        const results = await db.select().from(users).where(eq(users.id, id));
+        return results[0];
+      },
+      undefined,
+      'getUserById'
+    );
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
@@ -850,8 +866,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(user: InsertUser): Promise<User> {
-    const results = await db.insert(users).values(user).returning();
-    return results[0];
+    return await executeWithRetry(
+      async () => {
+        const results = await db.insert(users).values(user).returning();
+        return results[0];
+      },
+      3,
+      1000
+    );
   }
 
   async updateUser(
@@ -1693,19 +1715,31 @@ export class DatabaseStorage implements IStorage {
 
   // Trial usage operations
   async getTrialUsage(userId: number): Promise<TrialUsage | undefined> {
-    const [trialUsage] = await db
-      .select()
-      .from(trialUsages)
-      .where(eq(trialUsages.userId, userId));
-    return trialUsage || undefined;
+    return await executeWithFallback(
+      async () => {
+        const [trialUsage] = await db
+          .select()
+          .from(trialUsages)
+          .where(eq(trialUsages.userId, userId));
+        return trialUsage || undefined;
+      },
+      undefined,
+      'getTrialUsage'
+    );
   }
 
   async createTrialUsage(trialUsage: InsertTrialUsage): Promise<TrialUsage> {
-    const [newTrialUsage] = await db
-      .insert(trialUsages)
-      .values(trialUsage)
-      .returning();
-    return newTrialUsage;
+    return await executeWithRetry(
+      async () => {
+        const [newTrialUsage] = await db
+          .insert(trialUsages)
+          .values(trialUsage)
+          .returning();
+        return newTrialUsage;
+      },
+      3,
+      1000
+    );
   }
 }
 
