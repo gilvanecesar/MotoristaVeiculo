@@ -10,20 +10,16 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Configurações otimizadas para reduzir problemas de conexão
+// Configurações diferentes para desenvolvimento e produção
 const poolConfig = {
   connectionString: process.env.DATABASE_URL,
-  max: 5, // Reduzir drasticamente o pool
-  min: 1, // Manter pelo menos uma conexão
-  connectionTimeoutMillis: 10000, // Timeout mais conservador
-  idleTimeoutMillis: 30000, // Timeout de idle reduzido
+  max: 20,
+  connectionTimeoutMillis: 5000,
+  idleTimeoutMillis: 30000,
   // Em produção, pode ser necessário configurar SSL de maneira diferente
   ssl: {
     rejectUnauthorized: false
-  },
-  // Configurações de retry
-  keepAlive: false, // Desabilitar keep-alive que pode causar problemas
-  allowExitOnIdle: true,
+  }
 };
 
 console.log(`Conectando ao banco de dados no ambiente: ${process.env.NODE_ENV || 'development'}`);

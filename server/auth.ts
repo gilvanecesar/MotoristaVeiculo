@@ -7,7 +7,6 @@ import { promisify } from "util";
 import { storage } from "./storage";
 import { User, USER_TYPES } from "@shared/schema";
 import { sendWelcomeEmail } from "./email-service";
-import { initEmergencyAuth, emergencyValidateUser, isEmergencyModeActive } from "./emergency-auth";
 
 declare global {
   namespace Express {
@@ -63,9 +62,6 @@ async function comparePasswords(supplied: string, stored: string) {
 export function setupAuth(app: Express) {
   console.log(`Configurando autenticação no ambiente: ${process.env.NODE_ENV || 'development'}`);
   
-  // Inicializar sistema de autenticação de emergência
-  initEmergencyAuth();
-  
   const isProd = process.env.NODE_ENV === 'production';
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "querofretes-secret-key",
@@ -92,48 +88,23 @@ export function setupAuth(app: Express) {
     },
     async (email, password, done) => {
       try {
-        // Tentar autenticação normal primeiro
-        let user = null;
-        
-        try {
-          user = await storage.getUserByEmail(email);
-        } catch (dbError: any) {
-          console.warn('Erro de BD durante login, tentando modo de emergência:', dbError.message);
+        const user = await storage.getUserByEmail(email);
+        if (!user || !user.password || !(await comparePasswords(password, user.password))) {
+          return done(null, false, { message: "Credenciais inválidas" });
         }
         
-        // Se não conseguiu acessar o banco ou usuário não encontrado, usar modo de emergência
-        if (!user && isEmergencyModeActive()) {
-          console.log('Usando autenticação de emergência para:', email);
-          user = await emergencyValidateUser(email, password);
-          if (user) {
-            console.log('Login de emergência bem-sucedido para:', email);
-            return done(null, user);
-          }
+        // Verifica se o usuário está ativo
+        if (user.isActive === false) {
+          return done(null, false, { 
+            message: "Sua conta está desativada. Entre em contato com o administrador para mais informações." 
+          });
         }
         
-        // Autenticação normal
-        if (user && user.password && await comparePasswords(password, user.password)) {
-          // Verifica se o usuário está ativo
-          if (user.isActive === false) {
-            return done(null, false, { 
-              message: "Sua conta está desativada. Entre em contato com o administrador para mais informações." 
-            });
-          }
-          
-          // Tenta atualizar último login, mas não falha se der erro
-          try {
-            await storage.updateLastLogin(user.id);
-          } catch (updateError) {
-            console.warn('Erro ao atualizar último login, continuando:', updateError);
-          }
-          
-          return done(null, user);
-        }
-        
-        return done(null, false, { message: "Credenciais inválidas" });
+        // Atualiza último login
+        await storage.updateLastLogin(user.id);
+        return done(null, user);
       } catch (error) {
-        console.error('Erro durante autenticação:', error);
-        return done(null, false, { message: "Erro interno. Tente novamente." });
+        return done(error);
       }
     })
   );
@@ -144,49 +115,7 @@ export function setupAuth(app: Express) {
   
   passport.deserializeUser(async (id: number, done) => {
     try {
-      let user = null;
-      
-      // Tentar buscar no banco primeiro, se falhar usar cache de emergência
-      try {
-        user = await storage.getUserById(id);
-      } catch (dbError: any) {
-        console.warn('Erro de BD na deserialização, usando cache de emergência:', dbError.message);
-        
-        // Buscar no cache de emergência
-        for (const [email, cachedUser] of Object.entries({
-          "admin@querofretes.com.br": {
-            id: 1,
-            email: "admin@querofretes.com.br",
-            name: "Administrador Sistema",
-            profileType: "administrator",
-            isActive: true,
-            subscriptionActive: true
-          },
-          "gilvane.cesar@4glogistica.com.br": {
-            id: 4,
-            email: "gilvane.cesar@4glogistica.com.br", 
-            name: "4G LOGISTICA E TRANSPORTES LTDA",
-            profileType: "shipper",
-            isActive: true,
-            subscriptionActive: false,
-            clientId: 1
-          },
-          "gilvane.cesar@gmail.com": {
-            id: 5,
-            email: "gilvane.cesar@gmail.com",
-            name: "Gilvane Cesar",
-            profileType: "shipper",
-            isActive: true,
-            subscriptionActive: false,
-            clientId: 1
-          }
-        })) {
-          if ((cachedUser as any).id === id) {
-            user = cachedUser;
-            break;
-          }
-        }
-      }
+      const user = await storage.getUserById(id);
       
       // Se o usuário não existir mais ou estiver inativo, consideramos como não autenticado
       if (!user || user.isActive === false) {

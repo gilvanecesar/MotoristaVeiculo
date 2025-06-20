@@ -47,7 +47,6 @@ import {
   type InsertTrialUsage,
 } from "@shared/mercadopago-schema";
 import { db, pool } from "./db";
-import { executeWithRetry, executeWithFallback, isConnectionError, setCache, getCache } from "./db-utils";
 import { and, eq, ilike, or, sql, desc } from "drizzle-orm";
 import crypto from "crypto";
 import session from "express-session";
@@ -788,123 +787,25 @@ export class DatabaseStorage implements IStorage {
   }
 
   constructor() {
-    // Sempre usar MemoryStore durante instabilidade do banco
-    const MemoryStore = createMemoryStore(session);
-    this.sessionStore = new MemoryStore({
-      checkPeriod: 86400000,
+    this.sessionStore = new PostgresSessionStore({
+      pool,
+      createTableIfMissing: true,
     });
-    
-    console.log('Usando MemoryStore para sessions devido a instabilidade do PostgreSQL');
   }
 
   // Usuários
   async getUsers(): Promise<User[]> {
-    return await executeWithFallback(
-      () => db.select().from(users).orderBy(desc(users.createdAt)),
-      [],
-      'getUsers'
-    );
+    return await db.select().from(users);
   }
 
   async getUserById(id: number): Promise<User | undefined> {
-    // Cache específico para usuários de emergência
-    const emergencyUsers: { [key: number]: User } = {
-      1: {
-        id: 1,
-        email: "admin@querofretes.com.br",
-        password: null,
-        name: "Administrador Sistema",
-        profileType: "administrator",
-        authProvider: "local",
-        isVerified: true,
-        isActive: true,
-        subscriptionActive: true,
-        subscriptionType: "premium",
-        subscriptionExpiresAt: new Date("2025-12-31"),
-        clientId: null,
-        createdAt: new Date("2024-01-01"),
-        lastLogin: null,
-        providerId: null,
-        avatarUrl: null,
-        stripeCustomerId: null,
-        stripeSubscriptionId: null,
-        paymentRequired: false,
-        driverId: null
-      },
-      4: {
-        id: 4,
-        email: "gilvane.cesar@4glogistica.com.br",
-        password: null,
-        name: "4G LOGISTICA E TRANSPORTES LTDA",
-        profileType: "shipper",
-        authProvider: "local",
-        isVerified: true,
-        isActive: true,
-        subscriptionActive: false,
-        subscriptionType: null,
-        subscriptionExpiresAt: null,
-        clientId: 1,
-        createdAt: new Date("2024-01-01"),
-        lastLogin: null,
-        providerId: null,
-        avatarUrl: null,
-        stripeCustomerId: null,
-        stripeSubscriptionId: null,
-        paymentRequired: false,
-        driverId: null
-      },
-      5: {
-        id: 5,
-        email: "gilvane.cesar@gmail.com",
-        password: null,
-        name: "Gilvane Cesar",
-        profileType: "shipper",
-        authProvider: "local",
-        isVerified: true,
-        isActive: true,
-        subscriptionActive: false,
-        subscriptionType: null,
-        subscriptionExpiresAt: null,
-        clientId: 1,
-        createdAt: new Date("2024-01-01"),
-        lastLogin: null,
-        providerId: null,
-        avatarUrl: null,
-        stripeCustomerId: null,
-        stripeSubscriptionId: null,
-        paymentRequired: false,
-        driverId: null
-      }
-    };
-
-    return await executeWithFallback(
-      async () => {
-        const results = await db.select().from(users).where(eq(users.id, id));
-        return results[0];
-      },
-      emergencyUsers[id],
-      'getUserById'
-    );
+    const results = await db.select().from(users).where(eq(users.id, id));
+    return results[0];
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    // Tentar cache primeiro
-    const cacheKey = `user_email:${email}`;
-    const cached = getCache<User>(cacheKey);
-    if (cached) return cached;
-    
-    return await executeWithFallback(
-      async () => {
-        const results = await db.select().from(users).where(eq(users.email, email));
-        const user = results[0];
-        if (user) {
-          setCache(cacheKey, user, 30); // Cache por 30 segundos
-        }
-        return user;
-      },
-      undefined,
-      'getUserByEmail'
-    );
+    const results = await db.select().from(users).where(eq(users.email, email));
+    return results[0];
   }
   
   async getUserByStripeCustomerId(stripeCustomerId: string): Promise<User | undefined> {
@@ -948,14 +849,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(user: InsertUser): Promise<User> {
-    return await executeWithRetry(
-      async () => {
-        const results = await db.insert(users).values(user).returning();
-        return results[0];
-      },
-      3,
-      1000
-    );
+    const results = await db.insert(users).values(user).returning();
+    return results[0];
   }
 
   async updateUser(
@@ -1797,31 +1692,19 @@ export class DatabaseStorage implements IStorage {
 
   // Trial usage operations
   async getTrialUsage(userId: number): Promise<TrialUsage | undefined> {
-    return await executeWithFallback(
-      async () => {
-        const [trialUsage] = await db
-          .select()
-          .from(trialUsages)
-          .where(eq(trialUsages.userId, userId));
-        return trialUsage || undefined;
-      },
-      undefined,
-      'getTrialUsage'
-    );
+    const [trialUsage] = await db
+      .select()
+      .from(trialUsages)
+      .where(eq(trialUsages.userId, userId));
+    return trialUsage || undefined;
   }
 
   async createTrialUsage(trialUsage: InsertTrialUsage): Promise<TrialUsage> {
-    return await executeWithRetry(
-      async () => {
-        const [newTrialUsage] = await db
-          .insert(trialUsages)
-          .values(trialUsage)
-          .returning();
-        return newTrialUsage;
-      },
-      3,
-      1000
-    );
+    const [newTrialUsage] = await db
+      .insert(trialUsages)
+      .values(trialUsage)
+      .returning();
+    return newTrialUsage;
   }
 }
 
