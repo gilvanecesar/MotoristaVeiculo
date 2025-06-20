@@ -88,23 +88,48 @@ export function setupAuth(app: Express) {
     },
     async (email, password, done) => {
       try {
-        const user = await storage.getUserByEmail(email);
-        if (!user || !user.password || !(await comparePasswords(password, user.password))) {
-          return done(null, false, { message: "Credenciais inválidas" });
+        // Tentar autenticação normal primeiro
+        let user = null;
+        
+        try {
+          user = await storage.getUserByEmail(email);
+        } catch (dbError: any) {
+          console.warn('Erro de BD durante login, tentando modo de emergência:', dbError.message);
         }
         
-        // Verifica se o usuário está ativo
-        if (user.isActive === false) {
-          return done(null, false, { 
-            message: "Sua conta está desativada. Entre em contato com o administrador para mais informações." 
-          });
+        // Se não conseguiu acessar o banco ou usuário não encontrado, usar modo de emergência
+        if (!user && isEmergencyModeActive()) {
+          console.log('Usando autenticação de emergência para:', email);
+          user = await emergencyValidateUser(email, password);
+          if (user) {
+            console.log('Login de emergência bem-sucedido para:', email);
+            return done(null, user);
+          }
         }
         
-        // Atualiza último login
-        await storage.updateLastLogin(user.id);
-        return done(null, user);
+        // Autenticação normal
+        if (user && user.password && await comparePasswords(password, user.password)) {
+          // Verifica se o usuário está ativo
+          if (user.isActive === false) {
+            return done(null, false, { 
+              message: "Sua conta está desativada. Entre em contato com o administrador para mais informações." 
+            });
+          }
+          
+          // Tenta atualizar último login, mas não falha se der erro
+          try {
+            await storage.updateLastLogin(user.id);
+          } catch (updateError) {
+            console.warn('Erro ao atualizar último login, continuando:', updateError);
+          }
+          
+          return done(null, user);
+        }
+        
+        return done(null, false, { message: "Credenciais inválidas" });
       } catch (error) {
-        return done(error);
+        console.error('Erro durante autenticação:', error);
+        return done(null, false, { message: "Erro interno. Tente novamente." });
       }
     })
   );

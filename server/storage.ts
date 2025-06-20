@@ -827,8 +827,23 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    const results = await db.select().from(users).where(eq(users.email, email));
-    return results[0];
+    // Tentar cache primeiro
+    const cacheKey = `user_email:${email}`;
+    const cached = getCache<User>(cacheKey);
+    if (cached) return cached;
+    
+    return await executeWithFallback(
+      async () => {
+        const results = await db.select().from(users).where(eq(users.email, email));
+        const user = results[0];
+        if (user) {
+          setCache(cacheKey, user, 30); // Cache por 30 segundos
+        }
+        return user;
+      },
+      undefined,
+      'getUserByEmail'
+    );
   }
   
   async getUserByStripeCustomerId(stripeCustomerId: string): Promise<User | undefined> {
