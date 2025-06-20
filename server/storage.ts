@@ -47,7 +47,7 @@ import {
   type InsertTrialUsage,
 } from "@shared/mercadopago-schema";
 import { db, pool } from "./db";
-import { executeWithRetry, executeWithFallback, isConnectionError } from "./db-utils";
+import { executeWithRetry, executeWithFallback, isConnectionError, setCache, getCache } from "./db-utils";
 import { and, eq, ilike, or, sql, desc } from "drizzle-orm";
 import crypto from "crypto";
 import session from "express-session";
@@ -788,32 +788,38 @@ export class DatabaseStorage implements IStorage {
   }
 
   constructor() {
-    try {
-      this.sessionStore = new PostgresSessionStore({
-        pool,
-        createTableIfMissing: true,
-        schemaName: 'public',
-        tableName: 'session'
-      });
-    } catch (error) {
-      console.warn('Erro ao configurar session store PostgreSQL, usando MemoryStore como fallback:', error);
-      const MemoryStore = createMemoryStore(session);
-      this.sessionStore = new MemoryStore({
-        checkPeriod: 86400000,
-      });
-    }
+    // Sempre usar MemoryStore durante instabilidade do banco
+    const MemoryStore = createMemoryStore(session);
+    this.sessionStore = new MemoryStore({
+      checkPeriod: 86400000,
+    });
+    
+    console.log('Usando MemoryStore para sessions devido a instabilidade do PostgreSQL');
   }
 
   // Usuários
   async getUsers(): Promise<User[]> {
-    return await db.select().from(users);
+    return await executeWithFallback(
+      () => db.select().from(users).orderBy(desc(users.createdAt)),
+      [],
+      'getUsers'
+    );
   }
 
   async getUserById(id: number): Promise<User | undefined> {
+    // Tentar cache primeiro
+    const cacheKey = `user:${id}`;
+    const cached = getCache<User>(cacheKey);
+    if (cached) return cached;
+    
     return await executeWithFallback(
       async () => {
         const results = await db.select().from(users).where(eq(users.id, id));
-        return results[0];
+        const user = results[0];
+        if (user) {
+          setCache(cacheKey, user, 30); // Cache por 30 segundos
+        }
+        return user;
       },
       undefined,
       'getUserById'

@@ -4,8 +4,8 @@ import { db } from "./db";
 // Função para executar queries com retry automático
 export async function executeWithRetry<T>(
   operation: () => Promise<T>,
-  maxRetries: number = 3,
-  delay: number = 1000
+  maxRetries: number = 2,
+  delay: number = 500
 ): Promise<T> {
   let lastError: any;
   
@@ -14,7 +14,7 @@ export async function executeWithRetry<T>(
       return await Promise.race([
         operation(),
         new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error('Operation timeout')), 15000)
+          setTimeout(() => reject(new Error('Operation timeout')), 8000)
         )
       ]);
     } catch (error: any) {
@@ -25,14 +25,16 @@ export async function executeWithRetry<T>(
         throw error;
       }
       
-      // Log do retry
-      console.warn(`Tentativa ${attempt} falhou, tentando novamente em ${delay}ms:`, error.message);
+      // Log do retry apenas se não for erro de conexão comum
+      if (!isConnectionError(error)) {
+        console.warn(`Tentativa ${attempt} falhou, tentando novamente em ${delay}ms:`, error.message);
+      }
       
       // Aguarda antes do próximo retry
       await new Promise(resolve => setTimeout(resolve, delay));
       
-      // Aumenta o delay exponencialmente
-      delay *= 2;
+      // Aumenta o delay linearmente (não exponencialmente para ser mais rápido)
+      delay += 300;
     }
   }
   
@@ -46,12 +48,17 @@ export function isConnectionError(error: any): boolean {
     'Connection timeout',
     'ECONNRESET',
     'ETIMEDOUT',
-    'Control plane request failed'
+    'Control plane request failed',
+    'Failed to acquire permit',
+    'Too many database connection',
+    'database connection attempts',
+    'XX000'
   ];
   
   return connectionErrors.some(msg => 
     error?.message?.includes(msg) || 
-    error?.code?.includes(msg)
+    error?.code?.includes(msg) ||
+    error?.severity === 'ERROR'
   );
 }
 
@@ -62,12 +69,44 @@ export async function executeWithFallback<T>(
   operationName: string = 'Database operation'
 ): Promise<T> {
   try {
-    return await executeWithRetry(operation, 2, 500);
+    return await executeWithRetry(operation, 1, 200);
   } catch (error: any) {
     if (isConnectionError(error)) {
-      console.warn(`${operationName} falhou devido a problemas de conexão, usando fallback:`, error.message);
+      // Log menos verboso para não poluir o console
+      if (process.env.NODE_ENV === 'development') {
+        console.warn(`${operationName}: usando fallback devido a instabilidade do BD`);
+      }
       return fallbackValue;
     }
     throw error;
+  }
+}
+
+// Cache simples em memória para operações críticas
+const memoryCache = new Map<string, { data: any; expiry: number }>();
+
+export function setCache(key: string, data: any, ttlSeconds: number = 60) {
+  const expiry = Date.now() + (ttlSeconds * 1000);
+  memoryCache.set(key, { data, expiry });
+}
+
+export function getCache<T>(key: string): T | undefined {
+  const cached = memoryCache.get(key);
+  if (!cached) return undefined;
+  
+  if (Date.now() > cached.expiry) {
+    memoryCache.delete(key);
+    return undefined;
+  }
+  
+  return cached.data as T;
+}
+
+export function clearExpiredCache() {
+  const now = Date.now();
+  for (const [key, value] of memoryCache.entries()) {
+    if (now > value.expiry) {
+      memoryCache.delete(key);
+    }
   }
 }

@@ -2060,13 +2060,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Estatísticas públicas para a página inicial
   app.get("/api/public/stats", async (req: Request, res: Response) => {
     try {
-      // Obter dados necessários
-      const allDrivers = await storage.getDrivers();
-      const allClients = await storage.getClients();
-      const allUsers = await storage.getUsers();
+      // Usar Promise.allSettled para obter dados sem falhar se uma operação falhar
+      const [driversResult, clientsResult, usersResult, freightsResult] = await Promise.allSettled([
+        storage.getDrivers().catch(() => []),
+        storage.getClients().catch(() => []),
+        storage.getUsers().catch(() => []),
+        storage.getFreights().catch(() => [])
+      ]);
       
-      // Obter fretes e filtrar os ativos
-      const allFreights = await storage.getFreights();
+      const allDrivers = driversResult.status === 'fulfilled' ? driversResult.value : [];
+      const allClients = clientsResult.status === 'fulfilled' ? clientsResult.value : [];
+      const allUsers = usersResult.status === 'fulfilled' ? usersResult.value : [];
+      const allFreights = freightsResult.status === 'fulfilled' ? freightsResult.value : [];
+      
       const now = new Date();
       const activeFreights = allFreights.filter(freight => 
         new Date(freight.expirationDate) > now && freight.status === 'active'
