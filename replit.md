@@ -138,6 +138,7 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 - June 20, 2025. Initial setup
 - June 20, 2025. Sistema de autenticação de emergência implementado para resolver problemas de instabilidade do PostgreSQL
 - June 20, 2025. Login administrativo e de cliente funcionando mesmo com timeouts de banco de dados
+- June 20, 2025. Sistema de login robusto finalizado com 3 usuários configurados e sessions persistentes
 
 ## User Preferences
 

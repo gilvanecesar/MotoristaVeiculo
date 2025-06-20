@@ -28,6 +28,28 @@ const emergencyUsers = [
     driverId: null
   },
   {
+    id: 5,
+    email: "gilvane.cesar@gmail.com",
+    password: null,
+    name: "Gilvane Cesar",
+    profileType: "shipper",
+    authProvider: "local",
+    isVerified: true,
+    isActive: true,
+    subscriptionActive: false,
+    subscriptionType: null,
+    subscriptionExpiresAt: null,
+    clientId: 1,
+    createdAt: new Date("2024-01-01"),
+    lastLogin: null,
+    providerId: null,
+    avatarUrl: null,
+    stripeCustomerId: null,
+    stripeSubscriptionId: null,
+    paymentRequired: false,
+    driverId: null
+  },
+  {
     id: 1,
     email: "admin@querofretes.com.br",
     password: null,
@@ -66,6 +88,10 @@ export async function emergencyGetUserByEmail(email: string) {
 export async function emergencyValidateUser(email: string, password: string) {
   // Validação simples para usuários de emergência
   if (email === "gilvane.cesar@4glogistica.com.br" && password === "123456") {
+    return emergencyUserCache.get(email);
+  }
+  
+  if (email === "gilvane.cesar@gmail.com" && password === "123456") {
     return emergencyUserCache.get(email);
   }
   

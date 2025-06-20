@@ -170,6 +170,15 @@ export function setupAuth(app: Express) {
             isActive: true,
             subscriptionActive: false,
             clientId: 1
+          },
+          "gilvane.cesar@gmail.com": {
+            id: 5,
+            email: "gilvane.cesar@gmail.com",
+            name: "Gilvane Cesar",
+            profileType: "shipper",
+            isActive: true,
+            subscriptionActive: false,
+            clientId: 1
           }
         })) {
           if ((cachedUser as any).id === id) {
