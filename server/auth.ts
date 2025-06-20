@@ -7,6 +7,7 @@ import { promisify } from "util";
 import { storage } from "./storage";
 import { User, USER_TYPES } from "@shared/schema";
 import { sendWelcomeEmail } from "./email-service";
+import { initEmergencyAuth, emergencyValidateUser, isEmergencyModeActive } from "./emergency-auth";
 
 declare global {
   namespace Express {
@@ -61,6 +62,9 @@ async function comparePasswords(supplied: string, stored: string) {
 
 export function setupAuth(app: Express) {
   console.log(`Configurando autenticação no ambiente: ${process.env.NODE_ENV || 'development'}`);
+  
+  // Inicializar sistema de autenticação de emergência
+  initEmergencyAuth();
   
   const isProd = process.env.NODE_ENV === 'production';
   const sessionSettings: session.SessionOptions = {
