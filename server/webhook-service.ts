@@ -106,8 +106,7 @@ ${destinosText}
 💰 *Pagamento:* ${freight.paymentMethod}
 💵 *Valor:* ${formatCurrency(freight.freightValue)}
 
-📅 *Publicado em:* ${formatDate(freight.createdAt)}
-⏰ *Válido até:* ${formatDate(freight.expirationDate)}
+
 
 👤 *Contato:* ${freight.contactName}
 📞 *Telefone:* ${freight.contactPhone}
