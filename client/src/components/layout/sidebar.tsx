@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Car, BarChart3, Menu, X, Moon, Sun, Truck, 
   Building2, Home, DollarSign, UserCog, Settings, User, CreditCard,
   Receipt, CalendarClock, AlertCircle, Bell, Webhook, Package, LogOut,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, MessageCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -105,6 +105,11 @@ const subscriptionItems = [
     label: "Faturas",
     path: "/invoices",
     icon: Receipt
+  },
+  {
+    label: "WhatsApp Config",
+    path: "/webhook-config",
+    icon: MessageCircle
   }
 ];
 
