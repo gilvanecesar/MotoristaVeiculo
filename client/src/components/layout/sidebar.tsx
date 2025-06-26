@@ -187,13 +187,13 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   return (
     <div
       className={cn(
-        "flex flex-col bg-background border-r border-border h-screen transition-all duration-300",
+        "flex flex-col bg-card border-r border-border h-screen transition-all duration-300 shadow-sm",
         collapsed ? "w-16" : "w-64",
         isMobile && "fixed inset-y-0 left-0 z-50 transform",
       )}
     >
       {/* Header da Sidebar */}
-      <div className="flex items-center justify-between p-4 border-b border-border">
+      <div className="flex items-center justify-between p-4 border-b border-border bg-card">
         {!collapsed && (
           <div className="flex items-center space-x-2">
             <img 
@@ -230,9 +230,9 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
                 <Button
                   variant={active ? "secondary" : "ghost"}
                   className={cn(
-                    "w-full justify-start gap-3",
+                    "w-full justify-start gap-3 text-card-foreground hover:bg-accent hover:text-accent-foreground",
                     collapsed && "justify-center px-2",
-                    active && "bg-secondary text-secondary-foreground"
+                    active && "bg-primary text-primary-foreground hover:bg-primary/90"
                   )}
                 >
                   <Icon className="h-4 w-4 flex-shrink-0" />
@@ -264,8 +264,8 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
                     <Button
                       variant={active ? "secondary" : "ghost"}
                       className={cn(
-                        "w-full justify-start gap-3",
-                        active && "bg-secondary text-secondary-foreground"
+                        "w-full justify-start gap-3 text-card-foreground hover:bg-accent hover:text-accent-foreground",
+                        active && "bg-primary text-primary-foreground hover:bg-primary/90"
                       )}
                     >
                       <Icon className="h-4 w-4 flex-shrink-0" />
@@ -282,7 +282,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
             <>
               {!collapsed && (
                 <div className="px-3 py-2">
-                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  <h3 className="text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider">
                     Administração
                   </h3>
                 </div>
@@ -296,9 +296,9 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
                     <Button
                       variant={active ? "secondary" : "ghost"}
                       className={cn(
-                        "w-full justify-start gap-3",
+                        "w-full justify-start gap-3 text-card-foreground hover:bg-accent hover:text-accent-foreground",
                         collapsed && "justify-center px-2",
-                        active && "bg-secondary text-secondary-foreground"
+                        active && "bg-primary text-primary-foreground hover:bg-primary/90"
                       )}
                     >
                       <Icon className="h-4 w-4 flex-shrink-0" />
@@ -314,13 +314,13 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
 
       {/* Cliente Selector (se não for admin e tiver cliente) */}
       {!isAdmin && user?.clientId && !collapsed && (
-        <div className="p-3 border-t border-border">
+        <div className="p-3 border-t border-border bg-card">
           <ClientSelector />
         </div>
       )}
 
       {/* Footer da Sidebar - Usuário */}
-      <div className="p-3 border-t border-border">
+      <div className="p-3 border-t border-border bg-card">
         {collapsed ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -357,17 +357,17 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
           </DropdownMenu>
         ) : (
           <div className="space-y-2">
-            <div className="flex items-center gap-3 px-2 py-2 rounded-lg bg-muted/50">
+            <div className="flex items-center gap-3 px-2 py-2 rounded-lg bg-accent/50">
               <Avatar className="h-8 w-8">
-                <AvatarFallback>
+                <AvatarFallback className="bg-primary text-primary-foreground">
                   {user?.name ? user.name.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">
+                <p className="text-sm font-medium truncate text-card-foreground">
                   {user?.name || user?.email}
                 </p>
-                <p className="text-xs text-muted-foreground truncate">
+                <p className="text-xs text-muted-foreground/70 truncate">
                   {user?.profileType === 'admin' ? 'Administrador' : 
                    user?.profileType === 'shipper' ? 'Embarcador' :
                    user?.profileType === 'driver' ? 'Motorista' :
@@ -382,7 +382,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
                 variant="ghost"
                 size="sm"
                 onClick={toggleTheme}
-                className="flex-1"
+                className="flex-1 text-card-foreground hover:bg-accent hover:text-accent-foreground"
               >
                 {theme === 'dark' ? (
                   <Sun className="h-4 w-4" />
@@ -394,7 +394,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
                 variant="ghost"
                 size="sm"
                 onClick={handleLogout}
-                className="flex-1"
+                className="flex-1 text-card-foreground hover:bg-destructive hover:text-destructive-foreground"
               >
                 <LogOut className="h-4 w-4" />
               </Button>
