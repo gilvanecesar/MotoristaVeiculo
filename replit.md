@@ -132,9 +132,14 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ## Recent Changes
 
 ```
+✓ PaymentBanner configurado para não aparecer para administradores nem usuários com assinatura ativa
+✓ Sidebar com layout moderno e responsivo implementado
+✓ Paleta de cores original verde-azulado restaurada por preferência do usuário
+✓ Efeitos visuais modernos mantidos (transições, backdrop blur)
+✓ Sistema OpenPix para pagamentos PIX implementado
 ✓ Removed publication and expiration dates from WhatsApp message format
 ✓ Updated all WhatsApp message formatting functions (webhook, freight list, individual freight)
-- June 23, 2025. Initial setup
+- June 26, 2025. Layout improvements and payment banner fixes
 ```
 
 ## User Preferences
