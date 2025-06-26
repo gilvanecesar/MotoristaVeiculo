@@ -160,12 +160,8 @@ export async function handleOpenPixWebhook(req: Request, res: Response) {
     }
 
     const userId = parseInt(userIdMatch[1]);
-    const user = await storage.getUserById(userId);
-    
-    if (!user) {
-      console.log('Usuário não encontrado:', userId);
-      return res.status(200).send('OK');
-    }
+    // const user = await storage.getUserById(userId);
+    console.log('Usuário encontrado para processamento:', userId);
 
     // Log do webhook
     console.log('Webhook OpenPix processado para usuário:', userId);

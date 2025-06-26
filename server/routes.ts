@@ -1148,34 +1148,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Criar ou atualizar assinatura manualmente (admin)
   app.post("/api/admin/subscriptions", isAdmin, async (req: Request, res: Response) => {
     try {
-      const { userId, clientId, type, active, expiresAt, notes } = req.body;
+      const { 
+        clientId, 
+        clientName, 
+        email, 
+        plan, 
+        planType, 
+        amount, 
+        status, 
+        startDate, 
+        endDate 
+      } = req.body;
       
-      if (!userId) {
-        return res.status(400).json({ message: "ID do usuário é obrigatório" });
+      if (!clientId && !email) {
+        return res.status(400).json({ message: "ID do cliente ou email é obrigatório" });
       }
       
-      // Verificar se o usuário existe
-      const user = await storage.getUserById(userId);
+      // Buscar usuário pelo cliente ou email
+      let user;
+      if (clientId) {
+        // Buscar usuário pelo clientId
+        const users = await storage.getUsers();
+        user = users.find(u => u.clientId === clientId);
+      } else if (email) {
+        // Buscar usuário pelo email
+        user = await storage.getUserByEmail(email);
+      }
+      
       if (!user) {
-        return res.status(404).json({ message: "Usuário não encontrado" });
+        return res.status(404).json({ message: "Usuário não encontrado para este cliente/email" });
       }
+      
+      // Determinar o tipo de plano
+      const finalPlanType = planType || plan || 'monthly';
+      const isActive = status === 'active' || status === 'trialing';
       
       // Atualizar usuário com os dados da assinatura
-      const updatedUser = await storage.updateUser(userId, {
-        subscriptionActive: active || true,
-        subscriptionType: type || 'monthly',
-        subscriptionExpiresAt: expiresAt ? new Date(expiresAt) : undefined,
+      const updatedUser = await storage.updateUser(user.id, {
+        subscriptionActive: isActive,
+        subscriptionType: finalPlanType,
+        subscriptionExpiresAt: endDate ? new Date(endDate) : undefined,
       });
       
       // Criar registro na tabela de assinaturas para histórico
       const subscription = await storage.createSubscription({
-        userId,
+        userId: user.id,
         clientId: clientId || user.clientId,
-        status: active ? 'active' : 'inactive',
-        planType: type || 'monthly',
-        currentPeriodStart: new Date(),
-        currentPeriodEnd: expiresAt ? new Date(expiresAt) : undefined,
-        metadata: { notes, manuallyCreated: true },
+        status: isActive ? 'active' : 'inactive',
+        planType: finalPlanType,
+        currentPeriodStart: startDate ? new Date(startDate) : new Date(),
+        currentPeriodEnd: endDate ? new Date(endDate) : undefined,
+        metadata: { 
+          manuallyCreated: true,
+          createdBy: req.user?.id,
+          amount: amount ? parseFloat(amount.toString()) : undefined
+        },
       });
       
       res.status(201).json({
