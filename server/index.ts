@@ -5,6 +5,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { db } from "./db";
 import { startSubscriptionChecker } from "./subscription-checker";
+import { setupOpenPixRoutes } from "./openpix-routes";
 
 // Servidor Express
 const app = express();
@@ -67,6 +68,9 @@ app.use((req, res, next) => {
   
   // Configurar rotas da API
   const server = await registerRoutes(app);
+  
+  // Configurar rotas do OpenPix
+  setupOpenPixRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
