@@ -187,7 +187,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   return (
     <div
       className={cn(
-        "flex flex-col bg-card border-r border-border h-screen transition-all duration-300 shadow-sm",
+        "flex flex-col bg-card/95 backdrop-blur-sm border-r border-border/50 h-screen transition-all duration-300 shadow-lg",
         collapsed ? "w-16" : "w-64",
         isMobile && "fixed inset-y-0 left-0 z-50 transform",
       )}
@@ -230,9 +230,9 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
                 <Button
                   variant={active ? "secondary" : "ghost"}
                   className={cn(
-                    "w-full justify-start gap-3 text-card-foreground hover:bg-accent hover:text-accent-foreground",
+                    "w-full justify-start gap-3 text-card-foreground/80 hover:text-card-foreground hover:bg-accent/50 transition-all duration-200 font-medium",
                     collapsed && "justify-center px-2",
-                    active && "bg-primary text-primary-foreground hover:bg-primary/90"
+                    active && "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
                   )}
                 >
                   <Icon className="h-4 w-4 flex-shrink-0" />
@@ -264,8 +264,8 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
                     <Button
                       variant={active ? "secondary" : "ghost"}
                       className={cn(
-                        "w-full justify-start gap-3 text-card-foreground hover:bg-accent hover:text-accent-foreground",
-                        active && "bg-primary text-primary-foreground hover:bg-primary/90"
+                        "w-full justify-start gap-3 text-card-foreground/80 hover:text-card-foreground hover:bg-accent/50 transition-all duration-200 font-medium",
+                        active && "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
                       )}
                     >
                       <Icon className="h-4 w-4 flex-shrink-0" />
