@@ -10,7 +10,7 @@ import { ClientRegistrationCheck } from "@/components/client-registration-check"
 import { SubscriptionStatusBanner } from "@/components/ui/subscription-status-banner";
 
 import NotFound from "@/pages/not-found";
-import Navigation from "@/components/layout/navigation";
+import AppLayout from "@/components/layout/app-layout";
 import Footer from "@/components/layout/footer";
 import Home from "@/pages/home";
 import Dashboard from "@/pages/dashboard";
@@ -118,6 +118,8 @@ function Router() {
 function App() {
   const [location] = useLocation();
   const isLandingPage = location === "/";
+  const isAuthPage = location === "/auth" || location === "/login" || location === "/reset-password";
+  const isPublicPage = isLandingPage || isAuthPage || location.startsWith("/freight/") || location.startsWith("/public/");
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -125,22 +127,21 @@ function App() {
         <UserAuthProvider>
           <ClientAuthProvider>
             <ClientRegistrationCheck />
-            <div className="flex flex-col min-h-screen bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-200">
-              {!isLandingPage && <Navigation />}
-              <SubscriptionStatusBanner />
-              <div className={`flex flex-col flex-grow ${isLandingPage ? 'px-0 py-0' : ''}`}>
-                <main className={`
-                  ${isLandingPage ? 'p-0' : 'px-3 sm:px-6 py-4 sm:py-6 pb-20 md:pb-6'} 
-                  flex-grow max-w-full overflow-x-hidden
-                `}>
-                  <div className={`${isLandingPage ? 'w-full max-w-full' : 'container mx-auto'}`}>
-                    <Router />
-                  </div>
-                </main>
-                {!isLandingPage && <Footer className="hidden md:block" />}
+            
+            {/* Páginas públicas sem layout */}
+            {isPublicPage ? (
+              <div className="min-h-screen bg-background">
+                <Router />
+                <Toaster />
               </div>
-            </div>
-            <Toaster />
+            ) : (
+              /* Páginas protegidas com layout sidebar */
+              <AppLayout>
+                <Router />
+                <Toaster />
+              </AppLayout>
+            )}
+            
           </ClientAuthProvider>
         </UserAuthProvider>
       </ThemeProvider>
