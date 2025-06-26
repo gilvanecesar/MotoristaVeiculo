@@ -193,13 +193,13 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
       )}
     >
       {/* Header da Sidebar */}
-      <div className="flex items-center justify-between p-4 border-b border-border bg-card">
+      <div className="flex items-center justify-between p-4 border-b border-border/30 bg-card/50 backdrop-blur-sm">
         {!collapsed && (
           <div className="flex items-center space-x-2">
             <img 
               src={logoImage} 
               alt="QUERO FRETES" 
-              className="h-8 w-auto"
+              className="h-8 w-auto drop-shadow-sm"
             />
             <span className="font-bold text-lg text-primary">QUERO FRETES</span>
           </div>
@@ -296,9 +296,9 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
                     <Button
                       variant={active ? "secondary" : "ghost"}
                       className={cn(
-                        "w-full justify-start gap-3 text-card-foreground hover:bg-accent hover:text-accent-foreground",
+                        "w-full justify-start gap-3 text-card-foreground/80 hover:text-card-foreground hover:bg-accent/50 transition-all duration-200 font-medium",
                         collapsed && "justify-center px-2",
-                        active && "bg-primary text-primary-foreground hover:bg-primary/90"
+                        active && "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
                       )}
                     >
                       <Icon className="h-4 w-4 flex-shrink-0" />
@@ -314,13 +314,13 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
 
       {/* Cliente Selector (se não for admin e tiver cliente) */}
       {!isAdmin && user?.clientId && !collapsed && (
-        <div className="p-3 border-t border-border bg-card">
+        <div className="p-3 border-t border-border/30 bg-card/50 backdrop-blur-sm">
           <ClientSelector />
         </div>
       )}
 
       {/* Footer da Sidebar - Usuário */}
-      <div className="p-3 border-t border-border bg-card">
+      <div className="p-3 border-t border-border/30 bg-card/50 backdrop-blur-sm">
         {collapsed ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -382,7 +382,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
                 variant="ghost"
                 size="sm"
                 onClick={toggleTheme}
-                className="flex-1 text-card-foreground hover:bg-accent hover:text-accent-foreground"
+                className="flex-1 text-card-foreground/70 hover:text-card-foreground hover:bg-accent/50 transition-all duration-200"
               >
                 {theme === 'dark' ? (
                   <Sun className="h-4 w-4" />
@@ -394,7 +394,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
                 variant="ghost"
                 size="sm"
                 onClick={handleLogout}
-                className="flex-1 text-card-foreground hover:bg-destructive hover:text-destructive-foreground"
+                className="flex-1 text-card-foreground/70 hover:text-destructive-foreground hover:bg-destructive/90 transition-all duration-200"
               >
                 <LogOut className="h-4 w-4" />
               </Button>
