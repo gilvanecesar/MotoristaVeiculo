@@ -1,6 +1,6 @@
 import { Express } from 'express';
 import { isAuthenticated } from './middlewares';
-import { createPixCharge, handleOpenPixWebhook, getChargeStatus, listOpenPixCharges, syncOpenPixPayments, getUserPayments, getUserOpenPixCharges } from './openpix-service';
+import { createPixCharge, handleOpenPixWebhook, getChargeStatus, listOpenPixCharges, syncOpenPixPayments, getUserPayments, getUserOpenPixCharges, getOpenPixFinanceStats, getOpenPixSubscriptions, getOpenPixInvoices } from './openpix-service';
 
 /**
  * Configura rotas do OpenPix
@@ -28,6 +28,17 @@ export function setupOpenPixRoutes(app: Express) {
 
   // Consultar pagamentos do usuário
   app.get('/api/openpix/my-payments', isAuthenticated, getUserPayments);
+
+  // ===== ROTAS ADMINISTRATIVAS OPENPIX =====
+  
+  // Estatísticas financeiras em tempo real da OpenPix (Admin)
+  app.get('/api/admin/openpix/finance/stats', isAuthenticated, getOpenPixFinanceStats);
+  
+  // Assinaturas da OpenPix (Admin)
+  app.get('/api/admin/openpix/subscriptions', isAuthenticated, getOpenPixSubscriptions);
+  
+  // Faturas da OpenPix (Admin)
+  app.get('/api/admin/openpix/invoices', isAuthenticated, getOpenPixInvoices);
 
   console.log('Rotas do OpenPix configuradas com sucesso');
 }

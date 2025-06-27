@@ -380,34 +380,37 @@ export default function FinancePage() {
     },
   });
 
-  // Buscar estatísticas financeiras
+  // Buscar estatísticas financeiras da OpenPix em tempo real
   const { 
     data: stats, 
     isLoading: isLoadingStats,
     error: statsError 
   } = useQuery<FinanceStats>({
-    queryKey: ["/api/admin/finance/stats"],
+    queryKey: ["/api/admin/openpix/finance/stats"],
     queryFn: getQueryFn({ on401: "throw" }),
+    refetchInterval: 30000, // Atualizar a cada 30 segundos
   });
 
-  // Buscar assinaturas
+  // Buscar assinaturas da OpenPix em tempo real
   const { 
     data: subscriptions, 
     isLoading: isLoadingSubscriptions,
     error: subscriptionsError 
   } = useQuery<SubscriptionData[]>({
-    queryKey: ["/api/admin/subscriptions"],
+    queryKey: ["/api/admin/openpix/subscriptions"],
     queryFn: getQueryFn({ on401: "throw" }),
+    refetchInterval: 30000, // Atualizar a cada 30 segundos
   });
 
-  // Buscar faturas
+  // Buscar faturas da OpenPix em tempo real
   const { 
     data: invoices, 
     isLoading: isLoadingInvoices,
     error: invoicesError 
   } = useQuery<InvoiceData[]>({
-    queryKey: ["/api/admin/invoices"],
+    queryKey: ["/api/admin/openpix/invoices"],
     queryFn: getQueryFn({ on401: "throw" }),
+    refetchInterval: 30000, // Atualizar a cada 30 segundos
   });
 
   // Handler para exportar relatório

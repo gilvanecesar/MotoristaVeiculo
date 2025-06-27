@@ -594,3 +594,234 @@ export async function getUserOpenPixCharges(req: Request, res: Response) {
     });
   }
 }
+
+/**
+ * Buscar estatísticas financeiras em tempo real da OpenPix (Admin)
+ */
+export async function getOpenPixFinanceStats(req: Request, res: Response) {
+  try {
+    console.log('=== GET OPENPIX FINANCE STATS ===');
+    
+    // Buscar todas as cobranças da OpenPix
+    const response = await fetch(`${openPixConfig.apiUrl}/charge`, {
+      method: 'GET',
+      headers: {
+        'Authorization': openPixConfig.authorization,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenPix API retornou erro: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const charges = data.charges || [];
+
+    // Filtrar cobranças pagas (COMPLETED)
+    const paidCharges = charges.filter((charge: any) => charge.status === 'COMPLETED');
+    
+    // Calcular estatísticas
+    const totalRevenue = paidCharges.reduce((total: number, charge: any) => {
+      return total + (charge.value || 0);
+    }, 0);
+
+    // Receita do mês atual
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    const monthlyRevenue = paidCharges
+      .filter((charge: any) => {
+        const chargeDate = new Date(charge.paidAt || charge.createdAt);
+        return chargeDate.getMonth() === currentMonth && chargeDate.getFullYear() === currentYear;
+      })
+      .reduce((total: number, charge: any) => total + (charge.value || 0), 0);
+
+    // Contar assinaturas ativas (cobranças dos últimos 30 dias)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const activeSubscriptions = charges.filter((charge: any) => {
+      const chargeDate = new Date(charge.createdAt);
+      return chargeDate > thirtyDaysAgo && charge.correlationID?.includes('subscription');
+    }).length;
+
+    // Dados mensais dos últimos 6 meses
+    const monthlyData = [];
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date();
+      date.setMonth(date.getMonth() - i);
+      const month = date.getMonth();
+      const year = date.getFullYear();
+      
+      const monthRevenue = paidCharges
+        .filter((charge: any) => {
+          const chargeDate = new Date(charge.paidAt || charge.createdAt);
+          return chargeDate.getMonth() === month && chargeDate.getFullYear() === year;
+        })
+        .reduce((total: number, charge: any) => total + (charge.value || 0), 0);
+
+      monthlyData.push({
+        month: date.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }),
+        revenue: monthRevenue / 100 // Converter centavos para reais
+      });
+    }
+
+    // Status das cobranças
+    const subscriptionsByStatus = [
+      {
+        status: 'Ativas',
+        count: charges.filter((c: any) => c.status === 'ACTIVE').length
+      },
+      {
+        status: 'Pagas',
+        count: charges.filter((c: any) => c.status === 'COMPLETED').length
+      },
+      {
+        status: 'Expiradas',
+        count: charges.filter((c: any) => c.status === 'EXPIRED').length
+      }
+    ];
+
+    const stats = {
+      totalRevenue: totalRevenue / 100, // Converter centavos para reais
+      monthlyRevenue: monthlyRevenue / 100,
+      activeSubscriptions,
+      churnRate: 0, // Calcular baseado em dados históricos se necessário
+      monthlyData,
+      subscriptionsByStatus
+    };
+
+    console.log('Estatísticas calculadas:', stats);
+
+    res.json(stats);
+
+  } catch (error: any) {
+    console.error('Erro ao buscar estatísticas financeiras:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor',
+      error: error.message
+    });
+  }
+}
+
+/**
+ * Buscar todas as assinaturas da OpenPix (Admin)
+ */
+export async function getOpenPixSubscriptions(req: Request, res: Response) {
+  try {
+    console.log('=== GET OPENPIX SUBSCRIPTIONS ===');
+    
+    // Buscar todas as cobranças da OpenPix
+    const response = await fetch(`${openPixConfig.apiUrl}/charge`, {
+      method: 'GET',
+      headers: {
+        'Authorization': openPixConfig.authorization,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenPix API retornou erro: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const charges = data.charges || [];
+
+    // Filtrar apenas cobranças relacionadas a assinaturas
+    const subscriptionCharges = charges.filter((charge: any) => 
+      charge.correlationID?.includes('subscription') || 
+      charge.comment?.toLowerCase().includes('assinatura')
+    );
+
+    // Mapear para formato esperado pelo frontend
+    const subscriptions = subscriptionCharges.map((charge: any) => {
+      const statusMap: any = {
+        'COMPLETED': 'active',
+        'ACTIVE': 'active', 
+        'EXPIRED': 'canceled',
+        'CREATED': 'trialing'
+      };
+
+      return {
+        id: charge.correlationID || charge.identifier,
+        clientId: null,
+        clientName: charge.customer?.name || 'Cliente não identificado',
+        email: charge.customer?.email || '',
+        plan: charge.value >= 5000 ? 'annual' : 'monthly', // Inferir plano baseado no valor
+        status: statusMap[charge.status] || 'trialing',
+        amount: charge.value / 100, // Converter centavos para reais
+        startDate: charge.createdAt,
+        endDate: charge.expiresDate || null
+      };
+    });
+
+    console.log('Assinaturas mapeadas:', subscriptions.length);
+
+    res.json(subscriptions);
+
+  } catch (error: any) {
+    console.error('Erro ao buscar assinaturas:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor',
+      error: error.message
+    });
+  }
+}
+
+/**
+ * Buscar todas as faturas da OpenPix (Admin)
+ */
+export async function getOpenPixInvoices(req: Request, res: Response) {
+  try {
+    console.log('=== GET OPENPIX INVOICES ===');
+    
+    // Buscar todas as cobranças da OpenPix
+    const response = await fetch(`${openPixConfig.apiUrl}/charge`, {
+      method: 'GET',
+      headers: {
+        'Authorization': openPixConfig.authorization,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenPix API retornou erro: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const charges = data.charges || [];
+
+    // Mapear cobranças para formato de faturas
+    const invoices = charges.map((charge: any) => {
+      const statusMap: any = {
+        'COMPLETED': 'paid',
+        'ACTIVE': 'open',
+        'EXPIRED': 'void',
+        'CREATED': 'open'
+      };
+
+      return {
+        id: charge.identifier,
+        clientName: charge.customer?.name || 'Cliente não identificado',
+        email: charge.customer?.email || '',
+        amount: charge.value / 100, // Converter centavos para reais
+        status: statusMap[charge.status] || 'open',
+        date: charge.paidAt || charge.createdAt
+      };
+    });
+
+    console.log('Faturas mapeadas:', invoices.length);
+
+    res.json(invoices);
+
+  } catch (error: any) {
+    console.error('Erro ao buscar faturas:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor',
+      error: error.message
+    });
+  }
+}
