@@ -118,9 +118,11 @@ export default function AuthPage() {
           }
         } else if (user.subscriptionActive) {
           // Se já tem assinatura ativa, vai para a página Home
+          console.log("REDIRECIONANDO para /home - usuário com assinatura ativa");
           setLocation("/home");
         } else {
           // Se não tem assinatura ativa e não é motorista, mostra página de planos
+          console.log("MOSTRANDO planos - usuário sem assinatura ativa");
           setShowPlans(true);
           setSubscriptionRequired(true);
         }
