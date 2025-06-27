@@ -42,6 +42,7 @@ import FinanceSettings from "@/pages/admin/finance/settings";
 import AdminUsersPage from "@/pages/admin/users/index";
 import EmailAdminPage from "@/pages/admin/email/index";
 import AdminWebhooksPage from "@/pages/admin/webhooks/index";
+import AdminOpenPixPage from "@/pages/admin/openpix/index";
 import PaymentSuccessPage from "@/pages/payment-success";
 import PaymentCancelPage from "@/pages/payment-cancel";
 import CheckoutPage from "@/pages/checkout";
@@ -109,6 +110,7 @@ function Router() {
       <ProtectedRoute path="/admin/users" component={AdminUsersPage} />
       <ProtectedRoute path="/admin/email" component={EmailAdminPage} />
       <ProtectedRoute path="/admin/webhooks" component={AdminWebhooksPage} />
+      <ProtectedRoute path="/admin/openpix" component={AdminOpenPixPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
       <ProtectedRoute path="/webhook-config" component={WebhookConfig} />
       <ProtectedRoute path="/home" component={Home} />
