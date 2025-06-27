@@ -221,7 +221,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
             variant="ghost"
             size="sm"
             onClick={onToggleCollapse}
-            className="ml-auto"
+            className="ml-auto text-white/70 hover:text-white hover:bg-gray-600/50 transition-all duration-200"
           >
             {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </Button>
@@ -299,7 +299,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
               <Link href="/checkout?plan=monthly">
                 <Button
                   variant="ghost"
-                  className="w-full justify-start gap-3 text-white/80 hover:text-white hover:bg-cyan-500/50 transition-all duration-200 font-medium"
+                  className="w-full justify-start gap-3 text-white/80 hover:text-white hover:bg-gray-700/50 transition-all duration-200 font-medium"
                 >
                   <CreditCard className="h-4 w-4 flex-shrink-0" />
                   <span>Assinar Agora</span>

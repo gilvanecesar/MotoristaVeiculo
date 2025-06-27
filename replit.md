@@ -161,12 +161,16 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Preços padronizados em todo o sistema: R$ 49,90 mensal (4990 centavos na API)
 ✓ Planos anuais completamente removidos das páginas landing e auth conforme solicitação
 ✓ Interface de pagamentos atualizada para focar exclusivamente no pagamento via PIX
+✓ Sidebar completamente redesenhada com cor personalizada #00222d e fontes brancas
+✓ Todos os elementos da sidebar (header, footer, botões, seções) ajustados para o novo esquema de cores
+✓ Cores de botões ativos e hover atualizadas para funcionar bem com o fundo escuro
 - June 27, 2025. OpenPix como método oficial único, interface simplificada
 - June 27, 2025. Removidas opções de Google login e múltiplos planos de preços
 - June 27, 2025. Menu "Histórico" removido, faturas integradas ao OpenPix
 - June 27, 2025. Página "Minha Assinatura" com tratamento completo de estados
 - June 27, 2025. Interface reorganizada: "Meus Fretes" na sidebar, ícone do usuário no cabeçalho
 - June 27, 2025. Preços unificados: R$ 49,90 em toda interface, planos anuais removidos
+- June 27, 2025. Sidebar redesenhada com cor específica #00222d, fontes brancas e elementos visuais otimizados
 ```
 
 ## User Preferences
