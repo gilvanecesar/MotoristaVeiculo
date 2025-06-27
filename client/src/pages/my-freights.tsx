@@ -22,20 +22,20 @@ export default function MyFreightsPage() {
 
   // Buscar fretes do usuário atual
   const { data: freights = [], isLoading } = useQuery<FreightWithDestinations[]>({
-    queryKey: ["/api/freights", "my-freights"],
+    queryKey: ["/api/my-freights"],
     queryFn: async () => {
-      const res = await apiRequest("GET", "/api/freights");
-      if (!res.ok) throw new Error("Falha ao carregar fretes");
-      const allFreights = await res.json();
-      
-      // Filtrar apenas fretes do usuário atual
+      // Para motoristas, buscar todos os fretes
       if (user?.profileType === 'driver' || user?.profileType === 'motorista') {
-        console.log("Usuário motorista, retornando todos os fretes");
-        return allFreights;
+        console.log("Usuário motorista, buscando todos os fretes");
+        const res = await apiRequest("GET", "/api/freights");
+        if (!res.ok) throw new Error("Falha ao carregar fretes");
+        return await res.json();
       } else {
-        console.log("Filtrando fretes do usuário logado, ID:", user?.id);
-        // Para outros usuários, filtrar apenas fretes criados por eles
-        const userFreights = allFreights.filter((freight: any) => freight.userId === user?.id);
+        // Para outros usuários, usar a rota específica que retorna apenas seus fretes
+        console.log("Buscando apenas fretes do usuário logado, ID:", user?.id);
+        const res = await apiRequest("GET", "/api/my-freights");
+        if (!res.ok) throw new Error("Falha ao carregar fretes do usuário");
+        const userFreights = await res.json();
         console.log(`Encontrados ${userFreights.length} fretes para o usuário`);
         return userFreights;
       }
@@ -342,7 +342,9 @@ export default function MyFreightsPage() {
                 <div className="space-y-2">
                   <h4 className="text-sm font-medium text-slate-500">Valor</h4>
                   <p className="text-lg font-semibold">
-                    R$ {selectedFreight.freightValue?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}
+                    R$ {selectedFreight.freightValue
+                      ? Number(selectedFreight.freightValue).toLocaleString('pt-BR', { minimumFractionDigits: 2 })
+                      : '0,00'}
                   </p>
                 </div>
                 
