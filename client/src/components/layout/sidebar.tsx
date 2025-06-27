@@ -51,6 +51,11 @@ const navItems = [
     icon: Truck
   },
   { 
+    label: "Meus Fretes", 
+    path: "/my-freights",
+    icon: Package
+  },
+  { 
     label: "Clientes", 
     path: "/clients",
     icon: Building2
