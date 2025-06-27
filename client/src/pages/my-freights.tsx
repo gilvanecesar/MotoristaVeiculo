@@ -1,20 +1,102 @@
-import React, { useEffect } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { Package, ArrowRight } from "lucide-react";
+// import { useClientAuth } from "@/lib/auth-context";
+import { useAuth } from "@/hooks/use-auth";
+import { 
+  getVehicleCategory, 
+  getVehicleTypeNameOnly, 
+  getVehicleTypeDisplay,
+  formatMultipleVehicleTypes,
+  formatMultipleBodyTypes
+} from "@/lib/utils/vehicle-types";
+import { 
+  Plus, 
+  Search, 
+  Edit, 
+  Eye, 
+  Trash2, 
+  Truck, 
+  Filter, 
+  PhoneCall, 
+  MapPin, 
+  Package, 
+  DollarSign,
+  ExternalLink,
+  MessageSquare
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { 
+  FreightWithDestinations, 
+  Client,
+  FreightDestination,
+  CARGO_TYPES, 
+  TARP_OPTIONS, 
+  TOLL_OPTIONS, 
+  VEHICLE_TYPES,
+  BODY_TYPES
+} from "@shared/schema";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { queryClient } from "@/lib/queryClient";
+import { Skeleton } from "@/components/ui/skeleton";
+import { formatCurrency } from "@/lib/utils/format";
+import { FaWhatsapp } from "react-icons/fa";
 
-export default function FreightsPage() {
-  const [, setLocation] = useLocation();
+// Função para verificar se um frete está expirado
+const isExpired = (expirationDate: string | Date | null | undefined): boolean => {
+  if (!expirationDate) return false;
+  
+  const today = new Date();
+  const expDate = new Date(expirationDate);
+  
+  return today > expDate;
+};
 
+export default function MyFreightsPage() {
+  // Log para debugar
+  console.log("Página Meus Fretes carregando...");
+  
+  // Adicionar um log para quando terminar de carregar
   useEffect(() => {
-    console.log("Página de fretes (redirecionamento) carregada");
+    console.log("Página Meus Fretes carregada com sucesso!");
   }, []);
   const [searchQuery, setSearchQuery] = useState("");
   const [, navigate] = useLocation();
