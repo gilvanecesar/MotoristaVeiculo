@@ -260,7 +260,43 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
                   Assinatura
                 </h3>
               </div>
-              {subscriptionItems.map((item) => {
+              
+              {/* Minha Assinatura - Status Ativo */}
+              <div className="mx-3 mb-2">
+                <div className="rounded-lg border bg-card/30 p-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="h-4 w-4 text-primary" />
+                    <span className="font-medium text-sm">Minha Assinatura</span>
+                    <div className="ml-auto">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        Ativa
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <div className="flex justify-between">
+                      <span>Plano:</span>
+                      <span className="font-medium">Mensal</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Expira em:</span>
+                      <span className="font-medium">
+                        {user?.subscriptionExpiresAt ? 
+                          new Date(user.subscriptionExpiresAt).toLocaleDateString('pt-BR') : 
+                          'N/A'
+                        }
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Valor:</span>
+                      <span className="font-medium text-primary">R$ 49,90</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Outros itens de assinatura */}
+              {subscriptionItems.filter(item => item.label !== 'Minha Assinatura').map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.path);
                 
@@ -279,6 +315,26 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
                   </Link>
                 );
               })}
+            </>
+          )}
+          
+          {/* Menu de assinatura para usuários SEM assinatura ativa */}
+          {!isDriver && !user?.subscriptionActive && !collapsed && (
+            <>
+              <div className="px-3 py-2">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Assinatura
+                </h3>
+              </div>
+              <Link href="/checkout?plan=monthly">
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start gap-3 text-card-foreground/80 hover:text-card-foreground hover:bg-accent/50 transition-all duration-200 font-medium"
+                >
+                  <CreditCard className="h-4 w-4 flex-shrink-0" />
+                  <span>Assinar Agora</span>
+                </Button>
+              </Link>
             </>
           )}
           
