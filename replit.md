@@ -132,24 +132,18 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ## Recent Changes
 
 ```
-✓ Integração OpenPix completa implementada com valor R$ 4990.00 detectado corretamente
-✓ Página administrativa OpenPix criada em /admin/openpix para testes e gerenciamento
-✓ Menu "OpenPix" adicionado na seção administrativa da sidebar
-✓ Função criar cobrança PIX de teste (R$ 49,90) com QR Code e link de pagamento
-✓ API OpenPix testada com sucesso - conexão funcionando em 907ms
-✓ Página "Webhooks" administrativa criada em /admin/webhooks com configurações globais
-✓ Corrigido problema "page not found" no menu Webhooks do painel admin
-✓ Menu "WhatsApp Config" adicionado na seção de assinatura para administradores e usuários ativos
-✓ Rota /webhook-config já existia mas não estava acessível via menu
-✓ PaymentBanner configurado para não aparecer para administradores nem usuários com assinatura ativa
-✓ Sidebar com layout moderno e responsivo implementado
-✓ Paleta de cores original verde-azulado restaurada por preferência do usuário
-✓ Efeitos visuais modernos mantidos (transições, backdrop blur)
-✓ Sistema OpenPix para pagamentos PIX implementado
-✓ Removed publication and expiration dates from WhatsApp message format
-✓ Updated all WhatsApp message formatting functions (webhook, freight list, individual freight)
-- June 27, 2025. OpenPix integration fully operational with test charge creation
-- June 26, 2025. Layout improvements, payment banner fixes, and admin webhooks page creation
+✓ OpenPix implementado como método de pagamento oficial único
+✓ Mercado Pago e PayPal removidos do sistema conforme solicitação
+✓ Página de checkout moderna criada exclusivamente para pagamentos PIX
+✓ Seção "ou continue com Google" removida da tela de login
+✓ Cards de preços simplificados: apenas um plano de R$ 49,90 por 30 dias
+✓ Sistema integrado: cadastro → checkout PIX → ativação automática de assinatura
+✓ QR Code, código copia-e-cola e link de pagamento funcionando perfeitamente
+✓ Interface de login limpa e focada em email/senha tradicional
+✓ Plano único centralizado com destaque visual "Plano Oficial"
+✓ Valor oficial: R$ 49,90 para acesso de 30 dias (4990 centavos na API)
+- June 27, 2025. OpenPix como método oficial único, interface simplificada
+- June 27, 2025. Removidas opções de Google login e múltiplos planos de preços
 ```
 
 ## User Preferences

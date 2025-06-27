@@ -53,7 +53,7 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 export default function LoginPage() {
   const [activeTab, setActiveTab] = useState<string>("login");
   const [selectedRole, setSelectedRole] = useState<string>(USER_TYPES.SHIPPER);
-  const [selectedPlan, setSelectedPlan] = useState<string>("trial");
+  const [selectedPlan, setSelectedPlan] = useState<string>("monthly");
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [isRequestingReset, setIsRequestingReset] = useState(false);
@@ -96,12 +96,9 @@ export default function LoginPage() {
           // Se for motorista, redireciona para a página de fretes
           window.location.href = "/freights";
         } 
-        // Se um plano não gratuito foi selecionado, redireciona para o checkout
-        else if (selectedPlan !== "trial") {
+        else {
+          // Redireciona para o checkout PIX
           window.location.href = `/checkout?plan=${selectedPlan}`;
-        } else {
-          // Caso contrário, redireciona para a página HOME
-          window.location.href = "/home";
         }
       },
     });
@@ -247,114 +244,46 @@ export default function LoginPage() {
           </Card>
           
           <p className="text-center text-muted-foreground mb-6">
-            Para embarcadores, agentes e administradores, escolha um dos planos abaixo:
+            Para embarcadores, agentes e administradores:
           </p>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Plano de Teste */}
-            <Card 
-              className={`shadow-lg hover:shadow-xl transition-shadow cursor-pointer ${selectedPlan === "trial" ? "border-primary ring-2 ring-primary" : ""}`}
-              onClick={() => setSelectedPlan("trial")}
-            >
-              <CardHeader className="bg-primary/5 pb-3">
-                <CardTitle className="text-xl">Teste Grátis</CardTitle>
-                <CardDescription>Teste por 7 dias</CardDescription>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <div className="text-3xl font-bold text-center mb-2">Grátis</div>
-                <div className="text-sm text-center mb-4 text-muted-foreground">Acesso completo por 7 dias</div>
-                <ul className="space-y-2 mb-6">
-                  <li className="flex items-center text-sm">
-                    <Icons.check className="mr-2 h-4 w-4 text-primary" />
-                    Gerenciamento de fretes
-                  </li>
-                  <li className="flex items-center text-sm">
-                    <Icons.check className="mr-2 h-4 w-4 text-primary" />
-                    Cadastro de motoristas e veículos
-                  </li>
-                  <li className="flex items-center text-sm">
-                    <Icons.check className="mr-2 h-4 w-4 text-primary" />
-                    Acesso a relatórios básicos
-                  </li>
-                </ul>
-                {selectedPlan === "trial" && (
-                  <div className="w-full text-center text-sm text-primary font-medium">
+          <div className="flex justify-center mb-6">
+            <div className="w-full max-w-md">
+              <Card className="shadow-lg hover:shadow-xl transition-shadow border-primary ring-2 ring-primary">
+                <CardHeader className="bg-primary/10 pb-3 text-center">
+                  <div className="absolute -top-3 left-0 right-0 flex justify-center">
+                    <span className="px-3 py-1 bg-primary text-primary-foreground text-xs rounded-full">Plano Oficial</span>
+                  </div>
+                  <CardTitle className="text-2xl">Acesso Completo</CardTitle>
+                  <CardDescription>Acesso por 30 dias</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="text-4xl font-bold text-center mb-2 text-primary">R$ 49,90</div>
+                  <div className="text-sm text-center mb-6 text-muted-foreground">Pagamento único via PIX</div>
+                  <ul className="space-y-3 mb-6">
+                    <li className="flex items-center text-sm">
+                      <Icons.check className="mr-3 h-5 w-5 text-primary" />
+                      Gerenciamento ilimitado de fretes
+                    </li>
+                    <li className="flex items-center text-sm">
+                      <Icons.check className="mr-3 h-5 w-5 text-primary" />
+                      Cadastro ilimitado de motoristas
+                    </li>
+                    <li className="flex items-center text-sm">
+                      <Icons.check className="mr-3 h-5 w-5 text-primary" />
+                      Relatórios avançados
+                    </li>
+                    <li className="flex items-center text-sm">
+                      <Icons.check className="mr-3 h-5 w-5 text-primary" />
+                      Suporte prioritário
+                    </li>
+                  </ul>
+                  <div className="w-full text-center text-sm text-primary font-medium bg-primary/10 py-2 rounded-md">
                     Plano Selecionado
                   </div>
-                )}
-              </CardContent>
-            </Card>
-            
-            {/* Plano Mensal */}
-            <Card 
-              className={`shadow-lg hover:shadow-xl transition-shadow cursor-pointer ${selectedPlan === "monthly" ? "border-primary ring-2 ring-primary" : ""}`}
-              onClick={() => setSelectedPlan("monthly")}
-            >
-              <CardHeader className="bg-primary/5 pb-3">
-                <CardTitle className="text-xl">Mensal</CardTitle>
-                <CardDescription>Acesso por 30 dias</CardDescription>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <div className="text-3xl font-bold text-center mb-2">R$ 49,90</div>
-                <div className="text-sm text-center mb-4 text-muted-foreground">Cobrado a cada mês</div>
-                <ul className="space-y-2 mb-6">
-                  <li className="flex items-center text-sm">
-                    <Icons.check className="mr-2 h-4 w-4 text-primary" />
-                    Gerenciamento ilimitado de fretes
-                  </li>
-                  <li className="flex items-center text-sm">
-                    <Icons.check className="mr-2 h-4 w-4 text-primary" />
-                    Cadastro ilimitado de motoristas
-                  </li>
-                  <li className="flex items-center text-sm">
-                    <Icons.check className="mr-2 h-4 w-4 text-primary" />
-                    Relatórios avançados
-                  </li>
-                </ul>
-                {selectedPlan === "monthly" && (
-                  <div className="w-full text-center text-sm text-primary font-medium">
-                    Plano Selecionado
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-            
-            {/* Plano Anual */}
-            <Card 
-              className={`shadow-lg hover:shadow-xl transition-shadow cursor-pointer ${selectedPlan === "annual" ? "border-primary ring-2 ring-primary" : "border-primary"}`}
-              onClick={() => setSelectedPlan("annual")}
-            >
-              <CardHeader className="bg-primary/10 pb-3">
-                <div className="absolute -top-3 left-0 right-0 flex justify-center">
-                  <span className="px-3 py-1 bg-primary text-primary-foreground text-xs rounded-full">Mais Popular</span>
-                </div>
-                <CardTitle className="text-xl">Anual</CardTitle>
-                <CardDescription>Acesso por 1 ano completo</CardDescription>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <div className="text-3xl font-bold text-center mb-2">R$ 960,00</div>
-                <div className="text-sm text-center mb-4 text-muted-foreground">Apenas R$ 80,00/mês</div>
-                <ul className="space-y-2 mb-6">
-                  <li className="flex items-center text-sm">
-                    <Icons.check className="mr-2 h-4 w-4 text-primary" />
-                    Todas as funcionalidades do plano mensal
-                  </li>
-                  <li className="flex items-center text-sm">
-                    <Icons.check className="mr-2 h-4 w-4 text-primary" />
-                    Suporte prioritário
-                  </li>
-                  <li className="flex items-center text-sm">
-                    <Icons.check className="mr-2 h-4 w-4 text-primary" />
-                    Pagamento único anual
-                  </li>
-                </ul>
-                {selectedPlan === "annual" && (
-                  <div className="w-full text-center text-sm text-primary font-medium">
-                    Plano Selecionado
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
         
@@ -427,23 +356,7 @@ export default function LoginPage() {
                     </form>
                   </Form>
                 </CardContent>
-                <div className="pt-6 flex flex-col space-y-4">
-                  <div className="relative w-full">
-                    <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t border-gray-300" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-white dark:bg-slate-900 px-2 text-muted-foreground">
-                        ou continue com
-                      </span>
-                    </div>
-                  </div>
 
-                  <Button variant="outline" className="w-full" disabled>
-                    <GoogleIcon className="mr-2 h-4 w-4" />
-                    Google
-                  </Button>
-                </div>
               </Card>
             </TabsContent>
 
