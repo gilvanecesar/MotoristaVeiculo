@@ -140,6 +140,7 @@ export interface IStorage {
   // Freight operations
   getFreights(): Promise<FreightWithDestinations[]>;
   getFreight(id: number): Promise<FreightWithDestinations | undefined>;
+  getFreightsByUserId(userId: number): Promise<FreightWithDestinations[]>;
   createFreight(freight: InsertFreight): Promise<Freight>;
   updateFreight(
     id: number,
@@ -1126,6 +1127,21 @@ export class DatabaseStorage implements IStorage {
       ...results[0],
       destinations,
     };
+  }
+
+  async getFreightsByUserId(userId: number): Promise<FreightWithDestinations[]> {
+    const freightsData = await db.select().from(freights).where(eq(freights.userId, userId));
+    
+    const freightsWithDestinations: FreightWithDestinations[] = [];
+    for (const freight of freightsData) {
+      const destinations = await this.getFreightDestinations(freight.id);
+      freightsWithDestinations.push({
+        ...freight,
+        destinations,
+      });
+    }
+
+    return freightsWithDestinations;
   }
 
   async createFreight(freight: InsertFreight): Promise<Freight> {

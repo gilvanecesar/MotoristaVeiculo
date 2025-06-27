@@ -33,8 +33,11 @@ export default function MyFreightsPage() {
         console.log("Usuário motorista, retornando todos os fretes");
         return allFreights;
       } else {
-        console.log("Outro tipo de usuário, retornando todos os fretes");
-        return allFreights;
+        console.log("Filtrando fretes do usuário logado, ID:", user?.id);
+        // Para outros usuários, filtrar apenas fretes criados por eles
+        const userFreights = allFreights.filter((freight: any) => freight.userId === user?.id);
+        console.log(`Encontrados ${userFreights.length} fretes para o usuário`);
+        return userFreights;
       }
     },
     refetchOnWindowFocus: false,

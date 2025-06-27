@@ -582,6 +582,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Obter apenas os fretes do usuário logado
+  app.get("/api/my-freights", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Usuário não autenticado" });
+      }
+
+      // Buscar apenas fretes criados pelo usuário atual
+      const freights = await storage.getFreightsByUserId(userId);
+      
+      res.json(freights);
+    } catch (error) {
+      console.error("Error fetching user freights:", error);
+      res.status(500).json({ message: "Failed to fetch user freights" });
+    }
+  });
+
   // Obter frete por ID
   app.get("/api/freights/:id", isAuthenticated, async (req: Request, res: Response) => {
     try {
