@@ -37,7 +37,7 @@ export default function Checkout() {
       description: "Acesso por 12 meses",
       period: "ano",
       savings: "Economia de R$ 99,80",
-      value: 49900
+      value: 4990
     }
   };
 

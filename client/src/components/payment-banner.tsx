@@ -56,7 +56,7 @@ export function PaymentBanner() {
           <h3 className="font-bold text-lg">Plano Premium QUERO FRETES</h3>
           <p className="text-sm md:text-base">
             Acesso completo a todas as funcionalidades por apenas{" "}
-            <span className="font-bold">R$ 99,90/mês</span> com faturamento anual
+            <span className="font-bold">R$ 49,90/mês</span> com pagamento via PIX
           </p>
         </div>
         <div className="flex-shrink-0">

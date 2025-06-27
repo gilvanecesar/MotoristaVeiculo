@@ -82,8 +82,8 @@ export default function FinanceSettingsPage() {
   const planForm = useForm<PlanSettingsFormValues>({
     resolver: zodResolver(planSettingsSchema),
     defaultValues: {
-      monthlyPrice: settings?.monthlyPrice ?? 99.90,
-      yearlyPrice: settings?.yearlyPrice ?? 1198.80,
+      monthlyPrice: settings?.monthlyPrice ?? 49.90,
+      yearlyPrice: settings?.yearlyPrice ?? 598.80,
       trialDays: settings?.trialDays ?? 7,
       planName: settings?.planName ?? "Premium",
       planDescription: settings?.planDescription ?? "Acesso completo a todas as funcionalidades",
@@ -106,8 +106,8 @@ export default function FinanceSettingsPage() {
       });
 
       planForm.reset({
-        monthlyPrice: settings.monthlyPrice ?? 99.90,
-        yearlyPrice: settings.yearlyPrice ?? 1198.80,
+        monthlyPrice: settings.monthlyPrice ?? 49.90,
+        yearlyPrice: settings.yearlyPrice ?? 598.80,
         trialDays: settings.trialDays ?? 7,
         planName: settings.planName ?? "Premium",
         planDescription: settings.planDescription ?? "Acesso completo a todas as funcionalidades",

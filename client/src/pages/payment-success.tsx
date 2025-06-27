@@ -100,7 +100,7 @@ export default function PaymentSuccessPage() {
               Status: <span className="text-green-600 dark:text-green-400 font-medium">Ativo</span>
             </p>
             <p className="text-muted-foreground">
-              Valor: <span className="font-medium">{subscriptionType === "annual" ? "R$ 1.198,80 (12x R$ 99,90)" : "R$ 99,90"}</span>
+              Valor: <span className="font-medium">R$ 49,90</span>
             </p>
           </div>
           <p>
