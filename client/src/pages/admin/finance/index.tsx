@@ -132,6 +132,7 @@ interface SubscriptionData {
   amount: number | string | null;  // Permitir diferentes tipos para robustez
   startDate: string | Date | null; // Permitir diferentes tipos para robustez
   endDate: string | Date | null;   // Permitir diferentes tipos para robustez
+  source?: 'openpix' | 'local';    // Nova propriedade para indicar origem dos dados
 }
 
 // Interface para dados de clientes
@@ -693,8 +694,22 @@ export default function FinancePage() {
                         return (
                           <TableRow key={subscription.id}>
                             <TableCell className="font-medium">
-                              <div>{clientName}</div>
-                              <div className="text-xs text-muted-foreground">{email}</div>
+                              <div className="flex items-center gap-2">
+                                <div>
+                                  <div>{clientName}</div>
+                                  <div className="text-xs text-muted-foreground">{email}</div>
+                                </div>
+                                {subscription.source === 'openpix' && (
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    OpenPix
+                                  </span>
+                                )}
+                                {subscription.source === 'local' && (
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    Local
+                                  </span>
+                                )}
+                              </div>
                             </TableCell>
                             <TableCell>{planName}</TableCell>
                             <TableCell>{formatCurrency(subscription.amount)}</TableCell>

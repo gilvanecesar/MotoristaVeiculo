@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import axios from 'axios';
 import { db } from './db';
-import { users, openPixPayments, OPENPIX_PAYMENT_STATUS } from '../shared/schema';
+import { users, openPixPayments, subscriptions, OPENPIX_PAYMENT_STATUS } from '../shared/schema';
 import { eq, and } from 'drizzle-orm';
 import { sendSubscriptionEmail } from './email-service';
 
@@ -713,7 +713,7 @@ export async function getOpenPixSubscriptions(req: Request, res: Response) {
     console.log('=== GET COMBINED SUBSCRIPTIONS (OpenPix + Local) ===');
     
     // 1. Buscar assinaturas da OpenPix
-    const openPixSubscriptions = [];
+    const openPixSubscriptions: any[] = [];
     try {
       const response = await fetch(`${openPixConfig.apiUrl}/charge`, {
         method: 'GET',
@@ -761,7 +761,7 @@ export async function getOpenPixSubscriptions(req: Request, res: Response) {
     }
 
     // 2. Buscar assinaturas do banco local
-    const localSubscriptions = [];
+    const localSubscriptions: any[] = [];
     try {
       const subscriptionsQuery = await db
         .select({
@@ -780,7 +780,7 @@ export async function getOpenPixSubscriptions(req: Request, res: Response) {
         .leftJoin(users, eq(subscriptions.userId, users.id))
         .where(eq(subscriptions.status, 'active'));
 
-      subscriptionsQuery.forEach((sub: any) => {
+      subscriptionsQuery.forEach((sub) => {
         localSubscriptions.push({
           id: `local-${sub.id}`,
           source: 'local',
@@ -789,7 +789,7 @@ export async function getOpenPixSubscriptions(req: Request, res: Response) {
           email: sub.userEmail || '',
           plan: sub.planType || 'monthly',
           status: sub.status,
-          amount: sub.planType === 'yearly' ? 498.0 : 49.9, // Valores padrão
+          amount: sub.planType === 'annual' ? 498.0 : 49.9, // Valores padrão
           startDate: sub.currentPeriodStart,
           endDate: sub.currentPeriodEnd
         });
