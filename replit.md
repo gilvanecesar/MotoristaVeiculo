@@ -175,6 +175,10 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Indicador visual "OpenPix Live" mostra conexão em tempo real na página administrativa
 ✓ Queries React automaticamente atualizadas a cada 30 segundos para dados sempre atuais
 ✓ Rotas administrativas específicas para dados da OpenPix em tempo real
+✓ Sistema híbrido implementado combinando dados OpenPix + banco local
+✓ Indicadores visuais na interface administrativa mostrando origem dos dados
+✓ Solução completa para inconsistências de dados entre fontes diferentes
+✓ Gestão unificada de assinaturas reais (OpenPix) e criadas localmente
 - June 27, 2025. OpenPix como método oficial único, interface simplificada
 - June 27, 2025. Removidas opções de Google login e múltiplos planos de preços
 - June 27, 2025. Menu "Histórico" removido, faturas integradas ao OpenPix
