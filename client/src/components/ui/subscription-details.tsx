@@ -225,7 +225,7 @@ export default function SubscriptionDetails({
                 <div className="grid grid-cols-2">
                   <div className="text-sm font-medium">Plano:</div>
                   <div className="text-sm">
-                    {planType === 'monthly' ? 'Mensal (R$ 99,90)' : 
+                    {planType === 'monthly' ? 'Mensal (R$ 49,90)' : 
                      planType === 'annual' ? 'Anual (R$ 960,00)' : 
                      planType === 'trial' ? 'Teste Gratuito (7 dias)' : 
                      planType}

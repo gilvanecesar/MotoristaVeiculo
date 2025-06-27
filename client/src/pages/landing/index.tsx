@@ -218,7 +218,7 @@ export default function LandingPage() {
               <div className="p-6 sm:p-8">
                 <h3 className="text-xl font-bold mb-4 text-slate-900">Mensal</h3>
                 <div className="mb-4">
-                  <span className="text-3xl sm:text-4xl font-bold text-slate-900">R$ 99,90</span>
+                  <span className="text-3xl sm:text-4xl font-bold text-slate-900">R$ 49,90</span>
                   <span className="text-slate-600">/mês</span>
                 </div>
                 <p className="text-slate-600 mb-6">
@@ -248,40 +248,7 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Annual Plan */}
-            <div className="bg-white rounded-lg shadow-lg border border-slate-200 flex-1 overflow-hidden md:col-span-2 lg:col-span-1">
-              <div className="p-6 sm:p-8">
-                <h3 className="text-xl font-bold mb-4 text-slate-900">Anual</h3>
-                <div className="mb-4">
-                  <span className="text-3xl sm:text-4xl font-bold text-slate-900">R$ 960,00</span>
-                  <span className="text-slate-600">/ano</span>
-                </div>
-                <p className="text-slate-600 mb-6">
-                  <span className="text-green-600 font-bold">Economize 20%</span> com o plano anual.
-                </p>
-                <ul className="space-y-3 mb-8">
-                  <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-800">Todas as funcionalidades do plano mensal</span>
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-800">Relatórios avançados</span>
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-800">Suporte prioritário</span>
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-800">Acesso a novas funcionalidades</span>
-                  </li>
-                </ul>
-                <Button variant="outline" className="w-full" onClick={goToLogin}>
-                  Escolher Anual
-                </Button>
-              </div>
-            </div>
+
           </div>
         </div>
       </section>

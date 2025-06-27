@@ -313,23 +313,12 @@ export default function AuthPage() {
                     <CardDescription>Acesso por 30 dias</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold mb-2">R$ 99,90</div>
+                    <div className="text-2xl font-bold mb-2">R$ 49,90</div>
                     <p className="text-sm text-muted-foreground">Cobrado a cada mês</p>
                   </CardContent>
                 </Card>
                 
-                {/* Plano Anual */}
-                <Card className={`cursor-pointer transition-all hover:shadow-md ${subscriptionType === "annual" ? 'border-primary ring-2 ring-primary' : ''}`}
-                      onClick={() => setSubscriptionType("annual")}>
-                  <CardHeader className="pb-3">
-                    <CardTitle>Anual</CardTitle>
-                    <CardDescription>Acesso por 1 ano completo</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold mb-2">R$ 1.198,80</div>
-                    <p className="text-sm text-muted-foreground">Apenas R$ 99,90/mês</p>
-                  </CardContent>
-                </Card>
+
               </div>
               
               <Button 
