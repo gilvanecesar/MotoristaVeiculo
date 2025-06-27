@@ -95,6 +95,7 @@ export default function AuthPage() {
         console.log("LOGIN SUCCESS - User data:", user);
         console.log("LOGIN SUCCESS - subscriptionActive:", user.subscriptionActive);
         console.log("LOGIN SUCCESS - profileType:", user.profileType);
+        console.log("LOGIN SUCCESS - clientId:", user.clientId);
         
         toast({
           title: "Login realizado com sucesso",
@@ -119,7 +120,10 @@ export default function AuthPage() {
         } else if (user.subscriptionActive) {
           // Se já tem assinatura ativa, vai para a página Home
           console.log("REDIRECIONANDO para /home - usuário com assinatura ativa");
-          setLocation("/home");
+          // Adiciona um pequeno delay para garantir que o context do usuário seja atualizado
+          setTimeout(() => {
+            setLocation("/home");
+          }, 100);
         } else {
           // Se não tem assinatura ativa e não é motorista, mostra página de planos
           console.log("MOSTRANDO planos - usuário sem assinatura ativa");

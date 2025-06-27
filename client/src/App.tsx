@@ -134,8 +134,6 @@ function App() {
       <ThemeProvider>
         <UserAuthProvider>
           <ClientAuthProvider>
-            <ClientRegistrationCheck />
-            
             {/* Páginas públicas sem layout */}
             {isPublicPage ? (
               <div className="min-h-screen bg-background">
@@ -145,6 +143,7 @@ function App() {
             ) : (
               /* Páginas protegidas com layout sidebar */
               <AppLayout>
+                <ClientRegistrationCheck />
                 <Router />
                 <Toaster />
               </AppLayout>

@@ -29,6 +29,10 @@ export function ClientRegistrationCheck() {
     // Ignore for admin users or if no user logged in
     if (!user || user.profileType === 'admin' || user.profileType === 'administrador') return;
     
+    // Ignore se estiver na página de auth (login/registro)
+    const currentPath = window.location.pathname;
+    if (currentPath.startsWith('/auth') || currentPath === '/') return;
+    
     // Verifica se o usuário é motorista (pode acessar sem assinatura)
     const isDriver = user.profileType === 'motorista' || user.profileType === 'driver';
     
