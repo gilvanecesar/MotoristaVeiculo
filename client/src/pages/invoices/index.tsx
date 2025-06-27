@@ -44,27 +44,24 @@ export default function InvoicesPage() {
     enabled: !!user
   });
 
-  // Debug: Verificar estrutura dos dados recebidos
-  console.log("OpenPix charges data:", openPixCharges);
-  
   // Transformar dados do OpenPix para o formato da interface
   const invoices = openPixCharges?.charges?.map((charge: any, index: number) => {
     // OpenPix retorna valores em centavos, então convertemos para reais
-    const value = Number(charge.charge?.value) || 4990; // Default para R$ 49,90 em centavos
+    const value = Number(charge.value) || 4990; // Default para R$ 49,90 em centavos
     const valueInReais = value / 100;
     
     return {
-      id: charge.charge?.correlationID || charge.charge?.identifier || `charge-${Date.now()}-${index}`,
-      status: charge.charge?.status === "COMPLETED" ? "paid" : charge.charge?.status === "ACTIVE" ? "unpaid" : "failed",
+      id: charge.correlationID || charge.identifier || `charge-${Date.now()}-${index}`,
+      status: charge.status === "COMPLETED" ? "paid" : charge.status === "ACTIVE" ? "unpaid" : "failed",
       amountDue: valueInReais,
-      amountPaid: charge.charge?.status === "COMPLETED" ? valueInReais : 0,
-      date: new Date(charge.charge?.createdAt || Date.now()),
-      dueDate: new Date(charge.charge?.expiresDate || Date.now()),
+      amountPaid: charge.status === "COMPLETED" ? valueInReais : 0,
+      date: new Date(charge.createdAt || Date.now()),
+      dueDate: new Date(charge.expiresDate || Date.now()),
       planType: "Plano Mensal - 30 dias",
-      pixCode: charge.charge?.brCode,
-      pixUrl: charge.charge?.paymentLinkUrl,
-      qrCodeImage: charge.charge?.qrCodeImage,
-      description: charge.charge?.comment || "Assinatura QUERO FRETES - Plano Mensal"
+      pixCode: charge.brCode,
+      pixUrl: charge.paymentLinkUrl,
+      qrCodeImage: charge.qrCodeImage,
+      description: charge.comment || "Assinatura QUERO FRETES - Plano Mensal"
     };
   }) || [];
   
