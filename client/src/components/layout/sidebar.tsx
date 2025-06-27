@@ -291,14 +291,14 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
           {!isDriver && !user?.subscriptionActive && !collapsed && (
             <>
               <div className="px-3 py-2">
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                <h3 className="text-xs font-semibold text-white/60 uppercase tracking-wider">
                   Assinatura
                 </h3>
               </div>
               <Link href="/checkout?plan=monthly">
                 <Button
                   variant="ghost"
-                  className="w-full justify-start gap-3 text-card-foreground/80 hover:text-card-foreground hover:bg-accent/50 transition-all duration-200 font-medium"
+                  className="w-full justify-start gap-3 text-white/80 hover:text-white hover:bg-cyan-500/50 transition-all duration-200 font-medium"
                 >
                   <CreditCard className="h-4 w-4 flex-shrink-0" />
                   <span>Assinar Agora</span>
@@ -312,7 +312,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
             <>
               {!collapsed && (
                 <div className="px-3 py-2">
-                  <h3 className="text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider">
+                  <h3 className="text-xs font-semibold text-white/60 uppercase tracking-wider">
                     Administração
                   </h3>
                 </div>
@@ -326,9 +326,9 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
                     <Button
                       variant={active ? "secondary" : "ghost"}
                       className={cn(
-                        "w-full justify-start gap-3 text-card-foreground/80 hover:text-card-foreground hover:bg-accent/50 transition-all duration-200 font-medium",
+                        "w-full justify-start gap-3 text-white/80 hover:text-white hover:bg-cyan-500/50 transition-all duration-200 font-medium",
                         collapsed && "justify-center px-2",
-                        active && "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+                        active && "bg-cyan-400 text-cyan-900 hover:bg-cyan-400/90 shadow-sm"
                       )}
                     >
                       <Icon className="h-4 w-4 flex-shrink-0" />
@@ -345,7 +345,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
 
 
       {/* Footer da Sidebar - Usuário */}
-      <div className="p-3 border-t border-border/30 bg-card/50 backdrop-blur-sm">
+      <div className="p-3 border-t border-cyan-400/30 bg-cyan-700/50 backdrop-blur-sm">
         {collapsed ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -382,17 +382,17 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
           </DropdownMenu>
         ) : (
           <div className="space-y-2">
-            <div className="flex items-center gap-3 px-2 py-2 rounded-lg bg-accent/50">
+            <div className="flex items-center gap-3 px-2 py-2 rounded-lg bg-cyan-600/50">
               <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-primary text-primary-foreground">
+                <AvatarFallback className="bg-cyan-400 text-cyan-900">
                   {user?.name ? user.name.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate text-card-foreground">
+                <p className="text-sm font-medium truncate text-white">
                   {user?.name || user?.email}
                 </p>
-                <p className="text-xs text-muted-foreground/70 truncate">
+                <p className="text-xs text-white/70 truncate">
                   {user?.profileType === 'admin' ? 'Administrador' : 
                    user?.profileType === 'shipper' ? 'Embarcador' :
                    user?.profileType === 'driver' ? 'Motorista' :
@@ -407,7 +407,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
                 variant="ghost"
                 size="sm"
                 onClick={toggleTheme}
-                className="flex-1 text-card-foreground/70 hover:text-card-foreground hover:bg-accent/50 transition-all duration-200"
+                className="flex-1 text-white/70 hover:text-white hover:bg-cyan-600/50 transition-all duration-200"
               >
                 {theme === 'dark' ? (
                   <Sun className="h-4 w-4" />
@@ -419,7 +419,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
                 variant="ghost"
                 size="sm"
                 onClick={handleLogout}
-                className="flex-1 text-card-foreground/70 hover:text-destructive-foreground hover:bg-destructive/90 transition-all duration-200"
+                className="flex-1 text-white/70 hover:text-white hover:bg-red-600/60 transition-all duration-200"
               >
                 <LogOut className="h-4 w-4" />
               </Button>
