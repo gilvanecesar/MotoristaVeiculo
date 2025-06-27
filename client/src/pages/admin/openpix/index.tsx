@@ -78,6 +78,7 @@ export default function AdminOpenPixPage() {
       const data = await response.json();
       
       if (response.ok) {
+        console.log('Dados da cobrança recebidos:', data);
         setLastCharge(data);
         toast({
           title: "Cobrança criada",
@@ -215,20 +216,37 @@ export default function AdminOpenPixPage() {
                 <div className="flex flex-col items-center space-y-2">
                   <h4 className="font-semibold">QR Code PIX</h4>
                   {lastCharge.charge?.qrCodeImage ? (
-                    <img 
-                      src={lastCharge.charge.qrCodeImage} 
-                      alt="QR Code PIX" 
-                      className="w-48 h-48 border rounded"
-                    />
+                    <div className="flex flex-col items-center space-y-2">
+                      <img 
+                        src={lastCharge.charge.qrCodeImage} 
+                        alt="QR Code PIX" 
+                        className="w-48 h-48 border rounded"
+                        onError={(e) => {
+                          console.error('Erro ao carregar QR Code:', e);
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Escaneie com seu banco ou app de pagamento
+                      </p>
+                    </div>
                   ) : (
                     <div className="w-48 h-48 border rounded flex items-center justify-center text-muted-foreground">
-                      QR Code não disponível
+                      <div className="text-center">
+                        <p>QR Code não disponível</p>
+                        <p className="text-xs">Verifique os logs do servidor</p>
+                      </div>
                     </div>
                   )}
                   {lastCharge.charge?.brCode && (
-                    <div className="text-xs text-center break-all max-w-48">
-                      <strong>Código PIX:</strong><br />
-                      <code className="text-xs">{lastCharge.charge.brCode}</code>
+                    <div className="text-xs text-center break-all max-w-48 mt-2">
+                      <strong>Código PIX Copia e Cola:</strong><br />
+                      <textarea 
+                        className="w-full h-16 text-xs p-1 border rounded resize-none"
+                        value={lastCharge.charge.brCode}
+                        readOnly
+                        onClick={(e) => e.currentTarget.select()}
+                      />
                     </div>
                   )}
                 </div>

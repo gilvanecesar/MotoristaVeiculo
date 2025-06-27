@@ -113,20 +113,20 @@ export async function createPixCharge(req: Request, res: Response) {
 
     // Log da cobrança criada
     console.log('Cobrança PIX criada:', charge.identifier);
-
-    console.log('Cobrança PIX criada com sucesso:', charge.identifier);
+    console.log('Dados completos da cobrança:', JSON.stringify(charge, null, 2));
 
     return res.json({
       success: true,
       charge: {
-        id: charge.identifier,
+        identifier: charge.identifier,
         correlationID: charge.correlationID,
         value: charge.value,
         status: charge.status,
-        paymentUrl: charge.paymentLinkUrl,
-        qrCode: charge.qrCodeImage,
-        pixCode: charge.brCode,
-        comment: charge.comment
+        customer: charge.customer,
+        comment: charge.comment,
+        paymentLinkUrl: charge.paymentLinkUrl,
+        qrCodeImage: charge.qrCodeImage,
+        brCode: charge.brCode
       }
     });
 
