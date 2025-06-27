@@ -679,3 +679,68 @@ export const subscriptionEventValidator = insertSubscriptionEventSchema.extend({
 // Tipo para eventos de assinatura
 export type SubscriptionEvent = typeof subscriptionEvents.$inferSelect;
 export type InsertSubscriptionEvent = z.infer<typeof insertSubscriptionEventSchema>;
+
+// Status de pagamento PIX OpenPix
+export const OPENPIX_PAYMENT_STATUS = {
+  ACTIVE: "ACTIVE",      // Pendente de pagamento
+  COMPLETED: "COMPLETED", // Pagamento realizado
+  EXPIRED: "EXPIRED"     // Expirado
+} as const;
+
+// Tabela para controlar pagamentos OpenPix e assinaturas
+export const openPixPayments = pgTable("openpix_payments", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  
+  // Dados do OpenPix
+  openPixChargeId: text("openpix_charge_id").unique().notNull(), // ID da cobrança OpenPix
+  correlationId: text("correlation_id").unique().notNull(),      // ID de correlação único
+  status: text("status").notNull().default(OPENPIX_PAYMENT_STATUS.ACTIVE),
+  
+  // Dados financeiros
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(), // Valor em reais
+  amountCents: integer("amount_cents").notNull(),                   // Valor em centavos (OpenPix)
+  
+  // Dados PIX
+  pixCode: text("pix_code"),          // Código PIX (copia e cola)
+  qrCodeImage: text("qr_code_image"), // URL da imagem QR Code
+  paymentUrl: text("payment_url"),    // URL de pagamento OpenPix
+  
+  // Controle de assinatura
+  planType: text("plan_type").notNull().default("monthly"),
+  subscriptionStartDate: timestamp("subscription_start_date"),     // Data de início da assinatura
+  subscriptionEndDate: timestamp("subscription_end_date"),         // Data de fim da assinatura (30 dias)
+  
+  // Status do processamento
+  processed: boolean("processed").default(false),                  // Se já foi processado pelo webhook
+  subscriptionActivated: boolean("subscription_activated").default(false), // Se a assinatura foi ativada
+  
+  // Metadados
+  webhookData: json("webhook_data"),  // Dados recebidos do webhook OpenPix
+  
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow(),
+  paidAt: timestamp("paid_at"),       // Data do pagamento
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Insert schema para OpenPix
+export const insertOpenPixPaymentSchema = createInsertSchema(openPixPayments)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+
+// Validator para OpenPix
+export const openPixPaymentValidator = insertOpenPixPaymentSchema.extend({
+  status: z.enum([
+    OPENPIX_PAYMENT_STATUS.ACTIVE,
+    OPENPIX_PAYMENT_STATUS.COMPLETED,
+    OPENPIX_PAYMENT_STATUS.EXPIRED
+  ]),
+  amount: z.coerce.number().positive(),
+  amountCents: z.coerce.number().positive(),
+  planType: z.enum([PLAN_TYPES.MONTHLY, PLAN_TYPES.ANNUAL, PLAN_TYPES.TRIAL]),
+});
+
+// Tipos OpenPix
+export type OpenPixPayment = typeof openPixPayments.$inferSelect;
+export type InsertOpenPixPayment = z.infer<typeof insertOpenPixPaymentSchema>;
+export type OpenPixPaymentStatus = typeof OPENPIX_PAYMENT_STATUS[keyof typeof OPENPIX_PAYMENT_STATUS];

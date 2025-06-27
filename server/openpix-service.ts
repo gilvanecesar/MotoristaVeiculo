@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import axios from 'axios';
 import { db } from './db';
-import { users, invoices, subscriptions } from '../shared/schema';
+import { users, openPixPayments, OPENPIX_PAYMENT_STATUS } from '../shared/schema';
 import { eq, and } from 'drizzle-orm';
 import { sendSubscriptionEmail } from './email-service';
 
@@ -111,9 +111,25 @@ export async function createPixCharge(req: Request, res: Response) {
 
     const charge = response.data.charge;
 
+    // Salvar na tabela de controle de pagamentos
+    await db.insert(openPixPayments).values({
+      userId: user.id,
+      openPixChargeId: charge.identifier,
+      correlationId: charge.correlationID,
+      status: OPENPIX_PAYMENT_STATUS.ACTIVE,
+      amount: value.toString(),
+      amountCents: Math.round(value * 100),
+      pixCode: charge.brCode,
+      qrCodeImage: charge.qrCodeImage,
+      paymentUrl: charge.paymentLinkUrl,
+      planType: planType === 'monthly' || planType === 'mensal' ? 'monthly' : 'annual',
+      processed: false,
+      subscriptionActivated: false
+    });
+
     // Log da cobrança criada
     console.log('Cobrança PIX criada:', charge.identifier);
-    console.log('Dados completos da cobrança:', JSON.stringify(charge, null, 2));
+    console.log('Pagamento salvo no banco de dados para controle');
 
     return res.json({
       success: true,
