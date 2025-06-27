@@ -289,9 +289,33 @@ export default function LoginPage() {
         
         <div className="w-full max-w-md">
           <Tabs defaultValue="login" value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-8">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="register">Cadastro</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 mb-8 bg-blue-50 border border-blue-200 rounded-lg overflow-hidden shadow-sm">
+              <TabsTrigger 
+                value="login" 
+                className={`relative py-4 px-6 font-semibold text-base text-center transition-all duration-300 border-r border-blue-200 ${
+                  activeTab === 'login' 
+                    ? 'bg-blue-100 text-blue-800 border-b-2 border-b-blue-600' 
+                    : 'bg-blue-50 text-blue-600 hover:bg-blue-75 hover:text-blue-700'
+                }`}
+              >
+                <span className="relative z-10 w-full text-center block">Login</span>
+                {activeTab === 'login' && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"></div>
+                )}
+              </TabsTrigger>
+              <TabsTrigger 
+                value="register"
+                className={`relative py-4 px-6 font-semibold text-base text-center transition-all duration-300 ${
+                  activeTab === 'register' 
+                    ? 'bg-blue-100 text-blue-800 border-b-2 border-b-blue-600' 
+                    : 'bg-blue-50 text-blue-600 hover:bg-blue-75 hover:text-blue-700'
+                }`}
+              >
+                <span className="relative z-10 w-full text-center block">Cadastro</span>
+                {activeTab === 'register' && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"></div>
+                )}
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="login">
