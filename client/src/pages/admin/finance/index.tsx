@@ -357,9 +357,10 @@ export default function FinancePage() {
       return await response.json();
     },
     onSuccess: () => {
-      // Invalidar a query para buscar os dados atualizados
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/subscriptions"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/finance/stats"] });
+      // Invalidar a query para buscar os dados atualizados da OpenPix
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/openpix/subscriptions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/openpix/finance/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/openpix/invoices"] });
       
       // Fechar o modal e exibir mensagem de sucesso
       setShowSubscriptionDialog(false);

@@ -706,62 +706,110 @@ export async function getOpenPixFinanceStats(req: Request, res: Response) {
 }
 
 /**
- * Buscar todas as assinaturas da OpenPix (Admin)
+ * Buscar todas as assinaturas combinando OpenPix + banco local (Admin)
  */
 export async function getOpenPixSubscriptions(req: Request, res: Response) {
   try {
-    console.log('=== GET OPENPIX SUBSCRIPTIONS ===');
+    console.log('=== GET COMBINED SUBSCRIPTIONS (OpenPix + Local) ===');
     
-    // Buscar todas as cobranças da OpenPix
-    const response = await fetch(`${openPixConfig.apiUrl}/charge`, {
-      method: 'GET',
-      headers: {
-        'Authorization': openPixConfig.authorization,
-        'Content-Type': 'application/json'
-      }
-    });
+    // 1. Buscar assinaturas da OpenPix
+    const openPixSubscriptions = [];
+    try {
+      const response = await fetch(`${openPixConfig.apiUrl}/charge`, {
+        method: 'GET',
+        headers: {
+          'Authorization': openPixConfig.authorization,
+          'Content-Type': 'application/json'
+        }
+      });
 
-    if (!response.ok) {
-      throw new Error(`OpenPix API retornou erro: ${response.status}`);
+      if (response.ok) {
+        const data = await response.json();
+        const charges = data.charges || [];
+
+        // Filtrar cobranças relacionadas a assinaturas
+        const subscriptionCharges = charges.filter((charge: any) => 
+          charge.correlationID?.includes('subscription') || 
+          charge.comment?.toLowerCase().includes('assinatura')
+        );
+
+        // Mapear para formato esperado
+        subscriptionCharges.forEach((charge: any) => {
+          const statusMap: any = {
+            'COMPLETED': 'active',
+            'ACTIVE': 'active', 
+            'EXPIRED': 'canceled',
+            'CREATED': 'trialing'
+          };
+
+          openPixSubscriptions.push({
+            id: `openpix-${charge.identifier}`,
+            source: 'openpix',
+            clientId: null,
+            clientName: charge.customer?.name || 'Cliente OpenPix',
+            email: charge.customer?.email || '',
+            plan: charge.value >= 5000 ? 'annual' : 'monthly',
+            status: statusMap[charge.status] || 'trialing',
+            amount: charge.value / 100,
+            startDate: charge.createdAt,
+            endDate: charge.expiresDate || null
+          });
+        });
+      }
+    } catch (openPixError) {
+      console.warn('Erro ao buscar dados da OpenPix:', openPixError);
     }
 
-    const data = await response.json();
-    const charges = data.charges || [];
+    // 2. Buscar assinaturas do banco local
+    const localSubscriptions = [];
+    try {
+      const subscriptionsQuery = await db
+        .select({
+          id: subscriptions.id,
+          userId: subscriptions.userId,
+          clientId: subscriptions.clientId,
+          planType: subscriptions.planType,
+          status: subscriptions.status,
+          currentPeriodStart: subscriptions.currentPeriodStart,
+          currentPeriodEnd: subscriptions.currentPeriodEnd,
+          cancelAtPeriodEnd: subscriptions.cancelAtPeriodEnd,
+          userName: users.name,
+          userEmail: users.email
+        })
+        .from(subscriptions)
+        .leftJoin(users, eq(subscriptions.userId, users.id))
+        .where(eq(subscriptions.status, 'active'));
 
-    // Filtrar apenas cobranças relacionadas a assinaturas
-    const subscriptionCharges = charges.filter((charge: any) => 
-      charge.correlationID?.includes('subscription') || 
-      charge.comment?.toLowerCase().includes('assinatura')
-    );
+      subscriptionsQuery.forEach((sub: any) => {
+        localSubscriptions.push({
+          id: `local-${sub.id}`,
+          source: 'local',
+          clientId: sub.clientId,
+          clientName: sub.userName || 'Cliente Local',
+          email: sub.userEmail || '',
+          plan: sub.planType || 'monthly',
+          status: sub.status,
+          amount: sub.planType === 'yearly' ? 498.0 : 49.9, // Valores padrão
+          startDate: sub.currentPeriodStart,
+          endDate: sub.currentPeriodEnd
+        });
+      });
+    } catch (localError) {
+      console.warn('Erro ao buscar dados locais:', localError);
+    }
 
-    // Mapear para formato esperado pelo frontend
-    const subscriptions = subscriptionCharges.map((charge: any) => {
-      const statusMap: any = {
-        'COMPLETED': 'active',
-        'ACTIVE': 'active', 
-        'EXPIRED': 'canceled',
-        'CREATED': 'trialing'
-      };
+    // 3. Combinar as duas fontes
+    const allSubscriptions = [
+      ...openPixSubscriptions,
+      ...localSubscriptions
+    ];
 
-      return {
-        id: charge.correlationID || charge.identifier,
-        clientId: null,
-        clientName: charge.customer?.name || 'Cliente não identificado',
-        email: charge.customer?.email || '',
-        plan: charge.value >= 5000 ? 'annual' : 'monthly', // Inferir plano baseado no valor
-        status: statusMap[charge.status] || 'trialing',
-        amount: charge.value / 100, // Converter centavos para reais
-        startDate: charge.createdAt,
-        endDate: charge.expiresDate || null
-      };
-    });
+    console.log(`Assinaturas combinadas: ${openPixSubscriptions.length} OpenPix + ${localSubscriptions.length} Local = ${allSubscriptions.length} Total`);
 
-    console.log('Assinaturas mapeadas:', subscriptions.length);
-
-    res.json(subscriptions);
+    res.json(allSubscriptions);
 
   } catch (error: any) {
-    console.error('Erro ao buscar assinaturas:', error);
+    console.error('Erro ao buscar assinaturas combinadas:', error);
     res.status(500).json({
       success: false,
       message: 'Erro interno do servidor',
