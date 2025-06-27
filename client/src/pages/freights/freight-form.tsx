@@ -489,7 +489,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
   };
 
   return (
-    <div className="container px-2 py-4 mx-auto">
+    <div className="container px-3 sm:px-4 lg:px-6 py-4 mx-auto">
       <div className="flex items-center mb-6">
         <Button
           variant="ghost"
@@ -736,7 +736,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                           <h4 className="text-sm font-semibold mb-2">
                             {getVehicleCategoryDisplay(categoryValue)}
                           </h4>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                             {vehicleTypes.map((type) => (
                               <div key={type} className="flex items-center space-x-2">
                                 <input

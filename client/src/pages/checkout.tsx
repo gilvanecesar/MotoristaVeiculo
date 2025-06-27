@@ -216,7 +216,7 @@ export default function Checkout() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="grid grid-cols-3 gap-4 text-center">
+                <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
                   <div className="space-y-2">
                     <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
                       <span className="text-primary font-semibold">1</span>

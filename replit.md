@@ -164,6 +164,11 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Sidebar completamente redesenhada com cor personalizada #00222d e fontes brancas
 ✓ Todos os elementos da sidebar (header, footer, botões, seções) ajustados para o novo esquema de cores
 ✓ Cores de botões ativos e hover atualizadas para funcionar bem com o fundo escuro
+✓ Otimização mobile completa: hook use-mobile.ts implementado para detecção de dispositivos
+✓ Layout responsivo aprimorado: padding e espaçamento otimizados para smartphones
+✓ Grids responsivos: home page e formulários ajustados para melhor experiência mobile
+✓ Checkout mobile: espaçamento e grids otimizados para dispositivos móveis
+✓ Formulários mobile-friendly: input fields com melhores interações touch
 - June 27, 2025. OpenPix como método oficial único, interface simplificada
 - June 27, 2025. Removidas opções de Google login e múltiplos planos de preços
 - June 27, 2025. Menu "Histórico" removido, faturas integradas ao OpenPix
@@ -171,6 +176,7 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 - June 27, 2025. Interface reorganizada: "Meus Fretes" na sidebar, ícone do usuário no cabeçalho
 - June 27, 2025. Preços unificados: R$ 49,90 em toda interface, planos anuais removidos
 - June 27, 2025. Sidebar redesenhada com cor específica #00222d, fontes brancas e elementos visuais otimizados
+- June 27, 2025. Mobile optimization: responsive layouts, touch-friendly forms, and optimized spacing for smartphones
 ```
 
 ## User Preferences
