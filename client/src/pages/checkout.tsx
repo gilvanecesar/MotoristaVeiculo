@@ -159,8 +159,8 @@ export default function Checkout() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/30 flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted/30 flex items-center justify-center p-3 sm:p-4">
+      <div className="w-full max-w-2xl space-y-4 sm:space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
           <Button

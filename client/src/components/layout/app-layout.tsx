@@ -101,7 +101,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
         {/* Área de conteúdo */}
         <main className="flex-1 overflow-auto">
-          <div className="container mx-auto px-4 py-6 max-w-full">
+          <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 max-w-full">
             {children}
           </div>
         </main>
