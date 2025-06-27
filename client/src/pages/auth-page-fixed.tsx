@@ -92,6 +92,10 @@ export default function AuthPage() {
   const onLoginSubmit = (data: LoginFormValues) => {
     loginMutation.mutate(data, {
       onSuccess: (user) => {
+        console.log("LOGIN SUCCESS - User data:", user);
+        console.log("LOGIN SUCCESS - subscriptionActive:", user.subscriptionActive);
+        console.log("LOGIN SUCCESS - profileType:", user.profileType);
+        
         toast({
           title: "Login realizado com sucesso",
           description: "Bem-vindo à plataforma Quero Fretes",
