@@ -198,25 +198,48 @@ export async function handleOpenPixWebhook(req: Request, res: Response) {
     if (status === 'COMPLETED' && pix) {
       console.log(`Pagamento PIX aprovado para usuário ${userId}`);
 
-      // Extrair tipo de plano dos additionalInfo
-      const planTypeInfo = charge.additionalInfo?.find((info: any) => info.key === 'planType');
-      const planType = planTypeInfo?.value || 'mensal';
-
-      // Calcular data de expiração
-      const now = new Date();
-      const expiresAt = new Date(now);
-      if (planType === 'anual') {
-        expiresAt.setFullYear(expiresAt.getFullYear() + 1);
-      } else {
-        expiresAt.setMonth(expiresAt.getMonth() + 1);
+      // Buscar pagamento na nossa tabela de controle
+      const [payment] = await db
+        .select()
+        .from(openPixPayments)
+        .where(eq(openPixPayments.correlationId, correlationID));
+      
+      if (!payment) {
+        console.error('Pagamento não encontrado na tabela de controle:', correlationID);
+        return res.status(404).json({ error: 'Pagamento não encontrado' });
+      }
+      
+      // Verificar se já foi processado
+      if (payment.processed) {
+        console.log('Pagamento já processado:', correlationID);
+        return res.status(200).send('OK');
       }
 
+      // Calcular datas de assinatura (30 dias)
+      const now = new Date();
+      const expiresAt = new Date(now);
+      expiresAt.setDate(expiresAt.getDate() + 30); // Sempre 30 dias
+
       try {
+        // Atualizar tabela de pagamentos
+        await db.update(openPixPayments)
+          .set({
+            status: OPENPIX_PAYMENT_STATUS.COMPLETED,
+            processed: true,
+            subscriptionActivated: true,
+            paidAt: now,
+            subscriptionStartDate: now,
+            subscriptionEndDate: expiresAt,
+            webhookData: req.body,
+            updatedAt: now
+          })
+          .where(eq(openPixPayments.id, payment.id));
+
         // Ativar assinatura do usuário
         await db.update(users)
           .set({
             subscriptionActive: true,
-            subscriptionType: planType,
+            subscriptionType: 'monthly',
             subscriptionExpiresAt: expiresAt,
             paymentRequired: false
           })
@@ -484,6 +507,51 @@ export async function getChargeStatus(req: Request, res: Response) {
     return res.status(500).json({ 
       error: 'Erro ao consultar status da cobrança',
       details: error.response?.data?.message || error.message
+    });
+  }
+}
+
+/**
+ * Consultar pagamentos do usuário na tabela local
+ */
+export async function getUserPayments(req: Request, res: Response) {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Usuário não autenticado' });
+    }
+
+    const payments = await db
+      .select()
+      .from(openPixPayments)
+      .where(eq(openPixPayments.userId, req.user.id))
+      .orderBy(openPixPayments.createdAt);
+
+    return res.json({
+      success: true,
+      payments: payments.map(payment => ({
+        id: payment.id,
+        openPixChargeId: payment.openPixChargeId,
+        correlationId: payment.correlationId,
+        status: payment.status,
+        amount: payment.amount,
+        amountCents: payment.amountCents,
+        planType: payment.planType,
+        processed: payment.processed,
+        subscriptionActivated: payment.subscriptionActivated,
+        paidAt: payment.paidAt,
+        subscriptionStartDate: payment.subscriptionStartDate,
+        subscriptionEndDate: payment.subscriptionEndDate,
+        createdAt: payment.createdAt,
+        updatedAt: payment.updatedAt,
+        paymentUrl: payment.paymentUrl
+      }))
+    });
+
+  } catch (error: any) {
+    console.error('Erro ao consultar pagamentos do usuário:', error);
+    return res.status(500).json({ 
+      error: 'Erro ao consultar pagamentos',
+      details: error.message
     });
   }
 }
