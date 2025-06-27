@@ -157,10 +157,10 @@ export default function SubscribePage() {
                       <div className="grid grid-cols-2">
                         <div className="text-sm font-medium">Plano:</div>
                         <div className="text-sm">
-                          {subscriptionData.planType === 'monthly' ? 'Mensal (R$ 99,90)' : 
-                           subscriptionData.planType === 'annual' ? 'Anual (R$ 960,00)' : 
+                          {subscriptionData.planType === 'monthly' ? 'Mensal (R$ 49,90)' : 
+                           subscriptionData.planType === 'annual' ? 'Anual (R$ 49,90)' : 
                            subscriptionData.planType === 'trial' ? 'Teste Gratuito (7 dias)' : 
-                           subscriptionData.planType}
+                           'Acesso 30 dias (R$ 49,90)'}
                         </div>
                       </div>
                     )}
@@ -190,21 +190,39 @@ export default function SubscribePage() {
                 <div className="flex-1 flex flex-col justify-center">
                   <div className="space-y-3">
                     {subscriptionData.active ? (
-                      <Button 
-                        variant="outline" 
-                        className="w-full" 
-                        onClick={() => navigate('/invoices')}
-                      >
-                        Ver Histórico de Pagamentos
-                      </Button>
+                      <>
+                        <Button 
+                          className="w-full" 
+                          onClick={() => navigate('/checkout?plan=monthly')}
+                        >
+                          <CreditCard className="h-4 w-4 mr-2" />
+                          Renovar Assinatura
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          className="w-full" 
+                          onClick={() => navigate('/invoices')}
+                        >
+                          Ver Histórico de Pagamentos
+                        </Button>
+                      </>
                     ) : (
-                      <Button 
-                        variant="outline" 
-                        className="w-full" 
-                        onClick={() => setActiveTab('plans')}
-                      >
-                        Ver Planos Disponíveis
-                      </Button>
+                      <>
+                        <Button 
+                          className="w-full" 
+                          onClick={() => navigate('/checkout?plan=monthly')}
+                        >
+                          <CreditCard className="h-4 w-4 mr-2" />
+                          Assinar Agora
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          className="w-full" 
+                          onClick={() => setActiveTab('plans')}
+                        >
+                          Ver Planos Disponíveis
+                        </Button>
+                      </>
                     )}
                     
                     <Button 
@@ -222,97 +240,60 @@ export default function SubscribePage() {
         </TabsContent>
         
         <TabsContent value="plans" className="space-y-6">
-          {/* Planos disponíveis - sempre visíveis */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <Card className="flex flex-col">
+          {/* Plano único oficial */}
+          <div className="flex justify-center">
+            <Card className="flex flex-col border-primary max-w-md w-full">
               <CardHeader>
-                <CardTitle>Plano Mensal</CardTitle>
-                <CardDescription>Acesso completo por 30 dias</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="mb-6">
-                  <p className="text-3xl font-bold">
-                    R$ 99,90<span className="text-sm font-normal text-muted-foreground">/mês</span>
-                  </p>
-                  <p className="text-muted-foreground text-sm mt-1">Pagamento mensal</p>
-                </div>
-                
-                <ul className="space-y-2 mb-6">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
-                    <span>Acesso a todas as funcionalidades</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
-                    <span>Gerenciamento de fretes ilimitado</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
-                    <span>Suporte por email e WhatsApp</span>
-                  </li>
-                </ul>
-              </CardContent>
-              <CardFooter className="mt-auto">
-                <Button 
-                  className="w-full"
-                  onClick={() => {
-                    // Mostrar mensagem em vez de redirecionar para API problemática
-                    alert('Esta é uma versão de demonstração. Em produção, este botão iniciaria o processo de assinatura do plano mensal.');
-                  }}
-                >
-                  Assinar Plano Mensal
-                </Button>
-              </CardFooter>
-            </Card>
-            
-            <Card className="flex flex-col border-primary">
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle>Plano Anual</CardTitle>
-                    <CardDescription>Acesso completo por 12 meses</CardDescription>
+                <div className="text-center">
+                  <div className="bg-primary text-primary-foreground text-xs font-bold py-1 px-3 rounded-full mb-3 inline-block">
+                    Plano Oficial
                   </div>
-                  <div className="bg-primary text-primary-foreground text-xs font-bold py-1 px-3 rounded-full">
-                    Melhor Valor
-                  </div>
+                  <CardTitle>Acesso QUERO FRETES</CardTitle>
+                  <CardDescription>Acesso completo por 30 dias</CardDescription>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="mb-6">
-                  <p className="text-3xl font-bold">
-                    R$ 960,00<span className="text-sm font-normal text-muted-foreground">/ano</span>
+                <div className="mb-6 text-center">
+                  <p className="text-4xl font-bold text-primary">
+                    R$ 49,90
                   </p>
-                  <p className="text-muted-foreground text-sm mt-1">Equivalente a R$ 80,00/mês</p>
+                  <p className="text-muted-foreground text-sm mt-1">Por 30 dias de acesso</p>
                 </div>
                 
-                <ul className="space-y-2 mb-6">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                <ul className="space-y-3 mb-6">
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
                     <span>Acesso a todas as funcionalidades</span>
                   </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
                     <span>Gerenciamento de fretes ilimitado</span>
                   </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
-                    <span>Suporte prioritário</span>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span>Cadastro de motoristas e veículos</span>
                   </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
-                    <span><strong>Economia de R$ 238,80 por ano</strong></span>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span>Relatórios e dashboard completo</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span>Suporte via WhatsApp</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span>Pagamento via PIX instantâneo</span>
                   </li>
                 </ul>
               </CardContent>
               <CardFooter>
                 <Button 
                   className="w-full"
-                  onClick={() => {
-                    // Mostrar mensagem em vez de redirecionar para API problemática
-                    alert('Esta é uma versão de demonstração. Em produção, este botão iniciaria o processo de assinatura do plano anual.');
-                  }}
+                  onClick={() => navigate('/checkout?plan=monthly')}
                 >
-                  Assinar Plano Anual
+                  <CreditCard className="h-4 w-4 mr-2" />
+                  Assinar Agora - R$ 49,90
                 </Button>
               </CardFooter>
             </Card>

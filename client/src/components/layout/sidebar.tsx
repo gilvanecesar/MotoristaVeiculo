@@ -98,7 +98,7 @@ const adminItems = [
 const subscriptionItems = [
   {
     label: "Minha Assinatura",
-    path: "/subscription-status",
+    path: "/checkout?plan=monthly",
     icon: CreditCard
   },
   {
