@@ -42,7 +42,8 @@ export function ClientRegistrationCheck() {
         '/payment-cancel',
         '/subscribe',
         '/subscribe/fixed',
-        '/subscribe/plans'
+        '/subscribe/plans',
+        '/checkout'
       ];
       
       const currentPath = window.location.pathname;
@@ -66,12 +67,23 @@ export function ClientRegistrationCheck() {
         return;
       }
       
-      // Para outros perfis, redireciona para o formulário de cliente
-      // Ignore if already on the client/new page
+      // Para outros perfis, verifica se tem assinatura ativa
       const currentPath = window.location.pathname;
+      
+      // Se tem assinatura ativa mas não tem cliente
+      if (user.subscriptionActive) {
+        // Ignore if already on the client/new page or home
+        if (currentPath.startsWith('/clients/new') || currentPath === '/home') return;
+        
+        // Se tem assinatura mas não tem cliente, redireciona para o formulário de cliente
+        setLocation("/clients/new");
+        return;
+      }
+      
+      // Ignore if already on the client/new page
       if (currentPath.startsWith('/clients/new')) return;
       
-      // Se tem assinatura mas não tem cliente, redireciona para o formulário de cliente
+      // Se não tem assinatura nem cliente, redireciona para o formulário de cliente
       setLocation("/clients/new");
       return;
     }
