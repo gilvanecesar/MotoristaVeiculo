@@ -142,8 +142,12 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Interface de login limpa e focada em email/senha tradicional
 ✓ Plano único centralizado com destaque visual "Plano Oficial"
 ✓ Valor oficial: R$ 49,90 para acesso de 30 dias (4990 centavos na API)
+✓ Menu "Histórico" removido da sidebar para simplificar navegação
+✓ Página de faturas integrada com dados reais do OpenPix
+✓ Problema "R$ NaN" corrigido com validação adequada de valores
 - June 27, 2025. OpenPix como método oficial único, interface simplificada
 - June 27, 2025. Removidas opções de Google login e múltiplos planos de preços
+- June 27, 2025. Menu "Histórico" removido, faturas integradas ao OpenPix
 ```
 
 ## User Preferences

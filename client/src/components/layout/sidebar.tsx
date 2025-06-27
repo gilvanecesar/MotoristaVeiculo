@@ -102,11 +102,6 @@ const subscriptionItems = [
     icon: CreditCard
   },
   {
-    label: "Histórico",
-    path: "/subscription-history",
-    icon: CalendarClock
-  },
-  {
     label: "Faturas",
     path: "/invoices",
     icon: Receipt

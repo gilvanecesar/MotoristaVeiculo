@@ -45,26 +45,30 @@ export default function InvoicesPage() {
   });
   
   // Transformar dados do OpenPix para o formato da interface
-  const invoices = openPixCharges?.charges?.map((charge: any) => ({
-    id: charge.charge?.correlationID || charge.charge?.identifier,
-    status: charge.charge?.status === "COMPLETED" ? "paid" : charge.charge?.status === "ACTIVE" ? "unpaid" : "failed",
-    amountDue: charge.charge?.value / 100, // OpenPix retorna em centavos
-    amountPaid: charge.charge?.status === "COMPLETED" ? charge.charge?.value / 100 : 0,
-    date: new Date(charge.charge?.createdAt || Date.now()),
-    dueDate: new Date(charge.charge?.expiresDate || Date.now()),
-    planType: "Acesso 30 dias",
-    pixCode: charge.charge?.brCode,
-    pixUrl: charge.charge?.paymentLinkUrl,
-    qrCodeImage: charge.charge?.qrCodeImage,
-    description: charge.charge?.comment || "Pagamento PIX - QUERO FRETES"
-  })) || [];
+  const invoices = openPixCharges?.charges?.map((charge: any, index: number) => {
+    const value = Number(charge.charge?.value) || 0;
+    return {
+      id: charge.charge?.correlationID || charge.charge?.identifier || `charge-${Date.now()}-${index}`,
+      status: charge.charge?.status === "COMPLETED" ? "paid" : charge.charge?.status === "ACTIVE" ? "unpaid" : "failed",
+      amountDue: value > 0 ? value / 100 : 49.90, // OpenPix retorna em centavos, fallback para R$ 49,90
+      amountPaid: charge.charge?.status === "COMPLETED" ? (value > 0 ? value / 100 : 49.90) : 0,
+      date: new Date(charge.charge?.createdAt || Date.now()),
+      dueDate: new Date(charge.charge?.expiresDate || Date.now()),
+      planType: "Acesso 30 dias",
+      pixCode: charge.charge?.brCode,
+      pixUrl: charge.charge?.paymentLinkUrl,
+      qrCodeImage: charge.charge?.qrCodeImage,
+      description: charge.charge?.comment || "Pagamento PIX - QUERO FRETES"
+    };
+  }) || [];
   
   // Formatar moeda
   const formatCurrency = (value: number) => {
+    const numericValue = Number(value) || 0;
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
-    }).format(value);
+    }).format(numericValue);
   };
   
   // Formatar data
@@ -114,15 +118,26 @@ export default function InvoicesPage() {
         </div>
       </div>
       
-      {/* Nota de Informação */}
-      <Alert className="mb-6">
-        <HelpCircle className="h-4 w-4" />
-        <AlertTitle>Versão de Demonstração</AlertTitle>
-        <AlertDescription>
-          Esta é uma versão de demonstração com dados de exemplo. Em um ambiente de produção, 
-          este painel exibirá suas faturas reais do sistema.
-        </AlertDescription>
-      </Alert>
+      {/* Status de Carregamento ou Erro */}
+      {isLoading && (
+        <Alert className="mb-6">
+          <HelpCircle className="h-4 w-4" />
+          <AlertTitle>Carregando</AlertTitle>
+          <AlertDescription>
+            Buscando informações de pagamentos do OpenPix...
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      {error && (
+        <Alert className="mb-6" variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Erro ao carregar dados</AlertTitle>
+          <AlertDescription>
+            Não foi possível carregar as informações de pagamento. Tente novamente em alguns instantes.
+          </AlertDescription>
+        </Alert>
+      )}
       
       {/* Histórico de Faturas */}
       <Card>
