@@ -515,3 +515,82 @@ export async function getUserPayments(req: Request, res: Response) {
     });
   }
 }
+
+/**
+ * Buscar cobranças do OpenPix específicas do usuário logado
+ */
+export async function getUserOpenPixCharges(req: Request, res: Response) {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Usuário não autenticado' });
+    }
+
+    if (!openPixConfig.authorization) {
+      return res.status(500).json({ error: 'OpenPix não configurado' });
+    }
+
+    // Buscar pagamentos do usuário na nossa tabela de controle
+    const userPayments = await db
+      .select()
+      .from(openPixPayments)
+      .where(eq(openPixPayments.userId, req.user.id))
+      .orderBy(openPixPayments.createdAt);
+
+    // Se não há pagamentos registrados, retorna lista vazia
+    if (userPayments.length === 0) {
+      return res.json({
+        pageInfo: {
+          skip: 0,
+          limit: 100,
+          totalCount: 0,
+          hasPreviousPage: false,
+          hasNextPage: false
+        },
+        charges: []
+      });
+    }
+
+    // Buscar detalhes das cobranças no OpenPix usando os correlationIds
+    const charges = [];
+    
+    for (const payment of userPayments) {
+      try {
+        if (payment.openPixChargeId) {
+          const response = await axios.get(
+            `${openPixConfig.apiUrl}/charge/${payment.openPixChargeId}`,
+            {
+              headers: {
+                'Authorization': openPixConfig.authorization
+              }
+            }
+          );
+          
+          if (response.data.charge) {
+            charges.push(response.data.charge);
+          }
+        }
+      } catch (error) {
+        console.error(`Erro ao buscar cobrança ${payment.openPixChargeId}:`, error);
+        // Continua para as próximas cobranças
+      }
+    }
+
+    return res.json({
+      pageInfo: {
+        skip: 0,
+        limit: 100,
+        totalCount: charges.length,
+        hasPreviousPage: false,
+        hasNextPage: false
+      },
+      charges: charges
+    });
+
+  } catch (error: any) {
+    console.error('Erro ao buscar cobranças do usuário:', error);
+    return res.status(500).json({ 
+      error: 'Erro ao buscar cobranças do usuário',
+      details: error.message
+    });
+  }
+}

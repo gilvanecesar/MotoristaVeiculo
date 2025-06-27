@@ -38,9 +38,9 @@ export default function InvoicesPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   
-  // Buscar cobranças do OpenPix
+  // Buscar cobranças do OpenPix específicas do usuário logado
   const { data: openPixCharges, isLoading, error } = useQuery({
-    queryKey: ["/api/openpix/charges"],
+    queryKey: ["/api/openpix/my-charges"],
     enabled: !!user
   });
 
@@ -53,9 +53,6 @@ export default function InvoicesPage() {
     // Ordenar por data de criação mais recente primeiro
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   }) || [];
-
-  console.log("Charges únicas encontradas:", uniqueCharges.length);
-  console.log("Status das charges:", uniqueCharges.map((c: any) => ({ id: c.identifier, status: c.status, date: c.createdAt })));
 
   const invoices = uniqueCharges.map((charge: any, index: number) => {
     // OpenPix retorna valores em centavos, então convertemos para reais
