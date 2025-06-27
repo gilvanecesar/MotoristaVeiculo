@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 import { 
   Card, 
   CardContent, 
@@ -37,24 +38,26 @@ export default function InvoicesPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   
-  // Em vez de fazer requisição para a API que está gerando problemas,
-  // vamos usar dados fictícios simples com uma mensagem de esclarecimento
-  // para fins de demonstração
-  const invoices = [
-    {
-      id: "inv-demo-1",
-      status: "paid",
-      amountDue: 99.90,
-      amountPaid: 99.90,
-      date: new Date(2025, 4, 1), // 1 de maio de 2025
-      dueDate: new Date(2025, 4, 5), // 5 de maio de 2025
-      planType: "Mensal",
-      paymentMethod: "Cartão de crédito",
-      url: "#",
-      pdf: "#",
-      description: "Assinatura Mensal - QUERO FRETES"
-    }
-  ];
+  // Buscar cobranças do OpenPix
+  const { data: openPixCharges, isLoading, error } = useQuery({
+    queryKey: ["/api/openpix/charges"],
+    enabled: !!user
+  });
+  
+  // Transformar dados do OpenPix para o formato da interface
+  const invoices = openPixCharges?.charges?.map((charge: any) => ({
+    id: charge.charge?.correlationID || charge.charge?.identifier,
+    status: charge.charge?.status === "COMPLETED" ? "paid" : charge.charge?.status === "ACTIVE" ? "unpaid" : "failed",
+    amountDue: charge.charge?.value / 100, // OpenPix retorna em centavos
+    amountPaid: charge.charge?.status === "COMPLETED" ? charge.charge?.value / 100 : 0,
+    date: new Date(charge.charge?.createdAt || Date.now()),
+    dueDate: new Date(charge.charge?.expiresDate || Date.now()),
+    planType: "Acesso 30 dias",
+    pixCode: charge.charge?.brCode,
+    pixUrl: charge.charge?.paymentLinkUrl,
+    qrCodeImage: charge.charge?.qrCodeImage,
+    description: charge.charge?.comment || "Pagamento PIX - QUERO FRETES"
+  })) || [];
   
   // Formatar moeda
   const formatCurrency = (value: number) => {
@@ -153,11 +156,12 @@ export default function InvoicesPage() {
                     <TableHead>Valor</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Plano</TableHead>
+                    <TableHead>PIX</TableHead>
                     <TableHead>Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {invoices.map((invoice) => (
+                  {invoices.map((invoice: any) => (
                     <TableRow key={invoice.id}>
                       <TableCell className="font-medium">
                         {formatDate(invoice.date)}
@@ -177,6 +181,20 @@ export default function InvoicesPage() {
                         {invoice.planType}
                       </TableCell>
                       <TableCell>
+                        {invoice.pixUrl ? (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => window.open(invoice.pixUrl, '_blank')}
+                            title="Abrir link PIX"
+                          >
+                            PIX
+                          </Button>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         <div className="flex items-center gap-2">
                           <Button 
                             variant="outline" 
@@ -186,12 +204,12 @@ export default function InvoicesPage() {
                           >
                             <Download className="h-4 w-4" />
                           </Button>
-                          {invoice.url && (
+                          {invoice.qrCodeImage && (
                             <Button 
                               variant="outline" 
                               size="icon" 
-                              onClick={() => window.open(invoice.url, '_blank')}
-                              title="Ver fatura online"
+                              onClick={() => window.open(invoice.qrCodeImage, '_blank')}
+                              title="Ver QR Code PIX"
                             >
                               <ExternalLink className="h-4 w-4" />
                             </Button>
@@ -207,38 +225,21 @@ export default function InvoicesPage() {
         </CardContent>
       </Card>
       
-      {/* Métodos de Pagamento */}
+      {/* Informações sobre PIX */}
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle>Métodos de Pagamento</CardTitle>
-          <CardDescription>Gerencie seus métodos de pagamento</CardDescription>
+          <CardTitle>Pagamento via PIX</CardTitle>
+          <CardDescription>Todas as transações são processadas via PIX</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between p-4 border rounded-md mb-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-primary/10 p-2 rounded-md">
-                <CreditCard className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="font-medium">Cartão de crédito</p>
-                <p className="text-sm text-muted-foreground">**** **** **** 4242</p>
-              </div>
+          <div className="flex items-center gap-3 p-4 border rounded-md bg-green-50">
+            <div className="bg-green-100 p-2 rounded-md">
+              <CheckCircle className="h-5 w-5 text-green-600" />
             </div>
-            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Padrão</Badge>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row items-center gap-3">
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                toast({
-                  title: "Funcionalidade de demonstração",
-                  description: "Em produção, este botão permitiria atualizar seus métodos de pagamento."
-                });
-              }}
-            >
-              Atualizar Método de Pagamento
-            </Button>
+            <div>
+              <p className="font-medium text-green-800">PIX Instantâneo</p>
+              <p className="text-sm text-green-600">Pagamentos processados em tempo real</p>
+            </div>
           </div>
         </CardContent>
       </Card>
