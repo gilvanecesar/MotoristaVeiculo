@@ -295,7 +295,7 @@ export default function LoginPage() {
                 <CardDescription>Acesso por 30 dias</CardDescription>
               </CardHeader>
               <CardContent className="pt-6">
-                <div className="text-3xl font-bold text-center mb-2">R$ 99,90</div>
+                <div className="text-3xl font-bold text-center mb-2">R$ 49,90</div>
                 <div className="text-sm text-center mb-4 text-muted-foreground">Cobrado a cada mês</div>
                 <ul className="space-y-2 mb-6">
                   <li className="flex items-center text-sm">
@@ -602,13 +602,11 @@ export default function LoginPage() {
           </Tabs>
         </div>
       </main>
-      
       <footer className="py-4 border-t">
         <div className="container mx-auto text-center text-sm text-muted-foreground">
           © {new Date().getFullYear()} QUERO FRETES. Todos os direitos reservados.
         </div>
       </footer>
-      
       {/* Modal de recuperação de senha */}
       <Dialog open={forgotPasswordOpen} onOpenChange={setForgotPasswordOpen}>
         <DialogContent className="sm:max-w-md">
