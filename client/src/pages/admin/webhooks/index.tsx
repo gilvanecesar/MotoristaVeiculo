@@ -19,6 +19,13 @@ interface WebhookConfig {
   whatsappGroups?: string[];
 }
 
+interface OpenPixWebhookConfig {
+  enabled: boolean;
+  whatsappWebhookUrl: string;
+  notifyPayments: boolean;
+  notifySubscriptions: boolean;
+}
+
 export default function AdminWebhooksPage() {
   const { toast } = useToast();
   const [config, setConfig] = useState<WebhookConfig>({
@@ -31,11 +38,20 @@ export default function AdminWebhooksPage() {
     whatsappGroups: []
   });
   
+  const [openPixConfig, setOpenPixConfig] = useState<OpenPixWebhookConfig>({
+    enabled: false,
+    whatsappWebhookUrl: '',
+    notifyPayments: true,
+    notifySubscriptions: true
+  });
+  
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
+  const [isSavingOpenPix, setIsSavingOpenPix] = useState(false);
 
   useEffect(() => {
     loadConfig();
+    loadOpenPixConfig();
   }, []);
 
   const loadConfig = async () => {

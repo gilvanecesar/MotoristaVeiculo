@@ -255,6 +255,9 @@ export async function handleOpenPixWebhook(req: Request, res: Response) {
           parseFloat(payment.amount)
         );
 
+        // Enviar notificação WhatsApp automática
+        await sendPaymentConfirmationWhatsApp(user, payment, pix);
+
         console.log(`Assinatura ${payment.planType} ativada para usuário ${userId} até ${expiresAt}`);
         
       } catch (error) {
@@ -871,5 +874,147 @@ export async function getOpenPixInvoices(req: Request, res: Response) {
       message: 'Erro interno do servidor',
       error: error.message
     });
+  }
+}
+
+/**
+ * Envia notificação WhatsApp automática quando um pagamento é confirmado
+ */
+async function sendPaymentConfirmationWhatsApp(user: any, payment: any, pixData: any) {
+  try {
+    console.log('=== ENVIANDO NOTIFICAÇÃO WHATSAPP AUTOMÁTICA ===');
+    console.log(`Usuário: ${user.name}`);
+    console.log(`Email: ${user.email}`);
+    console.log(`Valor: R$ ${parseFloat(payment.amount).toFixed(2)}`);
+
+    // Buscar configuração de webhook para WhatsApp
+    const webhookConfig = await getOpenPixWebhookConfig();
+    
+    if (!webhookConfig.enabled || !webhookConfig.whatsappWebhookUrl) {
+      console.log('Webhook WhatsApp não configurado ou desabilitado');
+      return false;
+    }
+
+    // Preparar dados da mensagem
+    const messageData = {
+      event: 'payment_confirmed',
+      timestamp: new Date().toISOString(),
+      customer: {
+        name: user.name,
+        email: user.email,
+        id: user.id
+      },
+      payment: {
+        amount: parseFloat(payment.amount),
+        correlationId: payment.correlationId,
+        planType: payment.planType,
+        paidAt: pixData.time || new Date().toISOString()
+      },
+      pix: {
+        txid: pixData.txid,
+        endToEndId: pixData.endToEndId,
+        value: pixData.value / 100 // Converter de centavos
+      },
+      message: `🎉 *PAGAMENTO CONFIRMADO* 🎉
+
+✅ Cliente: ${user.name}
+📧 Email: ${user.email}
+💰 Valor: R$ ${parseFloat(payment.amount).toFixed(2)}
+📅 Data: ${new Date().toLocaleDateString('pt-BR')}
+🔑 ID: ${payment.correlationId}
+
+Assinatura QUERO FRETES ativada com sucesso!
+Vigência: 30 dias a partir de hoje.
+
+*Sistema automatizado QUERO FRETES*`
+    };
+
+    // Enviar para webhook WhatsApp configurado
+    const response = await fetch(webhookConfig.whatsappWebhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'QueroFretes-OpenPix-Webhook/1.0'
+      },
+      body: JSON.stringify(messageData)
+    });
+
+    if (response.ok) {
+      console.log('Notificação WhatsApp enviada com sucesso');
+      return true;
+    } else {
+      console.error('Erro ao enviar notificação WhatsApp:', response.status, response.statusText);
+      return false;
+    }
+
+  } catch (error) {
+    console.error('Erro ao enviar notificação WhatsApp:', error);
+    return false;
+  }
+}
+
+/**
+ * Configuração do webhook OpenPix para WhatsApp
+ */
+interface OpenPixWebhookConfig {
+  enabled: boolean;
+  whatsappWebhookUrl: string;
+  notifyPayments: boolean;
+  notifySubscriptions: boolean;
+}
+
+// Configuração padrão (será persistida no banco posteriormente)
+let openPixWebhookConfig: OpenPixWebhookConfig = {
+  enabled: false,
+  whatsappWebhookUrl: '',
+  notifyPayments: true,
+  notifySubscriptions: true
+};
+
+/**
+ * Obter configuração do webhook OpenPix
+ */
+async function getOpenPixWebhookConfig(): Promise<OpenPixWebhookConfig> {
+  return openPixWebhookConfig;
+}
+
+/**
+ * Definir configuração do webhook OpenPix
+ */
+export async function setOpenPixWebhookConfig(config: Partial<OpenPixWebhookConfig>): Promise<void> {
+  openPixWebhookConfig = { ...openPixWebhookConfig, ...config };
+  console.log('Configuração do webhook OpenPix atualizada:', openPixWebhookConfig);
+}
+
+/**
+ * Obter configuração atual do webhook OpenPix (endpoint público)
+ */
+export async function getOpenPixWebhookConfigAPI(req: Request, res: Response) {
+  try {
+    const config = await getOpenPixWebhookConfig();
+    res.json(config);
+  } catch (error) {
+    console.error('Erro ao obter configuração:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+}
+
+/**
+ * Atualizar configuração do webhook OpenPix (endpoint público)
+ */
+export async function updateOpenPixWebhookConfigAPI(req: Request, res: Response) {
+  try {
+    const newConfig = req.body;
+    await setOpenPixWebhookConfig(newConfig);
+    
+    const updatedConfig = await getOpenPixWebhookConfig();
+    res.json({ 
+      success: true, 
+      message: 'Configuração atualizada com sucesso',
+      config: updatedConfig 
+    });
+  } catch (error) {
+    console.error('Erro ao atualizar configuração:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
   }
 }

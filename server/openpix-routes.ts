@@ -1,6 +1,6 @@
 import { Express } from 'express';
 import { isAuthenticated } from './middlewares';
-import { createPixCharge, handleOpenPixWebhook, getChargeStatus, listOpenPixCharges, syncOpenPixPayments, getUserPayments, getUserOpenPixCharges, getOpenPixFinanceStats, getOpenPixSubscriptions, getOpenPixInvoices } from './openpix-service';
+import { createPixCharge, handleOpenPixWebhook, getChargeStatus, listOpenPixCharges, syncOpenPixPayments, getUserPayments, getUserOpenPixCharges, getOpenPixFinanceStats, getOpenPixSubscriptions, getOpenPixInvoices, getOpenPixWebhookConfigAPI, updateOpenPixWebhookConfigAPI } from './openpix-service';
 
 /**
  * Configura rotas do OpenPix
@@ -39,6 +39,14 @@ export function setupOpenPixRoutes(app: Express) {
   
   // Faturas da OpenPix (Admin)
   app.get('/api/admin/openpix/invoices', isAuthenticated, getOpenPixInvoices);
+
+  // ===== CONFIGURAÇÃO DE WEBHOOK WHATSAPP =====
+  
+  // Obter configuração do webhook WhatsApp (Admin)
+  app.get('/api/openpix/webhook/config', isAuthenticated, getOpenPixWebhookConfigAPI);
+  
+  // Atualizar configuração do webhook WhatsApp (Admin)
+  app.post('/api/openpix/webhook/config', isAuthenticated, updateOpenPixWebhookConfigAPI);
 
   console.log('Rotas do OpenPix configuradas com sucesso');
 }
