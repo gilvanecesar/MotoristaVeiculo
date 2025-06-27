@@ -98,6 +98,7 @@ function Router() {
       <ProtectedRoute path="/freights/valor-edit/:id" component={ValorFreteEdit} />
       <ProtectedRoute path="/freights/direct-edit/:id" component={DirectFreightEdit} />
       <ProtectedRoute path="/freights/:id" component={FreightDetailPage} />
+      <ProtectedRoute path="/my-freights" component={MyFreightsPage} />
       <Route path="/teste-checkbox" component={SimpleFreightForm} />
       <ProtectedRoute path="/clients" component={ClientsPage} />
       <ProtectedRoute path="/clients/new" component={ClientForm} />

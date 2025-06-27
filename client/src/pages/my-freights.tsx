@@ -14,7 +14,7 @@ import type { FreightWithDestinations, Client } from "@shared/schema";
 export default function MyFreightsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
   const [selectedFreight, setSelectedFreight] = useState<FreightWithDestinations | null>(null);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
 
@@ -76,12 +76,14 @@ export default function MyFreightsPage() {
   });
 
   // Função para verificar se o frete está expirado
-  const isExpired = (expirationDate: string | Date) => {
+  const isExpired = (expirationDate: string | Date | null) => {
+    if (!expirationDate) return false;
     return new Date(expirationDate) < new Date();
   };
 
   // Função para formatar data
-  const formatDate = (date: string | Date) => {
+  const formatDate = (date: string | Date | null) => {
+    if (!date) return 'N/A';
     return new Date(date).toLocaleDateString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
@@ -163,7 +165,7 @@ export default function MyFreightsPage() {
           <CardContent className="py-12 text-center">
             <div className="text-slate-500 text-lg mb-2">Nenhum frete encontrado</div>
             <p className="text-slate-400 mb-4">Você ainda não cadastrou nenhum frete.</p>
-            <Button onClick={() => navigate("/freights/new")}>
+            <Button onClick={() => setLocation("/freights/new")}>
               Cadastrar Primeiro Frete
             </Button>
           </CardContent>
@@ -260,7 +262,7 @@ export default function MyFreightsPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => navigate(`/freights/${freight.id}/edit`)}
+                          onClick={() => setLocation(`/freights/${freight.id}/edit`)}
                         >
                           <Edit className="h-4 w-4 mr-1" />
                           Editar
@@ -374,7 +376,7 @@ export default function MyFreightsPage() {
       <div className="fixed bottom-6 right-6">
         <Button
           variant="secondary"
-          onClick={() => navigate("/dashboard")}
+          onClick={() => setLocation("/dashboard")}
           className="shadow-lg"
         >
           Fechar
