@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,8 @@ export default function Checkout() {
   const [pixCharge, setPixCharge] = useState<any>(null);
   const [isCreatingPayment, setIsCreatingPayment] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'processing' | 'completed'>('pending');
+  const [isCheckingPayment, setIsCheckingPayment] = useState(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
   
   // Get the plan from URL query parameter
   const [searchParams] = useState<URLSearchParams>(() => new URLSearchParams(window.location.search));
@@ -40,6 +42,70 @@ export default function Checkout() {
   };
 
   const currentPlan = planDetails[selectedPlan as keyof typeof planDetails];
+
+  // Verificar status do pagamento
+  const checkPaymentStatus = async () => {
+    if (!pixCharge?.charge?.identifier) return;
+    
+    try {
+      setIsCheckingPayment(true);
+      
+      // Verificar nossos pagamentos locais primeiro
+      const response = await apiRequest("GET", "/api/openpix/my-payments");
+      
+      if (response.success && response.payments) {
+        const currentPayment = response.payments.find(
+          (payment: any) => payment.openPixChargeId === pixCharge.charge.identifier
+        );
+        
+        if (currentPayment?.status === 'COMPLETED' && currentPayment?.subscriptionActivated) {
+          setPaymentStatus('completed');
+          
+          // Limpar intervalo
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+          }
+          
+          toast({
+            title: "Pagamento confirmado!",
+            description: "Sua assinatura foi ativada com sucesso. Redirecionando...",
+          });
+          
+          // Redirecionar para HOME após 2 segundos
+          setTimeout(() => {
+            navigate("/");
+          }, 2000);
+          
+          return;
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao verificar status do pagamento:', error);
+    } finally {
+      setIsCheckingPayment(false);
+    }
+  };
+
+  // Iniciar monitoramento quando PIX for criado
+  useEffect(() => {
+    if (pixCharge?.charge?.identifier && paymentStatus === 'pending') {
+      setPaymentStatus('processing');
+      
+      // Verificar imediatamente
+      checkPaymentStatus();
+      
+      // Configurar verificação automática a cada 5 segundos
+      intervalRef.current = setInterval(checkPaymentStatus, 5000);
+    }
+    
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [pixCharge]);
 
   const createPixPayment = async () => {
     setIsCreatingPayment(true);
@@ -241,9 +307,21 @@ export default function Checkout() {
                     </div>
                     <div className="flex justify-between">
                       <span>Status:</span>
-                      <Badge variant="outline" className="text-yellow-600">
-                        Aguardando Pagamento
-                      </Badge>
+                      {paymentStatus === 'processing' ? (
+                        <Badge variant="outline" className="text-blue-600">
+                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                          Verificando Pagamento
+                        </Badge>
+                      ) : paymentStatus === 'completed' ? (
+                        <Badge variant="outline" className="text-green-600">
+                          <Check className="h-3 w-3 mr-1" />
+                          Pagamento Confirmado
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-yellow-600">
+                          Aguardando Pagamento
+                        </Badge>
+                      )}
                     </div>
                   </div>
 

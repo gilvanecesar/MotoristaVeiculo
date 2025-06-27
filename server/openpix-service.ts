@@ -245,57 +245,17 @@ export async function handleOpenPixWebhook(req: Request, res: Response) {
           })
           .where(eq(users.id, userId));
 
-        // TODO: Corrigir campos das tabelas - problemas de TypeScript
-        console.log(`Assinatura ${planType} deve ser ativada para usuário ${userId} até ${expiresAt}`);
-        console.log('Registro de subscription e invoice pendente - corrigir schema');
-        
-        /* 
-        // Criar registro da assinatura
-        const [newSubscription] = await db.insert(subscriptions).values({
-          userId: userId,
-          clientId: user.clientId,
-          planType: planType,
-          status: 'active',
-          currentPeriodStart: now,
-          currentPeriodEnd: expiresAt,
-          cancelAtPeriodEnd: false,
-          metadata: {
-            paymentMethod: 'pix_openpix',
-            openPixChargeId: charge.identifier,
-            amount: charge.value
-          }
-        }).returning();
-
-        // Criar registro de invoice
-        await db.insert(invoices).values({
-          userId: userId,
-          clientId: user.clientId,
-          subscriptionId: newSubscription?.id,
-          amount: charge.value.toString(),
-          status: 'paid',
-          description: `Assinatura ${planType} - OpenPix`,
-          metadata: {
-            openPixChargeId: charge.identifier,
-            correlationID: charge.correlationID,
-            pixEndToEndId: pix.endToEndId || null,
-            paymentMethod: 'pix_openpix'
-          },
-          paidAt: new Date(),
-          dueDate: now
-        });
-        */
-
         // Enviar email de confirmação
         await sendSubscriptionEmail(
           user.email,
           user.name,
-          planType,
+          payment.planType,
           now,
           expiresAt,
-          charge.value
+          parseFloat(payment.amount)
         );
 
-        console.log(`Assinatura ${planType} ativada para usuário ${userId} até ${expiresAt}`);
+        console.log(`Assinatura ${payment.planType} ativada para usuário ${userId} até ${expiresAt}`);
         
       } catch (error) {
         console.error('Erro ao ativar assinatura:', error);
