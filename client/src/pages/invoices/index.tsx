@@ -45,7 +45,19 @@ export default function InvoicesPage() {
   });
 
   // Transformar dados do OpenPix para o formato da interface
-  const invoices = openPixCharges?.charges?.map((charge: any, index: number) => {
+  // Filtrar apenas cobranças únicas e remover duplicatas, ordenar por data mais recente
+  const uniqueCharges = openPixCharges?.charges?.filter((charge: any, index: number, array: any[]) => {
+    // Manter apenas a primeira ocorrência de cada identifier único
+    return array.findIndex(c => c.identifier === charge.identifier) === index;
+  }).sort((a: any, b: any) => {
+    // Ordenar por data de criação mais recente primeiro
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  }) || [];
+
+  console.log("Charges únicas encontradas:", uniqueCharges.length);
+  console.log("Status das charges:", uniqueCharges.map((c: any) => ({ id: c.identifier, status: c.status, date: c.createdAt })));
+
+  const invoices = uniqueCharges.map((charge: any, index: number) => {
     // OpenPix retorna valores em centavos, então convertemos para reais
     const value = Number(charge.value) || 4990; // Default para R$ 49,90 em centavos
     const valueInReais = value / 100;
@@ -63,7 +75,7 @@ export default function InvoicesPage() {
       qrCodeImage: charge.qrCodeImage,
       description: charge.comment || "Assinatura QUERO FRETES - Plano Mensal"
     };
-  }) || [];
+  });
   
   // Formatar moeda com validação aprimorada
   const formatCurrency = (value: any) => {
