@@ -1,22 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, CreditCard, Calendar, Check, AlertCircle, QrCode, Building2 } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2, QrCode, Check, ArrowLeft, Copy } from "lucide-react";
 import { useLocation } from 'wouter';
 import { Badge } from "@/components/ui/badge";
 
-type PaymentMethod = 'pix' | 'mercadopago' | 'paypal';
-
 export default function Checkout() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const [_, navigate] = useLocation();
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>('pix');
   const [pixCharge, setPixCharge] = useState<any>(null);
   const [isCreatingPayment, setIsCreatingPayment] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'processing' | 'completed'>('pending');
   
   // Get the plan from URL query parameter
   const [searchParams] = useState<URLSearchParams>(() => new URLSearchParams(window.location.search));
@@ -30,23 +26,27 @@ export default function Checkout() {
       name: "Plano Mensal",
       price: "R$ 49,90",
       description: "Acesso por 30 dias",
-      period: "mês"
+      period: "mês",
+      value: 4990
     },
     annual: {
       name: "Plano Anual", 
       price: "R$ 499,00",
       description: "Acesso por 12 meses",
       period: "ano",
-      savings: "Economia de R$ 99,80"
+      savings: "Economia de R$ 99,80",
+      value: 49900
     }
   };
+
+  const currentPlan = planDetails[selectedPlan as keyof typeof planDetails];
 
   const createPixPayment = async () => {
     setIsCreatingPayment(true);
     try {
       const response = await apiRequest("POST", "/api/openpix/create-charge", {
         planType: selectedPlan,
-        value: selectedPlan === "monthly" ? 4990 : 49900,
+        value: currentPlan.value,
         email: "customer@querofretes.com.br",
         name: "Assinatura QUERO FRETES"
       });
@@ -54,6 +54,7 @@ export default function Checkout() {
       
       if (response.ok) {
         setPixCharge(data);
+        setPaymentStatus('processing');
         toast({
           title: "PIX gerado com sucesso",
           description: "Escaneie o QR Code ou copie o código PIX para pagar",
@@ -73,161 +74,230 @@ export default function Checkout() {
     }
   };
 
-  const handleMercadoPagoPayment = async () => {
-    setIsCreatingPayment(true);
-    try {
-      const response = await apiRequest("POST", "/api/create-payment-intent", { 
-        planType: selectedPlan
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        if (data.url) {
-          window.location.href = data.url;
-        }
-      } else {
-        throw new Error("Erro ao criar pagamento Mercado Pago");
+  const copyPixCode = async () => {
+    if (pixCharge?.charge?.brCode) {
+      try {
+        await navigator.clipboard.writeText(pixCharge.charge.brCode);
+        toast({
+          title: "Código copiado",
+          description: "Código PIX copiado para a área de transferência",
+        });
+      } catch (error) {
+        toast({
+          title: "Erro ao copiar",
+          description: "Não foi possível copiar o código",
+          variant: "destructive",
+        });
       }
-    } catch (error: any) {
-      toast({
-        title: "Erro",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setIsCreatingPayment(false);
     }
   };
-
-  const handlePayPalPayment = () => {
-    toast({
-      title: "PayPal",
-      description: "Integração PayPal em desenvolvimento",
-    });
-  };
-
-  const handleContinueToPayment = () => {
-    if (redirectUrl) {
-      // Redirecionar para o Mercado Pago
-      window.location.href = redirectUrl;
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary mb-4" />
-          <p className="text-muted-foreground">Preparando ambiente de pagamento...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="h-screen flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-destructive flex items-center">
-              <AlertCircle className="w-5 h-5 mr-2" />
-              Erro no Pagamento
-            </CardTitle>
-            <CardDescription>Não foi possível iniciar o processo de pagamento</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">{error}</p>
-          </CardContent>
-          <CardFooter>
-            <Button variant="outline" onClick={() => navigate("/subscribe/plans")} className="w-full">
-              Voltar
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
-    );
-  }
-
-  if (!redirectUrl) {
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Erro na Configuração</CardTitle>
-            <CardDescription>Não foi possível obter as informações de pagamento</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Não foi possível conectar ao serviço de pagamento. Tente novamente mais tarde.
-            </p>
-          </CardContent>
-          <CardFooter>
-            <Button variant="outline" onClick={() => navigate("/subscribe/plans")} className="w-full">
-              Voltar
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-muted/20">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Resumo da Assinatura</CardTitle>
-          <CardDescription>
-            {selectedPlan === "monthly" 
-              ? "Assinatura mensal do QUERO FRETES - R$ 99,90/mês" 
-              : "Assinatura anual do QUERO FRETES - economia equivalente a R$ 80,00/mês"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="bg-muted p-4 rounded-lg">
-              <h3 className="font-medium mb-2 flex items-center">
-                <CreditCard className="w-4 h-4 mr-2" />
-                Detalhes do Plano
-              </h3>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="text-muted-foreground">Plano:</div>
-                <div className="font-medium">{selectedPlan === "monthly" ? "Mensal" : "Anual"}</div>
-                <div className="text-muted-foreground">Valor:</div>
-                <div className="font-medium">
-                  {selectedPlan === "monthly" ? "R$ 99,90/mês" : "R$ 960,00/ano"}
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted/30 flex items-center justify-center p-4">
+      <div className="w-full max-w-2xl space-y-6">
+        {/* Header */}
+        <div className="text-center space-y-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/auth")}
+            className="mb-4"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar
+          </Button>
+          <h1 className="text-3xl font-bold">Finalizar Assinatura</h1>
+          <p className="text-muted-foreground">
+            Complete seu pagamento para acessar todos os recursos do QUERO FRETES
+          </p>
+        </div>
+
+        {/* Plan Summary */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              {currentPlan.name}
+              <Badge variant="secondary">{currentPlan.price}</Badge>
+            </CardTitle>
+            <CardDescription>{currentPlan.description}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Total a pagar:</span>
+              <span className="text-2xl font-bold">{currentPlan.price}</span>
+            </div>
+            {selectedPlan === 'annual' && (
+              <div className="mt-2">
+                <Badge variant="outline" className="text-green-600">
+                  Economia de R$ 99,80
+                </Badge>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Payment Method */}
+        {!pixCharge ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <QrCode className="h-5 w-5 mr-2" />
+                Pagamento via PIX
+              </CardTitle>
+              <CardDescription>
+                Pague instantaneamente com PIX - rápido, seguro e sem taxas
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div className="space-y-2">
+                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+                      <span className="text-primary font-semibold">1</span>
+                    </div>
+                    <p className="text-sm">Gerar QR Code</p>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+                      <span className="text-primary font-semibold">2</span>
+                    </div>
+                    <p className="text-sm">Escanear no App</p>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+                      <span className="text-primary font-semibold">3</span>
+                    </div>
+                    <p className="text-sm">Pagamento Aprovado</p>
+                  </div>
+                </div>
+                
+                <Button 
+                  onClick={createPixPayment} 
+                  disabled={isCreatingPayment}
+                  className="w-full"
+                  size="lg"
+                >
+                  {isCreatingPayment ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Gerando PIX...
+                    </>
+                  ) : (
+                    <>
+                      <QrCode className="h-4 w-4 mr-2" />
+                      Gerar PIX - {currentPlan.price}
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          /* PIX Payment Display */
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-center text-green-600">
+                <Check className="h-6 w-6 inline mr-2" />
+                PIX Gerado com Sucesso
+              </CardTitle>
+              <CardDescription className="text-center">
+                Escaneie o QR Code ou copie o código PIX para completar o pagamento
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-6 md:grid-cols-2">
+                {/* QR Code */}
+                <div className="flex flex-col items-center space-y-4">
+                  <h3 className="font-semibold">QR Code PIX</h3>
+                  {pixCharge.charge?.qrCodeImage ? (
+                    <div className="space-y-2">
+                      <img 
+                        src={pixCharge.charge.qrCodeImage} 
+                        alt="QR Code PIX" 
+                        className="w-48 h-48 border rounded-lg"
+                      />
+                      <p className="text-xs text-center text-muted-foreground">
+                        Abra o app do seu banco e escaneie o código
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="w-48 h-48 border rounded-lg flex items-center justify-center">
+                      <span className="text-muted-foreground">Carregando QR Code...</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Payment Info */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold">Informações do Pagamento</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span>Valor:</span>
+                      <span className="font-semibold">{currentPlan.price}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Plano:</span>
+                      <span>{currentPlan.name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Status:</span>
+                      <Badge variant="outline" className="text-yellow-600">
+                        Aguardando Pagamento
+                      </Badge>
+                    </div>
+                  </div>
+
+                  {/* PIX Code */}
+                  {pixCharge.charge?.brCode && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold">Código PIX (Copia e Cola):</label>
+                      <div className="flex gap-2">
+                        <textarea 
+                          className="flex-1 p-2 text-xs border rounded resize-none h-20"
+                          value={pixCharge.charge.brCode}
+                          readOnly
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={copyPixCode}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Payment Link */}
+                  {pixCharge.charge?.paymentLinkUrl && (
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => window.open(pixCharge.charge.paymentLinkUrl, '_blank')}
+                    >
+                      Abrir Link de Pagamento
+                    </Button>
+                  )}
                 </div>
               </div>
-            </div>
-            
-            <div className="space-y-2">
-              <h3 className="font-medium flex items-center">
-                <Check className="w-4 h-4 mr-2 text-green-600" />
-                O que está incluído:
-              </h3>
-              <ul className="list-disc list-inside text-sm space-y-1 text-muted-foreground">
-                <li>Acesso completo à plataforma QUERO FRETES</li>
-                <li>Gerenciamento de motoristas e veículos</li>
-                <li>Gerenciamento de fretes e destinos</li>
-                <li>Monitoramento de documentação</li>
-                <li>Relatórios e estatísticas</li>
-                <li>Suporte técnico durante horário comercial</li>
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-        <CardFooter className="flex-col space-y-4">
-          <Button 
-            onClick={handleContinueToPayment}
-            className="w-full"
-            size="lg"
-          >
-            Continuar para Pagamento
-          </Button>
-          <p className="text-xs text-muted-foreground text-center w-full">
-            Ao finalizar, você concorda com os termos de serviço e política de privacidade.
-          </p>
-        </CardFooter>
-      </Card>
+
+              {/* Status Check */}
+              <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+                <p className="text-sm text-center text-muted-foreground">
+                  Após o pagamento, sua assinatura será ativada automaticamente.
+                  Você receberá uma confirmação por email.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Security Note */}
+        <div className="text-center text-xs text-muted-foreground">
+          <p>🔒 Pagamento processado de forma segura via OpenPix</p>
+          <p>Seus dados estão protegidos com criptografia de ponta a ponta</p>
+        </div>
+      </div>
     </div>
   );
 }

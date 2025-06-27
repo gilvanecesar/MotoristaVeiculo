@@ -160,19 +160,8 @@ export default function AuthPage() {
         
         return; // Importante adicionar o return para não continuar o código
       } else {
-        // Processamento normal via Stripe para planos pagos
-        const response = await apiRequest("POST", "/api/create-checkout-session", {
-          subscriptionType: type
-        });
-        
-        if (!response.ok) {
-          throw new Error("Erro ao iniciar o processo de pagamento");
-        }
-        
-        const data = await response.json();
-        
-        // Redireciona para a página de checkout do Stripe
-        window.location.href = data.url;
+        // Redireciona para a nova página de checkout PIX
+        setLocation(`/checkout?plan=${type}`);
       }
     } catch (error) {
       console.error("Erro ao iniciar checkout:", error);
