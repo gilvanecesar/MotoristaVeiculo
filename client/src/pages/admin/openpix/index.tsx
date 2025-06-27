@@ -196,7 +196,7 @@ export default function AdminOpenPixPage() {
                 <div className="space-y-2">
                   <h4 className="font-semibold">Informações da Cobrança</h4>
                   <div className="space-y-1 text-sm">
-                    <p><strong>Valor:</strong> R$ {lastCharge.charge?.value?.toFixed(2) || '0,00'}</p>
+                    <p><strong>Valor:</strong> R$ {((lastCharge.charge?.value || 0) / 100).toFixed(2).replace('.', ',')}</p>
                     <p><strong>ID:</strong> {lastCharge.charge?.identifier}</p>
                     <p><strong>Status:</strong> {lastCharge.charge?.status}</p>
                     <p><strong>Cliente:</strong> {lastCharge.charge?.customer?.name}</p>
@@ -263,7 +263,7 @@ export default function AdminOpenPixPage() {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold">R$ {charge.value?.toFixed(2) || '0,00'}</p>
+                      <p className="font-bold">R$ {((charge.value || 0) / 100).toFixed(2).replace('.', ',')}</p>
                       <span 
                         className={`px-2 py-1 rounded text-xs ${
                           charge.status === 'COMPLETED' 

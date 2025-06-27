@@ -63,10 +63,13 @@ export async function createPixCharge(req: Request, res: Response) {
     const { planType = 'mensal' } = req.body;
     const user = req.user;
 
-    // Definir valores dos planos
+    // Definir valores dos planos (aceitar tanto português quanto inglês)
     const planValues = {
-      mensal: 99.90,
-      anual: 960.00
+      mensal: 49.90,
+      monthly: 49.90,
+      anual: 960.00,
+      yearly: 960.00,
+      annual: 960.00
     };
 
     const value = planValues[planType as keyof typeof planValues];
@@ -79,8 +82,8 @@ export async function createPixCharge(req: Request, res: Response) {
 
     const chargeData: CreateChargeRequest = {
       correlationID,
-      value,
-      comment: `Assinatura ${planType} - QUERO FRETES`,
+      value: Math.round(value * 100), // Converter para centavos
+      comment: `Assinatura ${planType} - QUERO FRETES (R$ ${value.toFixed(2)})`,
       customer: {
         name: user.name,
         email: user.email
@@ -88,7 +91,8 @@ export async function createPixCharge(req: Request, res: Response) {
       additionalInfo: [
         { key: 'userId', value: user.id.toString() },
         { key: 'planType', value: planType },
-        { key: 'source', value: 'querofretes-web' }
+        { key: 'source', value: 'querofretes-web' },
+        { key: 'valueInReais', value: value.toFixed(2) }
       ]
     };
 
