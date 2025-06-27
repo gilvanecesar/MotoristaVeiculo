@@ -444,58 +444,179 @@ export async function sendTestEmail(targetEmail: string): Promise<{ success: boo
 }
 
 /**
- * Envia um email de cobrança para um usuário
+ * Envia um email de cobrança para um usuário com cobrança PIX da OpenPix
  * @param user Objeto do usuário
  * @param customMessage Mensagem personalizada opcional
  */
 export async function sendPaymentReminderEmail(
   user: User, 
   customMessage?: string
-): Promise<boolean> {
+): Promise<{ success: boolean; charge?: any; error?: string }> {
   if (!transporter) {
     console.warn('Serviço de email não configurado. Email de cobrança não enviado.');
-    return false;
+    return { success: false, error: 'Serviço de email não configurado' };
   }
 
   try {
+    // 1. Criar cobrança PIX na OpenPix
+    const openPixConfig = {
+      authorization: process.env.OPENPIX_AUTHORIZATION || '',
+      apiUrl: 'https://api.openpix.com.br/api/v1'
+    };
+
+    const correlationID = `payment-reminder-${user.id}-${Date.now()}`;
+    const chargeValue = 4990; // R$ 49,90 em centavos
+
+    console.log('=== CRIANDO COBRANÇA PIX PARA EMAIL ===');
+    console.log(`Usuário: ${user.name} (${user.email})`);
+    console.log(`Valor: R$ 49,90`);
+
+    const chargeData = {
+      correlationID,
+      value: chargeValue,
+      comment: `Cobrança de assinatura QUERO FRETES - ${user.name}`,
+      customer: {
+        name: user.name,
+        email: user.email
+      },
+      additionalInfo: [
+        {
+          key: 'userId',
+          value: user.id.toString()
+        },
+        {
+          key: 'type',
+          value: 'subscription_reminder'
+        }
+      ]
+    };
+
+    const chargeResponse = await fetch(`${openPixConfig.apiUrl}/charge`, {
+      method: 'POST',
+      headers: {
+        'Authorization': openPixConfig.authorization,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(chargeData)
+    });
+
+    let charge = null;
+    let pixCode = '';
+    let paymentLink = '';
+    let qrCodeImage = '';
+
+    if (chargeResponse.ok) {
+      const chargeResult = await chargeResponse.json();
+      charge = chargeResult.charge;
+      pixCode = charge?.brCode || '';
+      paymentLink = charge?.paymentLinkUrl || '';
+      qrCodeImage = charge?.qrCodeImage || '';
+      
+      console.log('Cobrança PIX criada com sucesso:', charge?.identifier);
+    } else {
+      console.warn('Erro ao criar cobrança PIX:', await chargeResponse.text());
+    }
+
+    // 2. Preparar email com dados da cobrança PIX
+    const emailHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #ffffff;">
+        <div style="text-align: center; margin-bottom: 30px;">
+          <h1 style="color: #00222d; margin: 0; font-size: 24px;">QUERO FRETES</h1>
+          <p style="color: #666; margin: 5px 0 0 0;">Sistema de Gestão de Fretes</p>
+        </div>
+        
+        <h2 style="color: #00222d;">Olá, ${user.name}!</h2>
+        <p style="color: #333; line-height: 1.6;">Estamos entrando em contato para lembrar sobre o pagamento da sua assinatura do QUERO FRETES.</p>
+        
+        ${customMessage ? `
+          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #00222d; margin: 20px 0;">
+            <p style="margin: 0; color: #333;">${customMessage}</p>
+          </div>
+        ` : ''}
+        
+        <div style="background-color: #f0f8ff; padding: 25px; border-radius: 8px; margin: 25px 0; text-align: center;">
+          <h3 style="color: #00222d; margin: 0 0 15px 0;">💳 Pague via PIX - R$ 49,90</h3>
+          <p style="color: #666; margin: 0 0 20px 0;">Pagamento instantâneo e seguro</p>
+          
+          ${qrCodeImage ? `
+            <div style="margin: 20px 0;">
+              <img src="${qrCodeImage}" alt="QR Code PIX" style="max-width: 200px; border: 2px solid #ddd; border-radius: 8px;">
+              <p style="font-size: 12px; color: #666; margin: 10px 0 0 0;">Escaneie o QR Code com seu app do banco</p>
+            </div>
+          ` : ''}
+          
+          ${pixCode ? `
+            <div style="background-color: #ffffff; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #ddd;">
+              <p style="margin: 0 0 10px 0; font-weight: bold; color: #00222d;">Código PIX Copia e Cola:</p>
+              <p style="font-family: monospace; font-size: 12px; word-break: break-all; margin: 0; padding: 10px; background-color: #f5f5f5; border-radius: 4px;">${pixCode}</p>
+            </div>
+          ` : ''}
+          
+          ${paymentLink ? `
+            <div style="margin: 20px 0;">
+              <a href="${paymentLink}" style="background-color: #00222d; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+                🔗 Abrir Link de Pagamento
+              </a>
+            </div>
+          ` : ''}
+        </div>
+        
+        <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px;">
+          <h4 style="color: #00222d;">Como pagar:</h4>
+          <ol style="color: #333; line-height: 1.6;">
+            <li>Escaneie o QR Code com seu app do banco</li>
+            <li>OU copie e cole o código PIX</li>
+            <li>OU clique no link de pagamento</li>
+            <li>Confirme o pagamento de R$ 49,90</li>
+          </ol>
+        </div>
+        
+        <p style="color: #333; line-height: 1.6;">Após o pagamento, sua assinatura será ativada automaticamente em poucos minutos.</p>
+        
+        <div style="background-color: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107; margin: 20px 0;">
+          <p style="margin: 0; color: #856404;"><strong>Importante:</strong> Se você já efetuou o pagamento recentemente, por favor desconsidere este email.</p>
+        </div>
+        
+        <p style="color: #666;">Se precisar de ajuda ou tiver alguma dúvida, entre em contato conosco.</p>
+        
+        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center;">
+          <p style="font-size: 12px; color: #666; margin: 0;">
+            Este é um email automático, por favor não responda.<br>
+            QUERO FRETES © ${new Date().getFullYear()} • Gestão Inteligente de Fretes
+          </p>
+        </div>
+      </div>
+    `;
+
+    // 3. Enviar email
     const mailOptions = {
       from: `"QUERO FRETES" <${process.env.EMAIL_USER}>`,
       to: user.email,
-      subject: 'Lembrete de Pagamento - QUERO FRETES',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
-          <div style="text-align: center; margin-bottom: 20px;">
-            <img src="https://seusite.com.br/logo.png" alt="QUERO FRETES" style="max-width: 200px;">
-          </div>
-          <h2 style="color: #4a6cf7;">Olá, ${user.name}!</h2>
-          <p>Estamos entrando em contato para lembrar sobre o pagamento pendente da sua assinatura do QUERO FRETES.</p>
-          
-          ${customMessage ? `<p style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #4a6cf7;">${customMessage}</p>` : ''}
-          
-          <p>Para continuar aproveitando todos os recursos da nossa plataforma sem interrupções, por favor, regularize seu pagamento o mais breve possível.</p>
-          
-          <div style="text-align: center; margin-top: 30px; margin-bottom: 30px;">
-            <a href="${process.env.APP_URL || 'https://querofretes.com.br'}/pagamento" style="background-color: #4a6cf7; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
-              REGULARIZAR PAGAMENTO
-            </a>
-          </div>
-          
-          <p>Se você já efetuou o pagamento recentemente, por favor desconsidere este email.</p>
-          <p>Se precisar de ajuda ou tiver alguma dúvida sobre sua fatura, entre em contato conosco.</p>
-          <p style="margin-top: 30px; font-size: 12px; color: #666; text-align: center;">
-            Este é um email automático, por favor não responda.<br>
-            QUERO FRETES © ${new Date().getFullYear()}
-          </p>
-        </div>
-      `,
+      subject: '💳 Cobrança QUERO FRETES - Pague via PIX',
+      html: emailHtml,
     };
 
     await transporter.sendMail(mailOptions);
-    console.log(`Email de cobrança enviado para ${user.email}`);
-    return true;
+    console.log(`Email de cobrança com PIX enviado para ${user.email}`);
+    
+    return { 
+      success: true, 
+      charge: charge ? {
+        id: charge.identifier,
+        correlationID,
+        value: chargeValue / 100,
+        pixCode,
+        paymentLink,
+        qrCodeImage
+      } : null
+    };
+    
   } catch (error) {
-    console.error('Erro ao enviar email de cobrança:', error);
-    return false;
+    console.error('Erro ao enviar email de cobrança com PIX:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Erro desconhecido' 
+    };
   }
 }
 

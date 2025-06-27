@@ -2002,13 +2002,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Usuário não encontrado" });
       }
       
-      // Enviar email de lembrete
-      await sendPaymentReminderEmail(user, customMessage);
+      console.log(`=== ENVIANDO COBRANÇA PIX PARA USUÁRIO ===`);
+      console.log(`Usuário: ${user.name} (ID: ${userId})`);
+      console.log(`Email: ${user.email}`);
       
-      res.json({ message: "Lembrete de pagamento enviado com sucesso" });
+      // Enviar email de lembrete com cobrança PIX da OpenPix
+      const result = await sendPaymentReminderEmail(user, customMessage);
+      
+      if (!result.success) {
+        console.error('Erro ao enviar cobrança:', result.error);
+        return res.status(500).json({ 
+          message: "Erro ao enviar cobrança por email",
+          error: result.error 
+        });
+      }
+      
+      console.log('Email de cobrança enviado com sucesso');
+      if (result.charge) {
+        console.log(`Cobrança PIX criada: ${result.charge.id}`);
+        console.log(`Valor: R$ ${result.charge.value}`);
+      }
+      
+      res.json({ 
+        message: "Cobrança PIX enviada com sucesso por email",
+        charge: result.charge || null,
+        details: {
+          emailSent: true,
+          pixGenerated: !!result.charge,
+          value: result.charge?.value || 49.90,
+          recipient: user.email
+        }
+      });
     } catch (error) {
-      console.error("Erro ao enviar lembrete de pagamento:", error);
-      res.status(500).json({ message: "Erro ao enviar lembrete de pagamento" });
+      console.error("Erro ao enviar cobrança PIX:", error);
+      res.status(500).json({ message: "Erro ao enviar cobrança PIX por email" });
     }
   });
 

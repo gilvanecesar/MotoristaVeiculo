@@ -192,24 +192,33 @@ export default function AdminUsersPage() {
   // Enviar e-mail de cobrança
   const sendPaymentReminderMutation = useMutation({
     mutationFn: async ({ userId, message }: { userId: number, message: string }) => {
-      const res = await apiRequest("POST", `/api/admin/users/${userId}/send-payment-reminder`, { message });
+      const res = await apiRequest("POST", `/api/admin/users/${userId}/send-payment-reminder`, { customMessage: message });
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.message || "Falha ao enviar e-mail de cobrança");
+        throw new Error(errorData.message || "Falha ao enviar cobrança PIX");
       }
       return await res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       setReminderDialogOpen(false);
       setReminderMessage("");
-      toast({
-        title: "E-mail enviado",
-        description: "O e-mail de cobrança foi enviado com sucesso",
-      });
+      
+      // Mostrar informações detalhadas da cobrança PIX criada
+      if (data.charge) {
+        toast({
+          title: "💳 Cobrança PIX enviada",
+          description: `Email enviado com cobrança de R$ ${data.charge.value.toFixed(2)} • PIX ID: ${data.charge.id}`,
+        });
+      } else {
+        toast({
+          title: "📧 Email de cobrança enviado",
+          description: data.details?.emailSent ? "Email enviado com sucesso, mas sem cobrança PIX gerada" : "Email enviado com sucesso",
+        });
+      }
     },
     onError: (error: any) => {
       toast({
-        title: "Erro",
+        title: "Erro ao enviar cobrança",
         description: error.message,
         variant: "destructive",
       });
@@ -491,29 +500,46 @@ export default function AdminUsersPage() {
         </CardContent>
       </Card>
 
-      {/* Dialog de e-mail de cobrança */}
+      {/* Dialog de cobrança PIX */}
       <Dialog open={reminderDialogOpen} onOpenChange={setReminderDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Enviar e-mail de cobrança</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              💳 Enviar Cobrança PIX
+            </DialogTitle>
             <DialogDescription>
-              Envie um lembrete de pagamento para {selectedUser?.name}
+              Crie automaticamente uma cobrança PIX de R$ 49,90 via OpenPix e envie por email para {selectedUser?.name}
             </DialogDescription>
           </DialogHeader>
           
           <div className="grid gap-4 py-4">
+            <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300 mb-2">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="font-medium text-sm">O que será feito:</span>
+              </div>
+              <ul className="text-xs text-blue-600 dark:text-blue-400 space-y-1">
+                <li>• Cobrança PIX criada automaticamente na OpenPix</li>
+                <li>• Email enviado com QR Code e código copia-e-cola</li>
+                <li>• Valor: R$ 49,90 (assinatura mensal)</li>
+                <li>• Ativação automática após pagamento</li>
+              </ul>
+            </div>
+            
             <div className="grid gap-2">
-              <Label htmlFor="email">E-mail do destinatário</Label>
+              <Label htmlFor="email">Destinatário</Label>
               <Input id="email" value={selectedUser?.email} disabled />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="message">Mensagem personalizada (opcional)</Label>
               <Textarea
                 id="message"
-                placeholder="Insira uma mensagem personalizada para o e-mail de cobrança..."
+                placeholder="Ex: Sua assinatura está próxima do vencimento. Renove agora para continuar usando todos os recursos..."
                 value={reminderMessage}
                 onChange={(e) => setReminderMessage(e.target.value)}
-                rows={5}
+                rows={4}
               />
             </div>
           </div>
@@ -523,14 +549,17 @@ export default function AdminUsersPage() {
             <Button 
               onClick={handleSendReminder} 
               disabled={sendPaymentReminderMutation.isPending}
+              className="bg-green-600 hover:bg-green-700 text-white"
             >
               {sendPaymentReminderMutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Enviando...
+                  Criando PIX...
                 </>
               ) : (
-                "Enviar E-mail"
+                <>
+                  💳 Criar PIX e Enviar
+                </>
               )}
             </Button>
           </DialogFooter>
