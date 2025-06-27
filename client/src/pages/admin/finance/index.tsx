@@ -1,157 +1,65 @@
-import { useState, useEffect } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
+import { 
+  TrendingUp, 
+  TrendingDown, 
+  DollarSign, 
+  Users, 
+  CreditCard, 
+  Calendar,
+  RefreshCw,
+  Eye,
+  Download,
+  CheckCircle,
+  XCircle,
+  Clock,
+  AlertTriangle
+} from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
-// Função para formatar valores monetários com tratamento robusto de erros
+// Função para formatação de moeda
 function formatCurrency(value: number | string | null | undefined): string {
-  // Garantir que temos um número válido
   if (value === null || value === undefined) {
     return 'R$ 0,00';
   }
   
-  let numValue: number;
+  let numericValue: number;
+  
+  if (typeof value === 'string') {
+    const cleaned = value.replace(/[^\d.,]/g, '').replace(',', '.');
+    numericValue = parseFloat(cleaned) || 0;
+  } else {
+    numericValue = Number(value) || 0;
+  }
+  
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  }).format(numericValue);
+}
+
+// Função para formatação de data
+function formatDate(dateValue: string | Date | null | undefined): string {
+  if (!dateValue) return 'Data não disponível';
   
   try {
-    // Se for string, tentar converter para número
-    if (typeof value === 'string') {
-      // Remover caracteres não-numéricos exceto ponto e vírgula
-      const cleanValue = value.replace(/[^\d.,]/g, '');
-      
-      // Tratar string vazia
-      if (!cleanValue) {
-        return 'R$ 0,00';
-      }
-      
-      // Converter vírgula para ponto e parsear
-      numValue = parseFloat(cleanValue.replace(',', '.'));
-    } else {
-      numValue = Number(value);
-    }
-    
-    // Verificar se é um número válido
-    if (isNaN(numValue)) {
-      console.warn('Valor inválido para formatação de moeda:', value);
-      return 'R$ 0,00';
-    }
-    
-    // Garantir que não é um valor negativo (caso isso não seja desejável)
-    // Se valores negativos forem válidos, remova esta verificação
-    numValue = Math.max(0, numValue);
-    
-    return new Intl.NumberFormat('pt-BR', { 
-      style: 'currency', 
-      currency: 'BRL' 
-    }).format(numValue);
-  } catch (error) {
-    console.error('Erro ao formatar moeda:', error);
-    return 'R$ 0,00';
-  }
-}
-
-// Função para formatar datas com tratamento de erros
-function formatDate(dateValue: string | Date | null | undefined): string {
-  try {
-    // Se for null, undefined ou string vazia
-    if (!dateValue) {
-      return '—';
-    }
-    
-    // Criar objeto Date
     const date = new Date(dateValue);
+    if (isNaN(date.getTime())) return 'Data inválida';
     
-    // Verificar se a data é válida
-    if (isNaN(date.getTime())) {
-      console.warn('Data inválida:', dateValue);
-      return '—';
-    }
-    
-    // Formatar a data
-    return date.toLocaleDateString('pt-BR');
-  } catch (error) {
-    console.error('Erro ao formatar data:', error);
-    return '—';
+    return format(date, "dd/MM/yyyy", { locale: ptBR });
+  } catch {
+    return 'Data inválida';
   }
 }
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Loader2, PlusCircle, FileDown, Settings, LineChart, Users, DollarSign, X } from "lucide-react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend
-} from "recharts";
-import { useToast } from "@/hooks/use-toast";
-import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Link } from "wouter";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  FormDescription
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { CalendarIcon } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
-// Tipos para os dados financeiros
-interface SubscriptionData {
-  id: string;
-  clientId?: number | null;
-  clientName: string;
-  email: string;
-  plan: string;
-  status: "active" | "canceled" | "past_due" | "trialing";
-  amount: number | string | null;  // Permitir diferentes tipos para robustez
-  startDate: string | Date | null; // Permitir diferentes tipos para robustez
-  endDate: string | Date | null;   // Permitir diferentes tipos para robustez
-  source?: 'openpix' | 'local';    // Nova propriedade para indicar origem dos dados
-}
-
-// Interface para dados de clientes
-interface ClientData {
-  id: number;
-  name: string;
-  email: string;
-  type: string;
-}
-
-interface InvoiceData {
-  id: string;
-  clientName: string;
-  email: string;
-  amount: number | string | null;  // Permitir diferentes tipos para robustez
-  status: "paid" | "open" | "void" | "uncollectible";
-  date: string | Date | null;      // Permitir diferentes tipos para robustez
-}
-
+// Interfaces para tipos de dados
 interface FinanceStats {
   totalRevenue: number;
   monthlyRevenue: number;
@@ -167,465 +75,279 @@ interface FinanceStats {
   }[];
 }
 
-// Cores para o gráfico de pizza
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#9146FF'];
+interface SubscriptionData {
+  id: string;
+  clientId?: number | null;
+  clientName: string;
+  email: string;
+  plan: string;
+  status: "active" | "canceled" | "past_due" | "trialing" | "completed";
+  amount: number | string | null;
+  startDate: string | Date | null;
+  endDate: string | Date | null;
+  source?: 'openpix' | 'local';
+}
 
-// Status de assinatura traduzidos
-const subscriptionStatusMap = {
-  active: "Ativa",
-  canceled: "Cancelada",
-  past_due: "Pendente",
-  trialing: "Teste"
-};
+interface InvoiceData {
+  id: string;
+  clientName: string;
+  email: string;
+  amount: number | string | null;
+  status: "paid" | "open" | "void" | "uncollectible" | "completed";
+  date: string | Date | null;
+  description?: string;
+}
 
-// Status de fatura traduzidos
-const invoiceStatusMap = {
-  paid: "Pago",
-  open: "Aberto",
-  void: "Cancelado",
-  uncollectible: "Não Cobrável"
-};
+// Componente StatusBadge
+function StatusBadge({ status }: { status: string }) {
+  const statusConfig = {
+    active: { label: 'Ativa', variant: 'default' as const, icon: CheckCircle, color: 'text-green-600' },
+    completed: { label: 'Paga', variant: 'secondary' as const, icon: CheckCircle, color: 'text-green-600' },
+    canceled: { label: 'Cancelada', variant: 'destructive' as const, icon: XCircle, color: 'text-red-600' },
+    past_due: { label: 'Vencida', variant: 'destructive' as const, icon: AlertTriangle, color: 'text-red-600' },
+    trialing: { label: 'Teste', variant: 'outline' as const, icon: Clock, color: 'text-yellow-600' },
+    paid: { label: 'Pago', variant: 'secondary' as const, icon: CheckCircle, color: 'text-green-600' },
+    open: { label: 'Aberto', variant: 'outline' as const, icon: Clock, color: 'text-yellow-600' },
+    void: { label: 'Cancelado', variant: 'destructive' as const, icon: XCircle, color: 'text-red-600' },
+    uncollectible: { label: 'Irrecuperável', variant: 'destructive' as const, icon: XCircle, color: 'text-red-600' }
+  };
 
-// Cor do badge de acordo com o status
-const getSubscriptionBadgeVariant = (status: string): "default" | "destructive" | "secondary" | "outline" => {
-  switch (status) {
-    case "active":
-      return "default"; // Substituído "success" por "default"
-    case "canceled":
-      return "destructive";
-    case "past_due":
-      return "secondary"; // Substituído "warning" por "secondary"
-    case "trialing":
-      return "default";
-    default:
-      return "secondary";
-  }
-};
+  const config = statusConfig[status as keyof typeof statusConfig] || {
+    label: status,
+    variant: 'outline' as const,
+    icon: Clock,
+    color: 'text-gray-600'
+  };
 
-const getInvoiceBadgeVariant = (status: string): "default" | "destructive" | "secondary" | "outline" => {
-  switch (status) {
-    case "paid":
-      return "default"; // Substituído "success" por "default"
-    case "open":
-      return "default";
-    case "void":
-      return "destructive";
-    case "uncollectible":
-      return "secondary"; // Substituído "warning" por "secondary"
-    default:
-      return "secondary";
-  }
-};
+  const Icon = config.icon;
 
-// Removi a função duplicada formatCurrency
+  return (
+    <Badge variant={config.variant} className="flex items-center gap-1">
+      <Icon className={`h-3 w-3 ${config.color}`} />
+      {config.label}
+    </Badge>
+  );
+}
 
-// Schema de validação para o formulário de assinatura
-const subscriptionFormSchema = z.object({
-  clientId: z.number().optional(),
-  clientName: z.string().min(3, { message: "Nome do cliente é obrigatório" }),
-  email: z.string().email({ message: "E-mail inválido" }),
-  plan: z.enum(["monthly", "annual", "trial"], { 
-    required_error: "Selecione um plano" 
-  }),
-  amount: z.string().min(1).refine(
-    (val) => !isNaN(parseFloat(val.replace(",", "."))),
-    { message: "Valor inválido" }
-  ),
-  status: z.enum(["active", "trialing"], { 
-    required_error: "Selecione um status" 
-  }),
-  startDate: z.date({ required_error: "Data de início é obrigatória" }),
-  endDate: z.date({ required_error: "Data de término é obrigatória" }),
-});
-
-type SubscriptionFormValues = z.infer<typeof subscriptionFormSchema>;
-
-// Componente principal de finanças
+// Componente principal
 export default function FinancePage() {
-  const [activeTab, setActiveTab] = useState("overview");
-  const [showSubscriptionDialog, setShowSubscriptionDialog] = useState(false);
-  const { toast } = useToast();
-  
-  // Configuração do formulário de assinatura
-  const subscriptionForm = useForm<SubscriptionFormValues>({
-    resolver: zodResolver(subscriptionFormSchema),
-    defaultValues: {
-      clientName: "",
-      email: "",
-      plan: "monthly",
-      amount: "99,90",
-      status: "active",
-      startDate: new Date(),
-      endDate: new Date(new Date().setMonth(new Date().getMonth() + 1))
-    }
-  });
-  
-  // Buscar lista de clientes para o seletor
-  const { 
-    data: clients,
-    isLoading: isLoadingClients 
-  } = useQuery<ClientData[]>({
-    queryKey: ["/api/clients"],
-    queryFn: getQueryFn({ on401: "throw" }),
-    enabled: showSubscriptionDialog, // Só carrega quando o diálogo está aberto
-  });
-  
-  // Atualizar a data de término quando o valor inicial de data de início mudar
-  useEffect(() => {
-    if (showSubscriptionDialog) {
-      // Quando o diálogo abrir, recalcular a data de término baseada no plano
-      const startDate = subscriptionForm.getValues("startDate");
-      const planValue = subscriptionForm.getValues("plan");
-      let endDate = new Date(startDate);
-      
-      if (planValue === "monthly") {
-        endDate.setMonth(startDate.getMonth() + 1);
-      } else if (planValue === "annual") {
-        endDate.setFullYear(startDate.getFullYear() + 1);
-      } else if (planValue === "trial") {
-        endDate.setDate(startDate.getDate() + 7);
-      }
-      
-      subscriptionForm.setValue("endDate", endDate);
-    }
-  }, [showSubscriptionDialog, subscriptionForm]);
-  
-  // Função para preencher os dados do cliente quando um cliente é selecionado
-  const handleClientSelect = (clientId: number) => {
-    const selectedClient = clients?.find(client => client.id === clientId);
-    if (selectedClient) {
-      subscriptionForm.setValue("clientId", clientId);
-      subscriptionForm.setValue("clientName", selectedClient.name);
-      subscriptionForm.setValue("email", selectedClient.email);
-    }
-  };
-  
-  // Handler para atualizar datas e valores quando o plano é alterado
-  const handlePlanChange = (plan: "monthly" | "annual" | "trial") => {
-    subscriptionForm.setValue("plan", plan);
-    
-    // Ajustar o valor baseado no plano
-    if (plan === "monthly") {
-      subscriptionForm.setValue("amount", "99,90");
-    } else if (plan === "annual") {
-      subscriptionForm.setValue("amount", "1198,80");
-    } else if (plan === "trial") {
-      subscriptionForm.setValue("amount", "0");
-    }
-    
-    // Ajustar data de término baseada no plano
-    const startDate = subscriptionForm.getValues("startDate");
-    let endDate = new Date(startDate);
-    
-    if (plan === "monthly") {
-      endDate.setMonth(startDate.getMonth() + 1);
-    } else if (plan === "annual") {
-      endDate.setFullYear(startDate.getFullYear() + 1);
-    } else if (plan === "trial") {
-      endDate.setDate(startDate.getDate() + 7); // 7 dias
-    }
-    
-    subscriptionForm.setValue("endDate", endDate);
-  };
-  
-  // Mutation para criar assinatura
-  const createSubscriptionMutation = useMutation({
-    mutationFn: async (data: SubscriptionFormValues) => {
-      // Converte o valor para um número
-      const numericAmount = parseFloat(data.amount.replace(",", "."));
-      
-      // Encontra o cliente correspondente ao nome para obter o ID
-      const selectedClient = clients?.find((c) => c.name === data.clientName);
-      const clientId = selectedClient?.id;
-      
-      if (!clientId) {
-        throw new Error("Cliente não encontrado. Selecione um cliente válido da lista.");
-      }
-      
-      // Mapeia plan para planType que é o que o backend espera
-      const payload = {
-        ...data,
-        clientId,  // Adiciona o ID do cliente
-        planType: data.plan, // Adiciona planType mapeado de plan
-        amount: numericAmount,
-        startDate: data.startDate.toISOString(),
-        endDate: data.endDate.toISOString()
-      };
-      
-      console.log("Enviando payload:", payload); // Log para debug
-      
-      const response = await apiRequest("POST", "/api/admin/subscriptions", payload);
-      return await response.json();
-    },
-    onSuccess: () => {
-      // Invalidar a query para buscar os dados atualizados da OpenPix
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/openpix/subscriptions"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/openpix/finance/stats"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/openpix/invoices"] });
-      
-      // Fechar o modal e exibir mensagem de sucesso
-      setShowSubscriptionDialog(false);
-      toast({
-        title: "Assinatura criada",
-        description: "A assinatura foi criada com sucesso.",
-      });
-      
-      // Resetar o formulário
-      subscriptionForm.reset();
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Erro ao criar assinatura",
-        description: error.message || "Não foi possível criar a assinatura. Tente novamente.",
-        variant: "destructive",
-      });
-    },
+  // Queries para buscar dados da OpenPix
+  const { data: stats, isLoading: statsLoading, refetch: refetchStats } = useQuery({
+    queryKey: ['/api/admin/openpix/finance/stats'],
+    refetchInterval: 30000 // Atualizar a cada 30 segundos
   });
 
-  // Buscar estatísticas financeiras da OpenPix em tempo real
-  const { 
-    data: stats, 
-    isLoading: isLoadingStats,
-    error: statsError 
-  } = useQuery<FinanceStats>({
-    queryKey: ["/api/admin/openpix/finance/stats"],
-    queryFn: getQueryFn({ on401: "throw" }),
-    refetchInterval: 30000, // Atualizar a cada 30 segundos
+  const { data: subscriptions, isLoading: subscriptionsLoading, refetch: refetchSubscriptions } = useQuery({
+    queryKey: ['/api/admin/openpix/subscriptions'],
+    refetchInterval: 30000
   });
 
-  // Buscar assinaturas da OpenPix em tempo real
-  const { 
-    data: subscriptions, 
-    isLoading: isLoadingSubscriptions,
-    error: subscriptionsError 
-  } = useQuery<SubscriptionData[]>({
-    queryKey: ["/api/admin/openpix/subscriptions"],
-    queryFn: getQueryFn({ on401: "throw" }),
-    refetchInterval: 30000, // Atualizar a cada 30 segundos
+  const { data: invoices, isLoading: invoicesLoading, refetch: refetchInvoices } = useQuery({
+    queryKey: ['/api/admin/openpix/invoices'],
+    refetchInterval: 30000
   });
 
-  // Buscar faturas da OpenPix em tempo real
-  const { 
-    data: invoices, 
-    isLoading: isLoadingInvoices,
-    error: invoicesError 
-  } = useQuery<InvoiceData[]>({
-    queryKey: ["/api/admin/openpix/invoices"],
-    queryFn: getQueryFn({ on401: "throw" }),
-    refetchInterval: 30000, // Atualizar a cada 30 segundos
-  });
+  const isLoading = statsLoading || subscriptionsLoading || invoicesLoading;
 
-  // Handler para exportar relatório
-  const handleExportReport = () => {
-    toast({
-      title: "Exportação iniciada",
-      description: "O relatório será gerado e baixado em breve.",
-    });
-    // Lógica de exportação (PDF ou Excel)
+  // Função para refresh manual
+  const handleRefresh = () => {
+    refetchStats();
+    refetchSubscriptions();
+    refetchInvoices();
   };
 
-  // Verificação de erros
-  if (statsError || subscriptionsError || invoicesError) {
-    return (
-      <div className="flex items-center justify-center p-12">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-destructive">Erro ao carregar dados</CardTitle>
-            <CardDescription>
-              Não foi possível carregar os dados financeiros. Tente novamente mais tarde.
-            </CardDescription>
+  // Cálculos baseados em dados reais
+  const totalSubscriptions = subscriptions?.length || 0;
+  const activeSubscriptions = subscriptions?.filter((sub: SubscriptionData) => 
+    sub.status === 'active' || sub.status === 'completed'
+  ).length || 0;
+  
+  const totalRevenue = stats?.totalRevenue || 0;
+  const monthlyRevenue = stats?.monthlyRevenue || 0;
+  
+  const revenueGrowth = totalRevenue > 0 ? ((monthlyRevenue / totalRevenue) * 100) : 0;
+
+  return (
+    <div className="container mx-auto p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Gestão Financeira</h1>
+          <p className="text-muted-foreground">
+            Dados em tempo real da OpenPix • Atualização automática a cada 30s
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 text-sm text-green-600">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+            OpenPix Live
+          </div>
+          <Button onClick={handleRefresh} variant="outline" size="sm" disabled={isLoading}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            Atualizar
+          </Button>
+        </div>
+      </div>
+
+      {/* Cards de Estatísticas */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Receita Total</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <Button onClick={() => window.location.reload()}>
-              Tentar novamente
-            </Button>
+            <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
+            <p className="text-xs text-muted-foreground">
+              {formatCurrency(monthlyRevenue)} este mês
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Assinaturas Ativas</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{activeSubscriptions}</div>
+            <p className="text-xs text-muted-foreground">
+              de {totalSubscriptions} total
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Taxa de Crescimento</CardTitle>
+            {revenueGrowth >= 0 ? (
+              <TrendingUp className="h-4 w-4 text-green-600" />
+            ) : (
+              <TrendingDown className="h-4 w-4 text-red-600" />
+            )}
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {revenueGrowth.toFixed(1)}%
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Comparado ao total
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Faturas</CardTitle>
+            <CreditCard className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{invoices?.length || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              Faturas processadas
+            </p>
           </CardContent>
         </Card>
       </div>
-    );
-  }
 
-  // Loader enquanto carrega os dados
-  if (isLoadingStats || isLoadingSubscriptions || isLoadingInvoices) {
-    return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-12rem)]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  return (
-    <div className="container mx-auto py-6">
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center gap-4">
-          <h1 className="text-3xl font-bold tracking-tight">Gestão Financeira</h1>
-          <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 px-3 py-1 rounded-full border border-green-200">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <span className="font-medium">OpenPix Live</span>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleExportReport}>
-            <FileDown className="mr-2 h-4 w-4" />
-            Exportar Relatório
-          </Button>
-          <Link href="/admin/finance/settings">
-            <Button variant="outline" size="sm">
-              <Settings className="mr-2 h-4 w-4" />
-              Configurações
-            </Button>
-          </Link>
-        </div>
-      </div>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+      {/* Tabs principais */}
+      <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
           <TabsTrigger value="subscriptions">Assinaturas</TabsTrigger>
           <TabsTrigger value="invoices">Faturas</TabsTrigger>
+          <TabsTrigger value="analytics">Análises</TabsTrigger>
         </TabsList>
-        
+
         {/* Tab: Visão Geral */}
         <TabsContent value="overview" className="space-y-4">
-          {/* Cards de estatísticas */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* Distribuição por Status */}
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Receita Total</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <CardHeader>
+                <CardTitle>Distribuição de Assinaturas</CardTitle>
+                <CardDescription>Por status atual</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {formatCurrency(stats?.totalRevenue || 0)}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  +2.1% em relação ao mês anterior
-                </p>
+              <CardContent className="space-y-4">
+                {stats?.subscriptionsByStatus?.map((item: any, index: number) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <span className="text-sm font-medium">{item.status}</span>
+                    <div className="flex items-center gap-2">
+                      <Progress 
+                        value={(item.count / totalSubscriptions) * 100} 
+                        className="w-[100px]" 
+                      />
+                      <span className="text-sm text-muted-foreground w-8">
+                        {item.count}
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </CardContent>
             </Card>
-            
+
+            {/* Receita Mensal */}
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Assinaturas Ativas</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
+              <CardHeader>
+                <CardTitle>Receita por Mês</CardTitle>
+                <CardDescription>Últimos 6 meses</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {stats?.activeSubscriptions || 0}
+                <div className="space-y-2">
+                  {stats?.monthlyData?.slice(-6).map((item: any, index: number) => (
+                    <div key={index} className="flex items-center justify-between">
+                      <span className="text-sm">{item.month}</span>
+                      <span className="text-sm font-medium">
+                        {formatCurrency(item.revenue)}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  +{stats?.activeSubscriptions || 0} novos assinantes este mês
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Taxa de Cancelamento</CardTitle>
-                <LineChart className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {(stats?.churnRate || 0).toFixed(1)}%
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {stats?.churnRate && stats.churnRate < 3 ? "Abaixo" : "Acima"} da média do setor
-                </p>
               </CardContent>
             </Card>
           </div>
 
-          {/* Gráfico de Receita Mensal */}
+          {/* Resumo Rápido */}
           <Card>
             <CardHeader>
-              <CardTitle>Receita Mensal (2025)</CardTitle>
-              <CardDescription>
-                Acompanhe a evolução da receita ao longo do ano
-              </CardDescription>
+              <CardTitle>Resumo do Sistema</CardTitle>
+              <CardDescription>Status atual da OpenPix integration</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={stats?.monthlyData || []}
-                    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis 
-                      tickFormatter={(value) => 
-                        new Intl.NumberFormat('pt-BR', { 
-                          style: 'currency', 
-                          currency: 'BRL',
-                          notation: 'compact',
-                          maximumFractionDigits: 1
-                        }).format(value)
-                      } 
-                    />
-                    <Tooltip 
-                      formatter={(value: number) => [formatCurrency(value), "Receita"]}
-                      labelFormatter={(label) => `Mês: ${label}`}
-                    />
-                    <Bar 
-                      dataKey="revenue" 
-                      fill="var(--primary)" 
-                      radius={[4, 4, 0, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Distribuição das Assinaturas */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Status das Assinaturas</CardTitle>
-              <CardDescription>
-                Distribuição das assinaturas por status
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={stats?.subscriptionsByStatus || []}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="count"
-                      nameKey="status"
-                    >
-                      {stats?.subscriptionsByStatus?.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value) => [value, "Quantidade"]} />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="text-center p-4 border rounded-lg">
+                  <div className="text-2xl font-bold text-green-600">{totalRevenue > 0 ? '✓' : '○'}</div>
+                  <div className="text-sm font-medium">Integração OpenPix</div>
+                  <div className="text-xs text-muted-foreground">
+                    {totalRevenue > 0 ? 'Ativa' : 'Sem dados'}
+                  </div>
+                </div>
+                <div className="text-center p-4 border rounded-lg">
+                  <div className="text-2xl font-bold text-blue-600">{subscriptions?.length || 0}</div>
+                  <div className="text-sm font-medium">Total Assinaturas</div>
+                  <div className="text-xs text-muted-foreground">
+                    OpenPix + Local
+                  </div>
+                </div>
+                <div className="text-center p-4 border rounded-lg">
+                  <div className="text-2xl font-bold text-purple-600">{invoices?.length || 0}</div>
+                  <div className="text-sm font-medium">Faturas Processadas</div>
+                  <div className="text-xs text-muted-foreground">
+                    Este mês
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         {/* Tab: Assinaturas */}
-        <TabsContent value="subscriptions">
+        <TabsContent value="subscriptions" className="space-y-4">
           <Card>
             <CardHeader>
-              <div className="flex justify-between items-center">
-                <CardTitle>Assinaturas</CardTitle>
-                <Button size="sm" onClick={() => setShowSubscriptionDialog(true)}>
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Nova Assinatura
-                </Button>
-              </div>
+              <CardTitle>Assinaturas Ativas</CardTitle>
               <CardDescription>
-                Gerenciamento de todas as assinaturas ativas e inativas
+                Dados combinados: OpenPix + Banco Local • {subscriptions?.length || 0} total
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -634,135 +356,70 @@ export default function FinancePage() {
                   <TableRow>
                     <TableHead>Cliente</TableHead>
                     <TableHead>Plano</TableHead>
-                    <TableHead>Valor</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Valor</TableHead>
                     <TableHead>Início</TableHead>
                     <TableHead>Vencimento</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
+                    <TableHead>Origem</TableHead>
+                    <TableHead>Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {subscriptions && subscriptions.length > 0 ? (
-                    subscriptions
-                      // Filtrar apenas assinaturas com valor numérico válido maior que zero
-                      .filter((subscription) => {
-                        // Verificar se o valor é um número válido
-                        let numAmount = 0;
-                        
-                        if (typeof subscription.amount === 'string') {
-                          // Verificar se é uma string válida
-                          if (subscription.amount) {
-                            try {
-                              // Converter para string de maneira segura
-                              const amountStr = String(subscription.amount);
-                              // Limpar a string
-                              const cleanAmount = amountStr.replace(/[^\d.,]/g, '').replace(',', '.');
-                              numAmount = parseFloat(cleanAmount);
-                            } catch (e) {
-                              console.warn('Erro ao processar string de valor:', e);
-                            }
-                          }
-                        } else if (typeof subscription.amount === 'number') {
-                          numAmount = subscription.amount;
-                        }
-                        
-                        return !isNaN(numAmount) && numAmount > 0;
-                      })
-                      .map((subscription) => {
-                        // Determinar o nome do plano baseado no planType ou outros dados disponíveis
-                        let planName = subscription.plan || subscription.planType || 'Mensal';
-                        
-                        // Converter o tipo de plano para um formato legível
-                        if (planName === 'monthly') {
-                          planName = 'Mensal';
-                        } else if (planName === 'annual') {
-                          planName = 'Anual';
-                        } else if (planName === 'trial') {
-                          planName = 'Teste';
-                        }
-                        
-                        // Extrair data de início e fim
-                        const startDate = subscription.startDate || subscription.currentPeriodStart;
-                        const endDate = subscription.endDate || subscription.currentPeriodEnd;
-                        
-                        // Determinar o nome do cliente
-                        const clientName = subscription.clientName || 'Cliente';
-                        
-                        // Determinar email (com fallback para evitar dados undefined)
-                        const email = subscription.email || '';
-                        
-                        return (
-                          <TableRow key={subscription.id}>
-                            <TableCell className="font-medium">
-                              <div className="flex items-center gap-2">
-                                <div>
-                                  <div>{clientName}</div>
-                                  <div className="text-xs text-muted-foreground">{email}</div>
-                                </div>
-                                {subscription.source === 'openpix' && (
-                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                    OpenPix
-                                  </span>
-                                )}
-                                {subscription.source === 'local' && (
-                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                    Local
-                                  </span>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell>{planName}</TableCell>
-                            <TableCell>{formatCurrency(subscription.amount)}</TableCell>
-                            <TableCell>
-                              <Badge variant={getSubscriptionBadgeVariant(subscription.status)}>
-                                {subscriptionStatusMap[subscription.status] || subscription.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>{formatDate(startDate)}</TableCell>
-                            <TableCell>{formatDate(endDate)}</TableCell>
-                            <TableCell className="text-right">
-                              <Button variant="ghost" size="sm">
-                                Detalhes
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={7} className="h-32 text-center">
-                        <div className="flex flex-col items-center justify-center">
-                          <DollarSign className="h-8 w-8 text-muted-foreground mb-2" />
-                          <p>Nenhuma assinatura encontrada.</p>
-                          <p className="text-xs text-muted-foreground mb-2">
-                            Crie uma nova assinatura usando o botão acima.
-                          </p>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="mt-2"
-                            onClick={() => setShowSubscriptionDialog(true)}
-                          >
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            Criar Assinatura
-                          </Button>
+                  {subscriptions?.map((subscription: SubscriptionData) => (
+                    <TableRow key={subscription.id}>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{subscription.clientName}</div>
+                          <div className="text-xs text-muted-foreground">{subscription.email}</div>
                         </div>
                       </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">
+                          {subscription.plan === 'monthly' ? 'Mensal' : 
+                           subscription.plan === 'annual' ? 'Anual' : 
+                           subscription.plan}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={subscription.status} />
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {formatCurrency(subscription.amount)}
+                      </TableCell>
+                      <TableCell>{formatDate(subscription.startDate)}</TableCell>
+                      <TableCell>{formatDate(subscription.endDate)}</TableCell>
+                      <TableCell>
+                        {subscription.source === 'openpix' && (
+                          <Badge variant="secondary" className="bg-green-100 text-green-800">
+                            OpenPix
+                          </Badge>
+                        )}
+                        {subscription.source === 'local' && (
+                          <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                            Local
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="sm">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
-                  )}
+                  ))}
                 </TableBody>
               </Table>
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         {/* Tab: Faturas */}
-        <TabsContent value="invoices">
+        <TabsContent value="invoices" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Faturas</CardTitle>
+              <CardTitle>Faturas Recentes</CardTitle>
               <CardDescription>
-                Histórico de faturas emitidas
+                Dados da OpenPix • {invoices?.length || 0} faturas processadas
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -774,361 +431,132 @@ export default function FinancePage() {
                     <TableHead>Valor</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Data</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
+                    <TableHead>Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {invoices && invoices.length > 0 ? (
-                    invoices
-                      // Filtrar apenas faturas com valor numérico válido maior que zero
-                      .filter((invoice) => {
-                        // Verificar se o valor é um número válido
-                        let numAmount = 0;
-                        
-                        if (typeof invoice.amount === 'string') {
-                          // Verificar se é uma string válida
-                          if (invoice.amount) {
-                            try {
-                              // Converter para string de maneira segura
-                              const amountStr = String(invoice.amount);
-                              // Limpar a string
-                              const cleanAmount = amountStr.replace(/[^\d.,]/g, '').replace(',', '.');
-                              numAmount = parseFloat(cleanAmount);
-                            } catch (e) {
-                              console.warn('Erro ao processar string de valor:', e);
-                            }
-                          }
-                        } else if (typeof invoice.amount === 'number') {
-                          numAmount = invoice.amount;
-                        }
-                        
-                        return !isNaN(numAmount) && numAmount > 0;
-                      })
-                      .map((invoice) => (
-                        <TableRow key={invoice.id}>
-                          <TableCell className="font-medium">{invoice.id}</TableCell>
-                          <TableCell>
-                            <div>{invoice.clientName}</div>
-                            <div className="text-xs text-muted-foreground">{invoice.email}</div>
-                          </TableCell>
-                          <TableCell>{formatCurrency(invoice.amount)}</TableCell>
-                          <TableCell>
-                            <Badge variant={getInvoiceBadgeVariant(invoice.status)}>
-                              {invoiceStatusMap[invoice.status] || invoice.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{formatDate(invoice.date)}</TableCell>
-                          <TableCell className="text-right">
+                  {invoices?.map((invoice: InvoiceData) => (
+                    <TableRow key={invoice.id}>
+                      <TableCell className="font-mono text-xs">
+                        {invoice.id.slice(0, 8)}...
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{invoice.clientName}</div>
+                          <div className="text-xs text-muted-foreground">{invoice.email}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {formatCurrency(invoice.amount)}
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={invoice.status} />
+                      </TableCell>
+                      <TableCell>{formatDate(invoice.date)}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
                           <Button variant="ghost" size="sm">
-                            Baixar
+                            <Eye className="h-4 w-4" />
                           </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={6} className="h-32 text-center">
-                        <div className="flex flex-col items-center justify-center">
-                          <FileDown className="h-8 w-8 text-muted-foreground mb-2" />
-                          <p>Nenhuma fatura encontrada.</p>
-                          <p className="text-xs text-muted-foreground">
-                            As faturas serão geradas automaticamente quando houver assinaturas ativas.
-                          </p>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="mt-4"
-                            onClick={() => setShowSubscriptionDialog(true)}
-                          >
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            Criar Assinatura
+                          <Button variant="ghost" size="sm">
+                            <Download className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>
                     </TableRow>
-                  )}
+                  ))}
                 </TableBody>
               </Table>
             </CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
-      
-      {/* Diálogo para cadastro de assinatura */}
-      <Dialog open={showSubscriptionDialog} onOpenChange={setShowSubscriptionDialog}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Nova Assinatura</DialogTitle>
-            <DialogDescription>
-              Cadastre uma nova assinatura manualmente no sistema.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <Form {...subscriptionForm}>
-            <form 
-              className="space-y-4 py-2" 
-              onSubmit={subscriptionForm.handleSubmit((data) => createSubscriptionMutation.mutate(data))}
-            >
-              {/* Seletor de cliente existente */}
-              {clients && clients.length > 0 && (
-                <div className="mb-4">
-                  <FormLabel>Selecionar Cliente Existente</FormLabel>
-                  <Select onValueChange={(value) => handleClientSelect(parseInt(value))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um cliente" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {clients.map((client) => (
-                        <SelectItem key={client.id} value={client.id.toString()}>
-                          {client.name} - {client.type}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <div className="mt-1 text-xs text-muted-foreground">
-                    Selecione um cliente existente ou preencha os campos manualmente
+
+        {/* Tab: Análises */}
+        <TabsContent value="analytics" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Métricas de Performance</CardTitle>
+                <CardDescription>Indicadores chave de performance</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Taxa de Conversão</span>
+                  <span className="text-sm">
+                    {totalSubscriptions > 0 ? ((activeSubscriptions / totalSubscriptions) * 100).toFixed(1) : 0}%
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Receita Média por Cliente</span>
+                  <span className="text-sm">
+                    {formatCurrency(activeSubscriptions > 0 ? totalRevenue / activeSubscriptions : 0)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Faturas Processadas</span>
+                  <span className="text-sm">{invoices?.length || 0}</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Status da Integração</CardTitle>
+                <CardDescription>OpenPix API Status</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Conexão OpenPix</span>
+                  <Badge variant="secondary" className="bg-green-100 text-green-800">
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    Online
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Última Sincronização</span>
+                  <span className="text-xs text-muted-foreground">
+                    {format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Atualização Automática</span>
+                  <Badge variant="outline">30s</Badge>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Dados Técnicos */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Dados Técnicos</CardTitle>
+              <CardDescription>Informações técnicas da integração</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="space-y-2">
+                  <div className="text-sm font-medium">Fonte dos Dados</div>
+                  <div className="text-xs text-muted-foreground">
+                    OpenPix API v1 + PostgreSQL Local
                   </div>
                 </div>
-              )}
-              
-              {/* Loader para clientes */}
-              {isLoadingClients && (
-                <div className="flex items-center justify-center py-2">
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  <span className="text-sm text-muted-foreground">Carregando clientes...</span>
+                <div className="space-y-2">
+                  <div className="text-sm font-medium">Frequência de Atualização</div>
+                  <div className="text-xs text-muted-foreground">
+                    Automática a cada 30 segundos
+                  </div>
                 </div>
-              )}
-
-              {/* Campo oculto para clientId */}
-              <FormField
-                control={subscriptionForm.control}
-                name="clientId"
-                render={({ field }) => (
-                  <input type="hidden" {...field} value={field.value?.toString() || ""} />
-                )}
-              />
-              
-              <FormField
-                control={subscriptionForm.control}
-                name="clientName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nome do Cliente</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Digite o nome do cliente" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={subscriptionForm.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="email" placeholder="email@exemplo.com.br" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={subscriptionForm.control}
-                name="plan"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Plano</FormLabel>
-                    <Select 
-                      onValueChange={(value: "monthly" | "annual" | "trial") => {
-                        field.onChange(value);
-                        handlePlanChange(value);
-                      }} 
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o plano" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="monthly">Mensal</SelectItem>
-                        <SelectItem value="annual">Anual</SelectItem>
-                        <SelectItem value="trial">Período de teste</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={subscriptionForm.control}
-                name="amount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Valor</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="99,90" />
-                    </FormControl>
-                    <FormDescription>
-                      Digite o valor mensal da assinatura (ex: 99,90).
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={subscriptionForm.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o status" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="active">Ativa</SelectItem>
-                        <SelectItem value="trialing">Período de teste</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={subscriptionForm.control}
-                  name="startDate"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Data de Início</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              className={`w-full pl-3 text-left font-normal ${
-                                !field.value ? "text-muted-foreground" : ""
-                              }`}
-                            >
-                              {field.value ? (
-                                format(field.value, "dd/MM/yyyy", { locale: ptBR })
-                              ) : (
-                                <span>Selecione uma data</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={(date) => {
-                              if (date) {
-                                // Primeiro atualiza o valor no formulário
-                                field.onChange(date);
-                                
-                                // Pega o plano atual selecionado
-                                const planValue = subscriptionForm.getValues("plan");
-                                let endDate = new Date(date);
-                                
-                                if (planValue === "monthly") {
-                                  endDate.setMonth(date.getMonth() + 1);
-                                } else if (planValue === "annual") {
-                                  endDate.setFullYear(date.getFullYear() + 1);
-                                } else if (planValue === "trial") {
-                                  endDate.setDate(date.getDate() + 7);
-                                }
-                                
-                                subscriptionForm.setValue("endDate", endDate);
-                              }
-                            }}
-                            initialFocus
-                            locale={ptBR}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={subscriptionForm.control}
-                  name="endDate"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Data de Término</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              className={`w-full pl-3 text-left font-normal ${
-                                !field.value ? "text-muted-foreground" : ""
-                              }`}
-                            >
-                              {field.value ? (
-                                format(field.value, "dd/MM/yyyy", { locale: ptBR })
-                              ) : (
-                                <span>Selecione uma data</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={(date) => date && field.onChange(date)}
-                            initialFocus
-                            locale={ptBR}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="space-y-2">
+                  <div className="text-sm font-medium">Última Atualização</div>
+                  <div className="text-xs text-muted-foreground">
+                    {format(new Date(), "HH:mm:ss", { locale: ptBR })}
+                  </div>
+                </div>
               </div>
-              
-              <DialogFooter className="pt-4">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => setShowSubscriptionDialog(false)}
-                >
-                  Cancelar
-                </Button>
-                <Button 
-                  type="submit" 
-                  disabled={createSubscriptionMutation.isPending}
-                >
-                  {createSubscriptionMutation.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Cadastrando...
-                    </>
-                  ) : (
-                    'Cadastrar Assinatura'
-                  )}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
