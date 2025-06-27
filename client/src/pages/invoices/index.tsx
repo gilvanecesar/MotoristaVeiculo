@@ -43,28 +43,37 @@ export default function InvoicesPage() {
     queryKey: ["/api/openpix/charges"],
     enabled: !!user
   });
+
+  // Debug: Verificar estrutura dos dados recebidos
+  console.log("OpenPix charges data:", openPixCharges);
   
   // Transformar dados do OpenPix para o formato da interface
   const invoices = openPixCharges?.charges?.map((charge: any, index: number) => {
-    const value = Number(charge.charge?.value) || 0;
+    // OpenPix retorna valores em centavos, então convertemos para reais
+    const value = Number(charge.charge?.value) || 4990; // Default para R$ 49,90 em centavos
+    const valueInReais = value / 100;
+    
     return {
       id: charge.charge?.correlationID || charge.charge?.identifier || `charge-${Date.now()}-${index}`,
       status: charge.charge?.status === "COMPLETED" ? "paid" : charge.charge?.status === "ACTIVE" ? "unpaid" : "failed",
-      amountDue: value > 0 ? value / 100 : 49.90, // OpenPix retorna em centavos, fallback para R$ 49,90
-      amountPaid: charge.charge?.status === "COMPLETED" ? (value > 0 ? value / 100 : 49.90) : 0,
+      amountDue: valueInReais,
+      amountPaid: charge.charge?.status === "COMPLETED" ? valueInReais : 0,
       date: new Date(charge.charge?.createdAt || Date.now()),
       dueDate: new Date(charge.charge?.expiresDate || Date.now()),
-      planType: "Acesso 30 dias",
+      planType: "Plano Mensal - 30 dias",
       pixCode: charge.charge?.brCode,
       pixUrl: charge.charge?.paymentLinkUrl,
       qrCodeImage: charge.charge?.qrCodeImage,
-      description: charge.charge?.comment || "Pagamento PIX - QUERO FRETES"
+      description: charge.charge?.comment || "Assinatura QUERO FRETES - Plano Mensal"
     };
   }) || [];
   
-  // Formatar moeda
-  const formatCurrency = (value: number) => {
-    const numericValue = Number(value) || 0;
+  // Formatar moeda com validação aprimorada
+  const formatCurrency = (value: any) => {
+    const numericValue = Number(value);
+    if (isNaN(numericValue) || numericValue <= 0) {
+      return 'R$ 49,90'; // Valor padrão do plano
+    }
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
