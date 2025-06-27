@@ -227,6 +227,105 @@ export function setupWhatsAppRoutes(app: any) {
       res.status(500).json({ success: false, error: error.message });
     }
   });
+
+  // Enviar mensagem para todos os clientes cadastrados
+  app.post('/api/whatsapp/broadcast', async (req: Request, res: Response) => {
+    try {
+      const { message } = req.body;
+      
+      if (!message || message.trim().length === 0) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Mensagem é obrigatória' 
+        });
+      }
+
+      // Importar storage para buscar clientes
+      const { storage } = await import('./storage');
+      
+      // Buscar todos os clientes cadastrados
+      const clients = await storage.getClients();
+      
+      if (clients.length === 0) {
+        return res.json({ 
+          success: true, 
+          message: 'Nenhum cliente encontrado para enviar mensagens',
+          results: []
+        });
+      }
+
+      const results = [];
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const client of clients) {
+        try {
+          // Usar o WhatsApp do cliente ou o telefone principal
+          const phoneNumber = client.whatsapp || client.phone;
+          
+          if (!phoneNumber) {
+            results.push({
+              clientId: client.id,
+              clientName: client.name,
+              success: false,
+              error: 'Cliente não possui WhatsApp ou telefone cadastrado'
+            });
+            errorCount++;
+            continue;
+          }
+
+          // Formatar número para formato WhatsApp (55 + DDD + número)
+          const formattedNumber = phoneNumber.replace(/\D/g, '');
+          const chatId = `55${formattedNumber}@c.us`;
+          
+          // Personalizar mensagem com nome do cliente
+          const personalizedMessage = `Olá, ${client.name}!\n\n${message}`;
+          
+          await whatsappService.sendMessage(chatId, personalizedMessage);
+          
+          results.push({
+            clientId: client.id,
+            clientName: client.name,
+            phone: phoneNumber,
+            success: true
+          });
+          successCount++;
+
+          // Aguardar 2 segundos entre envios para evitar spam
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+        } catch (error) {
+          console.error(`Erro ao enviar para cliente ${client.name}:`, error);
+          results.push({
+            clientId: client.id,
+            clientName: client.name,
+            phone: client.whatsapp || client.phone,
+            success: false,
+            error: error.message
+          });
+          errorCount++;
+        }
+      }
+
+      res.json({
+        success: true,
+        message: `Envio concluído: ${successCount} sucessos, ${errorCount} erros`,
+        summary: {
+          totalClients: clients.length,
+          successCount,
+          errorCount
+        },
+        results
+      });
+
+    } catch (error) {
+      console.error('Erro no broadcast WhatsApp:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: error.message 
+      });
+    }
+  });
 }
 
 export { whatsappService };
