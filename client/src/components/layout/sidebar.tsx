@@ -11,7 +11,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useTheme } from "@/lib/theme-provider";
 import { useAuth } from "@/hooks/use-auth";
-import { ClientSelector } from "@/components/client-selector";
+
 import { useToast } from "@/hooks/use-toast";
 import logoImage from "../../assets/logo.png";
 import { 
@@ -342,12 +342,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
         </nav>
       </div>
 
-      {/* Cliente Selector (se não for admin e tiver cliente) */}
-      {!isAdmin && user?.clientId && !collapsed && (
-        <div className="p-3 border-t border-border/30 bg-card/50 backdrop-blur-sm">
-          <ClientSelector />
-        </div>
-      )}
+
 
       {/* Footer da Sidebar - Usuário */}
       <div className="p-3 border-t border-border/30 bg-card/50 backdrop-blur-sm">
