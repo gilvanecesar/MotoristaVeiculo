@@ -197,13 +197,13 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   return (
     <div
       className={cn(
-        "flex flex-col bg-card/95 backdrop-blur-sm border-r border-border/50 h-screen transition-all duration-300 shadow-lg",
+        "flex flex-col bg-cyan-600 backdrop-blur-sm border-r border-cyan-500/50 h-screen transition-all duration-300 shadow-lg",
         collapsed ? "w-16" : "w-64",
         isMobile && "fixed inset-y-0 left-0 z-50 transform",
       )}
     >
       {/* Header da Sidebar */}
-      <div className="flex items-center justify-between p-4 border-b border-border/30 bg-card/50 backdrop-blur-sm">
+      <div className="flex items-center justify-between p-4 border-b border-cyan-400/30 bg-cyan-700/50 backdrop-blur-sm">
         {!collapsed && (
           <div className="flex items-center space-x-2">
             <img 
@@ -211,7 +211,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
               alt="QUERO FRETES" 
               className="h-8 w-auto drop-shadow-sm"
             />
-            <span className="font-bold text-lg text-primary">QUERO FRETES</span>
+            <span className="font-bold text-lg text-white">QUERO FRETES</span>
           </div>
         )}
         
@@ -240,9 +240,9 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
                 <Button
                   variant={active ? "secondary" : "ghost"}
                   className={cn(
-                    "w-full justify-start gap-3 text-card-foreground/80 hover:text-card-foreground hover:bg-accent/50 transition-all duration-200 font-medium",
+                    "w-full justify-start gap-3 text-white/80 hover:text-white hover:bg-cyan-500/50 transition-all duration-200 font-medium",
                     collapsed && "justify-center px-2",
-                    active && "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+                    active && "bg-cyan-400 text-cyan-900 hover:bg-cyan-400/90 shadow-sm"
                   )}
                 >
                   <Icon className="h-4 w-4 flex-shrink-0" />
@@ -261,7 +261,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
           {!isDriver && user?.subscriptionActive && !collapsed && (
             <>
               <div className="px-3 py-2">
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                <h3 className="text-xs font-semibold text-white/60 uppercase tracking-wider">
                   Assinatura
                 </h3>
               </div>
@@ -274,8 +274,8 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
                     <Button
                       variant={active ? "secondary" : "ghost"}
                       className={cn(
-                        "w-full justify-start gap-3 text-card-foreground/80 hover:text-card-foreground hover:bg-accent/50 transition-all duration-200 font-medium",
-                        active && "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+                        "w-full justify-start gap-3 text-white/80 hover:text-white hover:bg-cyan-500/50 transition-all duration-200 font-medium",
+                        active && "bg-cyan-400 text-cyan-900 hover:bg-cyan-400/90 shadow-sm"
                       )}
                     >
                       <Icon className="h-4 w-4 flex-shrink-0" />
