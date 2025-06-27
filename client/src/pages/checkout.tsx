@@ -3,15 +3,20 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, CreditCard, Calendar, Check, AlertCircle } from "lucide-react";
+import { Loader2, CreditCard, Calendar, Check, AlertCircle, QrCode, Building2 } from "lucide-react";
 import { useLocation } from 'wouter';
+import { Badge } from "@/components/ui/badge";
+
+type PaymentMethod = 'pix' | 'mercadopago' | 'paypal';
 
 export default function Checkout() {
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const [_, navigate] = useLocation();
-  const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>('pix');
+  const [pixCharge, setPixCharge] = useState<any>(null);
+  const [isCreatingPayment, setIsCreatingPayment] = useState(false);
   
   // Get the plan from URL query parameter
   const [searchParams] = useState<URLSearchParams>(() => new URLSearchParams(window.location.search));
@@ -20,37 +25,86 @@ export default function Checkout() {
     return planFromURL === "monthly" ? "monthly" : "annual";
   });
 
-  useEffect(() => {
-    // Create payment link to Mercado Pago as soon as the page loads
-    setIsLoading(true);
-    apiRequest("POST", "/api/create-payment-intent", { 
-      planType: selectedPlan || "monthly"
-    })
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Falha ao conectar com o servidor de pagamento");
-        }
-        return res.json();
-      })
-      .then((data) => {
-        if (data.url) {
-          setRedirectUrl(data.url);
-        } else {
-          throw new Error("URL de pagamento não encontrada");
-        }
-        setIsLoading(false);
-      })
-      .catch((err) => {
-        console.error("Erro ao criar link de pagamento:", err);
-        setError(err.message);
-        setIsLoading(false);
-        toast({
-          title: "Erro no pagamento",
-          description: err.message,
-          variant: "destructive",
-        });
+  const planDetails = {
+    monthly: {
+      name: "Plano Mensal",
+      price: "R$ 49,90",
+      description: "Acesso por 30 dias",
+      period: "mês"
+    },
+    annual: {
+      name: "Plano Anual", 
+      price: "R$ 499,00",
+      description: "Acesso por 12 meses",
+      period: "ano",
+      savings: "Economia de R$ 99,80"
+    }
+  };
+
+  const createPixPayment = async () => {
+    setIsCreatingPayment(true);
+    try {
+      const response = await apiRequest("POST", "/api/openpix/create-charge", {
+        planType: selectedPlan,
+        value: selectedPlan === "monthly" ? 4990 : 49900,
+        email: "customer@querofretes.com.br",
+        name: "Assinatura QUERO FRETES"
       });
-  }, [toast, selectedPlan]);
+      const data = await response.json();
+      
+      if (response.ok) {
+        setPixCharge(data);
+        toast({
+          title: "PIX gerado com sucesso",
+          description: "Escaneie o QR Code ou copie o código PIX para pagar",
+        });
+      } else {
+        throw new Error(data.details || "Erro ao criar cobrança PIX");
+      }
+    } catch (error: any) {
+      console.error("Erro ao criar PIX:", error);
+      toast({
+        title: "Erro",
+        description: `Falha ao gerar PIX: ${error.message}`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingPayment(false);
+    }
+  };
+
+  const handleMercadoPagoPayment = async () => {
+    setIsCreatingPayment(true);
+    try {
+      const response = await apiRequest("POST", "/api/create-payment-intent", { 
+        planType: selectedPlan
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.url) {
+          window.location.href = data.url;
+        }
+      } else {
+        throw new Error("Erro ao criar pagamento Mercado Pago");
+      }
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingPayment(false);
+    }
+  };
+
+  const handlePayPalPayment = () => {
+    toast({
+      title: "PayPal",
+      description: "Integração PayPal em desenvolvimento",
+    });
+  };
 
   const handleContinueToPayment = () => {
     if (redirectUrl) {
