@@ -140,6 +140,50 @@ export default function AdminWebhooksPage() {
     }
   };
 
+  // ===== FUNÇÕES OPENPIX WEBHOOK =====
+  
+  const loadOpenPixConfig = async () => {
+    try {
+      const response = await apiRequest("GET", "/api/openpix/webhook/config");
+      const data = await response.json();
+      setOpenPixConfig(data);
+    } catch (error) {
+      console.error("Erro ao carregar configuração OpenPix:", error);
+      toast({
+        title: "Aviso",
+        description: "Configuração OpenPix será criada após o primeiro salvamento.",
+        variant: "default",
+      });
+    }
+  };
+
+  const saveOpenPixConfig = async () => {
+    setIsSavingOpenPix(true);
+    try {
+      const response = await apiRequest("POST", "/api/openpix/webhook/config", openPixConfig);
+      const data = await response.json();
+      
+      if (data.success) {
+        toast({
+          title: "Sucesso",
+          description: "Configuração OpenPix salva com sucesso!",
+        });
+        setOpenPixConfig(data.config);
+      } else {
+        throw new Error(data.message || "Erro ao salvar configuração");
+      }
+    } catch (error) {
+      console.error("Erro ao salvar OpenPix:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível salvar a configuração OpenPix.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingOpenPix(false);
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="mb-6">
@@ -264,14 +308,141 @@ export default function AdminWebhooksPage() {
           </CardContent>
         </Card>
 
+        {/* Configuração OpenPix WhatsApp */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Webhook className="h-5 w-5 text-green-600" />
+              Webhook OpenPix - Notificações WhatsApp
+            </CardTitle>
+            <CardDescription>
+              Configure notificações automáticas via WhatsApp quando pagamentos OpenPix forem confirmados
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Status */}
+            <div className="flex items-center justify-between">
+              <Label htmlFor="openpix-enabled" className="text-base">
+                Ativar notificações WhatsApp
+              </Label>
+              <Switch
+                id="openpix-enabled"
+                checked={openPixConfig.enabled}
+                onCheckedChange={(checked) => 
+                  setOpenPixConfig(prev => ({ ...prev, enabled: checked }))
+                }
+              />
+            </div>
+
+            {/* URL do Webhook WhatsApp */}
+            <div className="grid gap-2">
+              <Label htmlFor="whatsapp-webhook-url">URL do Webhook WhatsApp</Label>
+              <Input
+                id="whatsapp-webhook-url"
+                type="url"
+                placeholder="https://webhook.n8n.com/webhook/whatsapp-notifications"
+                value={openPixConfig.whatsappWebhookUrl}
+                onChange={(e) => 
+                  setOpenPixConfig(prev => ({ ...prev, whatsappWebhookUrl: e.target.value }))
+                }
+                disabled={!openPixConfig.enabled}
+              />
+              <p className="text-sm text-muted-foreground">
+                URL do webhook que receberá as notificações de pagamento para envio via WhatsApp
+              </p>
+            </div>
+
+            {/* Opções de notificação */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="notify-payments" className="text-sm">
+                  Notificar pagamentos individuais
+                </Label>
+                <Switch
+                  id="notify-payments"
+                  checked={openPixConfig.notifyPayments}
+                  onCheckedChange={(checked) => 
+                    setOpenPixConfig(prev => ({ ...prev, notifyPayments: checked }))
+                  }
+                  disabled={!openPixConfig.enabled}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="notify-subscriptions" className="text-sm">
+                  Notificar ativações de assinatura
+                </Label>
+                <Switch
+                  id="notify-subscriptions"
+                  checked={openPixConfig.notifySubscriptions}
+                  onCheckedChange={(checked) => 
+                    setOpenPixConfig(prev => ({ ...prev, notifySubscriptions: checked }))
+                  }
+                  disabled={!openPixConfig.enabled}
+                />
+              </div>
+            </div>
+
+            {/* Exemplo de mensagem */}
+            {openPixConfig.enabled && openPixConfig.whatsappWebhookUrl && (
+              <div className="bg-muted p-4 rounded-lg">
+                <h4 className="text-sm font-medium mb-2">Exemplo de mensagem automática:</h4>
+                <div className="text-sm text-muted-foreground font-mono whitespace-pre-line">
+{`🎉 *PAGAMENTO CONFIRMADO* 🎉
+
+✅ Cliente: João Silva
+📧 Email: joao@exemplo.com  
+💰 Valor: R$ 49,90
+📅 Data: ${new Date().toLocaleDateString('pt-BR')}
+🔑 ID: QF-${Date.now()}
+
+Assinatura QUERO FRETES ativada com sucesso!
+Vigência: 30 dias a partir de hoje.
+
+*Sistema automatizado QUERO FRETES*`}
+                </div>
+              </div>
+            )}
+
+            {/* Status da configuração */}
+            <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
+              <div className={`w-2 h-2 rounded-full ${openPixConfig.enabled && openPixConfig.whatsappWebhookUrl ? 'bg-green-500' : 'bg-gray-400'}`} />
+              <span className="text-sm">
+                {openPixConfig.enabled && openPixConfig.whatsappWebhookUrl 
+                  ? "Configuração ativa - notificações automáticas habilitadas" 
+                  : "Configuração inativa - configure a URL do webhook para ativar"
+                }
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Ações */}
-        <div className="flex justify-end gap-4">
-          <Button variant="outline" onClick={loadConfig}>
-            Cancelar
-          </Button>
-          <Button onClick={saveConfig} disabled={isSaving}>
-            {isSaving ? "Salvando..." : "Salvar Configuração"}
-          </Button>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Ações Webhook Geral */}
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={loadConfig} size="sm">
+              Cancelar
+            </Button>
+            <Button onClick={saveConfig} disabled={isSaving} size="sm">
+              {isSaving ? "Salvando..." : "Salvar Webhook Geral"}
+            </Button>
+          </div>
+
+          {/* Ações OpenPix */}
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={loadOpenPixConfig} size="sm">
+              Recarregar
+            </Button>
+            <Button 
+              onClick={saveOpenPixConfig} 
+              disabled={isSavingOpenPix || !openPixConfig.whatsappWebhookUrl} 
+              className="bg-green-600 hover:bg-green-700"
+              size="sm"
+            >
+              {isSavingOpenPix ? "Salvando..." : "Salvar OpenPix"}
+            </Button>
+          </div>
         </div>
       </div>
     </div>
