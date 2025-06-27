@@ -154,6 +154,9 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Cabeçalho mobile simplificado com apenas ícone do usuário no canto direito
 ✓ Sistema de segurança implementado: dados de faturas filtrados por usuário logado
 ✓ Nova rota /api/openpix/my-charges criada para busca segura de pagamentos
+✓ Página "Meus Fretes" criada com interface completa de cards e status visuais
+✓ Funcionalidades: reativar, editar, visualizar detalhes de fretes do usuário
+✓ Redirecionamento inteligente: usuários com assinatura ativa vão para /home após login
 - June 27, 2025. OpenPix como método oficial único, interface simplificada
 - June 27, 2025. Removidas opções de Google login e múltiplos planos de preços
 - June 27, 2025. Menu "Histórico" removido, faturas integradas ao OpenPix

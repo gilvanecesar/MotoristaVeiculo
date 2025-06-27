@@ -113,8 +113,8 @@ export default function AuthPage() {
             setLocation("/freights");
           }
         } else if (user.subscriptionActive) {
-          // Se já tem assinatura ativa, vai para a página inicial
-          setLocation("/");
+          // Se já tem assinatura ativa, vai para a página Home
+          setLocation("/home");
         } else {
           // Se não tem assinatura ativa e não é motorista, mostra página de planos
           setShowPlans(true);
