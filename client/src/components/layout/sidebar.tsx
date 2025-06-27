@@ -197,13 +197,14 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   return (
     <div
       className={cn(
-        "flex flex-col bg-cyan-600 backdrop-blur-sm border-r border-cyan-500/50 h-screen transition-all duration-300 shadow-lg",
+        "flex flex-col backdrop-blur-sm border-r border-gray-700/50 h-screen transition-all duration-300 shadow-lg",
         collapsed ? "w-16" : "w-64",
         isMobile && "fixed inset-y-0 left-0 z-50 transform",
       )}
+      style={{ backgroundColor: '#00222d' }}
     >
       {/* Header da Sidebar */}
-      <div className="flex items-center justify-between p-4 border-b border-cyan-400/30 bg-cyan-700/50 backdrop-blur-sm">
+      <div className="flex items-center justify-between p-4 border-b border-gray-600/30 backdrop-blur-sm" style={{ backgroundColor: '#00222d' }}>
         {!collapsed && (
           <div className="flex items-center space-x-2">
             <img 
@@ -274,8 +275,8 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
                     <Button
                       variant={active ? "secondary" : "ghost"}
                       className={cn(
-                        "w-full justify-start gap-3 text-white/80 hover:text-white hover:bg-cyan-500/50 transition-all duration-200 font-medium",
-                        active && "bg-cyan-400 text-cyan-900 hover:bg-cyan-400/90 shadow-sm"
+                        "w-full justify-start gap-3 text-white/80 hover:text-white hover:bg-gray-700/50 transition-all duration-200 font-medium",
+                        active && "bg-gray-600 text-white hover:bg-gray-600/90 shadow-sm"
                       )}
                     >
                       <Icon className="h-4 w-4 flex-shrink-0" />
@@ -326,9 +327,9 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
                     <Button
                       variant={active ? "secondary" : "ghost"}
                       className={cn(
-                        "w-full justify-start gap-3 text-white/80 hover:text-white hover:bg-cyan-500/50 transition-all duration-200 font-medium",
+                        "w-full justify-start gap-3 text-white/80 hover:text-white hover:bg-gray-700/50 transition-all duration-200 font-medium",
                         collapsed && "justify-center px-2",
-                        active && "bg-cyan-400 text-cyan-900 hover:bg-cyan-400/90 shadow-sm"
+                        active && "bg-gray-600 text-white hover:bg-gray-600/90 shadow-sm"
                       )}
                     >
                       <Icon className="h-4 w-4 flex-shrink-0" />
@@ -345,7 +346,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
 
 
       {/* Footer da Sidebar - Usuário */}
-      <div className="p-3 border-t border-cyan-400/30 bg-cyan-700/50 backdrop-blur-sm">
+      <div className="p-3 border-t border-gray-600/30 backdrop-blur-sm" style={{ backgroundColor: '#00222d' }}>
         {collapsed ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -382,9 +383,9 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
           </DropdownMenu>
         ) : (
           <div className="space-y-2">
-            <div className="flex items-center gap-3 px-2 py-2 rounded-lg bg-cyan-600/50">
+            <div className="flex items-center gap-3 px-2 py-2 rounded-lg bg-gray-700/30">
               <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-cyan-400 text-cyan-900">
+                <AvatarFallback className="bg-gray-600 text-white">
                   {user?.name ? user.name.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
@@ -407,7 +408,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
                 variant="ghost"
                 size="sm"
                 onClick={toggleTheme}
-                className="flex-1 text-white/70 hover:text-white hover:bg-cyan-600/50 transition-all duration-200"
+                className="flex-1 text-white/70 hover:text-white hover:bg-gray-600/50 transition-all duration-200"
               >
                 {theme === 'dark' ? (
                   <Sun className="h-4 w-4" />
