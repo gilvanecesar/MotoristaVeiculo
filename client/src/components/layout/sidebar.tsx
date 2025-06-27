@@ -46,13 +46,8 @@ const navItems = [
     icon: Car
   },
   { 
-    label: "Fretes", 
-    path: "/freights",
-    icon: Truck
-  },
-  { 
     label: "Meus Fretes", 
-    path: "/my-freights",
+    path: "/freights",
     icon: Package
   },
   { 

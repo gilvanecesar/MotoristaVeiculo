@@ -23,7 +23,6 @@ import VehiclesPage from "@/pages/vehicles/index";
 import VehicleForm from "@/pages/vehicles/vehicle-form";
 import ReportsPage from "@/pages/reports";
 import FreightsPage from "@/pages/freights/index";
-import MyFreightsPage from "@/pages/my-freights";
 import FreightForm from "@/pages/freights/freight-form";
 import FreightDetailPage from "@/pages/freights/[id]";
 import SimpleFreightForm from "@/pages/freights/simple-freight-form";
@@ -92,7 +91,6 @@ function Router() {
       <ProtectedRoute path="/vehicles/new" component={VehicleForm} />
       <ProtectedRoute path="/vehicles/:id" component={VehicleForm} />
       <ProtectedRoute path="/freights" component={FreightsPage} />
-      <ProtectedRoute path="/my-freights" component={MyFreightsPage} />
       <ProtectedRoute path="/freights/new" component={FreightForm} />
       <ProtectedRoute path="/freights/:id/edit" component={() => <FreightForm isEditMode={true} />} />
       <ProtectedRoute path="/freights/simple-edit/:id" component={SimpleFreightEdit} />
