@@ -60,6 +60,7 @@ import SettingsPage from "@/pages/settings";
 import PublicFreight from "@/pages/public-freight";
 import PublicComplement from "@/pages/public/complement";
 import WebhookConfig from "@/pages/webhook-config";
+import MyFreightsPage from "@/pages/my-freights";
 
 function Router() {
   return (
