@@ -145,9 +145,15 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Menu "Histórico" removido da sidebar para simplificar navegação
 ✓ Página de faturas integrada com dados reais do OpenPix
 ✓ Problema "R$ NaN" corrigido com validação adequada de valores
+✓ Página "Minha Assinatura" completa criada seguindo padrões do sistema
+✓ Sistema diferencia 3 estados: assinatura ativa, expirada e nunca teve
+✓ Usuários com assinatura expirada têm acesso direto ao botão "Gerar QR Code"
+✓ Interface específica para renovação com detalhes da assinatura anterior
+✓ Avisos visuais para assinaturas próximas do vencimento e expiradas
 - June 27, 2025. OpenPix como método oficial único, interface simplificada
 - June 27, 2025. Removidas opções de Google login e múltiplos planos de preços
 - June 27, 2025. Menu "Histórico" removido, faturas integradas ao OpenPix
+- June 27, 2025. Página "Minha Assinatura" com tratamento completo de estados
 ```
 
 ## User Preferences
