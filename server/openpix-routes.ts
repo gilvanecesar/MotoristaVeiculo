@@ -1,6 +1,6 @@
 import { Express } from 'express';
 import { isAuthenticated } from './middlewares';
-import { createPixCharge, handleOpenPixWebhook, getChargeStatus } from './openpix-service';
+import { createPixCharge, handleOpenPixWebhook, getChargeStatus, listOpenPixCharges, syncOpenPixPayments } from './openpix-service';
 
 /**
  * Configura rotas do OpenPix
@@ -16,6 +16,12 @@ export function setupOpenPixRoutes(app: Express) {
 
   // Consultar status de cobrança
   app.get('/api/openpix/charge/:chargeId', isAuthenticated, getChargeStatus);
+
+  // Listar todas as cobranças (admin)
+  app.get('/api/openpix/charges', isAuthenticated, listOpenPixCharges);
+
+  // Sincronizar pagamentos (admin)
+  app.post('/api/openpix/sync', isAuthenticated, syncOpenPixPayments);
 
   console.log('Rotas do OpenPix configuradas com sucesso');
 }

@@ -203,33 +203,37 @@ export async function handleOpenPixWebhook(req: Request, res: Response) {
           .where(eq(users.id, userId));
 
         // Criar registro da assinatura
-        await db.insert(subscriptions).values({
-          userId: userId,
-          clientId: user.clientId,
-          type: planType,
+        const [newSubscription] = await db.insert(subscriptions).values({
+          user_id: userId,
+          client_id: user.clientId,
+          plan_type: planType,
           status: 'active',
-          startDate: now,
-          endDate: expiresAt,
-          amount: charge.value.toString(),
-          paymentMethod: 'pix_openpix',
-          autoRenew: false
-        });
+          current_period_start: now,
+          current_period_end: expiresAt,
+          cancel_at_period_end: false,
+          metadata: {
+            paymentMethod: 'pix_openpix',
+            openPixChargeId: charge.identifier,
+            amount: charge.value
+          }
+        }).returning();
 
         // Criar registro de invoice
         await db.insert(invoices).values({
-          userId: userId,
-          clientId: user.clientId,
+          user_id: userId,
+          client_id: user.clientId,
+          subscription_id: newSubscription?.id,
           amount: charge.value.toString(),
           status: 'paid',
-          paymentMethod: 'pix_openpix',
           description: `Assinatura ${planType} - OpenPix`,
           metadata: {
             openPixChargeId: charge.identifier,
             correlationID: charge.correlationID,
-            pixEndToEndId: pix.endToEndId || null
+            pixEndToEndId: pix.endToEndId || null,
+            paymentMethod: 'pix_openpix'
           },
-          paidAt: new Date(),
-          dueDate: now
+          paid_at: new Date(),
+          due_date: now
         });
 
         // Enviar email de confirmação
@@ -255,6 +259,171 @@ export async function handleOpenPixWebhook(req: Request, res: Response) {
     console.error('Erro ao processar webhook OpenPix:', error);
     return res.status(500).json({ error: 'Erro interno do servidor' });
   }
+}
+
+/**
+ * Lista todas as cobranças do OpenPix
+ */
+export async function listOpenPixCharges(req: Request, res: Response) {
+  try {
+    if (!openPixConfig.authorization) {
+      return res.status(500).json({ error: 'OpenPix não configurado' });
+    }
+
+    const { skip = 0, limit = 100 } = req.query;
+
+    const response = await axios.get(
+      `${openPixConfig.apiUrl}/charge?skip=${skip}&limit=${limit}`,
+      {
+        headers: {
+          'Authorization': openPixConfig.authorization
+        }
+      }
+    );
+
+    return res.json(response.data);
+
+  } catch (error: any) {
+    console.error('Erro ao listar cobranças:', error.response?.data || error.message);
+    return res.status(500).json({ 
+      error: 'Erro ao listar cobranças',
+      details: error.response?.data?.message || error.message
+    });
+  }
+}
+
+/**
+ * Sincroniza pagamentos do OpenPix com o banco de dados local
+ */
+export async function syncOpenPixPayments(req: Request, res: Response) {
+  try {
+    if (!openPixConfig.authorization) {
+      return res.status(500).json({ error: 'OpenPix não configurado' });
+    }
+
+    console.log('Iniciando sincronização de pagamentos OpenPix...');
+
+    // Buscar cobranças recentes (últimos 30 dias)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const response = await axios.get(
+      `${openPixConfig.apiUrl}/charge?start=${thirtyDaysAgo.toISOString()}&end=${new Date().toISOString()}`,
+      {
+        headers: {
+          'Authorization': openPixConfig.authorization
+        }
+      }
+    );
+
+    const charges = response.data.charges || [];
+    let syncedCount = 0;
+    let errorCount = 0;
+
+    for (const charge of charges) {
+      try {
+        // Processar apenas cobranças completas do QUERO FRETES
+        if (charge.status === 'COMPLETED' && charge.correlationID?.startsWith('querofretes-')) {
+          const userIdMatch = charge.correlationID.match(/querofretes-(\d+)-/);
+          if (userIdMatch) {
+            const userId = parseInt(userIdMatch[1]);
+            
+            // Verificar se já existe uma invoice para esta cobrança
+            const [existingInvoice] = await db.select()
+              .from(invoices)
+              .where(eq(invoices.metadata, { openPixChargeId: charge.identifier }));
+
+            if (!existingInvoice) {
+              // Buscar usuário
+              const [user] = await db.select().from(users).where(eq(users.id, userId));
+              if (user) {
+                await processOpenPixPayment(charge, user);
+                syncedCount++;
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error(`Erro ao processar cobrança ${charge.identifier}:`, error);
+        errorCount++;
+      }
+    }
+
+    console.log(`Sincronização concluída: ${syncedCount} pagamentos sincronizados, ${errorCount} erros`);
+
+    return res.json({
+      success: true,
+      syncedCount,
+      errorCount,
+      totalCharges: charges.length
+    });
+
+  } catch (error: any) {
+    console.error('Erro na sincronização:', error.response?.data || error.message);
+    return res.status(500).json({ 
+      error: 'Erro na sincronização',
+      details: error.response?.data?.message || error.message
+    });
+  }
+}
+
+/**
+ * Processa um pagamento do OpenPix e atualiza o banco de dados
+ */
+async function processOpenPixPayment(charge: any, user: any) {
+  // Extrair tipo de plano
+  const planTypeInfo = charge.additionalInfo?.find((info: any) => info.key === 'planType');
+  const planType = planTypeInfo?.value || 'mensal';
+
+  // Calcular data de expiração
+  const now = new Date();
+  const expiresAt = new Date(now);
+  if (planType === 'anual') {
+    expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+  } else {
+    expiresAt.setMonth(expiresAt.getMonth() + 1);
+  }
+
+  // Ativar assinatura do usuário
+  await db.update(users)
+    .set({
+      subscriptionActive: true,
+      subscriptionType: planType,
+      subscriptionExpiresAt: expiresAt,
+      paymentRequired: false
+    })
+    .where(eq(users.id, user.id));
+
+  // Criar registro da assinatura
+  await db.insert(subscriptions).values({
+    userId: user.id,
+    clientId: user.clientId,
+    type: planType,
+    status: 'active',
+    startDate: now,
+    endDate: expiresAt,
+    amount: charge.value.toString(),
+    paymentMethod: 'pix_openpix',
+    autoRenew: false
+  });
+
+  // Criar registro de invoice
+  await db.insert(invoices).values({
+    userId: user.id,
+    clientId: user.clientId,
+    amount: charge.value.toString(),
+    status: 'paid',
+    paymentMethod: 'pix_openpix',
+    description: `Assinatura ${planType} - OpenPix`,
+    metadata: {
+      openPixChargeId: charge.identifier,
+      correlationID: charge.correlationID
+    },
+    paidAt: new Date(charge.updatedAt || charge.createdAt),
+    dueDate: new Date(charge.createdAt)
+  });
+
+  console.log(`Pagamento OpenPix processado para usuário ${user.id}: ${charge.identifier}`);
 }
 
 /**
