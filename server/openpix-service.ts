@@ -1,13 +1,17 @@
 import { Request, Response } from 'express';
 import axios from 'axios';
+import { db } from './db';
+import { users, invoices, subscriptions } from '../shared/schema';
+import { eq, and } from 'drizzle-orm';
+import { sendSubscriptionEmail } from './email-service';
 
 interface OpenPixConfig {
-  appId: string;
+  authorization: string;
   apiUrl: string;
 }
 
 const openPixConfig: OpenPixConfig = {
-  appId: process.env.OPENPIX_APP_ID || '',
+  authorization: process.env.OPENPIX_AUTHORIZATION || '',
   apiUrl: 'https://api.openpix.com.br/api/v1'
 };
 
@@ -52,7 +56,7 @@ export async function createPixCharge(req: Request, res: Response) {
       return res.status(401).json({ error: 'Usuário não autenticado' });
     }
 
-    if (!openPixConfig.appId) {
+    if (!openPixConfig.authorization) {
       return res.status(500).json({ error: 'OpenPix não configurado' });
     }
 
@@ -95,7 +99,7 @@ export async function createPixCharge(req: Request, res: Response) {
       chargeData,
       {
         headers: {
-          'Authorization': openPixConfig.appId,
+          'Authorization': openPixConfig.authorization,
           'Content-Type': 'application/json'
         }
       }
@@ -160,11 +164,15 @@ export async function handleOpenPixWebhook(req: Request, res: Response) {
     }
 
     const userId = parseInt(userIdMatch[1]);
-    // const user = await storage.getUserById(userId);
-    console.log('Usuário encontrado para processamento:', userId);
+    
+    // Buscar usuário no banco de dados
+    const [user] = await db.select().from(users).where(eq(users.id, userId));
+    if (!user) {
+      console.log('Usuário não encontrado:', userId);
+      return res.status(200).send('OK');
+    }
 
-    // Log do webhook
-    console.log('Webhook OpenPix processado para usuário:', userId);
+    console.log('Usuário encontrado para processamento:', userId);
 
     // Processar pagamento aprovado
     if (status === 'COMPLETED' && pix) {
@@ -183,10 +191,62 @@ export async function handleOpenPixWebhook(req: Request, res: Response) {
         expiresAt.setMonth(expiresAt.getMonth() + 1);
       }
 
-      // Ativar assinatura (implementação pendente - precisa integração com storage)
-      console.log(`Assinatura ${planType} deve ser ativada para usuário ${userId} até ${expiresAt}`);
+      try {
+        // Ativar assinatura do usuário
+        await db.update(users)
+          .set({
+            subscriptionActive: true,
+            subscriptionType: planType,
+            subscriptionExpiresAt: expiresAt,
+            paymentRequired: false
+          })
+          .where(eq(users.id, userId));
 
-      console.log(`Assinatura ${planType} ativada para usuário ${userId} até ${expiresAt}`);
+        // Criar registro da assinatura
+        await db.insert(subscriptions).values({
+          userId: userId,
+          clientId: user.clientId,
+          type: planType,
+          status: 'active',
+          startDate: now,
+          endDate: expiresAt,
+          amount: charge.value.toString(),
+          paymentMethod: 'pix_openpix',
+          autoRenew: false
+        });
+
+        // Criar registro de invoice
+        await db.insert(invoices).values({
+          userId: userId,
+          clientId: user.clientId,
+          amount: charge.value.toString(),
+          status: 'paid',
+          paymentMethod: 'pix_openpix',
+          description: `Assinatura ${planType} - OpenPix`,
+          metadata: {
+            openPixChargeId: charge.identifier,
+            correlationID: charge.correlationID,
+            pixEndToEndId: pix.endToEndId || null
+          },
+          paidAt: new Date(),
+          dueDate: now
+        });
+
+        // Enviar email de confirmação
+        await sendSubscriptionEmail(
+          user.email,
+          user.name,
+          planType,
+          now,
+          expiresAt,
+          charge.value
+        );
+
+        console.log(`Assinatura ${planType} ativada para usuário ${userId} até ${expiresAt}`);
+        
+      } catch (error) {
+        console.error('Erro ao ativar assinatura:', error);
+      }
     }
 
     return res.status(200).send('OK');
@@ -204,7 +264,7 @@ export async function getChargeStatus(req: Request, res: Response) {
   try {
     const { chargeId } = req.params;
 
-    if (!openPixConfig.appId) {
+    if (!openPixConfig.authorization) {
       return res.status(500).json({ error: 'OpenPix não configurado' });
     }
 
@@ -212,7 +272,7 @@ export async function getChargeStatus(req: Request, res: Response) {
       `${openPixConfig.apiUrl}/charge/${chargeId}`,
       {
         headers: {
-          'Authorization': openPixConfig.appId
+          'Authorization': openPixConfig.authorization
         }
       }
     );
