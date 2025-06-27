@@ -21,15 +21,16 @@ export default function SubscribePage() {
   const [activeTab, setActiveTab] = React.useState('details');
   const [location, navigate] = useLocation();
   
-  // Dados da assinatura diretamente do objeto de usuário - Versão simplificada e fixa
+  // Dados da assinatura diretamente do objeto de usuário - Dados reais
   const subscriptionData = {
-    active: true, // Fixando como ativo para evitar problemas
-    isTrial: false,
-    trialUsed: true,
-    planType: 'mensal',
-    expiresAt: '2025-06-12T00:00:00.000Z',
-    formattedExpirationDate: '12/06/2025',
-    paymentMethod: 'cartão de crédito'
+    active: user?.subscriptionActive || false,
+    isTrial: user?.subscriptionType === 'trial',
+    trialUsed: Boolean(user?.subscriptionExpiresAt),
+    planType: user?.subscriptionType || null,
+    expiresAt: user?.subscriptionExpiresAt ? String(user.subscriptionExpiresAt) : null,
+    formattedExpirationDate: user?.subscriptionExpiresAt ? 
+      format(new Date(user.subscriptionExpiresAt), 'dd/MM/yyyy', { locale: pt }) : null,
+    paymentMethod: 'PIX (OpenPix)'
   };
   
   // Verificar parâmetros de URL para exibir mensagens de status
