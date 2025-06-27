@@ -2,14 +2,16 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, CreditCard, RefreshCw, Eye } from "lucide-react";
+import { Loader2, CreditCard, RefreshCw, Eye, Plus } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
 export default function AdminOpenPixPage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [charges, setCharges] = useState<any[]>([]);
+  const [lastCharge, setLastCharge] = useState<any>(null);
 
   const testOpenPixConnection = async () => {
     setIsLoading(true);
@@ -61,6 +63,40 @@ export default function AdminOpenPixPage() {
       });
     } finally {
       setIsSyncing(false);
+    }
+  };
+
+  const createTestCharge = async () => {
+    setIsCreating(true);
+    try {
+      const response = await apiRequest("POST", "/api/openpix/create-charge", {
+        planType: "monthly",
+        value: 4990.00,
+        email: "test@querofretes.com.br",
+        name: "Teste OpenPix"
+      });
+      const data = await response.json();
+      
+      if (response.ok) {
+        setLastCharge(data);
+        toast({
+          title: "Cobrança criada",
+          description: `PIX de R$ 49,90 criado com sucesso!`,
+        });
+        // Recarregar lista de cobranças
+        testOpenPixConnection();
+      } else {
+        throw new Error(data.details || "Erro ao criar cobrança");
+      }
+    } catch (error: any) {
+      console.error("Erro ao criar cobrança:", error);
+      toast({
+        title: "Erro",
+        description: `Falha ao criar cobrança: ${error.message}`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -124,9 +160,82 @@ export default function AdminOpenPixPage() {
                   </>
                 )}
               </Button>
+
+              <Button 
+                onClick={createTestCharge} 
+                disabled={isCreating}
+                variant="default"
+              >
+                {isCreating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Criando...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Criar PIX Teste (R$ 49,90)
+                  </>
+                )}
+              </Button>
             </div>
           </CardContent>
         </Card>
+
+        {/* Última Cobrança Criada */}
+        {lastCharge && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Cobrança PIX Criada</CardTitle>
+              <CardDescription>
+                Última cobrança gerada - escaneie o QR Code para testar
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <h4 className="font-semibold">Informações da Cobrança</h4>
+                  <div className="space-y-1 text-sm">
+                    <p><strong>Valor:</strong> R$ {lastCharge.charge?.value?.toFixed(2) || '0,00'}</p>
+                    <p><strong>ID:</strong> {lastCharge.charge?.identifier}</p>
+                    <p><strong>Status:</strong> {lastCharge.charge?.status}</p>
+                    <p><strong>Cliente:</strong> {lastCharge.charge?.customer?.name}</p>
+                    <p><strong>Email:</strong> {lastCharge.charge?.customer?.email}</p>
+                  </div>
+                  {lastCharge.charge?.paymentLinkUrl && (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => window.open(lastCharge.charge.paymentLinkUrl, '_blank')}
+                    >
+                      Abrir Link de Pagamento
+                    </Button>
+                  )}
+                </div>
+                <div className="flex flex-col items-center space-y-2">
+                  <h4 className="font-semibold">QR Code PIX</h4>
+                  {lastCharge.charge?.qrCodeImage ? (
+                    <img 
+                      src={lastCharge.charge.qrCodeImage} 
+                      alt="QR Code PIX" 
+                      className="w-48 h-48 border rounded"
+                    />
+                  ) : (
+                    <div className="w-48 h-48 border rounded flex items-center justify-center text-muted-foreground">
+                      QR Code não disponível
+                    </div>
+                  )}
+                  {lastCharge.charge?.brCode && (
+                    <div className="text-xs text-center break-all max-w-48">
+                      <strong>Código PIX:</strong><br />
+                      <code className="text-xs">{lastCharge.charge.brCode}</code>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Lista de Cobranças */}
         {charges.length > 0 && (

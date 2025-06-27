@@ -132,6 +132,11 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ## Recent Changes
 
 ```
+✓ Integração OpenPix completa implementada com valor R$ 4990.00 detectado corretamente
+✓ Página administrativa OpenPix criada em /admin/openpix para testes e gerenciamento
+✓ Menu "OpenPix" adicionado na seção administrativa da sidebar
+✓ Função criar cobrança PIX de teste (R$ 49,90) com QR Code e link de pagamento
+✓ API OpenPix testada com sucesso - conexão funcionando em 907ms
 ✓ Página "Webhooks" administrativa criada em /admin/webhooks com configurações globais
 ✓ Corrigido problema "page not found" no menu Webhooks do painel admin
 ✓ Menu "WhatsApp Config" adicionado na seção de assinatura para administradores e usuários ativos
@@ -143,6 +148,7 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Sistema OpenPix para pagamentos PIX implementado
 ✓ Removed publication and expiration dates from WhatsApp message format
 ✓ Updated all WhatsApp message formatting functions (webhook, freight list, individual freight)
+- June 27, 2025. OpenPix integration fully operational with test charge creation
 - June 26, 2025. Layout improvements, payment banner fixes, and admin webhooks page creation
 ```
 

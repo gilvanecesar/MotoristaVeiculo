@@ -84,6 +84,11 @@ const adminItems = [
     icon: Webhook
   },
   {
+    label: "OpenPix",
+    path: "/admin/openpix",
+    icon: CreditCard
+  },
+  {
     label: "Configurações",
     path: "/admin/settings",
     icon: Settings
