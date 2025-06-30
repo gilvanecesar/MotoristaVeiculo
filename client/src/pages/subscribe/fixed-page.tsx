@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { Check, CreditCard, Loader2 } from "lucide-react";
+import { Check, CreditCard, Loader2, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 // Formata valores monetários
@@ -16,7 +16,7 @@ const currencyFormatter = new Intl.NumberFormat('pt-BR', {
 export default function SubscriptionPageFixed() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [selectedPlan, setSelectedPlan] = useState<"monthly" | "yearly">("monthly");
+  const [selectedPlan, setSelectedPlan] = useState<"monthly">("monthly");
   const [isLoading, setIsLoading] = useState(false);
   const [isPageLoaded, setIsPageLoaded] = useState(false);
 
@@ -30,19 +30,13 @@ export default function SubscriptionPageFixed() {
     subscriptionType: "Mensal"
   };
 
-  // Preços fixos
+  // Preços fixos - Atualizado para R$ 49,90 (plano único)
   const prices = {
     monthly: {
-      value: 99.90,
+      value: 49.90,
       currency: "BRL",
-      label: "Mensal",
+      label: "Plano Oficial",
       savings: 0
-    },
-    yearly: {
-      value: 960.00,
-      currency: "BRL",
-      label: "Anual",
-      savings: 238.80
     }
   };
 
@@ -164,73 +158,109 @@ export default function SubscriptionPageFixed() {
               </CardFooter>
             </Card>
 
-            {/* Opções de Assinatura */}
+            {/* Plano Único de Assinatura */}
             {!subscriptionStatus.active && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Escolha um Plano</CardTitle>
+                  <CardTitle>Assine o QueroFretes</CardTitle>
                   <CardDescription>
-                    Selecione o plano que melhor atende às suas necessidades
+                    Escolha o plano ideal para seu negócio
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Tabs 
-                    defaultValue="monthly" 
-                    value={selectedPlan}
-                    onValueChange={(value) => setSelectedPlan(value as "monthly" | "yearly")}
-                    className="w-full"
-                  >
-                    <TabsList className="grid w-full grid-cols-2 mb-8">
-                      <TabsTrigger value="monthly">Mensal</TabsTrigger>
-                      <TabsTrigger value="yearly">Anual</TabsTrigger>
-                    </TabsList>
-                    
-                    <TabsContent value="monthly">
-                      <div className="grid gap-8 md:grid-cols-1">
-                        <PlanCard
-                          title="Plano Mensal"
-                          description="Acesso a todos os recursos por um mês"
-                          price={prices.monthly.value}
-                          currency={prices.monthly.currency}
-                          interval="mensal"
-                          features={[
-                            "Acesso ilimitado a todos os recursos",
-                            "Integração com WhatsApp",
-                            "Relatórios e estatísticas",
-                            "Suporte prioritário",
-                            "Atualizações gratuitas"
-                          ]}
-                          onSelect={handlePayment}
-                          isLoading={isLoading}
-                          isSelected={true}
-                        />
+                  <div className="grid gap-6 md:grid-cols-2">
+                    {/* Teste Gratuito */}
+                    <Card className="border-muted">
+                      <CardHeader>
+                        <CardTitle className="text-lg">Teste Gratuito</CardTitle>
+                        <CardDescription>7 dias de acesso total</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-3xl font-bold mb-4">R$ 0,00</div>
+                        <ul className="space-y-2 text-sm">
+                          <li className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                            Acesso total por 7 dias
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                            Gerenciamento de fretes
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                            Gestão de motoristas e veículos
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                            Relatórios básicos
+                          </li>
+                        </ul>
+                      </CardContent>
+                      <CardFooter>
+                        <Button 
+                          className="w-full" 
+                          variant="outline"
+                          onClick={handlePayment}
+                          disabled={isLoading}
+                        >
+                          {isLoading ? "Processando..." : "Iniciar período de teste"}
+                        </Button>
+                      </CardFooter>
+                    </Card>
+
+                    {/* Plano Oficial */}
+                    <Card className="border-primary bg-primary/5 relative">
+                      <div className="absolute -top-2 left-1/2 transform -translate-x-1/2">
+                        <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-bold">
+                          Plano Oficial
+                        </span>
                       </div>
-                    </TabsContent>
-                    
-                    <TabsContent value="yearly">
-                      <div className="grid gap-8 md:grid-cols-1">
-                        <PlanCard
-                          title="Plano Anual"
-                          description="Acesso a todos os recursos por um ano"
-                          price={prices.yearly.value}
-                          currency={prices.yearly.currency}
-                          interval="anual"
-                          features={[
-                            "Tudo no plano mensal",
-                            "2 meses grátis",
-                            "Acesso a recursos beta",
-                            "Dados de exportação avançados",
-                            "Suporte VIP"
-                          ]}
-                          discountLabel={`Economize ${currencyFormatter.format(prices.yearly.savings)}`}
-                          onSelect={handlePayment}
-                          isLoading={isLoading}
-                          isSelected={true}
-                          isBestValue
-                        />
-                      </div>
-                    </TabsContent>
-                  </Tabs>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Assinatura Mensal</CardTitle>
+                        <CardDescription>Pague mensalmente</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-3xl font-bold mb-1">
+                          R$ {prices.monthly.value.toFixed(2).replace('.', ',')}
+                          <span className="text-sm font-normal text-muted-foreground">/mês</span>
+                        </div>
+                        <ul className="space-y-2 text-sm mt-4">
+                          <li className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                            Acesso total ao sistema
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                            Fretes ilimitados
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                            Suporte prioritário
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                            Relatórios avançados
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                            Exportação de dados
+                          </li>
+                        </ul>
+                      </CardContent>
+                      <CardFooter>
+                        <Button 
+                          className="w-full"
+                          onClick={handlePayment}
+                          disabled={isLoading}
+                        >
+                          {isLoading ? "Processando..." : "Assinar Plano Mensal"}
+                        </Button>
+                        <p className="text-xs text-center text-muted-foreground mt-2 w-full">
+                          Assinatura processada pelo OpenPix
+                        </p>
+                      </CardFooter>
+                    </Card>
+                  </div>
                 </CardContent>
               </Card>
             )}
