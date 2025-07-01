@@ -200,15 +200,19 @@ export default function AuthPage() {
   };
 
   const onRegisterSubmit = (data: RegisterFormValues) => {
+    console.log("Form data received:", data);
+    
     // Adiciona o profileType selecionado e os campos obrigatórios
     const registerData = {
       email: data.email,
       name: data.name,
       password: data.password!,
-      phone: data.phone,
-      whatsapp: data.whatsapp,
+      phone: data.phone || "",
+      whatsapp: data.whatsapp || "",
       profileType: selectedRole,
     };
+
+    console.log("Register data to send:", registerData);
 
     registerMutation.mutate(registerData, {
       onSuccess: (user) => {
