@@ -1,6 +1,74 @@
-import { Express } from 'express';
+import { Express, Request, Response } from 'express';
 import { isAuthenticated } from './middlewares';
 import { createPixCharge, handleOpenPixWebhook, handleOpenPixRefundWebhook, getChargeStatus, listOpenPixCharges, syncOpenPixPayments, getUserPayments, getUserOpenPixCharges, getOpenPixFinanceStats, getOpenPixSubscriptions, getOpenPixInvoices, getOpenPixWebhookConfigAPI, updateOpenPixWebhookConfigAPI, forcePaymentSync } from './openpix-service';
+import axios from 'axios';
+
+/**
+ * Buscar informações completas da API OpenPix
+ */
+export async function getOpenPixApiInfo(req: Request, res: Response) {
+  try {
+    console.log('=== OPENPIX API INFO REQUEST ===');
+    
+    const apiInfo = {
+      config: {
+        apiUrl: 'https://api.openpix.com.br/api/v1',
+        authorization: process.env.OPENPIX_AUTHORIZATION ? 'Configurado ✓' : 'Não configurado ✗',
+        webhookUrl: process.env.OPENPIX_WEBHOOK_URL || 'Não configurado',
+        environment: process.env.NODE_ENV || 'development'
+      },
+      endpoints: {
+        charges: '/charge',
+        webhook: '/webhook/openpix',
+        refunds: '/reembolso',
+        customers: '/customer',
+        subscriptions: '/subscription'
+      },
+      status: {
+        apiConnection: 'Conectado',
+        lastUpdate: new Date().toISOString(),
+        totalCharges: 0,
+        totalRevenue: 0
+      },
+      features: {
+        pixPayments: 'Ativo',
+        webhooks: 'Configurado',
+        refunds: 'Suportado',
+        qrCode: 'Geração automática',
+        brCode: 'Código copia-e-cola'
+      }
+    };
+
+    // Buscar estatísticas reais
+    try {
+      const charges = await axios.get(`${process.env.OPENPIX_API_URL || 'https://api.openpix.com.br/api/v1'}/charge`, {
+        headers: {
+          'Authorization': process.env.OPENPIX_AUTHORIZATION,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (charges.data && charges.data.charges) {
+        apiInfo.status.totalCharges = charges.data.charges.length;
+        apiInfo.status.totalRevenue = charges.data.charges
+          .filter((charge: any) => charge.status === 'COMPLETED')
+          .reduce((sum: number, charge: any) => sum + (charge.value || 0), 0) / 100;
+      }
+    } catch (error) {
+      console.log('Erro ao buscar estatísticas OpenPix:', error);
+      apiInfo.status.apiConnection = 'Erro na conexão';
+    }
+
+    console.log('Informações da API OpenPix:', apiInfo);
+    res.json(apiInfo);
+  } catch (error) {
+    console.error('Erro ao buscar informações da API OpenPix:', error);
+    res.status(500).json({ 
+      error: 'Erro ao buscar informações da API',
+      message: error instanceof Error ? error.message : 'Erro desconhecido'
+    });
+  }
+}
 
 /**
  * Configura rotas do OpenPix
@@ -40,6 +108,9 @@ export function setupOpenPixRoutes(app: Express) {
 
   // Consultar pagamentos do usuário
   app.get('/api/openpix/my-payments', isAuthenticated, getUserPayments);
+
+  // Informações da API OpenPix
+  app.get('/api/openpix/info', getOpenPixApiInfo);
 
   // ===== ROTAS ADMINISTRATIVAS OPENPIX =====
   
