@@ -4,7 +4,7 @@ import Sidebar from "./sidebar";
 import { Button } from "@/components/ui/button";
 import { Menu, X, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { PaymentBanner } from "@/components/payment-banner";
+
 import { SubscriptionStatusBanner } from "@/components/ui/subscription-status-banner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/use-auth";
@@ -96,7 +96,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
         {/* Banners de status */}
         <div className="flex-shrink-0">
           <SubscriptionStatusBanner />
-          <PaymentBanner />
         </div>
 
         {/* Área de conteúdo */}

@@ -12,7 +12,7 @@ import { useTheme } from "@/lib/theme-provider";
 import { useClientAuth } from "@/lib/auth-context";
 import { useAuth } from "@/hooks/use-auth";
 import { ClientSelector } from "@/components/client-selector";
-import { PaymentBanner } from "@/components/payment-banner";
+
 import { SubscriptionStatusBanner } from "@/components/ui/subscription-status-banner";
 import { useToast } from "@/hooks/use-toast";
 import logoImage from "../../assets/logo.png";
