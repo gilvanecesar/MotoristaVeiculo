@@ -430,3 +430,23 @@ export async function canEditVehicle(req: Request, res: Response, next: NextFunc
   console.log(`[canEditVehicle] Acesso negado para usuário ${req.user.id} editar veículo ${vehicleId}. Vehicle userId: ${vehicle.userId}, Vehicle driverId: ${vehicle.driverId}`);
   res.status(403).json({ message: "Você só pode editar/excluir veículos que cadastrou" });
 }
+
+// Middleware para bloquear motoristas de cadastrar fretes
+export function blockDriverFromFreightCreation(req: Request, res: Response, next: NextFunction) {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Não autenticado" });
+  }
+
+  // Verificar se o usuário tem perfil de motorista
+  if (req.user?.profileType?.toLowerCase() === "motorista") {
+    console.log(`[blockDriverFromFreightCreation] Motorista ${req.user.id} (${req.user.email}) tentou cadastrar frete - bloqueado`);
+    return res.status(403).json({ 
+      message: "Motoristas não podem cadastrar fretes. Apenas visualizar e gerenciar fretes existentes.",
+      code: "DRIVER_FREIGHT_CREATION_BLOCKED"
+    });
+  }
+
+  // Para outros perfis, permitir acesso
+  console.log(`[blockDriverFromFreightCreation] Usuário ${req.user.id} (${req.user.profileType}) autorizado para cadastrar fretes`);
+  next();
+}

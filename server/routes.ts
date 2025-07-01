@@ -39,7 +39,8 @@ import {
   hasFreightAccess, 
   hasVehicleAccess,
   canEditDriver,
-  canEditVehicle
+  canEditVehicle,
+  blockDriverFromFreightCreation
 } from "./middlewares";
 import { 
   Driver, 
@@ -627,7 +628,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Criar novo frete (rota principal com verificação de assinatura)
-  app.post("/api/freights", isAuthenticated, async (req: Request, res: Response) => {
+  app.post("/api/freights", isAuthenticated, blockDriverFromFreightCreation, async (req: Request, res: Response) => {
     try {
       const freightData = req.body;
       

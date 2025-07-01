@@ -59,7 +59,36 @@ export function ProtectedRoute({
   // Verifica se o usuário é motorista (acesso gratuito)
   if (user.profileType === "driver" || user.profileType === "motorista") {
     console.log(`Permitindo acesso ao motorista para a rota ${path}`);
-    // Permite acesso à rota para motoristas - sem restrições
+    
+    // Bloquear motoristas de acessar rotas de criação de fretes
+    const blockedDriverRoutes = [
+      '/freights/new',
+      '/freights/create'
+    ];
+    
+    if (blockedDriverRoutes.includes(path)) {
+      console.log(`Motorista ${user.id} tentou acessar rota bloqueada: ${path}`);
+      return (
+        <Route path={path}>
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="max-w-md p-6 bg-white rounded-lg shadow-lg text-center">
+              <h2 className="text-xl font-bold mb-4 text-red-600">Acesso Restrito</h2>
+              <p className="text-gray-600 mb-4">
+                Motoristas não podem cadastrar fretes. Você pode apenas visualizar e gerenciar fretes existentes.
+              </p>
+              <button 
+                onClick={() => window.history.back()} 
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                Voltar
+              </button>
+            </div>
+          </div>
+        </Route>
+      );
+    }
+    
+    // Permite acesso às outras rotas para motoristas
     return <Route path={path} component={Component} />;
   }
 
