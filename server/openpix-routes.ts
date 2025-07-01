@@ -48,5 +48,67 @@ export function setupOpenPixRoutes(app: Express) {
   // Atualizar configuração do webhook WhatsApp (Admin)
   app.post('/api/openpix/webhook/config', isAuthenticated, updateOpenPixWebhookConfigAPI);
 
+  // ===== ROTA DE TESTE PARA REEMBOLSO PIX =====
+  
+  // Simular reembolso PIX para teste (Admin only)
+  app.post('/api/openpix/test-refund', isAuthenticated, async (req, res) => {
+    try {
+      const { correlationId } = req.body;
+      
+      if (!correlationId) {
+        return res.status(400).json({ error: 'correlationId é obrigatório' });
+      }
+
+      console.log(`🧪 Testando reembolso PIX para correlationId: ${correlationId}`);
+
+      // Simular webhook de reembolso
+      const mockRefundWebhook = {
+        charge: {
+          correlationID: correlationId,
+          status: 'REFUND'
+        },
+        pix: null // Para reembolsos, o pix pode ser null
+      };
+
+      // Chamar o handler do webhook diretamente
+      const { handleOpenPixWebhook } = require('./openpix-service');
+      const mockReq = {
+        body: mockRefundWebhook
+      } as any;
+
+      const mockRes = {
+        status: (code: number) => ({
+          json: (data: any) => {
+            console.log(`Webhook de reembolso processado com status: ${code}`);
+            return res.status(200).json({ 
+              success: true, 
+              message: 'Reembolso PIX simulado com sucesso',
+              correlationId,
+              webhookResponse: data 
+            });
+          },
+          send: (data: any) => {
+            console.log(`Webhook de reembolso processado: ${data}`);
+            return res.status(200).json({ 
+              success: true, 
+              message: 'Reembolso PIX simulado com sucesso',
+              correlationId,
+              webhookResponse: data 
+            });
+          }
+        })
+      } as any;
+
+      await handleOpenPixWebhook(mockReq, mockRes);
+
+    } catch (error: any) {
+      console.error('Erro ao testar reembolso:', error);
+      return res.status(500).json({ 
+        error: 'Erro interno do servidor',
+        details: error.message 
+      });
+    }
+  });
+
   console.log('Rotas do OpenPix configuradas com sucesso');
 }
