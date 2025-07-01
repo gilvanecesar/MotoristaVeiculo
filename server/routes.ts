@@ -263,7 +263,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Criar novo motorista
-  app.post("/api/drivers", hasActiveSubscription, async (req: Request, res: Response) => {
+  app.post("/api/drivers", allowDriverAccess, async (req: Request, res: Response) => {
     try {
       const driverData: InsertDriver = {
         ...req.body
