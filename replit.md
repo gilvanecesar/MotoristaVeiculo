@@ -211,6 +211,10 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Menu "Meus Fretes" removido da sidebar para motoristas (acesso apenas a: Motoristas, Veículos, Fretes, Relatórios)
 ✓ Rota /my-freights bloqueada para perfil motorista via middleware de proteção
 ✓ Tratamento de erro melhorado: CPF duplicado retorna mensagem específica no frontend
+✓ Nova página de checkout criada seguindo design exato da imagem fornecida pelo usuário
+✓ Interface limpa e focada com: botão voltar, título "Finalizar Assinatura", card do plano, etapas PIX
+✓ Layout responsivo mantendo elementos visuais idênticos ao mockup original
+✓ Integração completa com OpenPix mantendo funcionalidade de geração de QR Code
 - June 27, 2025. OpenPix como método oficial único, interface simplificada
 - June 27, 2025. Removidas opções de Google login e múltiplos planos de preços
 - June 27, 2025. Menu "Histórico" removido, faturas integradas ao OpenPix

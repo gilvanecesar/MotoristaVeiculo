@@ -45,7 +45,7 @@ import AdminWebhooksPage from "@/pages/admin/webhooks/index";
 import AdminOpenPixPage from "@/pages/admin/openpix/index";
 import PaymentSuccessPage from "@/pages/payment-success";
 import PaymentCancelPage from "@/pages/payment-cancel";
-import CheckoutPage from "@/pages/checkout";
+import CheckoutPage from "@/pages/checkout-new";
 import SubscribePage from "@/pages/subscribe";
 import SubscribePlansPage from "@/pages/subscribe/plans";
 import SubscribeFixedPage from "@/pages/subscribe/fixed";
