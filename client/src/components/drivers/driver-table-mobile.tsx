@@ -1,3 +1,4 @@
+import React from "react";
 import { DriverWithVehicles, Vehicle, VEHICLE_TYPES, BODY_TYPES } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -189,8 +190,8 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
                     const whatsappLink = formatWhatsAppLink(driver.whatsapp);
                     
                     return (
-                      <>
-                        <TableRow key={driver.id} className="hover:bg-slate-50">
+                      <React.Fragment key={`driver-${driver.id}`}>
+                        <TableRow className="hover:bg-slate-50">
                           <TableCell className="p-2 align-middle text-center">
                             <Button
                               variant="ghost"
@@ -334,7 +335,7 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
                             </TableCell>
                           </TableRow>
                         )}
-                      </>
+                      </React.Fragment>
                     );
                   })}
                 </TableBody>
