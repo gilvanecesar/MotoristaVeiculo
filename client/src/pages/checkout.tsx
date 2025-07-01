@@ -135,9 +135,7 @@ export default function Checkout() {
 
   // Iniciar monitoramento quando PIX for criado
   useEffect(() => {
-    if (pixCharge?.charge?.identifier && paymentStatus === 'pending') {
-      setPaymentStatus('processing');
-      
+    if (pixCharge?.charge?.identifier && paymentStatus === 'processing') {
       // Verificar imediatamente
       checkPaymentStatus();
       
@@ -151,7 +149,7 @@ export default function Checkout() {
         intervalRef.current = null;
       }
     };
-  }, [pixCharge]);
+  }, [pixCharge, paymentStatus]);
 
   const createPixPayment = async () => {
     setIsCreatingPayment(true);
