@@ -173,7 +173,7 @@ export default function DriverForm() {
         description: "Motorista cadastrado com sucesso! Redirecionando para fretes...",
       });
       // Para perfil motorista, redirecionar para fretes
-      navigate("/fretes");
+      navigate("/freights");
     },
     onError: (error) => {
       toast({
