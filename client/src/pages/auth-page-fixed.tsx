@@ -61,12 +61,32 @@ export default function AuthPage() {
   // Redirecionamento se o usuário já estiver logado
   useEffect(() => {
     if (user) {
-      // Se o usuário tem assinatura ativa, redireciona para a página de dashboard/home
-      if (user.subscriptionActive) {
+      // Se for motorista, verificar se já tem cadastro de motorista
+      if (user.profileType === USER_TYPES.DRIVER) {
+        if (user.driverId) {
+          // Se já tem cadastro de motorista, vai para fretes
+          setLocation("/freights");
+        } else {
+          // Se não tem cadastro de motorista, redireciona para completar cadastro
+          setLocation("/drivers/new");
+        }
+      } else if (user.subscriptionActive) {
+        // Se já tem assinatura ativa, vai para a página Home
         setLocation("/home");
       } else {
-        // Se o usuário está logado mas não tem assinatura, mostra a página de planos
-        setShowPlans(true);
+        // Para perfis não-motorista, verificar se já completou cadastro empresarial
+        if (user.profileType === USER_TYPES.SHIPPER || user.profileType === USER_TYPES.AGENT) {
+          if (!user.clientId) {
+            // Se não tem cadastro empresarial, redireciona para completar
+            setLocation("/onboarding/client-registration");
+          } else {
+            // Se tem cadastro mas não tem assinatura, mostra planos
+            setShowPlans(true);
+          }
+        } else {
+          // Para outros perfis, mostra página de planos
+          setShowPlans(true);
+        }
       }
     }
   }, [user, setLocation]);
@@ -200,8 +220,6 @@ export default function AuthPage() {
   };
 
   const onRegisterSubmit = (data: RegisterFormValues) => {
-    console.log("Form data received:", data);
-    
     // Adiciona o profileType selecionado e os campos obrigatórios
     const registerData = {
       email: data.email,
@@ -211,8 +229,6 @@ export default function AuthPage() {
       whatsapp: data.whatsapp || "",
       profileType: selectedRole,
     };
-
-    console.log("Register data to send:", registerData);
 
     registerMutation.mutate(registerData, {
       onSuccess: (user) => {
