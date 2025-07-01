@@ -48,7 +48,7 @@ import PaymentCancelPage from "@/pages/payment-cancel";
 import CheckoutPage from "@/pages/checkout";
 import SubscribePage from "@/pages/subscribe";
 import SubscribePlansPage from "@/pages/subscribe/plans";
-import SubscribeFixedPage from "@/pages/subscribe/fixed";
+
 import InvoicesPage from "@/pages/invoices";
 import InvoicesFixedPage from "@/pages/invoices/fixed";
 import SubscriptionHistoryFixedPage from "@/pages/subscription-history/fixed";
@@ -77,7 +77,6 @@ function Router() {
       <Route path="/checkout" component={CheckoutPage} />
       <ProtectedRoute path="/subscribe" component={SubscribePage} />
       <ProtectedRoute path="/subscribe/plans" component={SubscribePlansPage} />
-      <ProtectedRoute path="/subscribe/fixed" component={SubscribeFixedPage} />
       <ProtectedRoute path="/subscription-status" component={SubscriptionStatusPage} />
       <ProtectedRoute path="/invoices" component={InvoicesPage} />
       <ProtectedRoute path="/invoices/fixed" component={InvoicesFixedPage} />

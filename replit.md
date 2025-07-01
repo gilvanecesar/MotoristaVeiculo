@@ -207,12 +207,17 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Botão "Verificar Status do Pagamento" adicionado na página de checkout
 ✓ Sistema de fallback manual para resolver problemas de sincronização automática
 ✓ Melhoria na experiência do usuário quando pagamento PIX não sincroniza automaticamente
+✓ Página /subscribe/fixed completamente removida do sistema
+✓ Rota /subscribe agora redireciona sempre para /checkout
+✓ Sistema simplificado com página de checkout como única opção de pagamento
+✓ Arquivo client/src/pages/subscribe/fixed.tsx excluído permanentemente
 - July 01, 2025. Sistema de reembolso automático OpenPix implementado com email e WhatsApp
 - July 01, 2025. Bug crítico de verificação automática de pagamento PIX corrigido
 - July 01, 2025. Problema de sincronização de pagamentos resolvido para comercial@maytransportes.com
 - July 01, 2025. Processos automáticos de ativação de assinatura funcionando corretamente
 - July 01, 2025. Permissões por perfil de usuário implementadas conforme especificações do cliente
 - July 01, 2025. Sistema de verificação manual de pagamento PIX implementado com botão na página de checkout
+- July 01, 2025. Página subscribe/fixed removida completamente, todas as assinaturas redirecionam para checkout
 ```
 
 ## User Preferences

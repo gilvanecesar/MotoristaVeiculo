@@ -87,7 +87,7 @@ export function ProtectedRoute({
       "/payment-success", 
       "/payment-cancel", 
       "/subscribe", 
-      "/subscribe/fixed",
+      "/checkout",
       "/subscribe/plans"
     ];
     
