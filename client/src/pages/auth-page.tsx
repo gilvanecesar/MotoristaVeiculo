@@ -78,7 +78,7 @@ export default function AuthPage() {
   useEffect(() => {
     if (showPlansOnly) {
       const timer = setTimeout(() => {
-        window.location.href = "https://querofretes.com.br/subscribe/fixed";
+        window.location.href = "https://querofretes.com.br/checkout";
       }, 2000);
       
       return () => clearTimeout(timer);
@@ -125,9 +125,9 @@ export default function AuthPage() {
           description: "Bem-vindo à plataforma Quero Fretes",
         });
         
-        // Se o usuário não tem assinatura ativa, redireciona para a página fixa de assinatura
+        // Se o usuário não tem assinatura ativa, redireciona para a página de checkout
         if (!userData.subscriptionActive) {
-          window.location.href = "https://querofretes.com.br/subscribe/fixed";
+          window.location.href = "https://querofretes.com.br/checkout";
         } else if (!userData.clientId) {
           // Se tem assinatura mas não tem cliente associado, redireciona para página de cadastro de cliente
           setLocation("/clients/new");
@@ -265,7 +265,7 @@ export default function AuthPage() {
               
               <Button 
                 className="w-full mt-6" 
-                onClick={() => window.location.href = "https://querofretes.com.br/subscribe/fixed"}
+                onClick={() => window.location.href = "https://querofretes.com.br/checkout"}
               >
                 Continuar para o site oficial
               </Button>

@@ -409,7 +409,7 @@ export default function ClientForm() {
         });
         // Curto atraso para garantir que o toast seja exibido
         setTimeout(() => {
-          navigate("/subscribe/fixed");
+          navigate("/checkout");
         }, 1000);
       } else {
         // Se estiver editando, volta para a lista de clientes

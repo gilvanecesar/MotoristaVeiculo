@@ -373,7 +373,7 @@ export default function Navigation() {
                     
                     {/* Status da Assinatura - Versão fixa */}
                     <DropdownMenuItem asChild>
-                      <Link href="/subscribe/fixed">
+                      <Link href="/checkout">
                         <div className="flex items-center gap-2 w-full">
                           <CreditCard className="h-4 w-4" />
                           <span>Gerenciar Assinatura</span>

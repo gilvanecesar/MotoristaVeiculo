@@ -130,7 +130,7 @@ export function ProtectedRoute({
         "/payment-success", 
         "/payment-cancel", 
         "/subscribe", 
-        "/subscribe/fixed",
+
         "/subscribe/plans"
       ];
       

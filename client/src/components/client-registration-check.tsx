@@ -45,7 +45,7 @@ export function ClientRegistrationCheck() {
         '/payment-success',
         '/payment-cancel',
         '/subscribe',
-        '/subscribe/fixed',
+        '/checkout',
         '/subscribe/plans',
         '/checkout'
       ];
