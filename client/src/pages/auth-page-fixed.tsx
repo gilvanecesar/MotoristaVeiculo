@@ -30,6 +30,8 @@ const registerSchema = userValidator.pick({
   name: true,
   email: true,
   password: true,
+  phone: true,
+  whatsapp: true,
   profileType: true,
 });
 
@@ -85,6 +87,8 @@ export default function AuthPage() {
       name: "",
       email: "",
       password: "",
+      phone: "",
+      whatsapp: "",
       profileType: USER_TYPES.SHIPPER,
     },
   });
@@ -568,6 +572,34 @@ export default function AuthPage() {
                               <FormLabel>E-mail</FormLabel>
                               <FormControl>
                                 <Input placeholder="seu@email.com" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={registerForm.control}
+                          name="phone"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Telefone</FormLabel>
+                              <FormControl>
+                                <Input placeholder="(11) 99999-9999" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={registerForm.control}
+                          name="whatsapp"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>WhatsApp</FormLabel>
+                              <FormControl>
+                                <Input placeholder="(11) 99999-9999" {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
