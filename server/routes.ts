@@ -2727,19 +2727,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`💰 Processando reembolso confirmado - correlationID: ${correlationID}, value: ${value}, refundId: ${refundId}`);
 
-      // Buscar o pagamento pela correlationID
-      const payment = await storage.getPaymentByCorrelationId(correlationID);
+      // Buscar o pagamento pela correlationID usando SQL direto
+      const { pool } = await import('./db');
+      const paymentResult = await pool.query(
+        `SELECT * FROM payments WHERE metadata->>'correlationID' = $1 LIMIT 1`,
+        [correlationID]
+      );
       
-      if (!payment) {
+      if (paymentResult.rows.length === 0) {
         console.log(`❌ Pagamento não encontrado para correlationID: ${correlationID}`);
         return res.status(404).json({ error: 'Pagamento não encontrado' });
       }
+      
+      const payment = paymentResult.rows[0];
 
       // Buscar o usuário
-      const user = await storage.getUserById(payment.userId);
+      const user = await storage.getUserById(payment.user_id);
       
       if (!user) {
-        console.log(`❌ Usuário não encontrado para o pagamento: ${payment.userId}`);
+        console.log(`❌ Usuário não encontrado para o pagamento: ${payment.user_id}`);
         return res.status(404).json({ error: 'Usuário não encontrado' });
       }
 
