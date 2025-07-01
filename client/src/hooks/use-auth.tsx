@@ -62,26 +62,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Força atualização do cache com os dados do usuário
       queryClient.setQueryData(["/api/user"], user);
       
-      // Redireciona após login baseado no status do usuário
+      // Aguarda um momento para o cache ser atualizado
       setTimeout(() => {
-        // Se motorista, vai para /freights
-        if (user.profileType === 'motorista' || user.profileType === 'driver') {
-          console.log("REDIRECIONANDO motorista para /freights");
-          window.location.href = "/freights";
-          return;
-        }
+        // Força uma nova navegação para garantir que funcione
+        const targetUrl = user.profileType === 'motorista' || user.profileType === 'driver' 
+          ? "/freights"
+          : user.subscriptionActive 
+            ? "/home" 
+            : "/checkout?plan=monthly";
         
-        // Se usuário com assinatura ativa, vai para /home
-        if (user.subscriptionActive) {
-          console.log("REDIRECIONANDO para /home - usuário com assinatura ativa");
-          window.location.href = "/home";
-          return;
-        }
-        
-        // Se usuário sem assinatura, vai para checkout
-        console.log("REDIRECIONANDO para checkout - usuário sem assinatura ativa");
-        window.location.href = "/checkout?plan=monthly";
-      }, 200);
+        console.log("FORÇANDO REDIRECIONAMENTO para:", targetUrl);
+        window.location.replace(targetUrl);
+      }, 300);
     },
     onError: (error: Error) => {
       toast({
