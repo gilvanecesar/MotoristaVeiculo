@@ -124,10 +124,25 @@ export default function AuthPage() {
             setLocation("/home");
           }, 100);
         } else {
-          // Se não tem assinatura ativa e não é motorista, mostra página de planos
-          console.log("MOSTRANDO planos - usuário sem assinatura ativa");
-          setShowPlans(true);
-          setSubscriptionRequired(true);
+          // Para perfis não-motorista, verificar se já completou cadastro empresarial
+          if (user.profileType === USER_TYPES.SHIPPER || user.profileType === USER_TYPES.AGENT) {
+            // Verificar se já tem clientId (cadastro empresarial completo)
+            if (!user.clientId) {
+              // Se não tem cadastro empresarial, redireciona para completar
+              console.log("REDIRECIONANDO para cadastro empresarial - clientId não encontrado");
+              setLocation("/onboarding/client-registration");
+            } else {
+              // Se tem cadastro mas não tem assinatura, mostra planos
+              console.log("MOSTRANDO planos - cadastro completo mas sem assinatura");
+              setShowPlans(true);
+              setSubscriptionRequired(true);
+            }
+          } else {
+            // Para outros perfis, mostra página de planos
+            console.log("MOSTRANDO planos - usuário sem assinatura ativa");
+            setShowPlans(true);
+            setSubscriptionRequired(true);
+          }
         }
       },
     });
@@ -206,13 +221,19 @@ export default function AuthPage() {
           // Redireciona para a página de cadastro de motoristas
           setLocation("/drivers/new");
         } else {
-          // Para outros tipos de perfil, mostra a página de planos
+          // Para outros tipos de perfil, redireciona para página de cadastro específica
           toast({
             title: "Conta criada com sucesso",
-            description: "Para continuar, é necessário assinar um plano",
+            description: "Agora complete seu cadastro empresarial para continuar.",
           });
-          // Após o cadastro, exibe a página de planos
-          setShowPlans(true);
+          
+          // Redireciona para página de cadastro baseada no perfil
+          if (selectedRole === USER_TYPES.SHIPPER || selectedRole === USER_TYPES.AGENT) {
+            setLocation("/onboarding/client-registration");
+          } else {
+            // Para outros perfis, mostra página de planos temporariamente
+            setShowPlans(true);
+          }
         }
       },
     });
