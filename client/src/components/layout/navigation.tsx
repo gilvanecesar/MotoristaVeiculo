@@ -183,13 +183,13 @@ export default function Navigation() {
     }
     // Se for motorista, tem acesso específico
     else if (isDriver) {
-      // Motoristas veem home, fretes disponíveis, complementos, seus dados e seus veículos
+      // Motoristas veem home, fretes disponíveis, seus dados, veículos e relatórios
       menuItems = [
         navItems[0],  // Home
         navItems[2],  // Motoristas (seus dados)
         navItems[3],  // Veículos
         navItems[4],  // Fretes
-        navItems[6]   // Complementos
+        navItems[7]   // Relatórios
       ];
     } 
     // Se for embarcador com assinatura ativa

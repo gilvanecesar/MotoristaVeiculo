@@ -195,7 +195,9 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Sistema de badges coloridos para status e origem dos dados (OpenPix vs Local)
 ✓ Permissões específicas implementadas para perfil motorista (acesso restrito)
 ✓ Middleware canCreateFreight criado para bloquear criação de fretes por motoristas
-✓ Sistema de menus na sidebar filtrado por perfil de usuário (motorista vê apenas: Motoristas, Meus Fretes, Relatórios)
+✓ Sistema de menus na sidebar filtrado por perfil de usuário (motorista vê apenas: Motoristas, Veículos, Fretes, Relatórios)
+✓ Rota /my-freights bloqueada para motoristas com redirecionamento automático para /freights
+✓ Navegação mobile ajustada com permissões consistentes para motoristas
 ✓ Mensagem de marketing atualizada: "PAGUE APENAS 49,90 e tenha acesso a todas as funções do sistema"
 - July 01, 2025. Sistema de reembolso automático OpenPix implementado com email e WhatsApp
 - July 01, 2025. Bug crítico de verificação automática de pagamento PIX corrigido

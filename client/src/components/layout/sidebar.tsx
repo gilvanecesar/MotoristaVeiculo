@@ -186,7 +186,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   
   // Filtrar menus baseado no perfil
   const availableNavItems = showLimitedMenus 
-    ? navItems.filter(item => ["Motoristas", "Meus Fretes", "Relatórios"].includes(item.label))
+    ? navItems.filter(item => ["Motoristas", "Veículos", "Fretes", "Relatórios"].includes(item.label))
     : navItems;
 
   const isActive = (path: string) => {

@@ -58,8 +58,18 @@ export function ProtectedRoute({
 
   // Verifica se o usuário é motorista (acesso gratuito)
   if (user.profileType === "driver" || user.profileType === "motorista") {
+    // Motoristas não podem acessar a página "Meus Fretes"
+    if (path === "/my-freights") {
+      console.log("Bloqueando acesso do motorista à rota /my-freights");
+      return (
+        <Route path={path}>
+          <Redirect to="/freights" />
+        </Route>
+      );
+    }
+    
     console.log(`Permitindo acesso ao motorista para a rota ${path}`);
-    // Permite acesso à rota para motoristas - sem restrições
+    // Permite acesso à rota para motoristas - com restrições específicas
     return <Route path={path} component={Component} />;
   }
 
