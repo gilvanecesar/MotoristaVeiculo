@@ -71,10 +71,11 @@ export function ProtectedRoute({
   if (user.profileType === "driver" || user.profileType === "motorista") {
     console.log(`Permitindo acesso ao motorista para a rota ${path}`);
     
-    // Bloquear motoristas de acessar rotas de criação de fretes
+    // Bloquear motoristas de acessar rotas de criação de fretes e "Meus Fretes"
     const blockedDriverRoutes = [
       '/freights/new',
-      '/freights/create'
+      '/freights/create',
+      '/my-freights'
     ];
     
     if (blockedDriverRoutes.includes(path)) {
