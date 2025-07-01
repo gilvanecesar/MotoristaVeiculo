@@ -61,6 +61,8 @@ import PublicFreight from "@/pages/public-freight";
 import PublicComplement from "@/pages/public/complement";
 import WebhookConfig from "@/pages/webhook-config";
 import MyFreightsPage from "@/pages/my-freights";
+import ClientRegistrationPage from "@/pages/onboarding/client-registration";
+import OnboardingLayout from "@/components/layout/onboarding-layout";
 
 function Router() {
   return (
@@ -88,6 +90,11 @@ function Router() {
       <ProtectedRoute path="/drivers" component={DriversPage} />
       <ProtectedRoute path="/drivers/new" component={DriverForm} />
       <ProtectedRoute path="/drivers/:id" component={DriverForm} />
+      <Route path="/onboarding/client-registration" component={() => (
+        <OnboardingLayout>
+          <ClientRegistrationPage />
+        </OnboardingLayout>
+      )} />
       <ProtectedRoute path="/vehicles" component={VehiclesPage} />
       <ProtectedRoute path="/vehicles/new" component={VehicleForm} />
       <ProtectedRoute path="/vehicles/:id" component={VehicleForm} />
