@@ -190,6 +190,16 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Integração funcional: pagamento PIX → ativação assinatura → notificação WhatsApp
 ✓ Página de webhooks com seção dedicada para configuração OpenPix WhatsApp
 ✓ Sistema testado e validado com pagamentos reais processados corretamente
+✓ Controle granular de acesso para perfil motorista implementado completamente
+✓ Motoristas podem visualizar fretes e contatos WhatsApp/telefone mas não criar/editar
+✓ Middleware blockDriverFromFreightEdit aplicado em todas as rotas de edição de fretes
+✓ Sistema de redirecionamento obrigatório para cadastro de motorista implementado
+✓ Hook useDriverRegistration criado para verificar status de cadastro
+✓ Rota /api/drivers/by-user/:userId para buscar motorista por userId
+✓ Cadastro de motorista com userId automático do usuário logado funcionando
+✓ Menus "Fretes" e "Meus Fretes" habilitados para perfil motorista
+✓ Banner de plano premium removido para motoristas (não precisam assinar)
+✓ Dados de motorista salvos corretamente: gilvane cesar silva2 (ID: 43, User: 353)
 - June 27, 2025. OpenPix como método oficial único, interface simplificada
 - June 27, 2025. Removidas opções de Google login e múltiplos planos de preços
 - June 27, 2025. Menu "Histórico" removido, faturas integradas ao OpenPix
@@ -199,6 +209,7 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 - June 27, 2025. Sidebar redesenhada com cor específica #00222d, fontes brancas e elementos visuais otimizados
 - June 27, 2025. Mobile optimization: responsive layouts, touch-friendly forms, and optimized spacing for smartphones
 - June 30, 2025. Sistema de notificação WhatsApp automática implementado com webhook OpenPix configurável
+- July 01, 2025. Controle granular de acesso para motoristas: visualização permitida, criação/edição bloqueada
 ```
 
 ## User Preferences

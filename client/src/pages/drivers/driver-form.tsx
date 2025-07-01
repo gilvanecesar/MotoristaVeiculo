@@ -167,11 +167,13 @@ export default function DriverForm() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/drivers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/drivers/by-user"] });
       toast({
-        title: "Sucesso",
-        description: "Motorista cadastrado com sucesso!",
+        title: "Cadastro concluído com sucesso!",
+        description: "Motorista cadastrado com sucesso! Redirecionando para fretes...",
       });
-      navigate("/drivers");
+      // Para perfil motorista, redirecionar para fretes
+      navigate("/fretes");
     },
     onError: (error) => {
       toast({

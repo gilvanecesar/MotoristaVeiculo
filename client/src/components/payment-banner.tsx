@@ -14,8 +14,8 @@ export function PaymentBanner() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  // Não mostrar o banner para administradores ou usuários com assinatura ativa
-  if (!user || user.profileType === 'admin' || user.subscriptionActive) {
+  // Não mostrar o banner para administradores, motoristas ou usuários com assinatura ativa
+  if (!user || user.profileType === 'admin' || user.profileType === 'motorista' || user.subscriptionActive) {
     return null;
   }
 
