@@ -1,6 +1,6 @@
 import { Express } from 'express';
 import { isAuthenticated } from './middlewares';
-import { createPixCharge, handleOpenPixWebhook, getChargeStatus, listOpenPixCharges, syncOpenPixPayments, getUserPayments, getUserOpenPixCharges, getOpenPixFinanceStats, getOpenPixSubscriptions, getOpenPixInvoices, getOpenPixWebhookConfigAPI, updateOpenPixWebhookConfigAPI } from './openpix-service';
+import { createPixCharge, handleOpenPixWebhook, getChargeStatus, listOpenPixCharges, syncOpenPixPayments, getUserPayments, getUserOpenPixCharges, getOpenPixFinanceStats, getOpenPixSubscriptions, getOpenPixInvoices, getOpenPixWebhookConfigAPI, updateOpenPixWebhookConfigAPI, forcePaymentSync } from './openpix-service';
 
 /**
  * Configura rotas do OpenPix
@@ -25,6 +25,9 @@ export function setupOpenPixRoutes(app: Express) {
 
   // Sincronizar pagamentos (admin)
   app.post('/api/openpix/sync', isAuthenticated, syncOpenPixPayments);
+
+  // Forçar sincronização de um pagamento específico
+  app.post('/api/openpix/force-sync/:chargeId', isAuthenticated, forcePaymentSync);
 
   // Consultar pagamentos do usuário
   app.get('/api/openpix/my-payments', isAuthenticated, getUserPayments);

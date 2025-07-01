@@ -14,6 +14,7 @@ export default function Checkout() {
   const [isCreatingPayment, setIsCreatingPayment] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'processing' | 'completed'>('pending');
   const [isCheckingPayment, setIsCheckingPayment] = useState(false);
+  const [isManualCheck, setIsManualCheck] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   
   // Get the plan from URL query parameter
@@ -236,6 +237,55 @@ export default function Checkout() {
     }
   };
 
+  // Função para verificar status manualmente
+  const manualStatusCheck = async () => {
+    if (!pixCharge?.charge?.identifier) return;
+
+    setIsManualCheck(true);
+    try {
+      console.log('Verificação manual iniciada para:', pixCharge.charge.identifier);
+
+      const response = await apiRequest("POST", `/api/openpix/force-sync/${pixCharge.charge.identifier}`);
+      
+      if (response.success) {
+        console.log('Pagamento processado com sucesso!');
+        setPaymentStatus('completed');
+        
+        // Limpar intervalo automático
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+        
+        toast({
+          title: "Pagamento confirmado!",
+          description: "Sua assinatura foi ativada com sucesso. Redirecionando...",
+        });
+        
+        // Redirecionar para home
+        setTimeout(() => {
+          console.log('Redirecionando para /home...');
+          navigate("/home");
+        }, 1000);
+      } else {
+        toast({
+          title: "Pagamento pendente",
+          description: response.message || "Pagamento ainda não foi confirmado",
+          variant: "default",
+        });
+      }
+    } catch (error: any) {
+      console.error('Erro na verificação manual:', error);
+      toast({
+        title: "Erro na verificação",
+        description: "Erro ao verificar status do pagamento",
+        variant: "destructive",
+      });
+    } finally {
+      setIsManualCheck(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/30 flex items-center justify-center p-3 sm:p-4">
       <div className="w-full max-w-2xl space-y-4 sm:space-y-6">
@@ -438,10 +488,34 @@ export default function Checkout() {
               </div>
 
               {/* Status Check */}
-              <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+              <div className="mt-6 p-4 bg-muted/50 rounded-lg space-y-3">
                 <p className="text-sm text-center text-muted-foreground">
                   Após o pagamento, sua assinatura será ativada automaticamente.
                   Você receberá uma confirmação por email.
+                </p>
+                
+                {/* Botão de verificação manual */}
+                <div className="flex justify-center">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={manualStatusCheck}
+                    disabled={isManualCheck || paymentStatus === 'completed'}
+                    className="text-xs"
+                  >
+                    {isManualCheck ? (
+                      <>
+                        <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                        Verificando...
+                      </>
+                    ) : (
+                      "Verificar Status do Pagamento"
+                    )}
+                  </Button>
+                </div>
+                
+                <p className="text-xs text-center text-muted-foreground">
+                  Se você já pagou, clique no botão acima para verificar
                 </p>
               </div>
             </CardContent>

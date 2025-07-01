@@ -500,6 +500,84 @@ async function processOpenPixPayment(charge: any, user: any) {
 }
 
 /**
+ * Força sincronização manual de um pagamento específico
+ */
+export async function forcePaymentSync(req: Request, res: Response) {
+  try {
+    const { chargeId } = req.params;
+    const userId = req.user?.id;
+
+    if (!chargeId) {
+      return res.status(400).json({ error: 'ID da cobrança é obrigatório' });
+    }
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Usuário não autenticado' });
+    }
+
+    console.log(`Forçando sincronização do pagamento ${chargeId} para usuário ${userId}`);
+
+    // Buscar status atual na OpenPix
+    const response = await axios.get(
+      `${openPixConfig.apiUrl}/charge/${chargeId}`,
+      {
+        headers: {
+          'Authorization': openPixConfig.authorization
+        }
+      }
+    );
+
+    const charge = response.data.charge;
+    
+    if (!charge) {
+      return res.status(404).json({ error: 'Cobrança não encontrada na OpenPix' });
+    }
+
+    console.log('Status da cobrança na OpenPix:', charge.status);
+
+    // Se a cobrança foi paga, processar o pagamento
+    if (charge.status === 'COMPLETED' || charge.status === 'PAID') {
+      console.log('Cobrança paga, processando...');
+
+      // Buscar o usuário
+      const [user] = await db.select().from(users).where(eq(users.id, userId));
+      
+      if (!user) {
+        return res.status(404).json({ error: 'Usuário não encontrado' });
+      }
+
+      // Processar o pagamento manualmente
+      await processOpenPixPayment(charge, user);
+
+      return res.json({
+        success: true,
+        message: 'Pagamento processado com sucesso!',
+        charge: {
+          status: charge.status,
+          identifier: charge.identifier
+        }
+      });
+    } else {
+      return res.json({
+        success: false,
+        message: `Pagamento ainda não foi confirmado. Status atual: ${charge.status}`,
+        charge: {
+          status: charge.status,
+          identifier: charge.identifier
+        }
+      });
+    }
+
+  } catch (error: any) {
+    console.error('Erro ao forçar sincronização:', error);
+    return res.status(500).json({ 
+      error: 'Erro ao verificar pagamento',
+      details: error.response?.data?.message || error.message
+    });
+  }
+}
+
+/**
  * Consultar status de uma cobrança
  */
 export async function getChargeStatus(req: Request, res: Response) {
