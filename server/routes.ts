@@ -237,6 +237,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Obter motorista por userId
+  app.get("/api/drivers/by-user/:userId", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      
+      // Verificar se o usuário está tentando acessar seu próprio cadastro ou se é admin
+      if (req.user?.id !== userId && req.user?.profileType?.toLowerCase() !== "administrador" && req.user?.profileType?.toLowerCase() !== "admin") {
+        return res.status(403).json({ message: "Acesso negado" });
+      }
+      
+      const driver = await storage.getDriverByUserId(userId);
+      
+      if (!driver) {
+        return res.status(404).json({ message: "Motorista não encontrado" });
+      }
+      
+      res.json(driver);
+    } catch (error) {
+      console.error("Error fetching driver by user:", error);
+      res.status(500).json({ message: "Failed to fetch driver" });
+    }
+  });
+
   // Obter motorista por ID com seus veículos
   app.get("/api/drivers/:id", allowDriverAccess, async (req: Request, res: Response) => {
     try {
