@@ -1,5 +1,4 @@
 import { useAuth } from "@/hooks/use-auth";
-import { useDriverRegistration } from "@/hooks/use-driver-registration";
 import { Loader2 } from "lucide-react";
 import { Redirect, Route } from "wouter";
 
@@ -26,9 +25,8 @@ export function ProtectedRoute({
   component: React.ComponentType<any>;
 }) {
   const { user, isLoading } = useAuth();
-  const { needsDriverRegistration, isLoading: driverLoading } = useDriverRegistration();
 
-  if (isLoading || driverLoading) {
+  if (isLoading) {
     return (
       <Route path={path}>
         <div className="flex items-center justify-center min-h-screen">
@@ -43,15 +41,6 @@ export function ProtectedRoute({
     return (
       <Route path={path}>
         <Redirect to="/auth" />
-      </Route>
-    );
-  }
-
-  // Se usuário é motorista mas ainda não tem cadastro, redireciona para criar cadastro
-  if (needsDriverRegistration && path !== '/drivers/new') {
-    return (
-      <Route path={path}>
-        <Redirect to="/drivers/new" />
       </Route>
     );
   }
@@ -70,37 +59,7 @@ export function ProtectedRoute({
   // Verifica se o usuário é motorista (acesso gratuito)
   if (user.profileType === "driver" || user.profileType === "motorista") {
     console.log(`Permitindo acesso ao motorista para a rota ${path}`);
-    
-    // Bloquear motoristas de acessar rotas de criação de fretes e "Meus Fretes"
-    const blockedDriverRoutes = [
-      '/freights/new',
-      '/freights/create',
-      '/my-freights'
-    ];
-    
-    if (blockedDriverRoutes.includes(path)) {
-      console.log(`Motorista ${user.id} tentou acessar rota bloqueada: ${path}`);
-      return (
-        <Route path={path}>
-          <div className="flex items-center justify-center min-h-screen">
-            <div className="max-w-md p-6 bg-white rounded-lg shadow-lg text-center">
-              <h2 className="text-xl font-bold mb-4 text-red-600">Acesso Restrito</h2>
-              <p className="text-gray-600 mb-4">
-                Motoristas não podem cadastrar fretes. Você pode apenas visualizar e gerenciar fretes existentes.
-              </p>
-              <button 
-                onClick={() => window.history.back()} 
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-              >
-                Voltar
-              </button>
-            </div>
-          </div>
-        </Route>
-      );
-    }
-    
-    // Permite acesso às outras rotas para motoristas
+    // Permite acesso à rota para motoristas - sem restrições
     return <Route path={path} component={Component} />;
   }
 

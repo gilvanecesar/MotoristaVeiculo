@@ -222,24 +222,13 @@ export default function AuthPage() {
               setShowPlans(true);
             });
         } else {
-          // Para outros tipos de perfil (embarcador, transportador, agente), faz login automático
+          // Para outros tipos de perfil, mostra a página de planos
           toast({
             title: "Conta criada com sucesso",
-            description: "Redirecionando para a tela de assinatura...",
+            description: "Para continuar, é necessário assinar um plano",
           });
-          
-          // Faz login automático com os dados do registro
-          loginMutation.mutate({
-            email: registerData.email,
-            password: registerData.password,
-          }, {
-            onSuccess: () => {
-              // Pequeno delay para garantir que o cache seja atualizado
-              setTimeout(() => {
-                setLocation("/checkout?plan=monthly");
-              }, 100);
-            }
-          });
+          // Após o cadastro, exibe a página de planos
+          setShowPlans(true);
         }
       },
     });

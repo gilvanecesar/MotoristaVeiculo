@@ -149,9 +149,6 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
     }
   };
   
-  // Debug: verificar estado do usuário
-  console.log("Estado completo do user no sidebar:", user);
-  
   // Verificar o tipo de perfil do usuário
   const isAdmin = user?.profileType === "administrador" || user?.profileType === "admin";
   const isDriver = user?.profileType === "motorista" || user?.profileType === "driver";
@@ -189,7 +186,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   
   // Filtrar menus baseado no perfil
   const availableNavItems = showLimitedMenus 
-    ? navItems.filter(item => ["Motoristas", "Veículos", "Fretes", "Relatórios"].includes(item.label))
+    ? navItems.filter(item => ["Motoristas", "Veículos", "Relatórios"].includes(item.label))
     : navItems;
 
   const isActive = (path: string) => {

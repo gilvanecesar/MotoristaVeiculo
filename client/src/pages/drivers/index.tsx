@@ -34,11 +34,6 @@ export default function DriversPage() {
       return true;
     }
     
-    // Motoristas podem criar novos motoristas (acesso gratuito)
-    if (user?.profileType?.toLowerCase() === "motorista") {
-      return true;
-    }
-    
     // Embarcadores (shipper) e agentes podem criar motoristas
     if (user?.profileType?.toLowerCase() === "shipper" || 
         user?.profileType?.toLowerCase() === "embarcador" || 

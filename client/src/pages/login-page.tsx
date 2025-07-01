@@ -108,24 +108,7 @@ export default function LoginPage() {
         } else {
           // Se não tem assinatura ativa e não é motorista, redireciona para checkout
           console.log("REDIRECIONANDO para checkout - usuário sem assinatura ativa");
-          console.log("Selected plan:", selectedPlan);
-          console.log("URL final:", `/checkout?plan=${selectedPlan}`);
-          
-          // Força redirecionamento usando navigate do Wouter
-          const targetUrl = `/checkout?plan=${selectedPlan}`;
-          console.log("EXECUTANDO REDIRECIONAMENTO VIA WOUTER para:", targetUrl);
-          
-          // Usa navigate do Wouter + window.location como backup
-          setTimeout(() => {
-            navigate(targetUrl);
-            console.log("Navegação via Wouter executada");
-            
-            // Backup com window.location após delay
-            setTimeout(() => {
-              console.log("Executando backup com window.location");
-              window.location.href = targetUrl;
-            }, 200);
-          }, 100);
+          window.location.href = `/checkout?plan=${selectedPlan}`;
         }
       },
     });

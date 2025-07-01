@@ -190,31 +190,6 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Integração funcional: pagamento PIX → ativação assinatura → notificação WhatsApp
 ✓ Página de webhooks com seção dedicada para configuração OpenPix WhatsApp
 ✓ Sistema testado e validado com pagamentos reais processados corretamente
-✓ Controle granular de acesso para perfil motorista implementado completamente
-✓ Motoristas podem visualizar fretes e contatos WhatsApp/telefone mas não criar/editar
-✓ Middleware blockDriverFromFreightEdit aplicado em todas as rotas de edição de fretes
-✓ Sistema de redirecionamento obrigatório para cadastro de motorista implementado
-✓ Hook useDriverRegistration criado para verificar status de cadastro
-✓ Rota /api/drivers/by-user/:userId para buscar motorista por userId
-✓ Cadastro de motorista com userId automático do usuário logado funcionando
-✓ Menus "Fretes" e "Meus Fretes" habilitados para perfil motorista
-✓ Banner de plano premium removido para motoristas (não precisam assinar)
-✓ Dados de motorista salvos corretamente: gilvane cesar silva2 (ID: 43, User: 353)
-✓ Fluxo de cadastro otimizado: registro → login automático → redirecionamento direto para /checkout?plan=monthly
-✓ Usuários sem assinatura ativa redirecionados diretamente para checkout PIX (R$ 49,90)
-✓ Problema de autenticação resolvido: sidebar não bloqueia mais durante carregamento
-✓ Páginas de checkout tratadas como públicas para evitar loops de redirecionamento
-✓ Loop de redirecionamento identificado: página /checkout redirecionava para /auth imediatamente
-✓ Problema resolvido: timeout de 2s adicionado no useEffect da página checkout
-✓ Redirecionamento pós-login funcionando: Wouter navigate + window.location backup
-✓ Sistema de logs detalhados implementado para debug completo
-✓ Menu "Meus Fretes" removido da sidebar para motoristas (acesso apenas a: Motoristas, Veículos, Fretes, Relatórios)
-✓ Rota /my-freights bloqueada para perfil motorista via middleware de proteção
-✓ Tratamento de erro melhorado: CPF duplicado retorna mensagem específica no frontend
-✓ Nova página de checkout criada seguindo design exato da imagem fornecida pelo usuário
-✓ Interface limpa e focada com: botão voltar, título "Finalizar Assinatura", card do plano, etapas PIX
-✓ Layout responsivo mantendo elementos visuais idênticos ao mockup original
-✓ Integração completa com OpenPix mantendo funcionalidade de geração de QR Code
 - June 27, 2025. OpenPix como método oficial único, interface simplificada
 - June 27, 2025. Removidas opções de Google login e múltiplos planos de preços
 - June 27, 2025. Menu "Histórico" removido, faturas integradas ao OpenPix
@@ -224,7 +199,6 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 - June 27, 2025. Sidebar redesenhada com cor específica #00222d, fontes brancas e elementos visuais otimizados
 - June 27, 2025. Mobile optimization: responsive layouts, touch-friendly forms, and optimized spacing for smartphones
 - June 30, 2025. Sistema de notificação WhatsApp automática implementado com webhook OpenPix configurável
-- July 01, 2025. Controle granular de acesso para motoristas: visualização permitida, criação/edição bloqueada
 ```
 
 ## User Preferences

@@ -39,11 +39,7 @@ import {
   hasFreightAccess, 
   hasVehicleAccess,
   canEditDriver,
-  canEditVehicle,
-  blockDriverFromFreightCreation,
-  blockDriverFromFreightEdit,
-  allowDriverAccess,
-  allowDriverVehicleAccess
+  canEditVehicle
 } from "./middlewares";
 import { 
   Driver, 
@@ -212,7 +208,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ==================== DRIVERS ====================
   // Obter todos motoristas com seus veículos
-  app.get("/api/drivers", allowDriverAccess, async (req: Request, res: Response) => {
+  app.get("/api/drivers", hasActiveSubscription, async (req: Request, res: Response) => {
     try {
       // Obter todos os motoristas
       const drivers = await storage.getDrivers();
@@ -238,31 +234,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Obter motorista por userId
-  app.get("/api/drivers/by-user/:userId", isAuthenticated, async (req: Request, res: Response) => {
-    try {
-      const userId = parseInt(req.params.userId);
-      
-      // Verificar se o usuário está tentando acessar seu próprio cadastro ou se é admin
-      if (req.user?.id !== userId && req.user?.profileType?.toLowerCase() !== "administrador" && req.user?.profileType?.toLowerCase() !== "admin") {
-        return res.status(403).json({ message: "Acesso negado" });
-      }
-      
-      const driver = await storage.getDriverByUserId(userId);
-      
-      if (!driver) {
-        return res.status(404).json({ message: "Motorista não encontrado" });
-      }
-      
-      res.json(driver);
-    } catch (error) {
-      console.error("Error fetching driver by user:", error);
-      res.status(500).json({ message: "Failed to fetch driver" });
-    }
-  });
-
   // Obter motorista por ID com seus veículos
-  app.get("/api/drivers/:id", allowDriverAccess, async (req: Request, res: Response) => {
+  app.get("/api/drivers/:id", hasActiveSubscription, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       const driver = await storage.getDriver(id);
@@ -288,37 +261,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Criar novo motorista
-  app.post("/api/drivers", allowDriverAccess, async (req: Request, res: Response) => {
+  app.post("/api/drivers", hasActiveSubscription, async (req: Request, res: Response) => {
     try {
       const driverData: InsertDriver = {
-        ...req.body,
-        userId: req.user!.id // Adicionar automaticamente o ID do usuário logado
+        ...req.body
       };
       
       const driver = await storage.createDriver(driverData);
       res.status(201).json(driver);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error creating driver:", error);
-      
-      // Tratar erro de CPF duplicado
-      if (error.code === '23505' && error.constraint === 'drivers_cpf_unique') {
-        return res.status(400).json({ 
-          message: "CPF já cadastrado no sistema", 
-          field: "cpf",
-          type: "duplicate" 
-        });
-      }
-      
-      // Tratar erro de CNH duplicada
-      if (error.code === '23505' && error.constraint === 'drivers_cnh_unique') {
-        return res.status(400).json({ 
-          message: "CNH já cadastrada no sistema", 
-          field: "cnh",
-          type: "duplicate" 
-        });
-      }
-      
-      res.status(500).json({ message: "Erro ao cadastrar motorista" });
+      res.status(500).json({ message: "Failed to create driver" });
     }
   });
 
@@ -368,22 +321,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ==================== VEHICLES ====================
   // Obter todos veículos
-  app.get("/api/vehicles", allowDriverVehicleAccess, async (req: Request, res: Response) => {
+  app.get("/api/vehicles", hasActiveSubscription, async (req: Request, res: Response) => {
     try {
       let vehicles: Vehicle[];
       
-      // Se for motorista, mostrar apenas veículos criados por ele
-      if (req.user?.profileType?.toLowerCase() === "motorista") {
-        console.log(`[allowDriverVehicleAccess] Motorista ${req.user.id} buscando apenas seus próprios veículos`);
-        vehicles = await storage.getVehiclesByUser(req.user.id);
+      // Se um ID de motorista for especificado, filtrar por esse motorista
+      if (req.query.driverId) {
+        const driverId = parseInt(req.query.driverId as string);
+        vehicles = await storage.getVehiclesByDriver(driverId);
       } else {
-        // Para outros perfis, aplicar lógica existente
-        if (req.query.driverId) {
-          const driverId = parseInt(req.query.driverId as string);
-          vehicles = await storage.getVehiclesByDriver(driverId);
-        } else {
-          vehicles = await storage.getVehicles();
-        }
+        vehicles = await storage.getVehicles();
       }
       
       res.json(vehicles);
@@ -394,7 +341,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Obter veículo por ID
-  app.get("/api/vehicles/:id", allowDriverVehicleAccess, async (req: Request, res: Response) => {
+  app.get("/api/vehicles/:id", hasActiveSubscription, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       const vehicle = await storage.getVehicle(id);
@@ -411,7 +358,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Criar novo veículo
-  app.post("/api/vehicles", allowDriverVehicleAccess, async (req: Request, res: Response) => {
+  app.post("/api/vehicles", hasActiveSubscription, async (req: Request, res: Response) => {
     try {
       const vehicleData = {
         ...req.body,
@@ -680,7 +627,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Criar novo frete (rota principal com verificação de assinatura)
-  app.post("/api/freights", isAuthenticated, blockDriverFromFreightCreation, async (req: Request, res: Response) => {
+  app.post("/api/freights", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const freightData = req.body;
       
@@ -782,7 +729,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Atualizar frete existente
-  app.put("/api/freights/:id", isAuthenticated, blockDriverFromFreightEdit, async (req: Request, res: Response) => {
+  app.put("/api/freights/:id", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       const freightData = req.body;
@@ -940,7 +887,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Rota simplificada para atualizar apenas o valor do frete, sem verificações rigorosas de acesso
-  app.post("/api/freights/:id/update-value", isAuthenticated, blockDriverFromFreightEdit, async (req: Request, res: Response) => {
+  app.post("/api/freights/:id/update-value", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       

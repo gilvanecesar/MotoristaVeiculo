@@ -45,7 +45,7 @@ import AdminWebhooksPage from "@/pages/admin/webhooks/index";
 import AdminOpenPixPage from "@/pages/admin/openpix/index";
 import PaymentSuccessPage from "@/pages/payment-success";
 import PaymentCancelPage from "@/pages/payment-cancel";
-import CheckoutPage from "@/pages/checkout-new";
+import CheckoutPage from "@/pages/checkout";
 import SubscribePage from "@/pages/subscribe";
 import SubscribePlansPage from "@/pages/subscribe/plans";
 import SubscribeFixedPage from "@/pages/subscribe/fixed";
@@ -127,8 +127,7 @@ function App() {
   const [location] = useLocation();
   const isLandingPage = location === "/";
   const isAuthPage = location === "/auth" || location === "/login" || location === "/reset-password";
-  const isCheckoutPage = location.startsWith("/checkout") || location.startsWith("/payment");
-  const isPublicPage = isLandingPage || isAuthPage || isCheckoutPage || location.startsWith("/freight/") || location.startsWith("/public/");
+  const isPublicPage = isLandingPage || isAuthPage || location.startsWith("/freight/") || location.startsWith("/public/");
 
   return (
     <QueryClientProvider client={queryClient}>

@@ -54,7 +54,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return await res.json();
     },
     onSuccess: (user: User) => {
-      // Força atualização do cache com os dados do usuário
       queryClient.setQueryData(["/api/user"], user);
     },
     onError: (error: Error) => {

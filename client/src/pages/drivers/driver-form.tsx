@@ -167,29 +167,16 @@ export default function DriverForm() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/drivers"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/drivers/by-user"] });
       toast({
-        title: "Cadastro concluído com sucesso!",
-        description: "Motorista cadastrado com sucesso! Redirecionando para fretes...",
+        title: "Sucesso",
+        description: "Motorista cadastrado com sucesso!",
       });
-      // Para perfil motorista, redirecionar para fretes
-      navigate("/freights");
+      navigate("/drivers");
     },
-    onError: (error: any) => {
-      console.log("Erro ao processar JSON da resposta:", error);
-      
-      // Tentar extrair a mensagem de erro do servidor
-      let errorMessage = "Falha ao cadastrar motorista";
-      
-      if (error?.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error?.message) {
-        errorMessage = error.message;
-      }
-      
+    onError: (error) => {
       toast({
         title: "Erro",
-        description: errorMessage,
+        description: `Falha ao cadastrar motorista: ${error.message}`,
         variant: "destructive",
       });
     },

@@ -106,7 +106,6 @@ export interface IStorage {
   // Driver operations
   getDrivers(): Promise<DriverWithVehicles[]>;
   getDriver(id: number): Promise<DriverWithVehicles | undefined>;
-  getDriverByUserId(userId: number): Promise<Driver | undefined>;
   createDriver(driver: InsertDriver): Promise<Driver>;
   updateDriver(
     id: number,
@@ -951,11 +950,6 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getDriverByUserId(userId: number): Promise<Driver | undefined> {
-    const [driver] = await db.select().from(drivers).where(eq(drivers.userId, userId));
-    return driver || undefined;
-  }
-
   async createDriver(driver: InsertDriver): Promise<Driver> {
     const results = await db.insert(drivers).values(driver).returning();
     return results[0];
@@ -1014,13 +1008,6 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(vehicles)
       .where(eq(vehicles.driverId, driverId));
-  }
-
-  async getVehiclesByUser(userId: number): Promise<Vehicle[]> {
-    return await db
-      .select()
-      .from(vehicles)
-      .where(eq(vehicles.userId, userId));
   }
 
   async getVehicle(id: number): Promise<Vehicle | undefined> {
