@@ -204,7 +204,10 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Usuários sem assinatura ativa redirecionados diretamente para checkout PIX (R$ 49,90)
 ✓ Problema de autenticação resolvido: sidebar não bloqueia mais durante carregamento
 ✓ Páginas de checkout tratadas como públicas para evitar loops de redirecionamento
-→ Ajustando redirecionamento forçado após login com logs detalhados
+✓ Loop de redirecionamento identificado: página /checkout redirecionava para /auth imediatamente
+✓ Problema resolvido: timeout de 2s adicionado no useEffect da página checkout
+✓ Redirecionamento pós-login funcionando: Wouter navigate + window.location backup
+✓ Sistema de logs detalhados implementado para debug completo
 ✓ Menu "Meus Fretes" removido da sidebar para motoristas (acesso apenas a: Motoristas, Veículos, Fretes, Relatórios)
 ✓ Rota /my-freights bloqueada para perfil motorista via middleware de proteção
 ✓ Tratamento de erro melhorado: CPF duplicado retorna mensagem específica no frontend

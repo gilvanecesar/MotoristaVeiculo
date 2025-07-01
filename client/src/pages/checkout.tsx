@@ -23,11 +23,17 @@ export default function CheckoutPage() {
   const [location, navigate] = useLocation();
   const [isLoading, setIsLoading] = useState(false);
 
-  // Se usuário não autenticado, redirecionar para login
+  // Aguarda carregamento do usuário antes de redirecionar
   useEffect(() => {
-    if (!user) {
-      navigate('/auth');
-    }
+    // Só redireciona se realmente não tem usuário após um tempo
+    const timer = setTimeout(() => {
+      if (!user) {
+        console.log("Usuário não encontrado após timeout, redirecionando para /auth");
+        navigate('/auth');
+      }
+    }, 2000); // 2 segundos de espera
+
+    return () => clearTimeout(timer);
   }, [user, navigate]);
 
   // Mutation para criar cobrança PIX
