@@ -159,14 +159,8 @@ export function setupAuth(app: Express) {
     try {
       const { email, password, name, phone, whatsapp, profileType } = req.body;
       
-      // Validação dos campos obrigatórios
-      if (!phone || phone.trim() === '') {
-        return res.status(400).json({ message: "Telefone é obrigatório" });
-      }
-      
-      if (!whatsapp || whatsapp.trim() === '') {
-        return res.status(400).json({ message: "WhatsApp é obrigatório" });
-      }
+      // Validação dos campos obrigatórios - removida para cadastro inicial básico
+      // Os campos phone e whatsapp são opcionais no cadastro inicial do usuário
       
       // Verifica se o usuário já existe
       const existingUser = await storage.getUserByEmail(email);
