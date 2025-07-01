@@ -54,26 +54,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return await res.json();
     },
     onSuccess: (user: User) => {
-      console.log("LOGIN SUCCESS - User data:", user);
-      console.log("LOGIN SUCCESS - subscriptionActive:", user.subscriptionActive);
-      console.log("LOGIN SUCCESS - profileType:", user.profileType);
-      console.log("LOGIN SUCCESS - clientId:", user.clientId);
-      
       // Força atualização do cache com os dados do usuário
       queryClient.setQueryData(["/api/user"], user);
-      
-      // Aguarda um momento para o cache ser atualizado
-      setTimeout(() => {
-        // Força uma nova navegação para garantir que funcione
-        const targetUrl = user.profileType === 'motorista' || user.profileType === 'driver' 
-          ? "/freights"
-          : user.subscriptionActive 
-            ? "/home" 
-            : "/checkout?plan=monthly";
-        
-        console.log("FORÇANDO REDIRECIONAMENTO para:", targetUrl);
-        window.location.replace(targetUrl);
-      }, 300);
     },
     onError: (error: Error) => {
       toast({

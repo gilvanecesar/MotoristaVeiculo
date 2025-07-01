@@ -202,6 +202,9 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Dados de motorista salvos corretamente: gilvane cesar silva2 (ID: 43, User: 353)
 ✓ Fluxo de cadastro otimizado: registro → login automático → redirecionamento direto para /checkout?plan=monthly
 ✓ Usuários sem assinatura ativa redirecionados diretamente para checkout PIX (R$ 49,90)
+✓ Problema de autenticação resolvido: sidebar não bloqueia mais durante carregamento
+✓ Páginas de checkout tratadas como públicas para evitar loops de redirecionamento
+→ Ajustando redirecionamento forçado após login com logs detalhados
 ✓ Menu "Meus Fretes" removido da sidebar para motoristas (acesso apenas a: Motoristas, Veículos, Fretes, Relatórios)
 ✓ Rota /my-freights bloqueada para perfil motorista via middleware de proteção
 ✓ Tratamento de erro melhorado: CPF duplicado retorna mensagem específica no frontend

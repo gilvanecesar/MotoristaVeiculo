@@ -108,7 +108,11 @@ export default function LoginPage() {
         } else {
           // Se não tem assinatura ativa e não é motorista, redireciona para checkout
           console.log("REDIRECIONANDO para checkout - usuário sem assinatura ativa");
-          window.location.href = `/checkout?plan=${selectedPlan}`;
+          console.log("Selected plan:", selectedPlan);
+          console.log("URL final:", `/checkout?plan=${selectedPlan}`);
+          setTimeout(() => {
+            window.location.href = `/checkout?plan=${selectedPlan}`;
+          }, 100);
         }
       },
     });
