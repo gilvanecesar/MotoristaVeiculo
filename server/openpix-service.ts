@@ -435,68 +435,67 @@ export async function syncOpenPixPayments(req: Request, res: Response) {
  * Processa um pagamento do OpenPix e atualiza o banco de dados
  */
 async function processOpenPixPayment(charge: any, user: any) {
-  // Extrair tipo de plano
-  const planTypeInfo = charge.additionalInfo?.find((info: any) => info.key === 'planType');
-  const planType = planTypeInfo?.value || 'mensal';
-
-  // Calcular data de expiração
-  const now = new Date();
-  const expiresAt = new Date(now);
-  if (planType === 'anual') {
-    expiresAt.setFullYear(expiresAt.getFullYear() + 1);
-  } else {
-    expiresAt.setMonth(expiresAt.getMonth() + 1);
-  }
-
-  // Ativar assinatura do usuário
-  await db.update(users)
-    .set({
-      subscriptionActive: true,
-      subscriptionType: planType,
-      subscriptionExpiresAt: expiresAt,
-      paymentRequired: false
-    })
-    .where(eq(users.id, user.id));
-
-  // TODO: Corrigir campos das tabelas - problemas de TypeScript
-  console.log(`Processamento pendente para usuário ${user.id}: ${charge.identifier}`);
-  
-  /*
-  // Criar registro da assinatura
-  const [newSubscription] = await db.insert(subscriptions).values({
-    userId: user.id,
-    clientId: user.clientId,
-    planType: planType,
-    status: 'active',
-    currentPeriodStart: now,
-    currentPeriodEnd: expiresAt,
-    cancelAtPeriodEnd: false,
-    metadata: {
-      paymentMethod: 'pix_openpix',
-      openPixChargeId: charge.identifier,
-      amount: charge.value
+  try {
+    console.log(`[PROCESSO PAGAMENTO] Iniciando para usuário ${user.id}, cobrança ${charge.identifier}`);
+    
+    // Verificar se já foi processado
+    const existingPayment = await db
+      .select()
+      .from(openPixPayments)
+      .where(eq(openPixPayments.correlationId, charge.correlationID))
+      .limit(1);
+    
+    if (existingPayment.length > 0 && existingPayment[0].processed) {
+      console.log(`[PROCESSO PAGAMENTO] Pagamento já processado anteriormente: ${charge.identifier}`);
+      return;
     }
-  }).returning();
 
-  // Criar registro de invoice
-  await db.insert(invoices).values({
-    userId: user.id,
-    clientId: user.clientId,
-    subscriptionId: newSubscription?.id,
-    amount: charge.value.toString(),
-    status: 'paid',
-    description: `Assinatura ${planType} - OpenPix`,
-    metadata: {
-      openPixChargeId: charge.identifier,
-      correlationID: charge.correlationID,
-      paymentMethod: 'pix_openpix'
-    },
-    paidAt: new Date(charge.updatedAt || charge.createdAt),
-    dueDate: new Date(charge.createdAt)
-  });
-  */
+    // Extrair tipo de plano - sempre usar "monthly" conforme padrão do sistema
+    const planType = 'monthly';
 
-  console.log(`Pagamento OpenPix processado para usuário ${user.id}: ${charge.identifier}`);
+    // Calcular data de expiração - sempre 30 dias conforme padrão
+    const now = new Date();
+    const expiresAt = new Date(now);
+    expiresAt.setDate(expiresAt.getDate() + 30); // Sempre 30 dias
+
+    console.log(`[PROCESSO PAGAMENTO] Ativando assinatura para usuário ${user.id} até ${expiresAt.toISOString()}`);
+
+    // Ativar assinatura do usuário
+    const updateResult = await db.update(users)
+      .set({
+        subscriptionActive: true,
+        subscriptionType: planType,
+        subscriptionExpiresAt: expiresAt,
+        paymentRequired: false
+      })
+      .where(eq(users.id, user.id))
+      .returning();
+
+    console.log(`[PROCESSO PAGAMENTO] Resultado da atualização:`, updateResult);
+
+    // Atualizar registro do pagamento se existir
+    if (existingPayment.length > 0) {
+      await db.update(openPixPayments)
+        .set({
+          status: OPENPIX_PAYMENT_STATUS.COMPLETED,
+          processed: true,
+          subscriptionActivated: true,
+          paidAt: now,
+          subscriptionStartDate: now,
+          subscriptionEndDate: expiresAt,
+          updatedAt: now
+        })
+        .where(eq(openPixPayments.id, existingPayment[0].id));
+      
+      console.log(`[PROCESSO PAGAMENTO] Registro de pagamento atualizado: ${existingPayment[0].id}`);
+    }
+
+    console.log(`[PROCESSO PAGAMENTO] Concluído para usuário ${user.id}: ${charge.identifier}`);
+
+  } catch (error) {
+    console.error(`[PROCESSO PAGAMENTO] Erro ao processar para usuário ${user.id}:`, error);
+    throw error;
+  }
 }
 
 /**

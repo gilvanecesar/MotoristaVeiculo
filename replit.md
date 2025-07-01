@@ -218,6 +218,7 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 - July 01, 2025. Permissões por perfil de usuário implementadas conforme especificações do cliente
 - July 01, 2025. Sistema de verificação manual de pagamento PIX implementado com botão na página de checkout
 - July 01, 2025. Página subscribe/fixed removida completamente, todas as assinaturas redirecionam para checkout
+- July 01, 2025. Sistema de detecção automática de reembolso OpenPix funcionando: webhook verifica status REFUND/REFUNDED e cancela assinatura automaticamente
 ```
 
 ## User Preferences
