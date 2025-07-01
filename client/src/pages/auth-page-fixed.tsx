@@ -232,6 +232,11 @@ export default function AuthPage() {
           loginMutation.mutate({
             email: registerData.email,
             password: registerData.password,
+          }, {
+            onSuccess: () => {
+              // Redireciona para home após login automático bem-sucedido
+              setLocation("/home");
+            }
           });
         }
       },

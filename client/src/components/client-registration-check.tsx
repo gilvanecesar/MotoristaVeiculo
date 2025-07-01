@@ -36,37 +36,26 @@ export function ClientRegistrationCheck() {
     // Verifica se o usuário é motorista (pode acessar sem assinatura)
     const isDriver = user.profileType === 'motorista' || user.profileType === 'driver';
     
-    // Para embarcadores recém-cadastrados, verificar se está dentro do período de teste
+    // Se o usuário não tem assinatura ativa e não é motorista, redireciona para a página interna de gerenciamento
     if (!user.subscriptionActive && !isDriver) {
-      // Calcular se está dentro dos 7 dias de teste
-      const createdAt = new Date(user.createdAt);
-      const currentDate = new Date();
-      const daysSinceCreated = Math.floor((currentDate.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
+      // Ignore se já estiver em páginas específicas
+      const ignorePaths = [
+        '/auth', 
+        '/reset-password',
+        '/payment-success',
+        '/payment-cancel',
+        '/subscribe',
+        '/subscribe/fixed',
+        '/subscribe/plans',
+        '/checkout'
+      ];
       
-      // Se ainda está dentro dos 7 dias de teste, permite continuar
-      if (daysSinceCreated <= 7) {
-        console.log(`Usuário embarcador dentro do período de teste: ${daysSinceCreated} dias desde o cadastro`);
-        // Continua normalmente sem redirecionar para checkout
-      } else {
-        // Ignore se já estiver em páginas específicas
-        const ignorePaths = [
-          '/auth', 
-          '/reset-password',
-          '/payment-success',
-          '/payment-cancel',
-          '/subscribe',
-          '/subscribe/fixed',
-          '/subscribe/plans',
-          '/checkout'
-        ];
-        
-        const currentPath = window.location.pathname;
-        if (ignorePaths.some(path => currentPath.startsWith(path))) return;
-        
-        // Redireciona para a página interna de gerenciamento de assinatura
-        setLocation("/subscribe");
-        return;
-      }
+      const currentPath = window.location.pathname;
+      if (ignorePaths.some(path => currentPath.startsWith(path))) return;
+      
+      // Redireciona para a página interna de gerenciamento de assinatura
+      setLocation("/subscribe");
+      return;
     }
     
     // If user has no clientId associated, show dialog or redirect directly
