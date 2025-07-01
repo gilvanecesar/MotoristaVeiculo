@@ -454,6 +454,7 @@ export async function getChargeStatus(req: Request, res: Response) {
       return res.status(500).json({ error: 'OpenPix não configurado' });
     }
 
+    // Consultar diretamente na API da OpenPix
     const response = await axios.get(
       `${openPixConfig.apiUrl}/charge/${chargeId}`,
       {
@@ -463,7 +464,70 @@ export async function getChargeStatus(req: Request, res: Response) {
       }
     );
 
-    return res.json(response.data);
+    const charge = response.data?.charge;
+    
+    if (!charge) {
+      return res.status(404).json({ error: 'Cobrança não encontrada' });
+    }
+
+    console.log(`Status da cobrança ${chargeId}:`, charge.status);
+
+    // Se a cobrança foi paga na OpenPix, verificar se processamos localmente
+    if (charge.status === 'COMPLETED' || charge.status === 'PAID') {
+      // Verificar se já processamos esta cobrança
+      const [localPayment] = await db
+        .select()
+        .from(openPixPayments)
+        .where(eq(openPixPayments.openPixChargeId, chargeId));
+
+      if (localPayment && !localPayment.processed) {
+        // Pagamento confirmado na OpenPix mas não processado localmente
+        // Buscar usuário para processar
+        const [user] = await db.select().from(users).where(eq(users.id, localPayment.userId));
+        
+        if (user) {
+          console.log(`Processando pagamento confirmado na OpenPix para usuário ${user.id}`);
+          
+          // Ativar assinatura
+          const now = new Date();
+          const expiresAt = new Date(now);
+          expiresAt.setDate(expiresAt.getDate() + 30);
+
+          await db.update(users).set({
+            subscriptionActive: true,
+            subscriptionType: 'monthly',
+            subscriptionExpiresAt: expiresAt,
+            paymentRequired: false
+          }).where(eq(users.id, user.id));
+
+          // Marcar pagamento como processado
+          await db.update(openPixPayments).set({
+            processed: true,
+            subscriptionActivated: true,
+            status: 'COMPLETED'
+          }).where(eq(openPixPayments.id, localPayment.id));
+
+          // Enviar notificação WhatsApp se configurado
+          await sendPaymentConfirmationWhatsApp(user, localPayment, { charge });
+
+          console.log(`Assinatura ativada automaticamente para usuário ${user.id}`);
+        }
+      }
+    }
+
+    return res.json({
+      success: true,
+      charge: {
+        identifier: charge.identifier,
+        status: charge.status,
+        value: charge.value,
+        customer: charge.customer,
+        correlationID: charge.correlationID,
+        createdAt: charge.createdAt,
+        updatedAt: charge.updatedAt,
+        paidAt: charge.paidAt
+      }
+    });
 
   } catch (error: any) {
     console.error('Erro ao consultar status da cobrança:', error.response?.data || error.message);

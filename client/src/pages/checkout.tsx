@@ -50,7 +50,53 @@ export default function Checkout() {
     try {
       setIsCheckingPayment(true);
       
-      // Verificar nossos pagamentos locais primeiro
+      // Verificar status diretamente na OpenPix
+      const openPixResponse = await apiRequest("GET", `/api/openpix/charge/${pixCharge.charge.identifier}`);
+      
+      if (openPixResponse.success && openPixResponse.charge) {
+        const charge = openPixResponse.charge;
+        
+        // Se o pagamento foi confirmado na OpenPix
+        if (charge.status === 'COMPLETED' || charge.status === 'PAID') {
+          console.log('Pagamento confirmado na OpenPix:', charge.status);
+          
+          // Verificar se a assinatura foi ativada localmente
+          const localResponse = await apiRequest("GET", "/api/openpix/my-payments");
+          
+          if (localResponse.success && localResponse.payments) {
+            const currentPayment = localResponse.payments.find(
+              (payment: any) => payment.openPixChargeId === pixCharge.charge.identifier
+            );
+            
+            if (currentPayment?.subscriptionActivated) {
+              setPaymentStatus('completed');
+              
+              // Limpar intervalo
+              if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+                intervalRef.current = null;
+              }
+              
+              toast({
+                title: "Pagamento confirmado!",
+                description: "Sua assinatura foi ativada com sucesso. Redirecionando...",
+              });
+              
+              // Redirecionar para HOME após 2 segundos
+              setTimeout(() => {
+                navigate("/home");
+              }, 2000);
+              
+              return;
+            } else {
+              // Pagamento confirmado mas assinatura ainda não ativada
+              console.log('Pagamento confirmado, aguardando ativação da assinatura...');
+            }
+          }
+        }
+      }
+      
+      // Fallback: verificar nossos pagamentos locais
       const response = await apiRequest("GET", "/api/openpix/my-payments");
       
       if (response.success && response.payments) {
@@ -74,7 +120,7 @@ export default function Checkout() {
           
           // Redirecionar para HOME após 2 segundos
           setTimeout(() => {
-            navigate("/");
+            navigate("/home");
           }, 2000);
           
           return;
