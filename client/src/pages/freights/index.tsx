@@ -461,7 +461,7 @@ ${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : '
                 Gerenciamento de fretes disponíveis no sistema
               </CardDescription>
             </div>
-            {user?.profileType !== 'driver' && user?.profileType !== 'motorista' && (
+            {user?.profileType !== 'driver' && (
               <Button onClick={() => navigate("/freights/new")}>
                 <Plus className="h-4 w-4 mr-2" /> Novo Frete
               </Button>

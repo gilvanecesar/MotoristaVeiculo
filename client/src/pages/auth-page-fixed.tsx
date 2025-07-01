@@ -30,8 +30,6 @@ const registerSchema = userValidator.pick({
   name: true,
   email: true,
   password: true,
-  phone: true,
-  whatsapp: true,
   profileType: true,
 });
 
@@ -61,32 +59,12 @@ export default function AuthPage() {
   // Redirecionamento se o usuário já estiver logado
   useEffect(() => {
     if (user) {
-      // Se for motorista, verificar se já tem cadastro de motorista
-      if (user.profileType === USER_TYPES.DRIVER) {
-        if (user.driverId) {
-          // Se já tem cadastro de motorista, vai para fretes
-          setLocation("/freights");
-        } else {
-          // Se não tem cadastro de motorista, redireciona para completar cadastro
-          setLocation("/drivers/new");
-        }
-      } else if (user.subscriptionActive) {
-        // Se já tem assinatura ativa, vai para a página Home
+      // Se o usuário tem assinatura ativa, redireciona para a página de dashboard/home
+      if (user.subscriptionActive) {
         setLocation("/home");
       } else {
-        // Para perfis não-motorista, verificar se já completou cadastro empresarial
-        if (user.profileType === USER_TYPES.SHIPPER || user.profileType === USER_TYPES.AGENT) {
-          if (!user.clientId) {
-            // Se não tem cadastro empresarial, redireciona para completar
-            setLocation("/onboarding/client-registration");
-          } else {
-            // Se tem cadastro mas não tem assinatura, mostra planos
-            setShowPlans(true);
-          }
-        } else {
-          // Para outros perfis, mostra página de planos
-          setShowPlans(true);
-        }
+        // Se o usuário está logado mas não tem assinatura, mostra a página de planos
+        setShowPlans(true);
       }
     }
   }, [user, setLocation]);
@@ -107,8 +85,6 @@ export default function AuthPage() {
       name: "",
       email: "",
       password: "",
-      phone: "",
-      whatsapp: "",
       profileType: USER_TYPES.SHIPPER,
     },
   });
@@ -126,15 +102,20 @@ export default function AuthPage() {
           description: "Bem-vindo à plataforma Quero Fretes",
         });
         
-        // Se for motorista, redireciona direto (sem precisar de pagamento)
+        // Se for motorista, redireciona direto para fretes (sem precisar de pagamento)
         if (user.profileType === USER_TYPES.DRIVER) {
-          // Motoristas têm acesso gratuito, verificar se já tem cadastro de motorista
-          if (user.driverId) {
-            // Se já tem cadastro de motorista, vai para fretes
-            setLocation("/freights");
+          // Ativa o acesso de motorista automaticamente, se ainda não estiver ativo
+          if (!user.subscriptionActive || user.subscriptionType !== "driver_free") {
+            apiRequest("POST", "/api/activate-driver-access", {})
+              .then(() => {
+                setLocation("/freights");
+              })
+              .catch((error) => {
+                console.error("Erro ao ativar acesso de motorista:", error);
+                setLocation("/auth?subscription=required");
+              });
           } else {
-            // Se não tem cadastro de motorista, redireciona para completar cadastro
-            setLocation("/drivers/new");
+            setLocation("/freights");
           }
         } else if (user.subscriptionActive) {
           // Se já tem assinatura ativa, vai para a página Home
@@ -144,25 +125,10 @@ export default function AuthPage() {
             setLocation("/home");
           }, 100);
         } else {
-          // Para perfis não-motorista, verificar se já completou cadastro empresarial
-          if (user.profileType === USER_TYPES.SHIPPER || user.profileType === USER_TYPES.AGENT) {
-            // Verificar se já tem clientId (cadastro empresarial completo)
-            if (!user.clientId) {
-              // Se não tem cadastro empresarial, redireciona para completar
-              console.log("REDIRECIONANDO para cadastro empresarial - clientId não encontrado");
-              setLocation("/onboarding/client-registration");
-            } else {
-              // Se tem cadastro mas não tem assinatura, mostra planos
-              console.log("MOSTRANDO planos - cadastro completo mas sem assinatura");
-              setShowPlans(true);
-              setSubscriptionRequired(true);
-            }
-          } else {
-            // Para outros perfis, mostra página de planos
-            console.log("MOSTRANDO planos - usuário sem assinatura ativa");
-            setShowPlans(true);
-            setSubscriptionRequired(true);
-          }
+          // Se não tem assinatura ativa e não é motorista, mostra página de planos
+          console.log("MOSTRANDO planos - usuário sem assinatura ativa");
+          setShowPlans(true);
+          setSubscriptionRequired(true);
         }
       },
     });
@@ -220,40 +186,49 @@ export default function AuthPage() {
   };
 
   const onRegisterSubmit = (data: RegisterFormValues) => {
-    // Adiciona o profileType selecionado e os campos obrigatórios
+    // Adiciona o profileType selecionado
     const registerData = {
       email: data.email,
       name: data.name,
       password: data.password!,
-      phone: data.phone || "",
-      whatsapp: data.whatsapp || "",
       profileType: selectedRole,
     };
 
     registerMutation.mutate(registerData, {
-      onSuccess: (user) => {
-        // Se for motorista, não cobra e redireciona para cadastro de motoristas
+      onSuccess: () => {
+        // Se for motorista, ativa o acesso gratuito automaticamente
         if (selectedRole === USER_TYPES.DRIVER) {
-          toast({
-            title: "Cadastro de motorista realizado",
-            description: "Agora complete seu cadastro de motorista com seus dados profissionais.",
-          });
-          // Redireciona para a página de cadastro de motoristas
-          setLocation("/drivers/new");
+          // Ativa o acesso gratuito para motoristas
+          apiRequest("POST", "/api/activate-driver-access", {})
+            .then((response) => {
+              if (response.ok) {
+                toast({
+                  title: "Cadastro de motorista realizado",
+                  description: "Seu acesso gratuito foi ativado! Você pode acessar fretes, veículos e motoristas.",
+                });
+                // Redireciona diretamente para a página de fretes
+                setLocation("/freights");
+              } else {
+                throw new Error("Erro ao ativar acesso de motorista");
+              }
+            })
+            .catch((error) => {
+              console.error("Erro ao ativar acesso:", error);
+              toast({
+                title: "Erro ao ativar acesso",
+                description: "Não foi possível ativar seu acesso gratuito. Tente novamente.",
+                variant: "destructive",
+              });
+              setShowPlans(true);
+            });
         } else {
-          // Para outros tipos de perfil, redireciona para página de cadastro específica
+          // Para outros tipos de perfil, mostra a página de planos
           toast({
             title: "Conta criada com sucesso",
-            description: "Agora complete seu cadastro empresarial para continuar.",
+            description: "Para continuar, é necessário assinar um plano",
           });
-          
-          // Redireciona para página de cadastro baseada no perfil
-          if (selectedRole === USER_TYPES.SHIPPER || selectedRole === USER_TYPES.AGENT) {
-            setLocation("/onboarding/client-registration");
-          } else {
-            // Para outros perfis, mostra página de planos temporariamente
-            setShowPlans(true);
-          }
+          // Após o cadastro, exibe a página de planos
+          setShowPlans(true);
         }
       },
     });
@@ -593,34 +568,6 @@ export default function AuthPage() {
                               <FormLabel>E-mail</FormLabel>
                               <FormControl>
                                 <Input placeholder="seu@email.com" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={registerForm.control}
-                          name="phone"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Telefone</FormLabel>
-                              <FormControl>
-                                <Input placeholder="(11) 99999-9999" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={registerForm.control}
-                          name="whatsapp"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>WhatsApp</FormLabel>
-                              <FormControl>
-                                <Input placeholder="(11) 99999-9999" {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>

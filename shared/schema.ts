@@ -444,8 +444,6 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   password: text("password"),
   name: text("name").notNull(),
-  phone: text("phone"), // Campo opcional para telefone (obrigatório apenas no cadastro completo)
-  whatsapp: text("whatsapp"), // Campo opcional para WhatsApp (obrigatório apenas no cadastro completo)
   profileType: text("profile_type").notNull(),
   authProvider: text("auth_provider").notNull().default(AUTH_PROVIDERS.LOCAL),
   providerId: text("provider_id"),
@@ -474,14 +472,6 @@ export const userValidator = insertUserSchema.extend({
   email: z.string().email("Informe um e-mail válido"),
   password: z.string().min(6, "A senha deve ter pelo menos 6 caracteres").optional(),
   name: z.string().min(3, "O nome deve ter pelo menos 3 caracteres"),
-  phone: z.string()
-    .min(10, "Telefone deve ter pelo menos 10 dígitos")
-    .max(15, "Telefone deve ter no máximo 15 dígitos")
-    .regex(/^[\d\s\-\(\)\+]+$/, "Telefone deve conter apenas números, espaços, hífens, parênteses e sinal de +"),
-  whatsapp: z.string()
-    .min(10, "WhatsApp deve ter pelo menos 10 dígitos")
-    .max(15, "WhatsApp deve ter no máximo 15 dígitos")
-    .regex(/^[\d\s\-\(\)\+]+$/, "WhatsApp deve conter apenas números, espaços, hífens, parênteses e sinal de +"),
   profileType: z.enum([
     USER_TYPES.DRIVER, 
     USER_TYPES.AGENT, 

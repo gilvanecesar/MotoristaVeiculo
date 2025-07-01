@@ -3,7 +3,7 @@ import axios from 'axios';
 import { db } from './db';
 import { users, openPixPayments, subscriptions, OPENPIX_PAYMENT_STATUS } from '../shared/schema';
 import { eq, and } from 'drizzle-orm';
-import { sendSubscriptionEmail, sendSubscriptionExpirationEmail } from './email-service';
+import { sendSubscriptionEmail } from './email-service';
 
 interface OpenPixConfig {
   authorization: string;
@@ -262,62 +262,6 @@ export async function handleOpenPixWebhook(req: Request, res: Response) {
         
       } catch (error) {
         console.error('Erro ao ativar assinatura:', error);
-      }
-    }
-    
-    // Processar reembolso/cancelamento PIX
-    if (status === 'REFUND') {
-      console.log(`⚠️ REEMBOLSO PIX detectado para usuário ${userId}`);
-
-      // Buscar pagamento na nossa tabela de controle
-      const [payment] = await db
-        .select()
-        .from(openPixPayments)
-        .where(eq(openPixPayments.correlationId, correlationID));
-      
-      if (!payment) {
-        console.error('Pagamento não encontrado para reembolso:', correlationID);
-        return res.status(404).json({ error: 'Pagamento não encontrado' });
-      }
-
-      const now = new Date();
-
-      try {
-        // Atualizar status do pagamento para reembolsado
-        await db.update(openPixPayments)
-          .set({
-            status: 'REFUND',
-            processed: true,
-            subscriptionActivated: false,
-            refundedAt: now,
-            webhookData: req.body,
-            updatedAt: now
-          })
-          .where(eq(openPixPayments.id, payment.id));
-
-        // Desativar assinatura do usuário imediatamente
-        await db.update(users)
-          .set({
-            subscriptionActive: false,
-            subscriptionType: null,
-            subscriptionExpiresAt: now, // Expira imediatamente
-            paymentRequired: true
-          })
-          .where(eq(users.id, userId));
-
-        // Enviar email de notificação sobre cancelamento
-        await sendSubscriptionExpirationEmail(
-          user.email,
-          user.name,
-          false, // não é trial
-          now
-        );
-
-        console.log(`🚫 Acesso revogado para usuário ${userId} devido a reembolso PIX`);
-        console.log(`📧 Email de cancelamento enviado para ${user.email}`);
-        
-      } catch (error) {
-        console.error('Erro ao processar reembolso:', error);
       }
     }
 
