@@ -36,7 +36,8 @@ import {
   isAdminOrSelf, 
   hasClientAccess, 
   hasDriverAccess,
-  canCreateFreight, 
+  canCreateFreight,
+  canCreateDriver, 
   hasFreightAccess, 
   hasVehicleAccess,
   canEditDriver,
@@ -262,7 +263,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Criar novo motorista
-  app.post("/api/drivers", hasActiveSubscription, async (req: Request, res: Response) => {
+  app.post("/api/drivers", canCreateDriver, async (req: Request, res: Response) => {
     try {
       const driverData: InsertDriver = {
         ...req.body

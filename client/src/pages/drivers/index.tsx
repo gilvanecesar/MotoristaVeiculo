@@ -34,6 +34,11 @@ export default function DriversPage() {
       return true;
     }
     
+    // Motoristas podem criar outros motoristas
+    if (user?.profileType?.toLowerCase() === "motorista" || user?.profileType?.toLowerCase() === "driver") {
+      return true;
+    }
+    
     // Embarcadores (shipper) e agentes podem criar motoristas
     if (user?.profileType?.toLowerCase() === "shipper" || 
         user?.profileType?.toLowerCase() === "embarcador" || 

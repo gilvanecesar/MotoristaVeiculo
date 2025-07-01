@@ -204,6 +204,27 @@ export function canCreateFreight(req: Request, res: Response, next: NextFunction
   return next();
 }
 
+export function canCreateDriver(req: Request, res: Response, next: NextFunction) {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Não autenticado" });
+  }
+
+  // Administradores podem criar motoristas
+  if (req.user?.profileType?.toLowerCase() === "admin" || req.user?.profileType?.toLowerCase() === "administrador") {
+    console.log(`[canCreateDriver] Administrador ${req.user.id} autorizado a criar motoristas`);
+    return next();
+  }
+
+  // Motoristas podem criar outros motoristas (acesso gratuito)
+  if (req.user?.profileType?.toLowerCase() === "motorista" || req.user?.profileType?.toLowerCase() === "driver") {
+    console.log(`[canCreateDriver] Motorista ${req.user.id} autorizado a criar outros motoristas`);
+    return next();
+  }
+
+  // Para outros perfis, seguir a lógica normal de assinatura
+  return hasActiveSubscription(req, res, next);
+}
+
 // Middleware para verificar se o usuário tem permissão para acessar um cliente
 export function hasClientAccess(req: Request, res: Response, next: NextFunction) {
   if (!req.isAuthenticated()) {
