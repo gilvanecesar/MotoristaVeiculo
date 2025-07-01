@@ -173,8 +173,8 @@ export default function Checkout() {
       // Verificar imediatamente
       checkPaymentStatus();
       
-      // Configurar verificação automática a cada 5 segundos
-      intervalRef.current = setInterval(checkPaymentStatus, 5000);
+      // Configurar verificação automática a cada 2 segundos
+      intervalRef.current = setInterval(checkPaymentStatus, 2000);
     }
     
     return () => {
