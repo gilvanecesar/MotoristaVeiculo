@@ -149,6 +149,14 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
     }
   };
   
+  // Debug: verificar estado do usuário
+  console.log("Estado completo do user no sidebar:", user);
+  
+  // Aguardar carregamento dos dados do usuário antes de processar menus
+  if (!user) {
+    return null; // ou um loading spinner
+  }
+  
   // Verificar o tipo de perfil do usuário
   const isAdmin = user?.profileType === "administrador" || user?.profileType === "admin";
   const isDriver = user?.profileType === "motorista" || user?.profileType === "driver";
@@ -157,12 +165,12 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   
   // Lógica para mostrar/ocultar menus baseado no perfil
   const userDataForMenus = {
-    id: user?.id,
-    profileType: user?.profileType,
-    clientId: user?.clientId,
-    subscriptionActive: user?.subscriptionActive,
-    subscriptionType: user?.subscriptionType,
-    subscriptionExpiresAt: user?.subscriptionExpiresAt
+    id: user.id,
+    profileType: user.profileType,
+    clientId: user.clientId,
+    subscriptionActive: user.subscriptionActive,
+    subscriptionType: user.subscriptionType,
+    subscriptionExpiresAt: user.subscriptionExpiresAt
   };
   
   console.log("Dados do usuário para menus:", userDataForMenus);
