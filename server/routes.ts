@@ -35,7 +35,8 @@ import {
   isAdmin, 
   isAdminOrSelf, 
   hasClientAccess, 
-  hasDriverAccess, 
+  hasDriverAccess,
+  canCreateFreight, 
   hasFreightAccess, 
   hasVehicleAccess,
   canEditDriver,
@@ -627,7 +628,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Criar novo frete (rota principal com verificação de assinatura)
-  app.post("/api/freights", isAuthenticated, async (req: Request, res: Response) => {
+  app.post("/api/freights", isAuthenticated, canCreateFreight, async (req: Request, res: Response) => {
     try {
       const freightData = req.body;
       

@@ -186,6 +186,24 @@ export function isAdminOrSelf(req: Request, res: Response, next: NextFunction) {
   res.status(403).json({ message: "Acesso não autorizado" });
 }
 
+// Middleware para verificar se motorista pode criar fretes (bloquear criação)
+export function canCreateFreight(req: Request, res: Response, next: NextFunction) {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Não autenticado" });
+  }
+
+  const userProfileType = req.user?.profileType?.toLowerCase() || "";
+  
+  // Motoristas não podem criar fretes
+  if (userProfileType === "motorista" || userProfileType === "driver") {
+    return res.status(403).json({ 
+      message: "Motoristas não têm permissão para criar fretes. Apenas visualização é permitida." 
+    });
+  }
+  
+  return next();
+}
+
 // Middleware para verificar se o usuário tem permissão para acessar um cliente
 export function hasClientAccess(req: Request, res: Response, next: NextFunction) {
   if (!req.isAuthenticated()) {
