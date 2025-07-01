@@ -1,4 +1,5 @@
 import { useAuth } from "@/hooks/use-auth";
+import { useDriverRegistration } from "@/hooks/use-driver-registration";
 import { Loader2 } from "lucide-react";
 import { Redirect, Route } from "wouter";
 
@@ -25,8 +26,9 @@ export function ProtectedRoute({
   component: React.ComponentType<any>;
 }) {
   const { user, isLoading } = useAuth();
+  const { needsDriverRegistration, isLoading: driverLoading } = useDriverRegistration();
 
-  if (isLoading) {
+  if (isLoading || driverLoading) {
     return (
       <Route path={path}>
         <div className="flex items-center justify-center min-h-screen">
@@ -41,6 +43,15 @@ export function ProtectedRoute({
     return (
       <Route path={path}>
         <Redirect to="/auth" />
+      </Route>
+    );
+  }
+
+  // Se usuário é motorista mas ainda não tem cadastro, redireciona para criar cadastro
+  if (needsDriverRegistration && path !== '/drivers/new') {
+    return (
+      <Route path={path}>
+        <Redirect to="/drivers/new" />
       </Route>
     );
   }
