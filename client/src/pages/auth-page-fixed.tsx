@@ -236,7 +236,7 @@ export default function AuthPage() {
             onSuccess: () => {
               // Pequeno delay para garantir que o cache seja atualizado
               setTimeout(() => {
-                setLocation("/subscribe");
+                setLocation("/checkout?plan=monthly");
               }, 100);
             }
           });

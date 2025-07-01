@@ -53,8 +53,8 @@ export function ClientRegistrationCheck() {
       const currentPath = window.location.pathname;
       if (ignorePaths.some(path => currentPath.startsWith(path))) return;
       
-      // Redireciona para a página interna de gerenciamento de assinatura
-      setLocation("/subscribe");
+      // Redireciona diretamente para checkout PIX mensal
+      setLocation("/checkout?plan=monthly");
       return;
     }
     
