@@ -906,12 +906,12 @@ ${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : '
           ) : (
             <div className="text-center py-10">
               <p className="text-slate-500 mb-4">Nenhum frete encontrado.</p>
-              {user?.profileType !== 'driver' && (
+              {user?.profileType !== 'driver' && user?.profileType !== 'motorista' && (
                 <Button onClick={() => navigate("/freights/new")}>
                   <Plus className="h-4 w-4 mr-2" /> Novo Frete
                 </Button>
               )}
-              {user?.profileType === 'driver' && (
+              {(user?.profileType === 'driver' || user?.profileType === 'motorista') && (
                 <p className="text-sm text-slate-500 max-w-md mx-auto">
                   Como motorista, você pode visualizar todos os fretes disponíveis no sistema. 
                   Aguarde o cadastro de novos fretes pelos embarcadores e transportadoras.
