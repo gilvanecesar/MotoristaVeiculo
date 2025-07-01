@@ -50,6 +50,32 @@ export default function Checkout() {
     try {
       setIsCheckingPayment(true);
       
+      // Primeiro, verificar se o usuário já tem assinatura ativa
+      const userResponse = await apiRequest("GET", "/api/user");
+      if (userResponse.subscriptionActive === true) {
+        console.log('Usuário já tem assinatura ativa, redirecionando...');
+        setPaymentStatus('completed');
+        
+        // Limpar intervalo
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+        
+        toast({
+          title: "Pagamento confirmado!",
+          description: "Sua assinatura foi ativada com sucesso. Redirecionando...",
+        });
+        
+        // Redirecionar imediatamente
+        setTimeout(() => {
+          console.log('Redirecionando para /home...');
+          navigate("/home");
+        }, 500);
+        
+        return;
+      }
+      
       // Verificar status diretamente na OpenPix
       const openPixResponse = await apiRequest("GET", `/api/openpix/charge/${pixCharge.charge.identifier}`);
       
@@ -68,7 +94,13 @@ export default function Checkout() {
               (payment: any) => payment.openPixChargeId === pixCharge.charge.identifier
             );
             
-            if (currentPayment?.subscriptionActivated) {
+            console.log('Pagamento encontrado:', currentPayment);
+            console.log('Status da assinatura:', currentPayment?.subscriptionActivated);
+            
+            // Verificar tanto subscriptionActivated quanto status COMPLETED
+            if (currentPayment?.subscriptionActivated === true || 
+                (currentPayment?.status === 'COMPLETED' && currentPayment?.processed === true)) {
+              console.log('Iniciando redirecionamento automático...');
               setPaymentStatus('completed');
               
               // Limpar intervalo
@@ -82,15 +114,17 @@ export default function Checkout() {
                 description: "Sua assinatura foi ativada com sucesso. Redirecionando...",
               });
               
-              // Redirecionar para HOME após 2 segundos
+              // Redirecionar para HOME imediatamente
               setTimeout(() => {
+                console.log('Redirecionando para /home...');
                 navigate("/home");
-              }, 2000);
+              }, 500);
               
               return;
             } else {
               // Pagamento confirmado mas assinatura ainda não ativada
               console.log('Pagamento confirmado, aguardando ativação da assinatura...');
+              console.log('Valor de subscriptionActivated:', currentPayment?.subscriptionActivated);
             }
           }
         }
@@ -118,10 +152,10 @@ export default function Checkout() {
             description: "Sua assinatura foi ativada com sucesso. Redirecionando...",
           });
           
-          // Redirecionar para HOME após 2 segundos
+          // Redirecionar para HOME após 1 segundo
           setTimeout(() => {
             navigate("/home");
-          }, 2000);
+          }, 1000);
           
           return;
         }
