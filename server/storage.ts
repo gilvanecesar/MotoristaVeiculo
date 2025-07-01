@@ -1010,6 +1010,13 @@ export class DatabaseStorage implements IStorage {
       .where(eq(vehicles.driverId, driverId));
   }
 
+  async getVehiclesByUser(userId: number): Promise<Vehicle[]> {
+    return await db
+      .select()
+      .from(vehicles)
+      .where(eq(vehicles.userId, userId));
+  }
+
   async getVehicle(id: number): Promise<Vehicle | undefined> {
     const results = await db.select().from(vehicles).where(eq(vehicles.id, id));
     return results[0];

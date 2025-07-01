@@ -41,7 +41,8 @@ import {
   canEditDriver,
   canEditVehicle,
   blockDriverFromFreightCreation,
-  allowDriverAccess
+  allowDriverAccess,
+  allowDriverVehicleAccess
 } from "./middlewares";
 import { 
   Driver, 
@@ -323,16 +324,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ==================== VEHICLES ====================
   // Obter todos veículos
-  app.get("/api/vehicles", hasActiveSubscription, async (req: Request, res: Response) => {
+  app.get("/api/vehicles", allowDriverVehicleAccess, async (req: Request, res: Response) => {
     try {
       let vehicles: Vehicle[];
       
-      // Se um ID de motorista for especificado, filtrar por esse motorista
-      if (req.query.driverId) {
-        const driverId = parseInt(req.query.driverId as string);
-        vehicles = await storage.getVehiclesByDriver(driverId);
+      // Se for motorista, mostrar apenas veículos criados por ele
+      if (req.user?.profileType?.toLowerCase() === "motorista") {
+        console.log(`[allowDriverVehicleAccess] Motorista ${req.user.id} buscando apenas seus próprios veículos`);
+        vehicles = await storage.getVehiclesByUser(req.user.id);
       } else {
-        vehicles = await storage.getVehicles();
+        // Para outros perfis, aplicar lógica existente
+        if (req.query.driverId) {
+          const driverId = parseInt(req.query.driverId as string);
+          vehicles = await storage.getVehiclesByDriver(driverId);
+        } else {
+          vehicles = await storage.getVehicles();
+        }
       }
       
       res.json(vehicles);
@@ -343,7 +350,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Obter veículo por ID
-  app.get("/api/vehicles/:id", hasActiveSubscription, async (req: Request, res: Response) => {
+  app.get("/api/vehicles/:id", allowDriverVehicleAccess, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       const vehicle = await storage.getVehicle(id);
@@ -360,7 +367,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Criar novo veículo
-  app.post("/api/vehicles", hasActiveSubscription, async (req: Request, res: Response) => {
+  app.post("/api/vehicles", allowDriverVehicleAccess, async (req: Request, res: Response) => {
     try {
       const vehicleData = {
         ...req.body,

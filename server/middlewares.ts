@@ -480,3 +480,33 @@ export function allowDriverAccess(req: Request, res: Response, next: NextFunctio
   // Permitir acesso para usuários com assinatura ativa
   next();
 }
+
+// Middleware para permitir acesso de motoristas aos veículos (apenas seus próprios)
+export function allowDriverVehicleAccess(req: Request, res: Response, next: NextFunction) {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Não autenticado" });
+  }
+
+  // Permitir acesso para administradores
+  if (req.user?.profileType?.toLowerCase() === "administrador" || req.user?.profileType?.toLowerCase() === "admin") {
+    return next();
+  }
+
+  // Permitir acesso para motoristas (acesso gratuito aos próprios veículos)
+  if (req.user?.profileType?.toLowerCase() === "motorista") {
+    console.log(`[allowDriverVehicleAccess] Motorista ${req.user.id} acessando cadastro de veículos`);
+    return next();
+  }
+
+  // Para outros perfis, verificar assinatura ativa
+  if (req.user?.subscriptionActive === false) {
+    console.log(`[allowDriverVehicleAccess] Usuário ${req.user.id} sem assinatura ativa tentou acessar veículos`);
+    return res.status(403).json({ 
+      message: "Assinatura ativa necessária para acessar esta funcionalidade",
+      code: "SUBSCRIPTION_REQUIRED" 
+    });
+  }
+
+  // Permitir acesso para usuários com assinatura ativa
+  next();
+}
