@@ -2705,6 +2705,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Webhook para verificação de reembolso OpenPix
+  app.post('/reembolso', async (req: Request, res: Response) => {
+    try {
+      console.log('🎯 Webhook /reembolso atingido - dados recebidos:', JSON.stringify(req.body, null, 2));
+      
+      const { refund } = req.body;
+      
+      if (!refund) {
+        console.log('❌ Webhook de reembolso sem dados de refund');
+        return res.status(400).json({ error: 'Dados de reembolso não encontrados' });
+      }
+
+      const { correlationID, status, value, refundId, time } = refund;
+      
+      // Verificar se é um reembolso confirmado
+      if (status !== 'CONFIRMED') {
+        console.log(`ℹ️ Reembolso não confirmado, status: ${status}`);
+        return res.json({ message: 'Reembolso não confirmado' });
+      }
+
+      console.log(`💰 Processando reembolso confirmado - correlationID: ${correlationID}, value: ${value}, refundId: ${refundId}`);
+
+      // Buscar o pagamento pela correlationID
+      const payment = await storage.getPaymentByCorrelationId(correlationID);
+      
+      if (!payment) {
+        console.log(`❌ Pagamento não encontrado para correlationID: ${correlationID}`);
+        return res.status(404).json({ error: 'Pagamento não encontrado' });
+      }
+
+      // Buscar o usuário
+      const user = await storage.getUserById(payment.userId);
+      
+      if (!user) {
+        console.log(`❌ Usuário não encontrado para o pagamento: ${payment.userId}`);
+        return res.status(404).json({ error: 'Usuário não encontrado' });
+      }
+
+      console.log(`👤 Processando reembolso para usuário: ${user.email} (ID: ${user.id})`);
+
+      // Atualizar o status do pagamento para reembolsado
+      await storage.updatePayment(payment.id, {
+        status: 'REFUNDED',
+        refundedAt: new Date(),
+        metadata: {
+          ...payment.metadata,
+          refundId,
+          refundTime: time,
+          refundValue: value
+        }
+      });
+
+      // Cancelar a assinatura do usuário
+      await storage.updateUser(user.id, {
+        subscriptionActive: false,
+        paymentRequired: true,
+        subscriptionType: null,
+        subscriptionExpiresAt: null
+      });
+
+      console.log(`✅ Reembolso processado com sucesso para ${user.email} - Assinatura cancelada`);
+
+      // Enviar email de cancelamento
+      try {
+        const { sendSubscriptionCancellationEmail } = await import('./email-service');
+        await sendSubscriptionCancellationEmail(
+          user.email,
+          user.name,
+          (value / 100), // Converter centavos para reais
+          new Date(time)
+        );
+        console.log(`📧 Email de cancelamento enviado para ${user.email}`);
+      } catch (emailError) {
+        console.error('Erro ao enviar email de cancelamento:', emailError);
+      }
+
+      return res.json({ 
+        success: true, 
+        message: 'Reembolso processado com sucesso',
+        user: user.email,
+        refundId,
+        correlationID
+      });
+
+    } catch (error: any) {
+      console.error('🚨 Erro ao processar webhook de reembolso:', error);
+      return res.status(500).json({ 
+        error: 'Erro interno do servidor',
+        message: error.message 
+      });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
