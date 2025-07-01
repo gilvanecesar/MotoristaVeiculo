@@ -450,3 +450,33 @@ export function blockDriverFromFreightCreation(req: Request, res: Response, next
   console.log(`[blockDriverFromFreightCreation] Usuário ${req.user.id} (${req.user.profileType}) autorizado para cadastrar fretes`);
   next();
 }
+
+// Middleware para permitir acesso de motoristas ao cadastro de motoristas
+export function allowDriverAccess(req: Request, res: Response, next: NextFunction) {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Não autenticado" });
+  }
+
+  // Permitir acesso para administradores
+  if (req.user?.profileType?.toLowerCase() === "administrador" || req.user?.profileType?.toLowerCase() === "admin") {
+    return next();
+  }
+
+  // Permitir acesso para motoristas (acesso gratuito ao cadastro de motoristas)
+  if (req.user?.profileType?.toLowerCase() === "motorista") {
+    console.log(`[allowDriverAccess] Motorista ${req.user.id} acessando cadastro de motoristas`);
+    return next();
+  }
+
+  // Para outros perfis, verificar assinatura ativa
+  if (req.user?.subscriptionActive === false) {
+    console.log(`[allowDriverAccess] Usuário ${req.user.id} sem assinatura ativa tentou acessar motoristas`);
+    return res.status(403).json({ 
+      message: "Assinatura ativa necessária para acessar esta funcionalidade",
+      code: "SUBSCRIPTION_REQUIRED" 
+    });
+  }
+
+  // Permitir acesso para usuários com assinatura ativa
+  next();
+}

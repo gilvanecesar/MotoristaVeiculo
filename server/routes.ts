@@ -40,7 +40,8 @@ import {
   hasVehicleAccess,
   canEditDriver,
   canEditVehicle,
-  blockDriverFromFreightCreation
+  blockDriverFromFreightCreation,
+  allowDriverAccess
 } from "./middlewares";
 import { 
   Driver, 
@@ -209,7 +210,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ==================== DRIVERS ====================
   // Obter todos motoristas com seus veículos
-  app.get("/api/drivers", hasActiveSubscription, async (req: Request, res: Response) => {
+  app.get("/api/drivers", allowDriverAccess, async (req: Request, res: Response) => {
     try {
       // Obter todos os motoristas
       const drivers = await storage.getDrivers();
@@ -236,7 +237,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Obter motorista por ID com seus veículos
-  app.get("/api/drivers/:id", hasActiveSubscription, async (req: Request, res: Response) => {
+  app.get("/api/drivers/:id", allowDriverAccess, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       const driver = await storage.getDriver(id);
