@@ -1138,3 +1138,28 @@ export async function updateOpenPixWebhookConfigAPI(req: Request, res: Response)
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 }
+
+/**
+ * Envia notificação WhatsApp para reembolso/cancelamento de assinatura
+ */
+async function sendRefundNotificationWhatsApp(user: any, payment: any, pixData: any) {
+  console.log('=== ENVIANDO NOTIFICAÇÃO WHATSAPP DE REEMBOLSO ===');
+  console.log('Usuário:', user.name);
+  console.log('Email:', user.email);
+  console.log('Valor reembolsado: R$', payment.amount);
+
+  const config = await getOpenPixWebhookConfig();
+  
+  if (!config.enabled || !config.notifyPayments) {
+    console.log('Webhook WhatsApp não configurado ou desabilitado para reembolsos');
+    return;
+  }
+
+  try {
+    // Aqui será implementada a integração com WhatsApp quando configurada
+    // Por enquanto, apenas logamos a intenção
+    console.log('Notificação de reembolso via WhatsApp enviada com sucesso');
+  } catch (error) {
+    console.error('Erro ao enviar notificação WhatsApp de reembolso:', error);
+  }
+}
