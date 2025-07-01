@@ -157,7 +157,16 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
-      const { email, password, name, profileType } = req.body;
+      const { email, password, name, phone, whatsapp, profileType } = req.body;
+      
+      // Validação dos campos obrigatórios
+      if (!phone || phone.trim() === '') {
+        return res.status(400).json({ message: "Telefone é obrigatório" });
+      }
+      
+      if (!whatsapp || whatsapp.trim() === '') {
+        return res.status(400).json({ message: "WhatsApp é obrigatório" });
+      }
       
       // Verifica se o usuário já existe
       const existingUser = await storage.getUserByEmail(email);
@@ -193,6 +202,8 @@ export function setupAuth(app: Express) {
       const newUser = await storage.createUser({
         email,
         name,
+        phone,
+        whatsapp,
         password: hashedPassword,
         profileType,
         authProvider: "local",
