@@ -1,203 +1,379 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/use-auth';
+import { useState, useEffect, useRef } from 'react';
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2, QrCode, Check, ArrowLeft, Copy } from "lucide-react";
 import { useLocation } from 'wouter';
-import { useMutation } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { CheckCircle, CreditCard, Loader2, ArrowLeft } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
 
-export default function CheckoutPage() {
-  const { user } = useAuth();
+export default function Checkout() {
   const { toast } = useToast();
-  const [location, navigate] = useLocation();
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Se usuário não autenticado, redirecionar para login
-  useEffect(() => {
-    if (!user) {
-      navigate('/auth');
-    }
-  }, [user, navigate]);
-
-  // Mutation para criar cobrança PIX
-  const createChargeMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest('POST', '/api/openpix/create-charge', {
-        planType: 'monthly'
-      });
-      
-      if (!res.ok) {
-        throw new Error('Erro ao criar cobrança PIX');
-      }
-      
-      return await res.json();
-    },
-    onSuccess: (data) => {
-      if (data.success && data.charge) {
-        // Redirecionar para página de pagamento PIX
-        navigate(`/payment?chargeId=${data.charge.identifier}`);
-      }
-    },
-    onError: (error) => {
-      toast({
-        title: "Erro ao criar cobrança",
-        description: "Não foi possível gerar o PIX. Tente novamente.",
-        variant: "destructive",
-      });
-    }
+  const [_, navigate] = useLocation();
+  const [pixCharge, setPixCharge] = useState<any>(null);
+  const [isCreatingPayment, setIsCreatingPayment] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'processing' | 'completed'>('pending');
+  const [isCheckingPayment, setIsCheckingPayment] = useState(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Get the plan from URL query parameter
+  const [searchParams] = useState<URLSearchParams>(() => new URLSearchParams(window.location.search));
+  const [selectedPlan, setSelectedPlan] = useState<string>(() => {
+    const planFromURL = searchParams.get("plan");
+    return planFromURL === "monthly" ? "monthly" : "annual";
   });
 
-  const handleSubscribe = () => {
-    createChargeMutation.mutate();
+  const planDetails = {
+    monthly: {
+      name: "Plano Mensal",
+      price: "R$ 49,90",
+      description: "Acesso por 30 dias",
+      period: "mês",
+      value: 4990
+    },
+    annual: {
+      name: "Plano Anual", 
+      price: "R$ 499,00",
+      description: "Acesso por 12 meses",
+      period: "ano",
+      savings: "Economia de R$ 99,80",
+      value: 4990
+    }
   };
 
-  if (!user) {
-    return null;
-  }
+  const currentPlan = planDetails[selectedPlan as keyof typeof planDetails];
+
+  // Verificar status do pagamento
+  const checkPaymentStatus = async () => {
+    if (!pixCharge?.charge?.identifier) return;
+    
+    try {
+      setIsCheckingPayment(true);
+      
+      // Verificar nossos pagamentos locais primeiro
+      const response = await apiRequest("GET", "/api/openpix/my-payments");
+      
+      if (response.success && response.payments) {
+        const currentPayment = response.payments.find(
+          (payment: any) => payment.openPixChargeId === pixCharge.charge.identifier
+        );
+        
+        if (currentPayment?.status === 'COMPLETED' && currentPayment?.subscriptionActivated) {
+          setPaymentStatus('completed');
+          
+          // Limpar intervalo
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+          }
+          
+          toast({
+            title: "Pagamento confirmado!",
+            description: "Sua assinatura foi ativada com sucesso. Redirecionando...",
+          });
+          
+          // Redirecionar para HOME após 2 segundos
+          setTimeout(() => {
+            navigate("/");
+          }, 2000);
+          
+          return;
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao verificar status do pagamento:', error);
+    } finally {
+      setIsCheckingPayment(false);
+    }
+  };
+
+  // Iniciar monitoramento quando PIX for criado
+  useEffect(() => {
+    if (pixCharge?.charge?.identifier && paymentStatus === 'pending') {
+      setPaymentStatus('processing');
+      
+      // Verificar imediatamente
+      checkPaymentStatus();
+      
+      // Configurar verificação automática a cada 5 segundos
+      intervalRef.current = setInterval(checkPaymentStatus, 5000);
+    }
+    
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [pixCharge]);
+
+  const createPixPayment = async () => {
+    setIsCreatingPayment(true);
+    try {
+      const response = await apiRequest("POST", "/api/openpix/create-charge", {
+        planType: selectedPlan,
+        value: currentPlan.value,
+        email: "customer@querofretes.com.br",
+        name: "Assinatura QUERO FRETES"
+      });
+      const data = await response.json();
+      
+      if (response.ok) {
+        setPixCharge(data);
+        setPaymentStatus('processing');
+        toast({
+          title: "PIX gerado com sucesso",
+          description: "Escaneie o QR Code ou copie o código PIX para pagar",
+        });
+      } else {
+        throw new Error(data.details || "Erro ao criar cobrança PIX");
+      }
+    } catch (error: any) {
+      console.error("Erro ao criar PIX:", error);
+      toast({
+        title: "Erro",
+        description: `Falha ao gerar PIX: ${error.message}`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingPayment(false);
+    }
+  };
+
+  const copyPixCode = async () => {
+    if (pixCharge?.charge?.brCode) {
+      try {
+        await navigator.clipboard.writeText(pixCharge.charge.brCode);
+        toast({
+          title: "Código copiado",
+          description: "Código PIX copiado para a área de transferência",
+        });
+      } catch (error) {
+        toast({
+          title: "Erro ao copiar",
+          description: "Não foi possível copiar o código",
+          variant: "destructive",
+        });
+      }
+    }
+  };
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Cabeçalho */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">Assine o QueroFretes</h1>
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted/30 flex items-center justify-center p-3 sm:p-4">
+      <div className="w-full max-w-2xl space-y-4 sm:space-y-6">
+        {/* Header */}
+        <div className="text-center space-y-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/auth")}
+            className="mb-4"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar
+          </Button>
+          <h1 className="text-3xl font-bold">Finalizar Assinatura</h1>
           <p className="text-muted-foreground">
-            Escolha o plano ideal para seu negócio
+            Complete seu pagamento para acessar todos os recursos do QUERO FRETES
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8">
-          {/* Teste Gratuito */}
-          <Card className="border-muted">
-            <CardHeader>
-              <CardTitle>Teste Gratuito</CardTitle>
-              <CardDescription>7 dias de acesso total</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold mb-4">R$ 0,00</div>
-              <ul className="space-y-3">
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span>Acesso total por 7 dias</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span>Gerenciamento de fretes</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span>Gestão de motoristas e veículos</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span>Relatórios básicos</span>
-                </li>
-              </ul>
-            </CardContent>
-            <CardFooter>
-              <Button className="w-full" variant="outline">
-                Iniciar período de teste
-              </Button>
-            </CardFooter>
-          </Card>
-
-          {/* Assinatura Mensal */}
-          <Card className="border-primary bg-primary/5 relative">
-            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-              <Badge className="bg-primary text-primary-foreground">
-                Plano Oficial
-              </Badge>
+        {/* Plan Summary */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              {currentPlan.name}
+              <Badge variant="secondary">{currentPlan.price}</Badge>
+            </CardTitle>
+            <CardDescription>{currentPlan.description}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Total a pagar:</span>
+              <span className="text-2xl font-bold">{currentPlan.price}</span>
             </div>
-            <CardHeader className="pt-8">
-              <CardTitle>Assinatura Mensal</CardTitle>
-              <CardDescription>Pague mensalmente</CardDescription>
+            {selectedPlan === 'annual' && (
+              <div className="mt-2">
+                <Badge variant="outline" className="text-green-600">
+                  Economia de R$ 99,80
+                </Badge>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Payment Method */}
+        {!pixCharge ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <QrCode className="h-5 w-5 mr-2" />
+                Pagamento via PIX
+              </CardTitle>
+              <CardDescription>
+                Pague instantaneamente com PIX - rápido, seguro e sem taxas
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold mb-1">
-                R$ 49,90
-                <span className="text-sm font-normal text-muted-foreground">/mês</span>
+              <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
+                  <div className="space-y-2">
+                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+                      <span className="text-primary font-semibold">1</span>
+                    </div>
+                    <p className="text-sm">Gerar QR Code</p>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+                      <span className="text-primary font-semibold">2</span>
+                    </div>
+                    <p className="text-sm">Escanear no App</p>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+                      <span className="text-primary font-semibold">3</span>
+                    </div>
+                    <p className="text-sm">Pagamento Aprovado</p>
+                  </div>
+                </div>
+                
+                <Button 
+                  onClick={createPixPayment} 
+                  disabled={isCreatingPayment}
+                  className="w-full"
+                  size="lg"
+                >
+                  {isCreatingPayment ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Gerando PIX...
+                    </>
+                  ) : (
+                    <>
+                      <QrCode className="h-4 w-4 mr-2" />
+                      Gerar PIX - {currentPlan.price}
+                    </>
+                  )}
+                </Button>
               </div>
-              <ul className="space-y-3 mt-6">
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span>Acesso total ao sistema</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span>Fretes ilimitados</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span>Suporte prioritário</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span>Relatórios avançados</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span>Exportação de dados</span>
-                </li>
-              </ul>
             </CardContent>
-            <CardFooter className="flex flex-col gap-2">
-              <Button 
-                className="w-full"
-                onClick={handleSubscribe}
-                disabled={createChargeMutation.isPending}
-              >
-                {createChargeMutation.isPending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Gerando PIX...
-                  </>
-                ) : (
-                  <>
-                    <CreditCard className="h-4 w-4 mr-2" />
-                    Assinar Plano Mensal
-                  </>
-                )}
-              </Button>
-              <p className="text-xs text-center text-muted-foreground">
-                Assinatura processada pelo OpenPix
-              </p>
-            </CardFooter>
           </Card>
-        </div>
+        ) : (
+          /* PIX Payment Display */
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-center text-green-600">
+                <Check className="h-6 w-6 inline mr-2" />
+                PIX Gerado com Sucesso
+              </CardTitle>
+              <CardDescription className="text-center">
+                Escaneie o QR Code ou copie o código PIX para completar o pagamento
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-6 md:grid-cols-2">
+                {/* QR Code */}
+                <div className="flex flex-col items-center space-y-4">
+                  <h3 className="font-semibold">QR Code PIX</h3>
+                  {pixCharge.charge?.qrCodeImage ? (
+                    <div className="space-y-2">
+                      <img 
+                        src={pixCharge.charge.qrCodeImage} 
+                        alt="QR Code PIX" 
+                        className="w-48 h-48 border rounded-lg"
+                      />
+                      <p className="text-xs text-center text-muted-foreground">
+                        Abra o app do seu banco e escaneie o código
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="w-48 h-48 border rounded-lg flex items-center justify-center">
+                      <span className="text-muted-foreground">Carregando QR Code...</span>
+                    </div>
+                  )}
+                </div>
 
-        {/* Informações adicionais */}
-        <div className="mt-8">
-          <Alert className="bg-blue-50 border-blue-200">
-            <CheckCircle className="h-4 w-4 text-blue-600" />
-            <AlertTitle>Dúvidas sobre nossos planos? Entre em contato com nosso suporte</AlertTitle>
-            <AlertDescription>
-              Você será redirecionado para uma página segura do OpenPix para finalizar seu pagamento via PIX.
-            </AlertDescription>
-          </Alert>
-        </div>
+                {/* Payment Info */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold">Informações do Pagamento</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span>Valor:</span>
+                      <span className="font-semibold">{currentPlan.price}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Plano:</span>
+                      <span>{currentPlan.name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Status:</span>
+                      {paymentStatus === 'processing' ? (
+                        <Badge variant="outline" className="text-blue-600">
+                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                          Verificando Pagamento
+                        </Badge>
+                      ) : paymentStatus === 'completed' ? (
+                        <Badge variant="outline" className="text-green-600">
+                          <Check className="h-3 w-3 mr-1" />
+                          Pagamento Confirmado
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-yellow-600">
+                          Aguardando Pagamento
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
 
-        <div className="text-center mt-6">
-          <Button variant="outline" onClick={() => navigate('/home')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar para a página inicial
-          </Button>
-        </div>
+                  {/* PIX Code */}
+                  {pixCharge.charge?.brCode && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold">Código PIX (Copia e Cola):</label>
+                      <div className="flex gap-2">
+                        <textarea 
+                          className="flex-1 p-2 text-xs border rounded resize-none h-20"
+                          value={pixCharge.charge.brCode}
+                          readOnly
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={copyPixCode}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
 
-        <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-md text-amber-800 text-sm max-w-2xl mx-auto">
-          <p><strong>Nota:</strong> A janela de pagamento do OpenPix é gerenciada pelo próprio OpenPix. 
-          Para fechar essa janela, você pode usar o botão de voltar do seu navegador ou clicar fora do modal 
-          caso o pagamento ainda não tenha sido iniciado.</p>
+                  {/* Payment Link */}
+                  {pixCharge.charge?.paymentLinkUrl && (
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => window.open(pixCharge.charge.paymentLinkUrl, '_blank')}
+                    >
+                      Abrir Link de Pagamento
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* Status Check */}
+              <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+                <p className="text-sm text-center text-muted-foreground">
+                  Após o pagamento, sua assinatura será ativada automaticamente.
+                  Você receberá uma confirmação por email.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Security Note */}
+        <div className="text-center text-xs text-muted-foreground">
+          <p>🔒 Pagamento processado de forma segura via OpenPix</p>
+          <p>Seus dados estão protegidos com criptografia de ponta a ponta</p>
         </div>
       </div>
     </div>
