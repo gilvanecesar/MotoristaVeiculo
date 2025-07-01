@@ -444,8 +444,8 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   password: text("password"),
   name: text("name").notNull(),
-  phone: text("phone").notNull(), // Campo obrigatório para telefone
-  whatsapp: text("whatsapp").notNull(), // Campo obrigatório para WhatsApp
+  phone: text("phone"), // Campo opcional para telefone (obrigatório apenas no cadastro completo)
+  whatsapp: text("whatsapp"), // Campo opcional para WhatsApp (obrigatório apenas no cadastro completo)
   profileType: text("profile_type").notNull(),
   authProvider: text("auth_provider").notNull().default(AUTH_PROVIDERS.LOCAL),
   providerId: text("provider_id"),
