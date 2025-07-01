@@ -297,9 +297,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const driver = await storage.createDriver(driverData);
       res.status(201).json(driver);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating driver:", error);
-      res.status(500).json({ message: "Failed to create driver" });
+      
+      // Tratar erro de CPF duplicado
+      if (error.code === '23505' && error.constraint === 'drivers_cpf_unique') {
+        return res.status(400).json({ 
+          message: "CPF já cadastrado no sistema", 
+          field: "cpf",
+          type: "duplicate" 
+        });
+      }
+      
+      // Tratar erro de CNH duplicada
+      if (error.code === '23505' && error.constraint === 'drivers_cnh_unique') {
+        return res.status(400).json({ 
+          message: "CNH já cadastrada no sistema", 
+          field: "cnh",
+          type: "duplicate" 
+        });
+      }
+      
+      res.status(500).json({ message: "Erro ao cadastrar motorista" });
     }
   });
 

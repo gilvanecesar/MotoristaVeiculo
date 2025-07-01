@@ -175,10 +175,21 @@ export default function DriverForm() {
       // Para perfil motorista, redirecionar para fretes
       navigate("/freights");
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.log("Erro ao processar JSON da resposta:", error);
+      
+      // Tentar extrair a mensagem de erro do servidor
+      let errorMessage = "Falha ao cadastrar motorista";
+      
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Erro",
-        description: `Falha ao cadastrar motorista: ${error.message}`,
+        description: errorMessage,
         variant: "destructive",
       });
     },
