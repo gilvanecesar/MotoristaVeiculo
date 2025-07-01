@@ -165,8 +165,8 @@ export default function AdminUsersPage() {
 
   // Alternar acesso (bloquear/desbloquear)
   const toggleAccessMutation = useMutation({
-    mutationFn: async ({ userId, blocked }: { userId: number, blocked: boolean }) => {
-      const res = await apiRequest("PUT", `/api/admin/users/${userId}/toggle-access`, { blocked });
+    mutationFn: async ({ userId, isActive }: { userId: number, isActive: boolean }) => {
+      const res = await apiRequest("PUT", `/api/admin/users/${userId}/toggle-access`, { isActive });
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.message || "Falha ao alterar acesso do usuário");
@@ -294,7 +294,7 @@ export default function AdminUsersPage() {
   const handleToggleAccess = (userId: number, currentStatus: boolean | undefined) => {
     toggleAccessMutation.mutate({
       userId,
-      blocked: !currentStatus || false
+      isActive: !currentStatus
     });
   };
 
@@ -443,11 +443,17 @@ export default function AdminUsersPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Switch 
-                          checked={user.isActive} 
-                          onCheckedChange={() => handleToggleAccess(user.id, user.isActive)}
-                          aria-label="Alternar acesso"
-                        />
+                        <div className="flex flex-col gap-1 items-center">
+                          <label className="text-xs text-muted-foreground">
+                            {user.isActive ? "Ativo" : "Bloqueado"}
+                          </label>
+                          <Switch 
+                            checked={user.isActive} 
+                            onCheckedChange={() => handleToggleAccess(user.id, user.isActive)}
+                            aria-label={user.isActive ? "Bloquear usuário" : "Liberar usuário"}
+                            className="data-[state=checked]:bg-green-600"
+                          />
+                        </div>
                         <div className="flex flex-col gap-2">
                           <Button 
                             variant="outline" 
