@@ -106,20 +106,15 @@ export default function AuthPage() {
           description: "Bem-vindo à plataforma Quero Fretes",
         });
         
-        // Se for motorista, redireciona direto para fretes (sem precisar de pagamento)
+        // Se for motorista, redireciona direto (sem precisar de pagamento)
         if (user.profileType === USER_TYPES.DRIVER) {
-          // Ativa o acesso de motorista automaticamente, se ainda não estiver ativo
-          if (!user.subscriptionActive || user.subscriptionType !== "driver_free") {
-            apiRequest("POST", "/api/activate-driver-access", {})
-              .then(() => {
-                setLocation("/freights");
-              })
-              .catch((error) => {
-                console.error("Erro ao ativar acesso de motorista:", error);
-                setLocation("/auth?subscription=required");
-              });
-          } else {
+          // Motoristas têm acesso gratuito, verificar se já tem cadastro de motorista
+          if (user.driverId) {
+            // Se já tem cadastro de motorista, vai para fretes
             setLocation("/freights");
+          } else {
+            // Se não tem cadastro de motorista, redireciona para completar cadastro
+            setLocation("/drivers/new");
           }
         } else if (user.subscriptionActive) {
           // Se já tem assinatura ativa, vai para a página Home
@@ -190,41 +185,26 @@ export default function AuthPage() {
   };
 
   const onRegisterSubmit = (data: RegisterFormValues) => {
-    // Adiciona o profileType selecionado
+    // Adiciona o profileType selecionado e os campos obrigatórios
     const registerData = {
       email: data.email,
       name: data.name,
       password: data.password!,
+      phone: data.phone,
+      whatsapp: data.whatsapp,
       profileType: selectedRole,
     };
 
     registerMutation.mutate(registerData, {
-      onSuccess: () => {
-        // Se for motorista, ativa o acesso gratuito automaticamente
+      onSuccess: (user) => {
+        // Se for motorista, não cobra e redireciona para cadastro de motoristas
         if (selectedRole === USER_TYPES.DRIVER) {
-          // Ativa o acesso gratuito para motoristas
-          apiRequest("POST", "/api/activate-driver-access", {})
-            .then((response) => {
-              if (response.ok) {
-                toast({
-                  title: "Cadastro de motorista realizado",
-                  description: "Seu acesso gratuito foi ativado! Você pode acessar fretes, veículos e motoristas.",
-                });
-                // Redireciona diretamente para a página de fretes
-                setLocation("/freights");
-              } else {
-                throw new Error("Erro ao ativar acesso de motorista");
-              }
-            })
-            .catch((error) => {
-              console.error("Erro ao ativar acesso:", error);
-              toast({
-                title: "Erro ao ativar acesso",
-                description: "Não foi possível ativar seu acesso gratuito. Tente novamente.",
-                variant: "destructive",
-              });
-              setShowPlans(true);
-            });
+          toast({
+            title: "Cadastro de motorista realizado",
+            description: "Agora complete seu cadastro de motorista com seus dados profissionais.",
+          });
+          // Redireciona para a página de cadastro de motoristas
+          setLocation("/drivers/new");
         } else {
           // Para outros tipos de perfil, mostra a página de planos
           toast({
