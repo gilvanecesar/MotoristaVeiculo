@@ -56,11 +56,66 @@ export function ProtectedRoute({
 
   // Essa verificação já foi feita acima
 
-  // Verifica se o usuário é motorista (acesso gratuito)
+  // Verifica se o usuário é motorista (acesso gratuito limitado)
   if (user.profileType === "driver" || user.profileType === "motorista") {
-    console.log(`Permitindo acesso ao motorista para a rota ${path}`);
-    // Permite acesso à rota para motoristas - sem restrições
-    return <Route path={path} component={Component} />;
+    // Rotas permitidas para motoristas
+    const motoristAllowedRoutes = [
+      '/freights',        // Ver fretes disponíveis
+      '/freights/',       // Ver fretes disponíveis
+      '/drivers',         // Cadastrar e ver motoristas
+      '/drivers/',        // Cadastrar e ver motoristas
+      '/drivers/new',     // Cadastrar novo motorista
+      '/vehicles',        // Cadastrar e ver veículos
+      '/vehicles/',       // Cadastrar e ver veículos
+      '/vehicles/new',    // Cadastrar novo veículo
+      '/dashboard',       // Dashboard básico
+      '/profile',         // Perfil do usuário
+      '/settings'         // Configurações
+    ];
+    
+    // Verifica se a rota atual é permitida para motoristas
+    const isAllowedRoute = motoristAllowedRoutes.some(allowedRoute => {
+      if (allowedRoute.endsWith('/')) {
+        return path.startsWith(allowedRoute) || path === allowedRoute.slice(0, -1);
+      }
+      return path === allowedRoute || path.startsWith(allowedRoute + '/');
+    });
+    
+    // Rotas explicitamente proibidas para motoristas
+    const forbiddenRoutes = [
+      '/freights/new',     // Cadastrar fretes (proibido)
+      '/freights/create',  // Criar fretes (proibido)
+      '/clients',          // Clientes (proibido)
+      '/admin',            // Administração (proibido)
+      '/reports',          // Relatórios (proibido)
+      '/invoices',         // Faturas (proibido)
+      '/subscribe'         // Assinaturas (proibido)
+    ];
+    
+    const isForbiddenRoute = forbiddenRoutes.some(forbiddenRoute => 
+      path.startsWith(forbiddenRoute)
+    );
+    
+    if (isForbiddenRoute) {
+      console.log(`Acesso negado ao motorista para a rota proibida: ${path}`);
+      return (
+        <Route path={path}>
+          <Redirect to="/freights" />
+        </Route>
+      );
+    }
+    
+    if (isAllowedRoute) {
+      console.log(`Permitindo acesso ao motorista para a rota ${path}`);
+      return <Route path={path} component={Component} />;
+    } else {
+      console.log(`Acesso negado ao motorista para a rota não permitida: ${path}`);
+      return (
+        <Route path={path}>
+          <Redirect to="/freights" />
+        </Route>
+      );
+    }
   }
 
   // Para outros tipos de usuários
