@@ -1,0 +1,49 @@
+VM430 eruda.js:2 Erro ao carregar usuário: TypeError: Failed to fetch
+    at window.fetch (VM430 eruda.js:2:218642)
+    at VM491 queryClient.ts:36:23
+    at Object.fetchFn [as fn] (VM484 @tanstack_react-query.js:840:14)
+    at run (VM484 @tanstack_react-query.js:494:49)
+    at Object.start (VM484 @tanstack_react-query.js:536:9)
+    at _a4.fetch (VM484 @tanstack_react-query.js:926:41)
+    at VM484 @tanstack_react-query.js:1726:29
+    at Array.map (<anonymous>)
+    at VM484 @tanstack_react-query.js:1725:101
+    at Object.batch (VM484 @tanstack_react-query.js:583:18)
+Mt.forEach.n.<computed> @ VM430 eruda.js:2
+(anonymous) @ VM491 queryClient.ts:52
+await in (anonymous)
+fetchFn @ VM484 @tanstack_react-query.js:840
+run @ VM484 @tanstack_react-query.js:494
+start @ VM484 @tanstack_react-query.js:536
+fetch @ VM484 @tanstack_react-query.js:926
+(anonymous) @ VM484 @tanstack_react-query.js:1726
+(anonymous) @ VM484 @tanstack_react-query.js:1725
+batch @ VM484 @tanstack_react-query.js:583
+refetchQueries @ VM484 @tanstack_react-query.js:1724
+(anonymous) @ VM484 @tanstack_react-query.js:1716
+batch @ VM484 @tanstack_react-query.js:583
+invalidateQueries @ VM484 @tanstack_react-query.js:1705
+onSuccess @ VM492 use-auth.tsx:44
+execute @ VM484 @tanstack_react-query.js:1233
+await in execute
+mutate @ VM484 @tanstack_react-query.js:2630
+(anonymous) @ VM484 @tanstack_react-query.js:3295
+onLoginSubmit @ VM501 login-page.tsx:111
+(anonymous) @ VM505 chunk-YABUFNLM.js:1675
+await in (anonymous)
+callCallback2 @ VM460 chunk-RPCDYKBN.js:3674
+invokeGuardedCallbackDev @ VM460 chunk-RPCDYKBN.js:3699
+invokeGuardedCallback @ VM460 chunk-RPCDYKBN.js:3733
+invokeGuardedCallbackAndCatchFirstError @ VM460 chunk-RPCDYKBN.js:3736
+executeDispatch @ VM460 chunk-RPCDYKBN.js:7014
+processDispatchQueueItemsInOrder @ VM460 chunk-RPCDYKBN.js:7034
+processDispatchQueue @ VM460 chunk-RPCDYKBN.js:7043
+dispatchEventsForPlugins @ VM460 chunk-RPCDYKBN.js:7051
+(anonymous) @ VM460 chunk-RPCDYKBN.js:7174
+batchedUpdates$1 @ VM460 chunk-RPCDYKBN.js:18913
+batchedUpdates @ VM460 chunk-RPCDYKBN.js:3579
+dispatchEventForPluginEventSystem @ VM460 chunk-RPCDYKBN.js:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ VM460 chunk-RPCDYKBN.js:5478
+dispatchEvent @ VM460 chunk-RPCDYKBN.js:5472
+dispatchDiscreteEvent @ VM460 chunk-RPCDYKBN.js:5449Understand this error
+C

@@ -234,8 +234,10 @@ export default function AuthPage() {
             password: registerData.password,
           }, {
             onSuccess: () => {
-              // Redireciona diretamente para a tela de assinatura
-              setLocation("/subscribe");
+              // Pequeno delay para garantir que o cache seja atualizado
+              setTimeout(() => {
+                setLocation("/subscribe");
+              }, 100);
             }
           });
         }
