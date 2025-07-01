@@ -222,10 +222,10 @@ export default function AuthPage() {
               setShowPlans(true);
             });
         } else {
-          // Para outros tipos de perfil (embarcador), faz login automático
+          // Para outros tipos de perfil (embarcador, transportador, agente), faz login automático
           toast({
             title: "Conta criada com sucesso",
-            description: "Redirecionando para a plataforma...",
+            description: "Redirecionando para a tela de assinatura...",
           });
           
           // Faz login automático com os dados do registro
@@ -234,8 +234,8 @@ export default function AuthPage() {
             password: registerData.password,
           }, {
             onSuccess: () => {
-              // Redireciona para home após login automático bem-sucedido
-              setLocation("/home");
+              // Redireciona diretamente para a tela de assinatura
+              setLocation("/subscribe");
             }
           });
         }

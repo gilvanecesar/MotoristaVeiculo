@@ -200,6 +200,10 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Menus "Fretes" e "Meus Fretes" habilitados para perfil motorista
 ✓ Banner de plano premium removido para motoristas (não precisam assinar)
 ✓ Dados de motorista salvos corretamente: gilvane cesar silva2 (ID: 43, User: 353)
+✓ Fluxo de cadastro e login para embarcadores: registro → login automático → redirecionamento para checkout
+✓ Menu "Meus Fretes" removido da sidebar para motoristas (acesso apenas a: Motoristas, Veículos, Fretes, Relatórios)
+✓ Rota /my-freights bloqueada para perfil motorista via middleware de proteção
+✓ Tratamento de erro melhorado: CPF duplicado retorna mensagem específica no frontend
 - June 27, 2025. OpenPix como método oficial único, interface simplificada
 - June 27, 2025. Removidas opções de Google login e múltiplos planos de preços
 - June 27, 2025. Menu "Histórico" removido, faturas integradas ao OpenPix
