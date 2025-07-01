@@ -132,6 +132,16 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ## Recent Changes
 
 ```
+✓ Sistema completo de reembolso automático OpenPix implementado
+✓ Cancelamento automático de assinatura quando status for REFUND
+✓ Email de cancelamento por reembolso com design profissional
+✓ Notificações WhatsApp configuradas para reembolsos
+✓ Campo refundedAt adicionado no banco para rastreamento de reembolsos
+✓ Webhook OpenPix aprimorado para processar reembolsos automaticamente
+✓ Bug crítico na verificação automática de pagamento PIX corrigido
+✓ Sistema de redirecionamento automático aprimorado com verificação dupla
+✓ Correção manual de pagamento processado para comercial@maytransportes.com
+✓ Sincronização automática de pagamentos OpenPix funcionando corretamente
 ✓ OpenPix implementado como método de pagamento oficial único
 ✓ Mercado Pago e PayPal removidos do sistema conforme solicitação
 ✓ Página de checkout moderna criada exclusivamente para pagamentos PIX
@@ -183,14 +193,10 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Interface profissional com 4 abas: Visão Geral, Assinaturas, Faturas, Análises
 ✓ Dashboard executivo com estatísticas em tempo real e atualização automática
 ✓ Sistema de badges coloridos para status e origem dos dados (OpenPix vs Local)
-- June 27, 2025. OpenPix como método oficial único, interface simplificada
-- June 27, 2025. Removidas opções de Google login e múltiplos planos de preços
-- June 27, 2025. Menu "Histórico" removido, faturas integradas ao OpenPix
-- June 27, 2025. Página "Minha Assinatura" com tratamento completo de estados
-- June 27, 2025. Interface reorganizada: "Meus Fretes" na sidebar, ícone do usuário no cabeçalho
-- June 27, 2025. Preços unificados: R$ 49,90 em toda interface, planos anuais removidos
-- June 27, 2025. Sidebar redesenhada com cor específica #00222d, fontes brancas e elementos visuais otimizados
-- June 27, 2025. Mobile optimization: responsive layouts, touch-friendly forms, and optimized spacing for smartphones
+- July 01, 2025. Sistema de reembolso automático OpenPix implementado com email e WhatsApp
+- July 01, 2025. Bug crítico de verificação automática de pagamento PIX corrigido
+- July 01, 2025. Problema de sincronização de pagamentos resolvido para comercial@maytransportes.com
+- July 01, 2025. Processos automáticos de ativação de assinatura funcionando corretamente
 ```
 
 ## User Preferences
