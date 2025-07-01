@@ -222,13 +222,17 @@ export default function AuthPage() {
               setShowPlans(true);
             });
         } else {
-          // Para outros tipos de perfil, mostra a página de planos
+          // Para outros tipos de perfil (embarcador), faz login automático
           toast({
             title: "Conta criada com sucesso",
-            description: "Para continuar, é necessário assinar um plano",
+            description: "Redirecionando para a plataforma...",
           });
-          // Após o cadastro, exibe a página de planos
-          setShowPlans(true);
+          
+          // Faz login automático com os dados do registro
+          loginMutation.mutate({
+            email: registerData.email,
+            password: registerData.password,
+          });
         }
       },
     });
