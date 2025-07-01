@@ -721,6 +721,7 @@ export const openPixPayments = pgTable("openpix_payments", {
   // Timestamps
   createdAt: timestamp("created_at").defaultNow(),
   paidAt: timestamp("paid_at"),       // Data do pagamento
+  refundedAt: timestamp("refunded_at"), // Data do reembolso
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 

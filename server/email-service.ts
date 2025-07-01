@@ -680,3 +680,91 @@ export async function sendPasswordResetEmail(
     return false;
   }
 }
+
+/**
+ * Envia um email de cancelamento de assinatura devido a reembolso
+ * @param email Email do destinatário
+ * @param clientName Nome do cliente
+ * @param refundAmount Valor reembolsado
+ * @param refundDate Data do reembolso
+ */
+export async function sendSubscriptionCancellationEmail(
+  email: string,
+  clientName: string,
+  refundAmount: number,
+  refundDate: Date
+) {
+  if (!transporter) {
+    console.warn('Serviço de email não configurado. Email de cancelamento não enviado.');
+    return;
+  }
+
+  const formattedRefundDate = new Date(refundDate).toLocaleDateString('pt-BR');
+  const formattedAmount = refundAmount.toLocaleString('pt-BR', { 
+    style: 'currency', 
+    currency: 'BRL' 
+  });
+
+  try {
+    const mailOptions = {
+      from: `"QUERO FRETES" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: 'Assinatura cancelada - Reembolso processado - QUERO FRETES',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #ffffff;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #00222d; margin: 0; font-size: 24px;">QUERO FRETES</h1>
+            <p style="color: #666; margin: 5px 0 0 0;">Sistema de Gestão de Fretes</p>
+          </div>
+          
+          <h2 style="color: #dc3545;">Assinatura Cancelada</h2>
+          <p>Olá, <strong>${clientName}</strong>!</p>
+          
+          <div style="background-color: #fff3cd; padding: 20px; border-radius: 8px; border-left: 4px solid #ffc107; margin: 20px 0;">
+            <h3 style="color: #856404; margin: 0 0 10px 0;">ℹ️ Informações do Cancelamento</h3>
+            <p style="margin: 0; color: #856404;">
+              Sua assinatura foi cancelada automaticamente devido ao reembolso do pagamento.
+            </p>
+          </div>
+          
+          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="color: #00222d; margin: 0 0 15px 0;">📋 Detalhes do Reembolso</h3>
+            <p><strong>Data do reembolso:</strong> ${formattedRefundDate}</p>
+            <p><strong>Valor reembolsado:</strong> ${formattedAmount}</p>
+            <p><strong>Status da assinatura:</strong> <span style="color: #dc3545; font-weight: bold;">Cancelada</span></p>
+          </div>
+          
+          <div style="background-color: #e7f3ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="color: #0066cc; margin: 0 0 15px 0;">🔄 Quer reativar sua assinatura?</h3>
+            <p style="color: #333; margin: 0 0 15px 0;">
+              Você pode reativar sua assinatura a qualquer momento e continuar aproveitando todos os recursos do QUERO FRETES.
+            </p>
+            <div style="text-align: center;">
+              <a href="${process.env.FRONTEND_URL || 'https://querofretes.com.br'}/subscribe" 
+                 style="background-color: #0066cc; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+                Reativar Assinatura
+              </a>
+            </div>
+          </div>
+          
+          <p style="color: #666; margin: 30px 0;">
+            Se você tiver alguma dúvida sobre este cancelamento ou precisar de assistência, 
+            entre em contato com nosso suporte.
+          </p>
+          
+          <p style="margin-top: 30px; font-size: 12px; color: #666; text-align: center;">
+            Este é um email automático, por favor não responda.<br>
+            QUERO FRETES © ${new Date().getFullYear()}
+          </p>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`Email de cancelamento de assinatura enviado para ${email}`);
+    return true;
+  } catch (error) {
+    console.error('Erro ao enviar email de cancelamento:', error);
+    return false;
+  }
+}

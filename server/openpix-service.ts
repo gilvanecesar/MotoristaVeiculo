@@ -3,7 +3,7 @@ import axios from 'axios';
 import { db } from './db';
 import { users, openPixPayments, subscriptions, OPENPIX_PAYMENT_STATUS } from '../shared/schema';
 import { eq, and } from 'drizzle-orm';
-import { sendSubscriptionEmail } from './email-service';
+import { sendSubscriptionEmail, sendSubscriptionCancellationEmail } from './email-service';
 
 interface OpenPixConfig {
   authorization: string;
@@ -262,6 +262,62 @@ export async function handleOpenPixWebhook(req: Request, res: Response) {
         
       } catch (error) {
         console.error('Erro ao ativar assinatura:', error);
+      }
+    }
+
+    // Processar reembolso/restituição
+    if (status === 'REFUND' || status === 'REFUNDED') {
+      console.log(`Reembolso PIX detectado para usuário ${userId}`);
+
+      // Buscar pagamento na nossa tabela de controle
+      const [payment] = await db
+        .select()
+        .from(openPixPayments)
+        .where(eq(openPixPayments.correlationId, correlationID));
+      
+      if (!payment) {
+        console.error('Pagamento não encontrado para reembolso:', correlationID);
+        return res.status(404).json({ error: 'Pagamento não encontrado' });
+      }
+
+      const now = new Date();
+
+      try {
+        // Atualizar status do pagamento para reembolsado
+        await db.update(openPixPayments)
+          .set({
+            status: 'REFUNDED',
+            subscriptionActivated: false,
+            refundedAt: now,
+            webhookData: req.body,
+            updatedAt: now
+          })
+          .where(eq(openPixPayments.id, payment.id));
+
+        // Cancelar assinatura do usuário
+        await db.update(users)
+          .set({
+            subscriptionActive: false,
+            subscriptionExpiresAt: now, // Expira imediatamente
+            paymentRequired: true
+          })
+          .where(eq(users.id, userId));
+
+        // Enviar email de cancelamento
+        await sendSubscriptionCancellationEmail(
+          user.email,
+          user.name,
+          parseFloat(payment.amount),
+          now
+        );
+
+        // Enviar notificação WhatsApp de cancelamento
+        await sendRefundNotificationWhatsApp(user, payment, pix);
+
+        console.log(`Assinatura cancelada para usuário ${userId} devido ao reembolso`);
+        
+      } catch (error) {
+        console.error('Erro ao processar reembolso:', error);
       }
     }
 
