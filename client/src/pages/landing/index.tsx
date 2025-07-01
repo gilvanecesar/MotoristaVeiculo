@@ -116,10 +116,7 @@ export default function LandingPage() {
                 </Button>
               </div>
               <div className="mt-8 flex flex-col sm:flex-row items-center justify-center lg:justify-start text-center lg:text-left">
-                <p className="text-slate-300 mb-2 sm:mb-0 sm:mr-4">Teste grátis por 7 dias</p>
-                <span className="flex items-center text-primary">
-                  <CheckCircle2 className="h-5 w-5 mr-2" /> Sem necessidade de cartão de crédito
-                </span>
+                <p className="text-primary font-bold text-lg mb-2 sm:mb-0 sm:mr-4">PAGUE APENAS 49,90 e tenha acesso a todas as funções do sistema</p>
               </div>
             </div>
             <div className="lg:w-1/2 flex justify-center">
