@@ -441,13 +441,33 @@ export function blockDriverFromFreightCreation(req: Request, res: Response, next
   if (req.user?.profileType?.toLowerCase() === "motorista") {
     console.log(`[blockDriverFromFreightCreation] Motorista ${req.user.id} (${req.user.email}) tentou cadastrar frete - bloqueado`);
     return res.status(403).json({ 
-      message: "Motoristas não podem cadastrar fretes. Apenas visualizar e gerenciar fretes existentes.",
+      message: "Motoristas não podem cadastrar fretes.",
       code: "DRIVER_FREIGHT_CREATION_BLOCKED"
     });
   }
 
   // Para outros perfis, permitir acesso
   console.log(`[blockDriverFromFreightCreation] Usuário ${req.user.id} (${req.user.profileType}) autorizado para cadastrar fretes`);
+  next();
+}
+
+// Middleware para bloquear motoristas de editar fretes
+export function blockDriverFromFreightEdit(req: Request, res: Response, next: NextFunction) {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Não autenticado" });
+  }
+
+  // Verificar se o usuário tem perfil de motorista
+  if (req.user?.profileType?.toLowerCase() === "motorista") {
+    console.log(`[blockDriverFromFreightEdit] Motorista ${req.user.id} (${req.user.email}) tentou editar frete - bloqueado`);
+    return res.status(403).json({ 
+      message: "Motoristas não podem editar fretes.",
+      code: "DRIVER_FREIGHT_EDIT_BLOCKED"
+    });
+  }
+
+  // Para outros perfis, permitir acesso
+  console.log(`[blockDriverFromFreightEdit] Usuário ${req.user.id} (${req.user.profileType}) autorizado para editar fretes`);
   next();
 }
 

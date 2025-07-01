@@ -41,6 +41,7 @@ import {
   canEditDriver,
   canEditVehicle,
   blockDriverFromFreightCreation,
+  blockDriverFromFreightEdit,
   allowDriverAccess,
   allowDriverVehicleAccess
 } from "./middlewares";
@@ -290,7 +291,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/drivers", allowDriverAccess, async (req: Request, res: Response) => {
     try {
       const driverData: InsertDriver = {
-        ...req.body
+        ...req.body,
+        userId: req.user!.id // Adicionar automaticamente o ID do usuário logado
       };
       
       const driver = await storage.createDriver(driverData);
@@ -761,7 +763,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Atualizar frete existente
-  app.put("/api/freights/:id", isAuthenticated, async (req: Request, res: Response) => {
+  app.put("/api/freights/:id", isAuthenticated, blockDriverFromFreightEdit, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       const freightData = req.body;
@@ -919,7 +921,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Rota simplificada para atualizar apenas o valor do frete, sem verificações rigorosas de acesso
-  app.post("/api/freights/:id/update-value", isAuthenticated, async (req: Request, res: Response) => {
+  app.post("/api/freights/:id/update-value", isAuthenticated, blockDriverFromFreightEdit, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       
