@@ -173,11 +173,14 @@ export default function AdminUsersPage() {
       }
       return await res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       toast({
-        title: "Acesso alterado",
-        description: "O acesso do usuário foi alterado com sucesso",
+        title: variables.isActive ? "Usuário ativado" : "Usuário bloqueado",
+        description: variables.isActive 
+          ? "O usuário agora tem acesso completo ao sistema" 
+          : "O usuário foi bloqueado e não pode mais acessar o sistema",
+        variant: variables.isActive ? "default" : "destructive",
       });
     },
     onError: (error: any) => {
