@@ -1,6 +1,6 @@
 import { Express } from 'express';
 import { isAuthenticated } from './middlewares';
-import { createPixCharge, handleOpenPixWebhook, getChargeStatus, listOpenPixCharges, syncOpenPixPayments, getUserPayments, getUserOpenPixCharges, getOpenPixFinanceStats, getOpenPixSubscriptions, getOpenPixInvoices, getOpenPixWebhookConfigAPI, updateOpenPixWebhookConfigAPI, forcePaymentSync } from './openpix-service';
+import { createPixCharge, handleOpenPixWebhook, handleOpenPixRefundWebhook, getChargeStatus, listOpenPixCharges, syncOpenPixPayments, getUserPayments, getUserOpenPixCharges, getOpenPixFinanceStats, getOpenPixSubscriptions, getOpenPixInvoices, getOpenPixWebhookConfigAPI, updateOpenPixWebhookConfigAPI, forcePaymentSync } from './openpix-service';
 
 /**
  * Configura rotas do OpenPix
@@ -13,6 +13,9 @@ export function setupOpenPixRoutes(app: Express) {
 
   // Webhook do OpenPix (sem autenticação)
   app.post('/api/webhooks/openpix', handleOpenPixWebhook);
+
+  // Webhook específico para reembolsos OpenPix (sem autenticação)
+  app.post('/api/webhooks/openpix/refund', handleOpenPixRefundWebhook);
 
   // Consultar status de cobrança
   app.get('/api/openpix/charge/:chargeId', isAuthenticated, getChargeStatus);

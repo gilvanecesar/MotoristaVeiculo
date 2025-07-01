@@ -160,6 +160,154 @@ export async function createPixCharge(req: Request, res: Response) {
 }
 
 /**
+ * Webhook específico para reembolsos da OpenPix
+ */
+export async function handleOpenPixRefundWebhook(req: Request, res: Response) {
+  try {
+    console.log('🔄 Webhook de reembolso OpenPix recebido:', JSON.stringify(req.body, null, 2));
+    
+    const { refund } = req.body;
+    
+    if (!refund) {
+      console.log('❌ Webhook de reembolso sem dados de refund');
+      return res.status(400).json({ error: 'Dados de reembolso não encontrados' });
+    }
+
+    const { correlationID, status, value, refundId, time } = refund;
+    
+    // Verificar se é um reembolso confirmado
+    if (status !== 'CONFIRMED') {
+      console.log(`ℹ️ Reembolso não confirmado, status: ${status}`);
+      return res.status(200).json({ message: 'Reembolso não confirmado, ignorado' });
+    }
+
+    console.log(`💰 Processando reembolso confirmado: ${refundId} - R$ ${value/100}`);
+    
+    // Buscar a cobrança original pelo correlationID
+    const originalCharge = await axios.get(`${openPixConfig.apiUrl}/charge?correlationID=${correlationID}`, {
+      headers: {
+        'Authorization': openPixConfig.authorization,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!originalCharge.data.charges || originalCharge.data.charges.length === 0) {
+      console.log(`❌ Cobrança original não encontrada para correlationID: ${correlationID}`);
+      return res.status(404).json({ error: 'Cobrança original não encontrada' });
+    }
+
+    const charge = originalCharge.data.charges[0];
+    console.log(`🔍 Cobrança original encontrada: ${charge.identifier}`);
+
+    // Extrair userId do correlationID (formato: querofretes-{userId}-{timestamp})
+    const correlationParts = correlationID.split('-');
+    if (correlationParts.length < 2 || correlationParts[0] !== 'querofretes') {
+      console.log(`❌ Formato de correlationID inválido: ${correlationID}`);
+      return res.status(400).json({ error: 'Formato de correlationID inválido' });
+    }
+
+    const userId = parseInt(correlationParts[1]);
+    console.log(`👤 Processando reembolso para usuário ID: ${userId}`);
+
+    // Buscar usuário no banco
+    const [user] = await db.select().from(users).where(eq(users.id, userId));
+    
+    if (!user) {
+      console.log(`❌ Usuário não encontrado no banco: ${userId}`);
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    console.log(`👤 Usuário encontrado: ${user.email}`);
+
+    // Cancelar assinatura do usuário
+    await db.update(users)
+      .set({
+        subscriptionActive: false,
+        subscriptionType: null,
+        subscriptionExpiresAt: null,
+        refundedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId));
+
+    console.log(`✅ Assinatura cancelada para usuário: ${user.email}`);
+
+    // Atualizar registro de pagamento existente com reembolso
+    try {
+      await db.update(openPixPayments)
+        .set({
+          status: 'EXPIRED',
+          refundedAt: new Date(time),
+          processed: true,
+          subscriptionActivated: false,
+          webhookData: { refund: refund, charge: charge },
+          updatedAt: new Date()
+        })
+        .where(eq(openPixPayments.openPixChargeId, charge.identifier));
+
+      console.log(`💾 Reembolso registrado no pagamento existente`);
+    } catch (updateError) {
+      console.log(`⚠️ Pagamento não encontrado, criando novo registro de reembolso`);
+      
+      // Se não existe pagamento, criar novo registro marcado como reembolsado
+      await db.insert(openPixPayments).values({
+        userId: userId,
+        openPixChargeId: charge.identifier,
+        correlationId: correlationID,
+        status: 'EXPIRED',
+        amount: (value / 100).toString(),
+        amountCents: value,
+        pixCode: charge.brCode || null,
+        qrCodeImage: charge.qrCodeImage || null,
+        paymentUrl: charge.paymentLinkUrl || null,
+        planType: 'monthly',
+        paidAt: charge.paidAt ? new Date(charge.paidAt) : null,
+        refundedAt: new Date(time),
+        processed: true,
+        subscriptionActivated: false,
+        webhookData: { refund: refund, charge: charge }
+      });
+    }
+
+    console.log(`💾 Reembolso registrado no banco de dados`);
+
+    // Enviar email de cancelamento por reembolso
+    try {
+      await sendSubscriptionCancellationEmail(
+        user.email,
+        user.name,
+        value / 100, // Converter centavos para reais
+        new Date(time)
+      );
+      console.log(`📧 Email de cancelamento enviado para: ${user.email}`);
+    } catch (emailError) {
+      console.error('❌ Erro ao enviar email de cancelamento:', emailError);
+    }
+
+    // Enviar notificação WhatsApp se configurado
+    try {
+      await sendRefundNotificationWhatsApp(user, { value, refundId }, { correlationID, time });
+      console.log(`📱 Notificação WhatsApp de reembolso enviada`);
+    } catch (whatsappError) {
+      console.error('❌ Erro ao enviar notificação WhatsApp:', whatsappError);
+    }
+
+    console.log(`🎉 Reembolso processado com sucesso para ${user.email}`);
+    
+    res.status(200).json({ 
+      message: 'Reembolso processado com sucesso',
+      userId: userId,
+      refundId: refundId,
+      amount: value / 100
+    });
+
+  } catch (error) {
+    console.error('❌ Erro ao processar webhook de reembolso:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+}
+
+/**
  * Webhook para receber notificações do OpenPix
  */
 export async function handleOpenPixWebhook(req: Request, res: Response) {
