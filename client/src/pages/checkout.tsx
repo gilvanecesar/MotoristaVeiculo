@@ -19,25 +19,14 @@ export default function Checkout() {
   
   // Get the plan from URL query parameter
   const [searchParams] = useState<URLSearchParams>(() => new URLSearchParams(window.location.search));
-  const [selectedPlan, setSelectedPlan] = useState<string>(() => {
-    const planFromURL = searchParams.get("plan");
-    return planFromURL === "monthly" ? "monthly" : "annual";
-  });
+  const [selectedPlan, setSelectedPlan] = useState<string>("monthly");
 
   const planDetails = {
     monthly: {
-      name: "Plano Mensal",
+      name: "Plano Oficial",
       price: "R$ 49,90",
       description: "Acesso por 30 dias",
       period: "mês",
-      value: 4990
-    },
-    annual: {
-      name: "Plano Anual", 
-      price: "R$ 499,00",
-      description: "Acesso por 12 meses",
-      period: "ano",
-      savings: "Economia de R$ 99,80",
       value: 4990
     }
   };
@@ -191,7 +180,6 @@ export default function Checkout() {
     try {
       const response = await apiRequest("POST", "/api/openpix/create-charge", {
         planType: selectedPlan,
-        value: currentPlan.value,
         email: "customer@querofretes.com.br",
         name: "Assinatura QUERO FRETES"
       });

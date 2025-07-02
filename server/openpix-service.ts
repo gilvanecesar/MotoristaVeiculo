@@ -66,10 +66,7 @@ export async function createPixCharge(req: Request, res: Response) {
     // Definir valores dos planos (aceitar tanto português quanto inglês)
     const planValues = {
       mensal: 49.90,
-      monthly: 49.90,
-      anual: 960.00,
-      yearly: 960.00,
-      annual: 960.00
+      monthly: 49.90
     };
 
     const value = planValues[planType as keyof typeof planValues];

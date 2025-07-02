@@ -20,14 +20,13 @@ interface PixCharge {
 export default function OpenPixPayment() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [selectedPlan, setSelectedPlan] = useState<'mensal' | 'anual'>('mensal');
+  const [selectedPlan, setSelectedPlan] = useState<'mensal'>('mensal');
   const [isCreating, setIsCreating] = useState(false);
   const [charge, setCharge] = useState<PixCharge | null>(null);
   const [copied, setCopied] = useState(false);
 
   const planValues = {
-    mensal: 99.90,
-    anual: 960.00
+    mensal: 49.90
   };
 
   const createPixCharge = async () => {

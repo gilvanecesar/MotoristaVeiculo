@@ -71,7 +71,6 @@ export default function AdminOpenPixPage() {
     try {
       const response = await apiRequest("POST", "/api/openpix/create-charge", {
         planType: "monthly",
-        value: 4990.00,
         email: "test@querofretes.com.br",
         name: "Teste OpenPix"
       });
