@@ -131,20 +131,28 @@ function StatusBadge({ status }: { status: string }) {
 
 // Componente principal
 export default function FinancePage() {
+  // Interfaces para os dados das estatísticas
+  interface StatsData {
+    totalRevenue: number;
+    monthlyRevenue: number;
+    subscriptionsByStatus: Array<{ status: string; count: number; }>;
+    monthlyData: Array<{ month: string; value: number; }>;
+  }
+
   // Queries para buscar dados da OpenPix
-  const { data: stats, isLoading: statsLoading, refetch: refetchStats } = useQuery({
+  const { data: stats, isLoading: statsLoading, refetch: refetchStats } = useQuery<StatsData>({
     queryKey: ['/api/admin/openpix/finance/stats'],
     refetchInterval: 30000 // Atualizar a cada 30 segundos
   });
 
-  const { data: subscriptions, isLoading: subscriptionsLoading, refetch: refetchSubscriptions } = useQuery({
+  const { data: subscriptions, isLoading: subscriptionsLoading, refetch: refetchSubscriptions } = useQuery<SubscriptionData[]>({
     queryKey: ['/api/admin/openpix/subscriptions', Date.now()],
     refetchInterval: 5000, // Reduzir para 5 segundos para testar
     staleTime: 0, // Dados sempre considerados obsoletos
     gcTime: 0 // Não cachear
   });
 
-  const { data: invoices, isLoading: invoicesLoading, refetch: refetchInvoices } = useQuery({
+  const { data: invoices, isLoading: invoicesLoading, refetch: refetchInvoices } = useQuery<InvoiceData[]>({
     queryKey: ['/api/admin/openpix/invoices'],
     refetchInterval: 30000
   });
@@ -160,10 +168,10 @@ export default function FinancePage() {
   };
 
   // Cálculos baseados em dados reais
-  const totalSubscriptions = subscriptions?.length || 0;
-  const activeSubscriptions = subscriptions?.filter((sub: SubscriptionData) => 
+  const totalSubscriptions = Array.isArray(subscriptions) ? subscriptions.length : 0;
+  const activeSubscriptions = Array.isArray(subscriptions) ? subscriptions.filter((sub: SubscriptionData) => 
     sub.status === 'active' || sub.status === 'completed'
-  ).length || 0;
+  ).length : 0;
   
   const totalRevenue = stats?.totalRevenue || 0;
   const monthlyRevenue = stats?.monthlyRevenue || 0;
@@ -245,7 +253,7 @@ export default function FinancePage() {
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{invoices?.length || 0}</div>
+            <div className="text-2xl font-bold">{Array.isArray(invoices) ? invoices.length : 0}</div>
             <p className="text-xs text-muted-foreground">
               Faturas processadas
             </p>
