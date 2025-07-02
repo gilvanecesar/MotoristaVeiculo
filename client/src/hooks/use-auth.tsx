@@ -7,6 +7,7 @@ import {
 import { User, USER_TYPES } from "@shared/schema";
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 
 // ===== TYPES =====
 type AuthContextType = {
@@ -36,6 +37,7 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   
   // Fetch current user data
   const {
@@ -57,11 +59,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       queryClient.setQueryData(["/api/user"], user);
     },
     onError: (error: Error) => {
-      toast({
-        title: "Falha no login",
-        description: error.message || "Verifique suas credenciais e tente novamente.",
-        variant: "destructive",
-      });
+      // Se for erro de credenciais inválidas, redirecionar para checkout
+      if (error.message === "Credenciais inválidas") {
+        toast({
+          title: "Redirecionando para checkout",
+          description: "Você será direcionado para finalizar sua assinatura.",
+        });
+        setTimeout(() => {
+          setLocation("/checkout");
+        }, 2000);
+      } else {
+        toast({
+          title: "Falha no login",
+          description: error.message || "Verifique suas credenciais e tente novamente.",
+          variant: "destructive",
+        });
+      }
     },
   });
 
