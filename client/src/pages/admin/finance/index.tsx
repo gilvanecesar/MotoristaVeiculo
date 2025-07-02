@@ -280,7 +280,7 @@ export default function FinancePage() {
                 <CardDescription>Por status atual</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {stats?.subscriptionsByStatus?.map((item: any, index: number) => (
+                {Array.isArray(stats?.subscriptionsByStatus) ? stats.subscriptionsByStatus.map((item: any, index: number) => (
                   <div key={index} className="flex items-center justify-between">
                     <span className="text-sm font-medium">{item.status}</span>
                     <div className="flex items-center gap-2">
@@ -293,7 +293,9 @@ export default function FinancePage() {
                       </span>
                     </div>
                   </div>
-                ))}
+                )) : (
+                  <p className="text-sm text-muted-foreground">Nenhum dado disponível</p>
+                )}
               </CardContent>
             </Card>
 
@@ -305,14 +307,16 @@ export default function FinancePage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {stats?.monthlyData?.slice(-6).map((item: any, index: number) => (
+                  {Array.isArray(stats?.monthlyData) ? stats.monthlyData.slice(-6).map((item: any, index: number) => (
                     <div key={index} className="flex items-center justify-between">
                       <span className="text-sm">{item.month}</span>
                       <span className="text-sm font-medium">
-                        {formatCurrency(item.revenue)}
+                        {formatCurrency(item.value)}
                       </span>
                     </div>
-                  ))}
+                  )) : (
+                    <p className="text-sm text-muted-foreground">Nenhum dado disponível</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -334,14 +338,14 @@ export default function FinancePage() {
                   </div>
                 </div>
                 <div className="text-center p-4 border rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">{subscriptions?.length || 0}</div>
+                  <div className="text-2xl font-bold text-blue-600">{Array.isArray(subscriptions) ? subscriptions.length : 0}</div>
                   <div className="text-sm font-medium">Total Assinaturas</div>
                   <div className="text-xs text-muted-foreground">
                     OpenPix + Local
                   </div>
                 </div>
                 <div className="text-center p-4 border rounded-lg">
-                  <div className="text-2xl font-bold text-purple-600">{invoices?.length || 0}</div>
+                  <div className="text-2xl font-bold text-purple-600">{Array.isArray(invoices) ? invoices.length : 0}</div>
                   <div className="text-sm font-medium">Faturas Processadas</div>
                   <div className="text-xs text-muted-foreground">
                     Este mês
@@ -376,7 +380,7 @@ export default function FinancePage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {subscriptions?.map((subscription: SubscriptionData) => (
+                  {Array.isArray(subscriptions) ? subscriptions.map((subscription: SubscriptionData) => (
                     <TableRow key={subscription.id}>
                       <TableCell>
                         <div>
@@ -417,7 +421,13 @@ export default function FinancePage() {
                         </Button>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )) : (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center text-muted-foreground">
+                        Nenhuma assinatura encontrada
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
@@ -446,7 +456,7 @@ export default function FinancePage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {invoices?.map((invoice: InvoiceData) => (
+                  {Array.isArray(invoices) ? invoices.map((invoice: InvoiceData) => (
                     <TableRow key={invoice.id}>
                       <TableCell className="font-mono text-xs">
                         {invoice.id.slice(0, 8)}...
@@ -475,7 +485,13 @@ export default function FinancePage() {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )) : (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center text-muted-foreground">
+                        Nenhuma fatura encontrada
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
