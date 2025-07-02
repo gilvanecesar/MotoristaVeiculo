@@ -16,6 +16,7 @@ import Home from "@/pages/home";
 import Dashboard from "@/pages/dashboard";
 import AuthPage from "@/pages/auth-page";
 import LoginPage from "@/pages/login-page";
+import ProfileSelection from "@/pages/profile-selection";
 import LandingPage from "@/pages/landing/index";
 import DriversPage from "@/pages/drivers/index";
 import DriverForm from "@/pages/drivers/driver-form";
@@ -71,6 +72,7 @@ function Router() {
       <ProtectedRoute path="/home" component={Home} />
       <Route path="/auth" component={LoginPage} />
       <Route path="/login" component={LoginPage} />
+      <Route path="/profile-selection" component={ProfileSelection} />
       <Route path="/reset-password" component={ResetPasswordPage} />
       <Route path="/payment-success" component={PaymentSuccessPage} />
       <Route path="/payment-cancel" component={PaymentCancelPage} />

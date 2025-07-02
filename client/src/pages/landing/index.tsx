@@ -18,7 +18,7 @@ export default function LandingPage() {
   };
   
   const goToRegister = () => {
-    setLocation("/auth");
+    setLocation("/profile-selection");
   };
 
   const features = [

@@ -84,6 +84,8 @@ export interface IStorage {
   getUsers(): Promise<User[]>;
   getUserById(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByCpf(cpf: string): Promise<User | undefined>;
+  getUserByCnpj(cnpj: string): Promise<User | undefined>;
   getUserByStripeCustomerId(stripeCustomerId: string): Promise<User | undefined>;
   getClientByStripeCustomerId(stripeCustomerId: string): Promise<Client | undefined>;
   getSubscriptionsByClientId(clientId: number): Promise<Subscription[]>;
@@ -806,6 +808,28 @@ export class DatabaseStorage implements IStorage {
 
   async getUserByEmail(email: string): Promise<User | undefined> {
     const results = await db.select().from(users).where(eq(users.email, email));
+    return results[0];
+  }
+
+  async getUserByCpf(cpf: string): Promise<User | undefined> {
+    const normalizedCpf = cpf.replace(/\D/g, '');
+    const results = await db.select().from(users).where(
+      or(
+        eq(users.cpf, normalizedCpf),
+        eq(users.cpf, cpf)
+      )
+    );
+    return results[0];
+  }
+
+  async getUserByCnpj(cnpj: string): Promise<User | undefined> {
+    const normalizedCnpj = cnpj.replace(/\D/g, '');
+    const results = await db.select().from(users).where(
+      or(
+        eq(users.cnpj, normalizedCnpj),
+        eq(users.cnpj, cnpj)
+      )
+    );
     return results[0];
   }
   
