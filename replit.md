@@ -248,6 +248,9 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 - July 02, 2025. Menu lateral oculto na página de checkout implementado para melhor experiência de pagamento
 - July 02, 2025. Mensagens específicas para email e CNPJ duplicados implementadas com tratamento adequado de erros
 - July 02, 2025. Redirecionamento automático para checkout implementado quando há erro de "Credenciais inválidas" no login
+- July 02, 2025. Sistema robusto de tratamento de erros implementado com mensagens amigáveis e códigos específicos
+- July 02, 2025. Acesso administrativo à página /admin corrigido: middleware agora reconhece profileType "administrador"
+- July 02, 2025. Sistema de toasts personalizados criado para diferentes tipos de erro com sugestões automáticas
 ```
 
 ## User Preferences

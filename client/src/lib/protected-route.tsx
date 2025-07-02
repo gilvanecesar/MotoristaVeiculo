@@ -49,8 +49,8 @@ export function ProtectedRoute({
   console.log(`Rota protegida: ${path}, Componente: ${Component.name || 'Unnamed'}, User: ${user.profileType}`);
   
   // Se o usuário for admin, permite acesso e informamos no log
-  if (user.profileType === "admin") {
-    console.log("Usuário é admin, autorizando acesso");
+  if (user.profileType === "administrador" || user.profileType === "admin") {
+    console.log("Permitindo acesso ao usuário administrador para a rota", path);
     return <Route path={path} component={Component} />;
   }
 
