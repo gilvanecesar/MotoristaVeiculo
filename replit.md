@@ -239,6 +239,10 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 - July 02, 2025. Página de seleção de perfis implementada e integrada com landing page
 - July 02, 2025. Sistema de cadastro multi-perfil configurado com 3 tipos de usuário
 - July 02, 2025. Fluxo de cadastro diferenciado: motoristas têm acesso gratuito, outros perfis precisam de assinatura
+- July 02, 2025. Problema crítico de preço corrigido: valor de R$ 499,90 sendo cobrado em vez de R$ 49,90 foi resolvido
+- July 02, 2025. Campos de nome, email e senha adicionados aos formulários de cadastro de todos os perfis
+- July 02, 2025. Planos anuais completamente removidos do sistema, apenas plano mensal R$ 49,90 disponível
+- July 02, 2025. APIs OpenPix e checkout corrigidas para usar somente valor correto de 4990 centavos (R$ 49,90)
 ```
 
 ## User Preferences
