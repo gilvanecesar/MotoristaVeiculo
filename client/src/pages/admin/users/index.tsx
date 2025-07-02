@@ -267,7 +267,7 @@ export default function AdminUsersPage() {
 
   // Handlers - Podem incluir renderização condicional
   
-  if (user?.profileType !== "admin") {
+  if (user?.profileType !== "admin" && user?.profileType !== "administrador") {
     return (
       <div className="container mx-auto py-10">
         <Card>
