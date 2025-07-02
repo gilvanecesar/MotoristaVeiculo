@@ -2904,6 +2904,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Rota para consultar CNPJ via ReceitaWS (evitar CORS no frontend)
+  app.get('/api/validate/cnpj/:cnpj', async (req: Request, res: Response) => {
+    try {
+      const { cnpj } = req.params;
+      const cleanCnpj = cnpj.replace(/\D/g, '');
+      
+      if (cleanCnpj.length !== 14) {
+        return res.status(400).json({ error: 'CNPJ deve ter 14 dígitos' });
+      }
+
+      const response = await fetch(`https://www.receitaws.com.br/v1/cnpj/${cleanCnpj}`);
+      
+      if (!response.ok) {
+        return res.status(response.status).json({ error: 'Erro ao consultar CNPJ' });
+      }
+
+      const data = await response.json();
+      
+      if (data.status === 'ERROR') {
+        return res.status(400).json({ error: data.message || 'CNPJ inválido' });
+      }
+
+      res.json({
+        cnpj: data.cnpj,
+        name: data.nome,
+        fantasia: data.fantasia,
+        situacao: data.situacao,
+        porte: data.porte,
+        endereco: {
+          logradouro: data.logradouro,
+          numero: data.numero,
+          complemento: data.complemento,
+          bairro: data.bairro,
+          municipio: data.municipio,
+          uf: data.uf,
+          cep: data.cep
+        }
+      });
+    } catch (error) {
+      console.error('Erro ao validar CNPJ:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Rota para consultar CPF via API (quando necessário)
+  app.get('/api/validate/cpf/:cpf', async (req: Request, res: Response) => {
+    try {
+      const { cpf } = req.params;
+      const cleanCpf = cpf.replace(/\D/g, '');
+      
+      if (cleanCpf.length !== 11) {
+        return res.status(400).json({ error: 'CPF deve ter 11 dígitos' });
+      }
+
+      // Validação básica de CPF
+      const isValidCpf = (cpf: string) => {
+        if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) return false;
+        
+        let sum = 0;
+        for (let i = 0; i < 9; i++) {
+          sum += parseInt(cpf.charAt(i)) * (10 - i);
+        }
+        let digit1 = 11 - (sum % 11);
+        if (digit1 > 9) digit1 = 0;
+        
+        sum = 0;
+        for (let i = 0; i < 10; i++) {
+          sum += parseInt(cpf.charAt(i)) * (11 - i);
+        }
+        let digit2 = 11 - (sum % 11);
+        if (digit2 > 9) digit2 = 0;
+        
+        return digit1 === parseInt(cpf.charAt(9)) && digit2 === parseInt(cpf.charAt(10));
+      };
+
+      if (!isValidCpf(cleanCpf)) {
+        return res.status(400).json({ error: 'CPF inválido' });
+      }
+
+      res.json({ cpf: cleanCpf, valid: true });
+    } catch (error) {
+      console.error('Erro ao validar CPF:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

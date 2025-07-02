@@ -90,12 +90,12 @@ export default function ProfileSelection() {
   // Função para buscar dados da empresa pelo CNPJ
   const fetchCompanyData = async (cnpj: string) => {
     try {
-      // Integração com ReceitaWS ou BrasilAPI
-      const response = await fetch(`https://www.receitaws.com.br/v1/cnpj/${cnpj.replace(/\D/g, '')}`);
+      // Integração com ReceitaWS via backend para evitar CORS
+      const response = await fetch(`/api/validate/cnpj/${cnpj.replace(/\D/g, '')}`);
       if (response.ok) {
         const data = await response.json();
         return {
-          name: data.nome,
+          name: data.name,
           fantasia: data.fantasia,
           situacao: data.situacao
         };
