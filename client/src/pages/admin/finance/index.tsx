@@ -146,10 +146,10 @@ export default function FinancePage() {
   });
 
   const { data: subscriptions, isLoading: subscriptionsLoading, refetch: refetchSubscriptions } = useQuery<SubscriptionData[]>({
-    queryKey: ['/api/admin/openpix/subscriptions', Date.now()],
-    refetchInterval: 5000, // Reduzir para 5 segundos para testar
+    queryKey: ['/api/admin/openpix/subscriptions'],
+    refetchInterval: 30000,
     staleTime: 0, // Dados sempre considerados obsoletos
-    gcTime: 0 // Não cachear
+    gcTime: 0, // Não cachear
   });
 
   const { data: invoices, isLoading: invoicesLoading, refetch: refetchInvoices } = useQuery<InvoiceData[]>({
