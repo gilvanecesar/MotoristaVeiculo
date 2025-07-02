@@ -135,6 +135,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Cadastro por perfil (novo sistema)
+  app.post("/api/auth/register-profile", async (req: Request, res: Response) => {
+    try {
+      const { profileType, cpf, cnpj, whatsapp, email, anttVehicle, vehiclePlate, documento, name, companyData, vehicleData } = req.body;
+
+      if (!profileType || !name) {
+        return res.status(400).json({ message: "Campos obrigatórios não preenchidos" });
+      }
+
+      // Validações específicas por perfil
+      if (profileType === "motorista") {
+        if (!cpf || !whatsapp || !anttVehicle || !vehiclePlate) {
+          return res.status(400).json({ message: "Dados de motorista incompletos" });
+        }
+        
+        // Verificar se CPF já existe
+        const existingUser = await storage.getUserByCpf(cpf);
+        if (existingUser) {
+          return res.status(400).json({ message: "CPF já cadastrado no sistema" });
+        }
+      } else if (profileType === "embarcador") {
+        if (!cnpj || !email) {
+          return res.status(400).json({ message: "CNPJ e email são obrigatórios para embarcadores" });
+        }
+        
+        // Verificar se CNPJ já existe
+        const existingUser = await storage.getUserByCnpj(cnpj);
+        if (existingUser) {
+          return res.status(400).json({ message: "CNPJ já cadastrado no sistema" });
+        }
+      } else if (profileType === "agenciador") {
+        if (!documento || !whatsapp || !email) {
+          return res.status(400).json({ message: "Dados de agenciador incompletos" });
+        }
+        
+        // Verificar se documento já existe
+        const existingUser = documento.length >= 14 ? 
+          await storage.getUserByCnpj(documento) : 
+          await storage.getUserByCpf(documento);
+        if (existingUser) {
+          return res.status(400).json({ message: "Documento já cadastrado no sistema" });
+        }
+      }
+
+      // Criar usuário baseado no perfil
+      const userData = {
+        name,
+        email: email || null,
+        profileType,
+        cpf: cpf || (documento?.length < 14 ? documento : null) || null,
+        cnpj: cnpj || (documento?.length >= 14 ? documento : null) || null,
+        whatsapp: whatsapp || null,
+        anttVehicle: anttVehicle || null,
+        vehiclePlate: vehiclePlate || null,
+        isActive: true,
+        isVerified: true, // Auto-verificar usuários registrados por perfil
+        subscriptionActive: profileType === "motorista" ? true : false, // Motoristas têm acesso gratuito
+        subscriptionType: profileType === "motorista" ? "free" : null
+      };
+
+      const newUser = await storage.createUser(userData);
+
+      // Para motoristas, não precisa de assinatura
+      if (profileType === "motorista") {
+        // Auto-login do usuário (simular login para motoristas)
+        req.login(newUser, (err) => {
+          if (err) {
+            console.error("Erro no auto-login:", err);
+            return res.status(500).json({ message: "Erro no cadastro" });
+          }
+          return res.json({ 
+            message: "Cadastro realizado com sucesso",
+            user: newUser,
+            needsSubscription: false
+          });
+        });
+      } else {
+        // Para embarcadores e agenciadores, verificar se precisa de assinatura
+        // Verificar se já tem assinatura ativa via OpenPix usando email ou documento
+        const hasActiveSubscription = false; // Aqui integraria com verificação OpenPix
+        
+        // Auto-login do usuário
+        req.login(newUser, (err) => {
+          if (err) {
+            console.error("Erro no auto-login:", err);
+            return res.status(500).json({ message: "Erro no cadastro" });
+          }
+          return res.json({ 
+            message: "Cadastro realizado com sucesso",
+            user: newUser,
+            needsSubscription: !hasActiveSubscription
+          });
+        });
+      }
+    } catch (error) {
+      console.error("Erro no cadastro por perfil:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
   // Ativar período de teste
   app.post("/api/activate-trial", isAuthenticated, async (req: Request, res: Response) => {
     try {

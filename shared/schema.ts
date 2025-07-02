@@ -438,10 +438,18 @@ export const AUTH_PROVIDERS = {
   GOOGLE: "google"
 } as const;
 
+// Profile types
+export const PROFILE_TYPES = {
+  MOTORISTA: "motorista",
+  EMBARCADOR: "embarcador", 
+  AGENCIADOR: "agenciador",
+  ADMIN: "admin"
+} as const;
+
 // User table
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  email: text("email").notNull().unique(),
+  email: text("email").unique(),
   password: text("password"),
   name: text("name").notNull(),
   profileType: text("profile_type").notNull(),
@@ -452,6 +460,14 @@ export const users = pgTable("users", {
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   lastLogin: timestamp("last_login"),
+  
+  // Dados específicos por perfil
+  cpf: text("cpf").unique(),
+  cnpj: text("cnpj").unique(),
+  whatsapp: text("whatsapp"),
+  anttVehicle: text("antt_vehicle"), // ANTT do veículo para motoristas
+  vehiclePlate: text("vehicle_plate"), // Placa do veículo para motoristas
+  
   // Informações de assinatura
   subscriptionActive: boolean("subscription_active").notNull().default(false),
   subscriptionType: text("subscription_type"),  // "monthly" ou "annual"
@@ -459,6 +475,7 @@ export const users = pgTable("users", {
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
   paymentRequired: boolean("payment_required").default(false),
+  
   // Referências opcionais para ligar o usuário aos perfis específicos
   driverId: integer("driver_id").references(() => drivers.id),
   clientId: integer("client_id").references(() => clients.id)
