@@ -153,17 +153,6 @@ export default function LoginPage() {
             >
               Esqueci minha senha
             </Button>
-            
-            <div className="text-center text-sm text-gray-600 dark:text-gray-400">
-              Não tem conta?{" "}
-              <Button
-                variant="link"
-                onClick={() => navigate("/profile-selection")}
-                className="text-teal-600 hover:text-teal-700 p-0 h-auto"
-              >
-                Criar conta
-              </Button>
-            </div>
           </CardFooter>
         </Card>
       </div>
