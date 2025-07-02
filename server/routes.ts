@@ -229,8 +229,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro no cadastro por perfil:", error);
+      
+      // Verificar se é erro de email duplicado
+      if (error.code === '23505' && error.constraint === 'users_email_unique') {
+        return res.status(400).json({ message: "Este email já está cadastrado no sistema" });
+      }
+      
+      // Verificar se é erro de CNPJ duplicado
+      if (error.code === '23505' && error.constraint === 'users_cnpj_unique') {
+        return res.status(400).json({ message: "Este CNPJ já está cadastrado no sistema" });
+      }
+      
       res.status(500).json({ message: "Erro interno do servidor" });
     }
   });
