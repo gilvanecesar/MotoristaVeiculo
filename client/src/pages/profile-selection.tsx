@@ -20,6 +20,9 @@ const PROFILE_TYPES = {
 
 // Schemas de validação para cada perfil
 const motoristaSchema = z.object({
+  name: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
+  email: z.string().email("Email inválido"),
+  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
   cpf: z.string().min(11, "CPF deve ter 11 dígitos").max(14),
   whatsapp: z.string().min(10, "WhatsApp deve ter pelo menos 10 dígitos"),
   anttVehicle: z.string().min(1, "ANTT do veículo é obrigatório"),
@@ -27,14 +30,18 @@ const motoristaSchema = z.object({
 });
 
 const embarcadorSchema = z.object({
-  cnpj: z.string().min(14, "CNPJ deve ter 14 dígitos").max(18),
-  email: z.string().email("Email inválido")
+  name: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
+  email: z.string().email("Email inválido"),
+  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
+  cnpj: z.string().min(14, "CNPJ deve ter 14 dígitos").max(18)
 });
 
 const agenciadorSchema = z.object({
+  name: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
+  email: z.string().email("Email inválido"),
+  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
   documento: z.string().min(11, "CPF ou CNPJ é obrigatório"),
-  whatsapp: z.string().min(10, "WhatsApp deve ter pelo menos 10 dígitos"),
-  email: z.string().email("Email inválido")
+  whatsapp: z.string().min(10, "WhatsApp deve ter pelo menos 10 dígitos")
 });
 
 export default function ProfileSelection() {
@@ -46,6 +53,9 @@ export default function ProfileSelection() {
   const motoristaForm = useForm({
     resolver: zodResolver(motoristaSchema),
     defaultValues: {
+      name: "",
+      email: "",
+      password: "",
       cpf: "",
       whatsapp: "",
       anttVehicle: "",
@@ -56,17 +66,21 @@ export default function ProfileSelection() {
   const embarcadorForm = useForm({
     resolver: zodResolver(embarcadorSchema),
     defaultValues: {
-      cnpj: "",
-      email: ""
+      name: "",
+      email: "",
+      password: "",
+      cnpj: ""
     }
   });
 
   const agenciadorForm = useForm({
     resolver: zodResolver(agenciadorSchema),
     defaultValues: {
+      name: "",
+      email: "",
+      password: "",
       documento: "",
-      whatsapp: "",
-      email: ""
+      whatsapp: ""
     }
   });
 
@@ -370,6 +384,45 @@ export default function ProfileSelection() {
                     <form onSubmit={motoristaForm.handleSubmit(onMotoristaSubmit)} className="space-y-4">
                       <FormField
                         control={motoristaForm.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nome Completo</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Digite seu nome completo" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={motoristaForm.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>E-mail</FormLabel>
+                            <FormControl>
+                              <Input type="email" placeholder="seu@email.com" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={motoristaForm.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Senha</FormLabel>
+                            <FormControl>
+                              <Input type="password" placeholder="Digite sua senha (min. 6 caracteres)" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={motoristaForm.control}
                         name="cpf"
                         render={({ field }) => (
                           <FormItem>
@@ -432,12 +485,12 @@ export default function ProfileSelection() {
                     <form onSubmit={embarcadorForm.handleSubmit(onEmbarcadorSubmit)} className="space-y-4">
                       <FormField
                         control={embarcadorForm.control}
-                        name="cnpj"
+                        name="name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>CNPJ</FormLabel>
+                            <FormLabel>Nome da Empresa</FormLabel>
                             <FormControl>
-                              <Input placeholder="00.000.000/0000-00" {...field} />
+                              <Input placeholder="Digite o nome da empresa" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -451,6 +504,32 @@ export default function ProfileSelection() {
                             <FormLabel>E-mail para contato</FormLabel>
                             <FormControl>
                               <Input type="email" placeholder="seu@email.com" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={embarcadorForm.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Senha</FormLabel>
+                            <FormControl>
+                              <Input type="password" placeholder="Digite sua senha (min. 6 caracteres)" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={embarcadorForm.control}
+                        name="cnpj"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>CNPJ</FormLabel>
+                            <FormControl>
+                              <Input placeholder="00.000.000/0000-00" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
