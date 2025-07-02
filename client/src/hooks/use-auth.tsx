@@ -57,6 +57,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
+      
+      // Lógica de redirecionamento após login bem-sucedido
+      toast({
+        title: "Login realizado com sucesso",
+        description: "Bem-vindo à plataforma Quero Fretes",
+      });
+      
+      const isDriver = user.profileType === 'motorista' || user.profileType === 'driver';
+      
+      if (isDriver) {
+        // Se for motorista, redireciona para a página de fretes
+        setTimeout(() => setLocation("/freights"), 1000);
+      } else if (user.subscriptionActive) {
+        // Se já tem assinatura ativa, vai para a página Home
+        setTimeout(() => setLocation("/home"), 1000);
+      } else {
+        // Se não tem assinatura ativa e não é motorista, redireciona para checkout
+        setTimeout(() => setLocation("/checkout"), 1000);
+      }
     },
     onError: (error: Error) => {
       // Se for erro de credenciais inválidas, redirecionar para checkout

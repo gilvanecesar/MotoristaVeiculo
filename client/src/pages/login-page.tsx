@@ -82,36 +82,7 @@ export default function LoginPage() {
   });
 
   const onLoginSubmit = async (data: LoginFormValues) => {
-    loginMutation.mutate(data, {
-      onSuccess: (user) => {
-        console.log("LOGIN SUCCESS - User data:", user);
-        console.log("LOGIN SUCCESS - subscriptionActive:", user.subscriptionActive);
-        console.log("LOGIN SUCCESS - profileType:", user.profileType);
-        console.log("LOGIN SUCCESS - clientId:", user.clientId);
-        
-        toast({
-          title: "Login realizado com sucesso",
-          description: "Bem-vindo à plataforma Quero Fretes",
-        });
-        
-        // Verifica o tipo de perfil do usuário
-        const isDriver = user.profileType === 'motorista' || user.profileType === 'driver';
-        
-        if (isDriver) {
-          // Se for motorista, redireciona para a página de fretes
-          console.log("REDIRECIONANDO motorista para /freights");
-          window.location.href = "/freights";
-        } else if (user.subscriptionActive) {
-          // Se já tem assinatura ativa, vai para a página Home
-          console.log("REDIRECIONANDO para /home - usuário com assinatura ativa");
-          window.location.href = "/home";
-        } else {
-          // Se não tem assinatura ativa e não é motorista, redireciona para checkout
-          console.log("REDIRECIONANDO para checkout - usuário sem assinatura ativa");
-          window.location.href = `/checkout?plan=${selectedPlan}`;
-        }
-      },
-    });
+    loginMutation.mutate(data);
   };
 
   const onRegisterSubmit = (data: RegisterFormValues) => {
