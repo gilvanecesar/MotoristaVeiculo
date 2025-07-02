@@ -12,6 +12,16 @@ import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
+// Função utilitária para processar erros da API
+const processApiError = async (response: Response): Promise<string> => {
+  try {
+    const errorData = await response.json();
+    return errorData.message || "Erro no cadastro";
+  } catch {
+    return "Erro no cadastro";
+  }
+};
+
 const PROFILE_TYPES = {
   MOTORISTA: "motorista",
   EMBARCADOR: "embarcador",
