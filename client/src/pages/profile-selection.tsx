@@ -261,6 +261,18 @@ export default function ProfileSelection() {
       <div className="max-w-4xl w-full">
         {!selectedProfile ? (
           <div className="text-center space-y-8">
+            {/* Link para usuários existentes */}
+            <div className="mb-4">
+              <p className="text-gray-600 mb-2">Já tem uma conta?</p>
+              <Button 
+                variant="outline" 
+                onClick={() => setLocation("/login")}
+                className="border-blue-500 text-blue-600 hover:bg-blue-50"
+              >
+                Fazer Login
+              </Button>
+            </div>
+            
             <div>
               <h1 className="text-4xl font-bold text-gray-900 mb-4">
                 Bem-vindo ao QUERO FRETES
