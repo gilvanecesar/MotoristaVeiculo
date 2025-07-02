@@ -89,15 +89,17 @@ export function setupAuth(app: Express) {
     async (email, password, done) => {
       try {
         const user = await storage.getUserByEmail(email);
-        if (!user || !user.password || !(await comparePasswords(password, user.password))) {
-          return done(null, false, { message: "Credenciais inválidas" });
+        if (!user) {
+          return done(null, false, { message: "USER_NOT_FOUND" });
+        }
+        
+        if (!user.password || !(await comparePasswords(password, user.password))) {
+          return done(null, false, { message: "INVALID_PASSWORD" });
         }
         
         // Verifica se o usuário está ativo
         if (user.isActive === false) {
-          return done(null, false, { 
-            message: "Sua conta está desativada. Entre em contato com o administrador para mais informações." 
-          });
+          return done(null, false, { message: "ACCOUNT_DISABLED" });
         }
         
         // Atualiza último login

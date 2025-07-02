@@ -8,6 +8,8 @@ import { User, USER_TYPES } from "@shared/schema";
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+import { parseErrorMessage, isAuthError, isSubscriptionError } from "@/lib/utils/error-handler";
+import { useErrorToast } from "@/components/ui/error-toast";
 
 // ===== TYPES =====
 type AuthContextType = {
@@ -80,11 +82,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onError: (error: Error) => {
       console.log("LOGIN ERROR:", error.message);
       
+      const errorMessage = parseErrorMessage(error);
+      
       toast({
         title: "Falha no login",
-        description: error.message || "Verifique suas credenciais e tente novamente.",
+        description: errorMessage,
         variant: "destructive",
       });
+
+      // Se o erro for de credenciais inválidas, pode redirecionar para cadastro
+      if (isAuthError(error) && errorMessage.includes('Usuário não encontrado')) {
+        // Sugere redirecionamento para cadastro após um tempo
+        setTimeout(() => {
+          toast({
+            title: "Primeira vez aqui?",
+            description: "Clique em 'Cadastro' para criar sua conta.",
+          });
+        }, 3000);
+      }
     },
   });
 
@@ -98,9 +113,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       queryClient.setQueryData(["/api/user"], user);
     },
     onError: (error: Error) => {
+      const errorMessage = parseErrorMessage(error);
+      
       toast({
         title: "Falha no cadastro",
-        description: error.message || "Não foi possível criar sua conta. Tente novamente.",
+        description: errorMessage,
         variant: "destructive",
       });
     },

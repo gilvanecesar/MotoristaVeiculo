@@ -1,30 +1,9 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { handleApiError } from "@/lib/utils/error-handler";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
-    // Clona a resposta para poder usar o body múltiplas vezes
-    const clonedRes = res.clone();
-    
-    try {
-      // Tenta extrair JSON da resposta
-      const errorData = await res.json();
-      
-      // Se temos uma mensagem específica do servidor, usamos ela
-      if (errorData && errorData.message) {
-        throw new Error(errorData.message);
-      }
-      
-      // Se o JSON não tem mensagem, usa o status como fallback
-      throw new Error(`${res.status}: ${res.statusText}`);
-    } catch (jsonError) {
-      // Se falhar ao ler JSON, tenta texto da resposta clonada
-      try {
-        const text = await clonedRes.text();
-        throw new Error(`${res.status}: ${text || res.statusText}`);
-      } catch (textError) {
-        throw new Error(`${res.status}: ${res.statusText}`);
-      }
-    }
+    await handleApiError(res);
   }
 }
 

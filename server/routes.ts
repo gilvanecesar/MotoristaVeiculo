@@ -153,7 +153,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Verificar se CPF já existe
         const existingUser = await storage.getUserByCpf(cpf);
         if (existingUser) {
-          return res.status(400).json({ message: "CPF já cadastrado no sistema" });
+          return res.status(409).json({ message: "CPF_ALREADY_EXISTS" });
         }
       } else if (profileType === "embarcador") {
         if (!cnpj || !email) {
@@ -163,7 +163,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Verificar se CNPJ já existe
         const existingUser = await storage.getUserByCnpj(cnpj);
         if (existingUser) {
-          return res.status(400).json({ message: "CNPJ já cadastrado no sistema" });
+          return res.status(409).json({ message: "CNPJ_ALREADY_EXISTS" });
         }
       } else if (profileType === "agenciador") {
         if (!documento || !whatsapp || !email) {
