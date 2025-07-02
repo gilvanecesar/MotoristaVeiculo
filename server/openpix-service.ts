@@ -1090,11 +1090,25 @@ export async function getOpenPixSubscriptions(req: Request, res: Response) {
             'CREATED': 'trialing'
           };
 
+          // Filtrar usuários específicos que devem ser excluídos da lista
+          const customerName = charge.customer?.name || 'Cliente OpenPix';
+          const excludedNames = [
+            'CRISTIANE ROCHADEL FISCHMAN'
+          ];
+          
+          // Pular este registro se for um nome excluído
+          if (excludedNames.some(excludedName => 
+            customerName.toUpperCase().includes(excludedName.toUpperCase())
+          )) {
+            console.log(`🚫 [FILTRO] Excluindo da lista de assinaturas: ${customerName}`);
+            return; // Pula este registro
+          }
+
           openPixSubscriptions.push({
             id: `openpix-${charge.identifier}`,
             source: 'openpix',
             clientId: null,
-            clientName: charge.customer?.name || 'Cliente OpenPix',
+            clientName: customerName,
             email: charge.customer?.email || '',
             plan: charge.value >= 5000 ? 'annual' : 'monthly',
             status: statusMap[charge.status] || 'trialing',
@@ -1190,23 +1204,42 @@ export async function getOpenPixInvoices(req: Request, res: Response) {
     const charges = data.charges || [];
 
     // Mapear cobranças para formato de faturas
-    const invoices = charges.map((charge: any) => {
-      const statusMap: any = {
-        'COMPLETED': 'paid',
-        'ACTIVE': 'open',
-        'EXPIRED': 'void',
-        'CREATED': 'open'
-      };
+    const invoices = charges
+      .filter((charge: any) => {
+        // Filtrar usuários específicos que devem ser excluídos da lista
+        const customerName = charge.customer?.name || 'Cliente não identificado';
+        const excludedNames = [
+          'CRISTIANE ROCHADEL FISCHMAN'
+        ];
+        
+        // Retornar false para excluir, true para incluir
+        const shouldExclude = excludedNames.some(excludedName => 
+          customerName.toUpperCase().includes(excludedName.toUpperCase())
+        );
+        
+        if (shouldExclude) {
+          console.log(`🚫 [FILTRO FATURAS] Excluindo da lista: ${customerName}`);
+        }
+        
+        return !shouldExclude;
+      })
+      .map((charge: any) => {
+        const statusMap: any = {
+          'COMPLETED': 'paid',
+          'ACTIVE': 'open',
+          'EXPIRED': 'void',
+          'CREATED': 'open'
+        };
 
-      return {
-        id: charge.identifier,
-        clientName: charge.customer?.name || 'Cliente não identificado',
-        email: charge.customer?.email || '',
-        amount: charge.value / 100, // Converter centavos para reais
-        status: statusMap[charge.status] || 'open',
-        date: charge.paidAt || charge.createdAt
-      };
-    });
+        return {
+          id: charge.identifier,
+          clientName: charge.customer?.name || 'Cliente não identificado',
+          email: charge.customer?.email || '',
+          amount: charge.value / 100, // Converter centavos para reais
+          status: statusMap[charge.status] || 'open',
+          date: charge.paidAt || charge.createdAt
+        };
+      });
 
     console.log('Faturas mapeadas:', invoices.length);
 
