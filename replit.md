@@ -243,6 +243,8 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 - July 02, 2025. Campos de nome, email e senha adicionados aos formulários de cadastro de todos os perfis
 - July 02, 2025. Planos anuais completamente removidos do sistema, apenas plano mensal R$ 49,90 disponível
 - July 02, 2025. APIs OpenPix e checkout corrigidas para usar somente valor correto de 4990 centavos (R$ 49,90)
+- July 02, 2025. Mensagens de erro de CNPJ já cadastrado corrigidas para exibir texto amigável em vez de "BAD Request"
+- July 02, 2025. Sistema de tratamento de erros da API melhorado em todos os formulários de cadastro por perfil
 ```
 
 ## User Preferences

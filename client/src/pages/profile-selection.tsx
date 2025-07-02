@@ -158,12 +158,13 @@ export default function ProfileSelection() {
         });
         setLocation("/freights");
       } else {
-        throw new Error("Erro no cadastro");
+        const errorMessage = await processApiError(response);
+        throw new Error(errorMessage);
       }
     } catch (error) {
       toast({
         title: "Erro no cadastro",
-        description: "Tente novamente ou entre em contato conosco.",
+        description: error instanceof Error ? error.message : "Tente novamente ou entre em contato conosco.",
         variant: "destructive"
       });
     } finally {
@@ -213,7 +214,8 @@ export default function ProfileSelection() {
           setLocation("/home");
         }
       } else {
-        throw new Error("Erro no cadastro");
+        const errorMessage = await processApiError(response);
+        throw new Error(errorMessage);
       }
     } catch (error) {
       toast({
@@ -267,7 +269,8 @@ export default function ProfileSelection() {
           setLocation("/home");
         }
       } else {
-        throw new Error("Erro no cadastro");
+        const errorMessage = await processApiError(response);
+        throw new Error(errorMessage);
       }
     } catch (error) {
       toast({
