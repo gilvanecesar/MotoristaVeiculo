@@ -160,7 +160,7 @@ export default function AdminUsersPage() {
       if (!res.ok) throw new Error("Falha ao carregar usuários");
       return await res.json();
     },
-    enabled: !!user && user.profileType === "admin"
+    enabled: !!user && (user.profileType === "admin" || user.profileType === "administrador")
   });
 
   // Alternar acesso (bloquear/desbloquear)
