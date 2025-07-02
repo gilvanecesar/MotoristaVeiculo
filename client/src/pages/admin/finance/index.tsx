@@ -138,8 +138,10 @@ export default function FinancePage() {
   });
 
   const { data: subscriptions, isLoading: subscriptionsLoading, refetch: refetchSubscriptions } = useQuery({
-    queryKey: ['/api/admin/openpix/subscriptions'],
-    refetchInterval: 30000
+    queryKey: ['/api/admin/openpix/subscriptions', Date.now()],
+    refetchInterval: 5000, // Reduzir para 5 segundos para testar
+    staleTime: 0, // Dados sempre considerados obsoletos
+    gcTime: 0 // Não cachear
   });
 
   const { data: invoices, isLoading: invoicesLoading, refetch: refetchInvoices } = useQuery({
@@ -149,8 +151,9 @@ export default function FinancePage() {
 
   const isLoading = statsLoading || subscriptionsLoading || invoicesLoading;
 
-  // Função para refresh manual
+  // Função para refresh manual com invalidação de cache
   const handleRefresh = () => {
+    console.log('🔄 [FRONTEND] Forçando refresh dos dados...');
     refetchStats();
     refetchSubscriptions();
     refetchInvoices();

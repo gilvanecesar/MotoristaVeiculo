@@ -1086,6 +1086,7 @@ export async function getOpenPixFinanceStats(req: Request, res: Response) {
 export async function getOpenPixSubscriptions(req: Request, res: Response) {
   try {
     console.log('=== GET COMBINED SUBSCRIPTIONS (OpenPix + Local) ===');
+    console.log(`🚀 [ENDPOINT] Endpoint /api/admin/openpix/subscriptions chamado em ${new Date().toISOString()}`);
     
     // 1. Buscar assinaturas da OpenPix
     const openPixSubscriptions: any[] = [];
@@ -1111,6 +1112,8 @@ export async function getOpenPixSubscriptions(req: Request, res: Response) {
           // Verificar se é de 2025 ou posterior
           const chargeDate = new Date(charge.createdAt);
           const is2025OrLater = chargeDate.getFullYear() >= 2025;
+          
+          console.log(`🔍 [DEBUG FILTRO] Cliente: ${charge.customer?.name || 'Cliente'}, Data: ${chargeDate.toISOString()}, Ano: ${chargeDate.getFullYear()}, É 2025+: ${is2025OrLater}, É assinatura: ${isSubscription}`);
           
           if (isSubscription && !is2025OrLater) {
             console.log(`🗓️ [FILTRO DATA] Excluindo cobrança de ${chargeDate.getFullYear()}: ${charge.customer?.name || 'Cliente'}`);
