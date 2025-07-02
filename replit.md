@@ -216,6 +216,8 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Fluxo de cadastro multi-perfil configurado: Motorista (gratuito), Embarcador/Transportador e Agenciador (pagos)
 ✓ Novos campos no schema de usuários: CPF, CNPJ, WhatsApp, ANTT, placa de veículo
 ✓ Sistema de roteamento atualizado para incluir página de perfis como rota pública
+✓ Página de seleção de perfis substituiu a página /auth como página principal de cadastro
+✓ Rota /auth agora direciona diretamente para seleção de perfis em vez de login tradicional
 - July 01, 2025. Sistema de reembolso automático OpenPix implementado com email e WhatsApp
 - July 01, 2025. Bug crítico de verificação automática de pagamento PIX corrigido
 - July 01, 2025. Problema de sincronização de pagamentos resolvido para comercial@maytransportes.com

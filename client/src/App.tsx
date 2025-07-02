@@ -70,7 +70,7 @@ function Router() {
       <Route path="/freight/:id" component={PublicFreight} />
       <Route path="/public/complements/:id" component={PublicComplement} />
       <ProtectedRoute path="/home" component={Home} />
-      <Route path="/auth" component={LoginPage} />
+      <Route path="/auth" component={ProfileSelection} />
       <Route path="/login" component={LoginPage} />
       <Route path="/profile-selection" component={ProfileSelection} />
       <Route path="/reset-password" component={ResetPasswordPage} />
