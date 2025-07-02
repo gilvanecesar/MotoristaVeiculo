@@ -128,7 +128,8 @@ function App() {
   const [location] = useLocation();
   const isLandingPage = location === "/";
   const isAuthPage = location === "/auth" || location === "/login" || location === "/reset-password";
-  const isPublicPage = isLandingPage || isAuthPage || location.startsWith("/freight/") || location.startsWith("/public/");
+  const isCheckoutPage = location === "/checkout";
+  const isPublicPage = isLandingPage || isAuthPage || isCheckoutPage || location.startsWith("/freight/") || location.startsWith("/public/");
 
   return (
     <QueryClientProvider client={queryClient}>
