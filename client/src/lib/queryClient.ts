@@ -2,30 +2,28 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
-    // Tenta extrair JSON da resposta
-    let errorData;
-    const contentType = res.headers.get('content-type');
+    // Clona a resposta para poder usar o body múltiplas vezes
+    const clonedRes = res.clone();
     
-    if (contentType && contentType.includes('application/json')) {
-      try {
-        errorData = await res.json();
-        
-        // Se temos uma mensagem específica do servidor, usamos ela
-        if (errorData && errorData.message) {
-          throw new Error(errorData.message);
-        }
-      } catch (jsonError) {
-        // Se falhar ao ler JSON, continuamos com o tratamento de texto normal
-        console.error("Erro ao processar JSON da resposta:", jsonError);
-      }
-    }
-    
-    // Tratamento padrão se não conseguirmos extrair JSON ou se não tiver mensagem
     try {
-      const text = await res.text();
-      throw new Error(`${res.status}: ${text || res.statusText}`);
-    } catch (textError) {
+      // Tenta extrair JSON da resposta
+      const errorData = await res.json();
+      
+      // Se temos uma mensagem específica do servidor, usamos ela
+      if (errorData && errorData.message) {
+        throw new Error(errorData.message);
+      }
+      
+      // Se o JSON não tem mensagem, usa o status como fallback
       throw new Error(`${res.status}: ${res.statusText}`);
+    } catch (jsonError) {
+      // Se falhar ao ler JSON, tenta texto da resposta clonada
+      try {
+        const text = await clonedRes.text();
+        throw new Error(`${res.status}: ${text || res.statusText}`);
+      } catch (textError) {
+        throw new Error(`${res.status}: ${res.statusText}`);
+      }
     }
   }
 }

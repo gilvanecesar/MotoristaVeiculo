@@ -78,13 +78,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     },
     onError: (error: Error) => {
+      console.log("LOGIN ERROR:", error.message);
+      
       // Se for erro de credenciais inválidas, redirecionar para checkout
       if (error.message === "Credenciais inválidas") {
+        console.log("REDIRECIONANDO PARA CHECKOUT - erro de credenciais inválidas");
         toast({
           title: "Redirecionando para checkout",
           description: "Você será direcionado para finalizar sua assinatura.",
         });
         setTimeout(() => {
+          console.log("EXECUTANDO REDIRECIONAMENTO PARA /checkout");
           setLocation("/checkout");
         }, 2000);
       } else {
