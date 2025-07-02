@@ -223,6 +223,8 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 - July 01, 2025. Sistema de sincronização OpenPix funcionando: pagamentos COMPLETED ativam assinatura de 30 dias automaticamente
 - July 01, 2025. Filtro de exclusão implementado na API OpenPix para remover "CRISTIANE ROCHADEL FISCHMAN" da lista de assinaturas ativas
 - July 01, 2025. Sistema de filtragem aplicado tanto em assinaturas quanto em faturas da interface administrativa
+- July 01, 2025. Filtro de data implementado: API OpenPix agora busca dados somente a partir de 2025
+- July 01, 2025. Todas as funções OpenPix filtram automaticamente dados anteriores a 2025 (assinaturas, faturas, estatísticas, listagens)
 ```
 
 ## User Preferences

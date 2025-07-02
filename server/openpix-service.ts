@@ -497,6 +497,23 @@ export async function listOpenPixCharges(req: Request, res: Response) {
       }
     );
 
+    // Filtrar cobranças para mostrar apenas as de 2025 em diante
+    if (response.data.charges) {
+      const filteredCharges = response.data.charges.filter((charge: any) => {
+        const chargeDate = new Date(charge.createdAt);
+        const is2025OrLater = chargeDate.getFullYear() >= 2025;
+        
+        if (!is2025OrLater) {
+          console.log(`🗓️ [FILTRO DATA LISTA] Excluindo cobrança de ${chargeDate.getFullYear()}: ${charge.customer?.name || 'Cliente'}`);
+        }
+        
+        return is2025OrLater;
+      });
+
+      response.data.charges = filteredCharges;
+      response.data.pageInfo.totalCount = filteredCharges.length;
+    }
+
     return res.json(response.data);
 
   } catch (error: any) {
@@ -966,8 +983,18 @@ export async function getOpenPixFinanceStats(req: Request, res: Response) {
     const data = await response.json();
     const charges = data.charges || [];
 
-    // Filtrar cobranças pagas (COMPLETED)
-    const paidCharges = charges.filter((charge: any) => charge.status === 'COMPLETED');
+    // Filtrar cobranças de 2025 em diante E pagas (COMPLETED)
+    const paidCharges = charges.filter((charge: any) => {
+      const chargeDate = new Date(charge.createdAt);
+      const is2025OrLater = chargeDate.getFullYear() >= 2025;
+      const isPaid = charge.status === 'COMPLETED';
+      
+      if (isPaid && !is2025OrLater) {
+        console.log(`🗓️ [FILTRO DATA STATS] Excluindo da estatística cobrança de ${chargeDate.getFullYear()}: ${charge.customer?.name || 'Cliente'}`);
+      }
+      
+      return isPaid && is2025OrLater;
+    });
     
     // Calcular estatísticas
     const totalRevenue = paidCharges.reduce((total: number, charge: any) => {
@@ -1075,11 +1102,22 @@ export async function getOpenPixSubscriptions(req: Request, res: Response) {
         const data = await response.json();
         const charges = data.charges || [];
 
-        // Filtrar cobranças relacionadas a assinaturas
-        const subscriptionCharges = charges.filter((charge: any) => 
-          charge.correlationID?.includes('subscription') || 
-          charge.comment?.toLowerCase().includes('assinatura')
-        );
+        // Filtrar cobranças relacionadas a assinaturas E criadas a partir de 2025
+        const subscriptionCharges = charges.filter((charge: any) => {
+          // Verificar se é relacionado a assinatura
+          const isSubscription = charge.correlationID?.includes('subscription') || 
+                                 charge.comment?.toLowerCase().includes('assinatura');
+          
+          // Verificar se é de 2025 ou posterior
+          const chargeDate = new Date(charge.createdAt);
+          const is2025OrLater = chargeDate.getFullYear() >= 2025;
+          
+          if (isSubscription && !is2025OrLater) {
+            console.log(`🗓️ [FILTRO DATA] Excluindo cobrança de ${chargeDate.getFullYear()}: ${charge.customer?.name || 'Cliente'}`);
+          }
+          
+          return isSubscription && is2025OrLater;
+        });
 
         // Mapear para formato esperado
         subscriptionCharges.forEach((charge: any) => {
@@ -1206,7 +1244,16 @@ export async function getOpenPixInvoices(req: Request, res: Response) {
     // Mapear cobranças para formato de faturas
     const invoices = charges
       .filter((charge: any) => {
-        // Filtrar usuários específicos que devem ser excluídos da lista
+        // Verificar se é de 2025 ou posterior
+        const chargeDate = new Date(charge.createdAt);
+        const is2025OrLater = chargeDate.getFullYear() >= 2025;
+        
+        if (!is2025OrLater) {
+          console.log(`🗓️ [FILTRO DATA FATURAS] Excluindo fatura de ${chargeDate.getFullYear()}: ${charge.customer?.name || 'Cliente'}`);
+          return false;
+        }
+        
+        // Filtrar usuários específicos que devem ser excluídos da lista (backup, caso ainda apareçam)
         const customerName = charge.customer?.name || 'Cliente não identificado';
         const excludedNames = [
           'CRISTIANE ROCHADEL FISCHMAN'
