@@ -6,8 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Webhook, Settings, TestTube, AlertCircle } from "lucide-react";
+import { Webhook, Settings, TestTube, AlertCircle, ExternalLink } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { Link } from "wouter";
 
 interface WebhookConfig {
   enabled: boolean;
@@ -187,13 +188,24 @@ export default function AdminWebhooksPage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Webhook className="h-8 w-8" />
-          Administração de Webhooks
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Configure e gerencie webhooks globais do sistema
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold flex items-center gap-2">
+              <Webhook className="h-8 w-8" />
+              Administração de Webhooks
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Configure e gerencie webhooks globais do sistema
+            </p>
+          </div>
+          <Link href="/admin/webhook-config">
+            <Button variant="outline" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Configurar OpenPix
+              <ExternalLink className="h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="grid gap-6">
