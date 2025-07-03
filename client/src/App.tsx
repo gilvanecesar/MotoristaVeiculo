@@ -45,6 +45,7 @@ import UserSearchPage from "@/pages/admin/user-search";
 import EmailAdminPage from "@/pages/admin/email/index";
 import AdminWebhooksPage from "@/pages/admin/webhooks/index";
 import AdminOpenPixPage from "@/pages/admin/openpix/index";
+import AdminWhatsAppPage from "@/pages/admin/whatsapp";
 import PaymentSuccessPage from "@/pages/payment-success";
 import PaymentCancelPage from "@/pages/payment-cancel";
 import CheckoutPage from "@/pages/checkout";
@@ -119,6 +120,7 @@ function Router() {
       <ProtectedRoute path="/admin/user-search" component={UserSearchPage} />
       <ProtectedRoute path="/admin/email" component={EmailAdminPage} />
       <ProtectedRoute path="/admin/webhooks" component={AdminWebhooksPage} />
+      <ProtectedRoute path="/admin/whatsapp" component={AdminWhatsAppPage} />
       <ProtectedRoute path="/admin/openpix" component={AdminOpenPixPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
       <ProtectedRoute path="/webhook-config" component={WebhookConfig} />

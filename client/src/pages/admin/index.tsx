@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/ui/icons";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { MessageCircle } from "lucide-react";
 import UsersManagement from "./users-management";
 import DataManagement from "./data-management";
 
@@ -106,7 +107,7 @@ export default function AdminPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                   <h3 className="font-medium mb-2 text-blue-900 dark:text-blue-100">Configuração de Email</h3>
                   <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">
@@ -115,6 +116,16 @@ export default function AdminPage() {
                   <Button onClick={() => navigate("/admin/email")} className="bg-blue-600 hover:bg-blue-700">
                     <Icons.settings className="mr-2 h-4 w-4" />
                     Configurar Email
+                  </Button>
+                </div>
+                <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                  <h3 className="font-medium mb-2 text-green-900 dark:text-green-100">Gestão WhatsApp</h3>
+                  <p className="text-sm text-green-700 dark:text-green-300 mb-4">
+                    Configure mensagens automáticas e gerencie conexão com WhatsApp.
+                  </p>
+                  <Button onClick={() => navigate("/admin/whatsapp")} className="bg-green-600 hover:bg-green-700">
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    Gestão WhatsApp
                   </Button>
                 </div>
                 <div>
