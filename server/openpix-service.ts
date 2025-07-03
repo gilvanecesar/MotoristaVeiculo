@@ -450,7 +450,8 @@ export async function handleOpenPixWebhook(req: Request, res: Response) {
       
       // Verificar se já foi processado
       if (payment.processed) {
-        console.log('Pagamento já processado:', correlationID);
+        console.log(`✅ WEBHOOK IGNORADO - Pagamento já processado: ${correlationID} (ID: ${payment.id})`);
+        console.log(`📋 Status atual: ${payment.status}, Processado em: ${payment.updatedAt}`);
         return res.status(200).send('OK');
       }
 

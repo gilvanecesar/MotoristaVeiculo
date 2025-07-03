@@ -108,59 +108,40 @@ export default function Checkout() {
         return;
       }
       
-      // Verificar status diretamente na OpenPix
-      const openPixResponse = await apiRequest("GET", `/api/openpix/charge/${pixCharge.charge.identifier}`);
-      const openPixData = await openPixResponse.json();
+      // Se chegou até aqui, apenas aguardar mais um pouco pois o webhook já processou
+      console.log('Aguardando processamento do webhook OpenPix...');
       
-      if (openPixData.success && openPixData.charge) {
-        const charge = openPixData.charge;
+      // Aguardar mais alguns segundos para o webhook processar
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      
+      // Verificar novamente o usuário após aguardar
+      const finalUserResponse = await apiRequest("GET", "/api/user");
+      const finalUserData = await finalUserResponse.json();
+      
+      if (finalUserData.subscriptionActive === true) {
+        console.log('Assinatura ativada com sucesso!');
         
-        // Se o pagamento foi confirmado na OpenPix
-        if (charge.status === 'COMPLETED' || charge.status === 'PAID') {
-          console.log('Pagamento confirmado na OpenPix:', charge.status);
-          
-          // Forçar sincronização manual
-          try {
-            const syncResponse = await apiRequest("POST", `/api/openpix/force-sync/${pixCharge.charge.identifier}`);
-            const syncData = await syncResponse.json();
-            console.log('Sincronização forçada:', syncData);
-            
-            // Aguardar processamento
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            // Verificar novamente se a assinatura foi ativada
-            const finalUserResponse = await apiRequest("GET", "/api/user");
-            const finalUserData = await finalUserResponse.json();
-            
-            if (finalUserData.subscriptionActive === true) {
-              console.log('Assinatura ativada após sincronização!');
-              
-              setIsRedirecting(true);
-              setPaymentStatus('completed');
-              
-              // Limpar intervalo
-              if (intervalRef.current) {
-                clearInterval(intervalRef.current);
-                intervalRef.current = null;
-              }
-              
-              toast({
-                title: "Pagamento confirmado!",
-                description: "Sua assinatura foi ativada com sucesso. Redirecionando...",
-              });
-              
-              // Redirecionar para HOME
-              setTimeout(() => {
-                console.log('Redirecionando para /home...');
-                window.location.href = "/home";
-              }, 1000);
-              
-              return;
-            }
-          } catch (syncError) {
-            console.error('Erro na sincronização:', syncError);
-          }
+        setIsRedirecting(true);
+        setPaymentStatus('completed');
+        
+        // Limpar intervalo
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
         }
+        
+        toast({
+          title: "Pagamento confirmado!",
+          description: "Sua assinatura foi ativada com sucesso. Redirecionando...",
+        });
+        
+        // Redirecionar para HOME
+        setTimeout(() => {
+          console.log('Redirecionando para /home...');
+          window.location.href = "/home";
+        }, 1000);
+        
+        return;
       }
       
     } catch (error) {
