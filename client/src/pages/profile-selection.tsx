@@ -720,11 +720,11 @@ export default function ProfileSelection() {
         )}
         
         {/* Botão Falar com Suporte - SEMPRE VISÍVEL */}
-        <div className="mt-8 text-center">
-          <Button 
-            variant="outline" 
-            onClick={() => window.open('https://wa.me/5531971559484', '_blank')}
-            className="bg-green-600 hover:bg-green-700 text-white border-green-600 hover:border-green-700"
+        <div className="mt-6 text-center">
+          <Button
+            variant="outline"
+            className="w-full max-w-sm mx-auto bg-green-50 border-green-200 text-green-700 hover:bg-green-100 hover:border-green-300"
+            onClick={() => window.open("https://wa.me/5531971559484", "_blank")}
           >
             <FaWhatsapp className="mr-2 h-4 w-4" />
             Falar com Suporte
