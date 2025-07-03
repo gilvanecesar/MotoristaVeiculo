@@ -158,7 +158,9 @@ export default function AdminUsersPage() {
     queryFn: async () => {
       const res = await apiRequest("GET", "/api/admin/users");
       if (!res.ok) throw new Error("Falha ao carregar usuários");
-      return await res.json();
+      const userData = await res.json();
+      // Ordenar por ID decrescente (usuários mais recentes primeiro)
+      return userData.sort((a: any, b: any) => b.id - a.id);
     },
     enabled: !!user && (user.profileType === "admin" || user.profileType === "administrador")
   });
