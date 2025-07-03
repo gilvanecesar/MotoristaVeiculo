@@ -28,31 +28,75 @@ const PROFILE_TYPES = {
   AGENCIADOR: "agenciador"
 } as const;
 
-// Schemas de validação para cada perfil
+// Schemas de validação rigorosa para cada perfil - TODOS OS CAMPOS OBRIGATÓRIOS
 const motoristaSchema = z.object({
-  name: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
-  email: z.string().email("Email inválido"),
-  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
-  cpf: z.string().min(11, "CPF deve ter 11 dígitos").max(14),
-  whatsapp: z.string().min(10, "WhatsApp deve ter pelo menos 10 dígitos"),
-  anttVehicle: z.string().min(1, "ANTT do veículo é obrigatório"),
-  vehiclePlate: z.string().min(7, "Placa deve ter pelo menos 7 caracteres").max(8)
+  name: z.string()
+    .min(1, "Nome é obrigatório")
+    .min(3, "Nome deve ter pelo menos 3 caracteres")
+    .max(100, "Nome muito longo"),
+  email: z.string()
+    .min(1, "Email é obrigatório")
+    .email("Email inválido"),
+  password: z.string()
+    .min(1, "Senha é obrigatória")
+    .min(6, "Senha deve ter pelo menos 6 caracteres"),
+  cpf: z.string()
+    .min(1, "CPF é obrigatório")
+    .min(11, "CPF deve ter 11 dígitos")
+    .max(14, "CPF inválido"),
+  whatsapp: z.string()
+    .min(1, "WhatsApp é obrigatório")
+    .min(10, "WhatsApp deve ter pelo menos 10 dígitos")
+    .max(15, "WhatsApp inválido"),
+  anttVehicle: z.string()
+    .min(1, "ANTT do veículo é obrigatório")
+    .max(20, "ANTT inválido"),
+  vehiclePlate: z.string()
+    .min(1, "Placa do veículo é obrigatória")
+    .min(7, "Placa deve ter pelo menos 7 caracteres")
+    .max(8, "Placa inválida")
 });
 
 const embarcadorSchema = z.object({
-  name: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
-  email: z.string().email("Email inválido"),
-  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
-  cnpj: z.string().min(14, "CNPJ deve ter 14 dígitos").max(18),
-  whatsapp: z.string().min(10, "WhatsApp deve ter pelo menos 10 dígitos")
+  name: z.string()
+    .min(1, "Nome da empresa é obrigatório")
+    .min(3, "Nome deve ter pelo menos 3 caracteres")
+    .max(100, "Nome muito longo"),
+  email: z.string()
+    .min(1, "Email é obrigatório")
+    .email("Email inválido"),
+  password: z.string()
+    .min(1, "Senha é obrigatória")
+    .min(6, "Senha deve ter pelo menos 6 caracteres"),
+  cnpj: z.string()
+    .min(1, "CNPJ é obrigatório")
+    .min(14, "CNPJ deve ter 14 dígitos")
+    .max(18, "CNPJ inválido"),
+  whatsapp: z.string()
+    .min(1, "WhatsApp é obrigatório")
+    .min(10, "WhatsApp deve ter pelo menos 10 dígitos")
+    .max(15, "WhatsApp inválido")
 });
 
 const agenciadorSchema = z.object({
-  name: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
-  email: z.string().email("Email inválido"),
-  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
-  documento: z.string().min(11, "CPF ou CNPJ é obrigatório"),
-  whatsapp: z.string().min(10, "WhatsApp deve ter pelo menos 10 dígitos")
+  name: z.string()
+    .min(1, "Nome é obrigatório")
+    .min(3, "Nome deve ter pelo menos 3 caracteres")
+    .max(100, "Nome muito longo"),
+  email: z.string()
+    .min(1, "Email é obrigatório")
+    .email("Email inválido"),
+  password: z.string()
+    .min(1, "Senha é obrigatória")
+    .min(6, "Senha deve ter pelo menos 6 caracteres"),
+  documento: z.string()
+    .min(1, "CPF ou CNPJ é obrigatório")
+    .min(11, "Documento deve ter pelo menos 11 dígitos")
+    .max(18, "Documento inválido"),
+  whatsapp: z.string()
+    .min(1, "WhatsApp é obrigatório")
+    .min(10, "WhatsApp deve ter pelo menos 10 dígitos")
+    .max(15, "WhatsApp inválido")
 });
 
 export default function ProfileSelection() {
@@ -133,7 +177,48 @@ export default function ProfileSelection() {
     }
   };
 
+  // Função para verificar campos obrigatórios vazios
+  const validateRequiredFields = (data: any, fieldNames: string[]) => {
+    const emptyFields = fieldNames.filter(field => !data[field] || data[field].trim() === "");
+    if (emptyFields.length > 0) {
+      const fieldLabels = {
+        name: "Nome",
+        email: "Email", 
+        password: "Senha",
+        cpf: "CPF",
+        cnpj: "CNPJ",
+        whatsapp: "WhatsApp",
+        anttVehicle: "ANTT do Veículo",
+        vehiclePlate: "Placa do Veículo",
+        documento: "CPF/CNPJ"
+      };
+      
+      const missingLabels = emptyFields.map(field => fieldLabels[field as keyof typeof fieldLabels] || field);
+      
+      toast({
+        title: "❌ Campos obrigatórios não preenchidos",
+        description: `Por favor, preencha os seguintes campos: ${missingLabels.join(", ")}`,
+        variant: "destructive"
+      });
+      return false;
+    }
+    return true;
+  };
+
+  // Componente para labels com asterisco obrigatório
+  const RequiredLabel = ({ children }: { children: React.ReactNode }) => (
+    <FormLabel className="flex items-center gap-1">
+      {children}
+      <span className="text-red-500 font-bold">*</span>
+    </FormLabel>
+  );
+
   const onMotoristaSubmit = async (data: z.infer<typeof motoristaSchema>) => {
+    // Validação extra para campos obrigatórios
+    if (!validateRequiredFields(data, ["name", "email", "password", "cpf", "whatsapp", "anttVehicle", "vehiclePlate"])) {
+      return;
+    }
+
     setIsLoading(true);
     try {
       // Buscar dados do veículo
@@ -175,6 +260,11 @@ export default function ProfileSelection() {
   };
 
   const onEmbarcadorSubmit = async (data: z.infer<typeof embarcadorSchema>) => {
+    // Validação extra para campos obrigatórios
+    if (!validateRequiredFields(data, ["name", "email", "password", "cnpj", "whatsapp"])) {
+      return;
+    }
+
     setIsLoading(true);
     try {
       // Buscar dados da empresa
@@ -231,6 +321,11 @@ export default function ProfileSelection() {
   };
 
   const onAgenciadorSubmit = async (data: z.infer<typeof agenciadorSchema>) => {
+    // Validação extra para campos obrigatórios
+    if (!validateRequiredFields(data, ["name", "email", "password", "documento", "whatsapp"])) {
+      return;
+    }
+
     setIsLoading(true);
     try {
       let companyData = null;
@@ -402,7 +497,7 @@ export default function ProfileSelection() {
                         name="name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Nome Completo</FormLabel>
+                            <RequiredLabel>Nome Completo</RequiredLabel>
                             <FormControl>
                               <Input placeholder="Digite seu nome completo" {...field} />
                             </FormControl>
@@ -415,7 +510,7 @@ export default function ProfileSelection() {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>E-mail</FormLabel>
+                            <RequiredLabel>E-mail</RequiredLabel>
                             <FormControl>
                               <Input type="email" placeholder="seu@email.com" {...field} />
                             </FormControl>
@@ -428,7 +523,7 @@ export default function ProfileSelection() {
                         name="password"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Senha</FormLabel>
+                            <RequiredLabel>Senha</RequiredLabel>
                             <FormControl>
                               <Input type="password" placeholder="Digite sua senha (min. 6 caracteres)" {...field} />
                             </FormControl>
@@ -441,7 +536,7 @@ export default function ProfileSelection() {
                         name="cpf"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>CPF</FormLabel>
+                            <RequiredLabel>CPF</RequiredLabel>
                             <FormControl>
                               <Input placeholder="000.000.000-00" {...field} />
                             </FormControl>
@@ -454,7 +549,7 @@ export default function ProfileSelection() {
                         name="whatsapp"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>WhatsApp</FormLabel>
+                            <RequiredLabel>WhatsApp</RequiredLabel>
                             <FormControl>
                               <Input placeholder="(11) 99999-9999" {...field} />
                             </FormControl>
@@ -467,7 +562,7 @@ export default function ProfileSelection() {
                         name="anttVehicle"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>ANTT do Veículo</FormLabel>
+                            <RequiredLabel>ANTT do Veículo</RequiredLabel>
                             <FormControl>
                               <Input placeholder="Digite o ANTT" {...field} />
                             </FormControl>
@@ -480,7 +575,7 @@ export default function ProfileSelection() {
                         name="vehiclePlate"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Placa do Veículo</FormLabel>
+                            <RequiredLabel>Placa do Veículo</RequiredLabel>
                             <FormControl>
                               <Input placeholder="ABC-1234" {...field} />
                             </FormControl>
@@ -503,7 +598,7 @@ export default function ProfileSelection() {
                         name="name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Nome da Empresa</FormLabel>
+                            <RequiredLabel>Nome da Empresa</RequiredLabel>
                             <FormControl>
                               <Input placeholder="Digite o nome da empresa" {...field} />
                             </FormControl>
@@ -516,7 +611,7 @@ export default function ProfileSelection() {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>E-mail para contato</FormLabel>
+                            <RequiredLabel>E-mail para contato</RequiredLabel>
                             <FormControl>
                               <Input type="email" placeholder="seu@email.com" {...field} />
                             </FormControl>
@@ -529,7 +624,7 @@ export default function ProfileSelection() {
                         name="password"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Senha</FormLabel>
+                            <RequiredLabel>Senha</RequiredLabel>
                             <FormControl>
                               <Input type="password" placeholder="Digite sua senha (min. 6 caracteres)" {...field} />
                             </FormControl>
@@ -542,7 +637,7 @@ export default function ProfileSelection() {
                         name="whatsapp"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>WhatsApp</FormLabel>
+                            <RequiredLabel>WhatsApp</RequiredLabel>
                             <FormControl>
                               <Input type="tel" placeholder="(11) 99999-9999" {...field} />
                             </FormControl>
@@ -555,7 +650,7 @@ export default function ProfileSelection() {
                         name="cnpj"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>CNPJ</FormLabel>
+                            <RequiredLabel>CNPJ</RequiredLabel>
                             <FormControl>
                               <Input placeholder="00.000.000/0000-00" {...field} />
                             </FormControl>
@@ -578,7 +673,7 @@ export default function ProfileSelection() {
                         name="documento"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>CPF ou CNPJ</FormLabel>
+                            <RequiredLabel>CPF ou CNPJ</RequiredLabel>
                             <FormControl>
                               <Input placeholder="000.000.000-00 ou 00.000.000/0000-00" {...field} />
                             </FormControl>
@@ -591,7 +686,7 @@ export default function ProfileSelection() {
                         name="whatsapp"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>WhatsApp</FormLabel>
+                            <RequiredLabel>WhatsApp</RequiredLabel>
                             <FormControl>
                               <Input placeholder="(11) 99999-9999" {...field} />
                             </FormControl>
@@ -604,7 +699,7 @@ export default function ProfileSelection() {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>E-mail</FormLabel>
+                            <RequiredLabel>E-mail</RequiredLabel>
                             <FormControl>
                               <Input type="email" placeholder="seu@email.com" {...field} />
                             </FormControl>
