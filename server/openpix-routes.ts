@@ -88,10 +88,22 @@ export function setupOpenPixRoutes(app: Express) {
   // Webhook específico para reembolsos OpenPix (sem autenticação)
   app.post('/api/webhooks/openpix/refund', handleOpenPixRefundWebhook);
 
+  // Webhook com ID específico usado pela OpenPix (no padrão /api/)
+  app.post('/api/webhook/7a2c033e-98e4-4ce2-b499-2e6dd16556f4', (req, res) => {
+    console.log('🎯 Webhook OpenPix com ID específico atingido - dados recebidos:', JSON.stringify(req.body, null, 2));
+    handleOpenPixWebhook(req, res);
+  });
+
+  // Webhook genérico para qualquer ID (no padrão /api/)
+  app.post('/api/webhook/:webhookId', (req, res) => {
+    console.log(`🎯 Webhook genérico atingido - ID: ${req.params.webhookId} - dados recebidos:`, JSON.stringify(req.body, null, 2));
+    handleOpenPixWebhook(req, res);
+  });
+
   // Webhook para verificação de reembolso no domínio principal
-  app.post('/reembolso', (req, res, next) => {
+  app.post('/reembolso', (req, res) => {
     console.log('🎯 Webhook /reembolso atingido - dados recebidos:', JSON.stringify(req.body, null, 2));
-    handleOpenPixRefundWebhook(req, res, next);
+    handleOpenPixRefundWebhook(req, res);
   });
 
   // Consultar status de cobrança

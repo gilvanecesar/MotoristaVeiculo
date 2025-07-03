@@ -293,6 +293,10 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Endpoint de teste implementado para validar integração N8N
 ✓ Sistema migrado de WhatsApp direto para processamento via N8N
 ✓ Payload estruturado com dados completos do usuário enviado ao N8N
+✓ Problema webhook OpenPix 502 identificado e resolvido
+✓ Rotas de webhook adicionadas para capturar notificações da OpenPix
+✓ Sistema robusto para lidar com webhooks de usuários deletados
+✓ Bug loop infinito de pagamento PIX corrigido com proteções avançadas
 ```
 
 ## User Preferences

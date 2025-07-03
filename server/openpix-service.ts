@@ -400,7 +400,25 @@ export async function handleOpenPixWebhook(req: Request, res: Response) {
     // Buscar usuário no banco de dados
     const [user] = await db.select().from(users).where(eq(users.id, userId));
     if (!user) {
-      console.log('Usuário não encontrado:', userId);
+      console.log(`⚠️ Usuário ID ${userId} não encontrado no banco de dados (pode ter sido deletado)`);
+      console.log(`📋 Webhook recebido para usuário inexistente - correlationID: ${correlationID}`);
+      
+      // Marcar como processado mesmo sem usuário para evitar reprocessamento
+      try {
+        await db.update(openPixPayments)
+          .set({
+            status: 'USER_NOT_FOUND',
+            processed: true,
+            webhookData: req.body,
+            updatedAt: new Date()
+          })
+          .where(eq(openPixPayments.correlationId, correlationID));
+        
+        console.log(`✅ Webhook marcado como processado para usuário inexistente`);
+      } catch (updateError) {
+        console.log(`⚠️ Erro ao marcar webhook como processado:`, updateError);
+      }
+      
       return res.status(200).send('OK');
     }
 
