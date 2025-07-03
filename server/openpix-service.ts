@@ -1464,6 +1464,82 @@ Vigência: 30 dias a partir de hoje.
 }
 
 /**
+ * Configurar webhook da OpenPix para o domínio correto
+ */
+export async function configureOpenPixWebhook(req: Request, res: Response) {
+  try {
+    const { webhookUrl } = req.body;
+    
+    if (!webhookUrl) {
+      return res.status(400).json({ error: 'URL do webhook é obrigatória' });
+    }
+
+    console.log(`🔧 Configurando webhook OpenPix para: ${webhookUrl}`);
+
+    // Configurar webhook via API da OpenPix
+    const webhookConfig = {
+      webhook: {
+        url: webhookUrl,
+        authorization: process.env.OPENPIX_WEBHOOK_AUTHORIZATION || '',
+        isActive: true
+      }
+    };
+
+    const response = await axios.post(`${openPixConfig.apiUrl}/webhook`, webhookConfig, {
+      headers: {
+        'Authorization': openPixConfig.authorization,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    console.log('✅ Webhook configurado com sucesso:', response.data);
+
+    res.json({ 
+      message: 'Webhook configurado com sucesso',
+      webhook: response.data,
+      configuredUrl: webhookUrl
+    });
+
+  } catch (error: any) {
+    console.error('❌ Erro ao configurar webhook:', error.response?.data || error.message);
+    res.status(500).json({ 
+      error: 'Erro ao configurar webhook',
+      details: error.response?.data || error.message
+    });
+  }
+}
+
+/**
+ * Listar webhooks configurados na OpenPix
+ */
+export async function listOpenPixWebhooks(req: Request, res: Response) {
+  try {
+    console.log('📋 Listando webhooks configurados na OpenPix...');
+
+    const response = await axios.get(`${openPixConfig.apiUrl}/webhook`, {
+      headers: {
+        'Authorization': openPixConfig.authorization,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    console.log('📋 Webhooks encontrados:', response.data);
+
+    res.json({ 
+      webhooks: response.data,
+      total: response.data?.webhooks?.length || 0
+    });
+
+  } catch (error: any) {
+    console.error('❌ Erro ao listar webhooks:', error.response?.data || error.message);
+    res.status(500).json({ 
+      error: 'Erro ao listar webhooks',
+      details: error.response?.data || error.message
+    });
+  }
+}
+
+/**
  * Configuração do webhook OpenPix para WhatsApp
  */
 interface OpenPixWebhookConfig {

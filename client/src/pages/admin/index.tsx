@@ -41,6 +41,10 @@ export default function AdminPage() {
             <Icons.settings className="h-4 w-4" />
             Configurar Email
           </Button>
+          <Button onClick={() => navigate("/admin/webhook-config")} variant="outline" className="flex items-center gap-2">
+            <Icons.settings className="h-4 w-4" />
+            Configurar Webhook
+          </Button>
           <Button onClick={() => navigate("/admin/finance")} className="flex items-center gap-2">
             <Icons.dollarSign className="h-4 w-4" />
             Gestão Financeira

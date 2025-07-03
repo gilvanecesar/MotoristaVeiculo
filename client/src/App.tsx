@@ -64,7 +64,7 @@ import ResetPasswordPage from "@/pages/reset-password";
 import SettingsPage from "@/pages/settings";
 import PublicFreight from "@/pages/public-freight";
 import PublicComplement from "@/pages/public/complement";
-import WebhookConfig from "@/pages/webhook-config";
+import WebhookConfig from "@/pages/admin/webhook-config";
 import MyFreightsPage from "@/pages/my-freights";
 
 function Router() {
@@ -124,6 +124,7 @@ function Router() {
       <ProtectedRoute path="/admin/whatsapp" component={AdminWhatsAppPage} />
       <ProtectedRoute path="/admin/n8n" component={AdminN8nConfigPage} />
       <ProtectedRoute path="/admin/openpix" component={AdminOpenPixPage} />
+      <ProtectedRoute path="/admin/webhook-config" component={WebhookConfig} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
       <ProtectedRoute path="/webhook-config" component={WebhookConfig} />
       <ProtectedRoute path="/home" component={Home} />
