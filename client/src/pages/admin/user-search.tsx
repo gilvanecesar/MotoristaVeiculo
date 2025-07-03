@@ -4,11 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Search, User, Mail, Phone, Calendar, CreditCard, Truck, Building2 } from "lucide-react";
+import { Search, User, Mail, Phone, Calendar, CreditCard, Truck, Building2, UserCheck, UserX } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useMutation } from "@tanstack/react-query";
 
 interface UserInfo {
   id: number;
@@ -39,6 +40,44 @@ export default function UserSearchPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const { toast } = useToast();
+
+  // Mutação para ativar/desativar assinatura
+  const toggleSubscriptionMutation = useMutation({
+    mutationFn: async ({ userId, activate }: { userId: number, activate: boolean }) => {
+      const endpoint = activate ? 'activate-subscription' : 'deactivate-subscription';
+      const res = await apiRequest("POST", `/api/admin/users/${userId}/${endpoint}`);
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Falha ao alterar assinatura");
+      }
+      return await res.json();
+    },
+    onSuccess: (data, variables) => {
+      // Atualizar o estado local do usuário
+      if (userInfo) {
+        setUserInfo({
+          ...userInfo,
+          subscription_active: variables.activate,
+          subscription_expires_at: variables.activate ? data.expiresAt : undefined
+        });
+      }
+      
+      toast({
+        title: variables.activate ? "Assinatura ativada" : "Assinatura desativada",
+        description: variables.activate 
+          ? "A assinatura do usuário foi ativada com sucesso" 
+          : "A assinatura do usuário foi desativada",
+        variant: variables.activate ? "default" : "destructive",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
 
   const handleSearch = async () => {
     if (!searchTerm.trim()) {
@@ -211,10 +250,17 @@ export default function UserSearchPage() {
                 {userInfo.whatsapp && (
                   <div>
                     <Label className="text-sm font-medium text-gray-600">WhatsApp</Label>
-                    <p className="text-lg flex items-center gap-2">
+                    <div className="flex items-center gap-2">
                       <Phone className="h-4 w-4" />
-                      {userInfo.whatsapp}
-                    </p>
+                      <a
+                        href={`https://wa.me/55${userInfo.whatsapp.replace(/\D/g, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-lg text-green-600 hover:text-green-800 hover:underline transition-colors"
+                      >
+                        {userInfo.whatsapp}
+                      </a>
+                    </div>
                   </div>
                 )}
                 {userInfo.cpf && (
@@ -299,9 +345,39 @@ export default function UserSearchPage() {
           {/* Assinatura */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5" />
-                Assinatura
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5" />
+                  Assinatura
+                </div>
+                <Button
+                  onClick={() => toggleSubscriptionMutation.mutate({ 
+                    userId: userInfo.id, 
+                    activate: !userInfo.subscription_active 
+                  })}
+                  disabled={toggleSubscriptionMutation.isPending}
+                  variant={userInfo.subscription_active ? "destructive" : "default"}
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  {toggleSubscriptionMutation.isPending ? (
+                    "Processando..."
+                  ) : (
+                    <>
+                      {userInfo.subscription_active ? (
+                        <>
+                          <UserX className="h-4 w-4" />
+                          Desativar
+                        </>
+                      ) : (
+                        <>
+                          <UserCheck className="h-4 w-4" />
+                          Ativar
+                        </>
+                      )}
+                    </>
+                  )}
+                </Button>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">

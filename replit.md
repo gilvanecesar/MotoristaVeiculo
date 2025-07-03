@@ -270,6 +270,12 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Endpoint backend para buscar usuários por ID ou email implementado
 ✓ Interface completa com formulário de busca e exibição detalhada de dados
 ✓ Botão "Pesquisar Usuário" adicionado no painel administrativo principal
+✓ Botão "Pesquisar Usuário" adicionado diretamente na página /admin/users para fácil acesso
+✓ Link clicável implementado no WhatsApp: abre automaticamente wa.me com número brasileiro
+✓ Botão para ativar/desativar assinatura implementado na interface de pesquisa de usuários
+✓ Rotas backend /api/admin/users/:userId/activate-subscription e deactivate-subscription criadas
+✓ Sistema permite ativação manual de assinatura por 30 dias ou desativação imediata
+✓ Interface administrativa completa para gestão de assinaturas de usuários
 ```
 
 ## User Preferences

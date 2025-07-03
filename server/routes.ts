@@ -3058,6 +3058,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Rota para ativar assinatura de usuário (admin)
+  app.post('/api/admin/users/:userId/activate-subscription', isAdmin, async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: 'ID de usuário inválido' });
+      }
+
+      const user = await storage.getUserById(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'Usuário não encontrado' });
+      }
+
+      // Ativar assinatura por 30 dias
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 30);
+
+      await storage.updateUser(userId, {
+        subscriptionActive: true,
+        subscriptionType: 'monthly',
+        subscriptionExpiresAt: expiresAt,
+        paymentRequired: false
+      });
+
+      console.log(`[ADMIN] Assinatura ativada para usuário ${user.email} até ${expiresAt.toISOString()}`);
+
+      res.json({ 
+        success: true, 
+        message: 'Assinatura ativada com sucesso',
+        expiresAt: expiresAt.toISOString()
+      });
+    } catch (error) {
+      console.error('Erro ao ativar assinatura:', error);
+      res.status(500).json({ message: 'Erro ao ativar assinatura' });
+    }
+  });
+
+  // Rota para desativar assinatura de usuário (admin)
+  app.post('/api/admin/users/:userId/deactivate-subscription', isAdmin, async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: 'ID de usuário inválido' });
+      }
+
+      const user = await storage.getUserById(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'Usuário não encontrado' });
+      }
+
+      await storage.updateUser(userId, {
+        subscriptionActive: false,
+        subscriptionExpiresAt: new Date(), // Expirar imediatamente
+        paymentRequired: true
+      });
+
+      console.log(`[ADMIN] Assinatura desativada para usuário ${user.email}`);
+
+      res.json({ 
+        success: true, 
+        message: 'Assinatura desativada com sucesso'
+      });
+    } catch (error) {
+      console.error('Erro ao desativar assinatura:', error);
+      res.status(500).json({ message: 'Erro ao desativar assinatura' });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
