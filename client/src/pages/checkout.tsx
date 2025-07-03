@@ -16,6 +16,7 @@ export default function Checkout() {
   const [isCheckingPayment, setIsCheckingPayment] = useState(false);
   const [isManualCheck, setIsManualCheck] = useState(false);
   const [isSimulating, setIsSimulating] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   
   // Get the plan from URL query parameter
@@ -43,8 +44,18 @@ export default function Checkout() {
       
       // Primeiro, verificar se o usuário já tem assinatura ativa
       const userResponse = await apiRequest("GET", "/api/user");
-      if (userResponse.subscriptionActive === true) {
+      const userData = await userResponse.json();
+      
+      if (userData.subscriptionActive === true) {
         console.log('Usuário já tem assinatura ativa, redirecionando...');
+        
+        // Evitar redirecionamento múltiplo
+        if (isRedirecting) {
+          console.log('Redirecionamento já em andamento, ignorando...');
+          return;
+        }
+        
+        setIsRedirecting(true);
         setPaymentStatus('completed');
         
         // Limpar intervalo
@@ -69,63 +80,62 @@ export default function Checkout() {
       
       // Verificar status diretamente na OpenPix
       const openPixResponse = await apiRequest("GET", `/api/openpix/charge/${pixCharge.charge.identifier}`);
+      const openPixData = await openPixResponse.json();
       
-      if (openPixResponse.success && openPixResponse.charge) {
-        const charge = openPixResponse.charge;
+      if (openPixData.success && openPixData.charge) {
+        const charge = openPixData.charge;
         
         // Se o pagamento foi confirmado na OpenPix
         if (charge.status === 'COMPLETED' || charge.status === 'PAID') {
           console.log('Pagamento confirmado na OpenPix:', charge.status);
           
-          // Verificar se a assinatura foi ativada localmente
-          const localResponse = await apiRequest("GET", "/api/openpix/my-payments");
+          // Aguardar um pouco para o processamento interno
+          await new Promise(resolve => setTimeout(resolve, 1000));
           
-          if (localResponse.success && localResponse.payments) {
-            const currentPayment = localResponse.payments.find(
-              (payment: any) => payment.openPixChargeId === pixCharge.charge.identifier
-            );
+          // Verificar novamente se a assinatura foi ativada
+          const finalUserResponse = await apiRequest("GET", "/api/user");
+          const finalUserData = await finalUserResponse.json();
+          
+          if (finalUserData.subscriptionActive === true) {
+            console.log('Assinatura ativada com sucesso!');
             
-            console.log('Pagamento encontrado:', currentPayment);
-            console.log('Status da assinatura:', currentPayment?.subscriptionActivated);
-            
-            // Verificar tanto subscriptionActivated quanto status COMPLETED
-            if (currentPayment?.subscriptionActivated === true || 
-                (currentPayment?.status === 'COMPLETED' && currentPayment?.processed === true)) {
-              console.log('Iniciando redirecionamento automático...');
-              setPaymentStatus('completed');
-              
-              // Limpar intervalo
-              if (intervalRef.current) {
-                clearInterval(intervalRef.current);
-                intervalRef.current = null;
-              }
-              
-              toast({
-                title: "Pagamento confirmado!",
-                description: "Sua assinatura foi ativada com sucesso. Redirecionando...",
-              });
-              
-              // Redirecionar para HOME imediatamente
-              setTimeout(() => {
-                console.log('Redirecionando para /home...');
-                navigate("/home");
-              }, 500);
-              
+            // Evitar redirecionamento múltiplo
+            if (isRedirecting) {
+              console.log('Redirecionamento já em andamento, ignorando...');
               return;
-            } else {
-              // Pagamento confirmado mas assinatura ainda não ativada
-              console.log('Pagamento confirmado, aguardando ativação da assinatura...');
-              console.log('Valor de subscriptionActivated:', currentPayment?.subscriptionActivated);
             }
+            
+            setIsRedirecting(true);
+            setPaymentStatus('completed');
+            
+            // Limpar intervalo
+            if (intervalRef.current) {
+              clearInterval(intervalRef.current);
+              intervalRef.current = null;
+            }
+            
+            toast({
+              title: "Pagamento confirmado!",
+              description: "Sua assinatura foi ativada com sucesso. Redirecionando...",
+            });
+            
+            // Redirecionar para HOME
+            setTimeout(() => {
+              console.log('Redirecionando para /home...');
+              navigate("/home");
+            }, 500);
+            
+            return;
           }
         }
       }
       
       // Fallback: verificar nossos pagamentos locais
       const response = await apiRequest("GET", "/api/openpix/my-payments");
+      const localData = await response.json();
       
-      if (response.success && response.payments) {
-        const currentPayment = response.payments.find(
+      if (localData.success && localData.payments) {
+        const currentPayment = localData.payments.find(
           (payment: any) => payment.openPixChargeId === pixCharge.charge.identifier
         );
         
@@ -164,8 +174,21 @@ export default function Checkout() {
       // Verificar imediatamente
       checkPaymentStatus();
       
-      // Configurar verificação automática a cada 2 segundos
-      intervalRef.current = setInterval(checkPaymentStatus, 2000);
+      // Configurar verificação automática a cada 3 segundos (reduzido de 2 para 3)
+      intervalRef.current = setInterval(checkPaymentStatus, 3000);
+      
+      // Timeout de segurança - parar verificação após 10 minutos
+      const timeoutId = setTimeout(() => {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+          console.log('Timeout de verificação atingido - parando monitoramento automático');
+        }
+      }, 600000); // 10 minutos
+      
+      return () => {
+        clearTimeout(timeoutId);
+      };
     }
     
     return () => {
@@ -235,8 +258,9 @@ export default function Checkout() {
       console.log('Verificação manual iniciada para:', pixCharge.charge.identifier);
 
       const response = await apiRequest("POST", `/api/openpix/force-sync/${pixCharge.charge.identifier}`);
+      const data = await response.json();
       
-      if (response.success) {
+      if (data.success) {
         console.log('Pagamento processado com sucesso!');
         setPaymentStatus('completed');
         
@@ -259,7 +283,7 @@ export default function Checkout() {
       } else {
         toast({
           title: "Pagamento pendente",
-          description: response.message || "Pagamento ainda não foi confirmado",
+          description: data.message || "Pagamento ainda não foi confirmado",
           variant: "default",
         });
       }
