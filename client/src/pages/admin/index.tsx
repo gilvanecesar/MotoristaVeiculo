@@ -118,14 +118,14 @@ export default function AdminPage() {
                     Configurar Email
                   </Button>
                 </div>
-                <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg p-4">
-                  <h3 className="font-medium mb-2 text-green-900 dark:text-green-100">Gestão WhatsApp</h3>
-                  <p className="text-sm text-green-700 dark:text-green-300 mb-4">
-                    Configure mensagens automáticas e gerencie conexão com WhatsApp.
+                <div className="bg-purple-50 dark:bg-purple-950 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+                  <h3 className="font-medium mb-2 text-purple-900 dark:text-purple-100">Integração N8N</h3>
+                  <p className="text-sm text-purple-700 dark:text-purple-300 mb-4">
+                    Configure webhook N8N para automação de processos e envio de dados.
                   </p>
-                  <Button onClick={() => navigate("/admin/whatsapp")} className="bg-green-600 hover:bg-green-700">
-                    <MessageCircle className="mr-2 h-4 w-4" />
-                    Gestão WhatsApp
+                  <Button onClick={() => navigate("/admin/n8n")} className="bg-purple-600 hover:bg-purple-700">
+                    <Icons.settings className="mr-2 h-4 w-4" />
+                    Configurar N8N
                   </Button>
                 </div>
                 <div>

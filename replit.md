@@ -240,6 +240,7 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 - July 02, 2025. Sistema de cadastro multi-perfil configurado com 3 tipos de usuário
 - July 02, 2025. Fluxo de cadastro diferenciado: motoristas têm acesso gratuito, outros perfis precisam de assinatura
 - July 02, 2025. Problema crítico de preço corrigido: valor de R$ 499,90 sendo cobrado em vez de R$ 49,90 foi resolvido
+- July 03, 2025. Sistema de integração N8N implementado: dados de novos usuários enviados automaticamente para webhook N8N configurável
 - July 02, 2025. Campos de nome, email e senha adicionados aos formulários de cadastro de todos os perfis
 - July 02, 2025. Planos anuais completamente removidos do sistema, apenas plano mensal R$ 49,90 disponível
 - July 02, 2025. APIs OpenPix e checkout corrigidas para usar somente valor correto de 4990 centavos (R$ 49,90)
@@ -276,12 +277,13 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Rotas backend /api/admin/users/:userId/activate-subscription e deactivate-subscription criadas
 ✓ Sistema permite ativação manual de assinatura por 30 dias ou desativação imediata
 ✓ Interface administrativa completa para gestão de assinaturas de usuários
-✓ Sistema automático de WhatsApp implementado para novos cadastros
-✓ Função sendWelcomeWhatsApp criada com mensagens personalizadas por perfil
-✓ Integração automática: usuário se cadastra → recebe WhatsApp de boas-vindas
-✓ Mensagens diferenciadas para motoristas (acesso liberado) e outros perfis (assinatura necessária)
-✓ Formatação automática de números brasileiros para WhatsApp
-✓ Sistema robusto com tratamento de erros e logs detalhados
+✓ Sistema de integração N8N implementado para automação de processos
+✓ Função sendUserDataToN8N criada para envio automático de dados de novos usuários
+✓ Integração automática: usuário se cadastra → dados enviados para webhook N8N
+✓ Página administrativa /admin/n8n criada para configurar webhook URL
+✓ Endpoint de teste implementado para validar integração N8N
+✓ Sistema migrado de WhatsApp direto para processamento via N8N
+✓ Payload estruturado com dados completos do usuário enviado ao N8N
 ```
 
 ## User Preferences

@@ -4,6 +4,64 @@ import { setupAuth, hashPassword } from "./auth";
 import { storage } from "./storage";
 import { sendPasswordResetEmail, testEmailConnection, sendTestEmail } from "./email-service";
 
+/**
+ * Envia dados do usuário para N8N quando ele se cadastra
+ * @param user Dados do usuário recém-cadastrado
+ * @param profileType Tipo de perfil do usuário
+ */
+async function sendUserDataToN8N(user: any, profileType: string) {
+  // URL do webhook N8N (configurável via variável de ambiente)
+  const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL;
+  
+  if (!N8N_WEBHOOK_URL) {
+    console.log('N8N_WEBHOOK_URL não configurada. Dados não enviados para N8N.');
+    return false;
+  }
+
+  try {
+    const payload = {
+      event: 'user_registered',
+      timestamp: new Date().toISOString(),
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        whatsapp: user.whatsapp,
+        profileType: profileType,
+        cpf: user.cpf,
+        cnpj: user.cnpj,
+        anttVehicle: user.anttVehicle,
+        vehiclePlate: user.vehiclePlate,
+        createdAt: user.createdAt
+      },
+      system: {
+        source: 'QUERO_FRETES',
+        environment: process.env.NODE_ENV || 'development'
+      }
+    };
+
+    const response = await fetch(N8N_WEBHOOK_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'QueroFretes-System/1.0'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (response.ok) {
+      console.log(`✅ Dados do usuário ${user.name} (${user.email}) enviados para N8N com sucesso`);
+      return true;
+    } else {
+      console.error(`❌ Erro ao enviar dados para N8N: ${response.status} - ${response.statusText}`);
+      return false;
+    }
+  } catch (error) {
+    console.error('❌ Erro na requisição para N8N:', error);
+    return false;
+  }
+}
+
 // Vamos criar um mockup do Stripe para resolver erros de compilação
 // até que todas as referências possam ser removidas
 const Stripe = function(apiKey: string, options: any) {
@@ -197,12 +255,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const newUser = await storage.createUser(userData);
 
-      // Enviar mensagem de boas-vindas via WhatsApp
+      // Enviar dados para N8N quando usuário se cadastra
       try {
-        const { sendWelcomeWhatsApp } = await import('./whatsapp-service');
-        await sendWelcomeWhatsApp(newUser);
+        await sendUserDataToN8N(newUser, profileType);
       } catch (error) {
-        console.error('Erro ao enviar WhatsApp de boas-vindas:', error);
+        console.error('Erro ao enviar dados para N8N:', error);
       }
 
       // Para motoristas, não precisa de assinatura
@@ -3133,6 +3190,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Erro ao desativar assinatura:', error);
       res.status(500).json({ message: 'Erro ao desativar assinatura' });
+    }
+  });
+
+  // Rotas para configuração N8N
+  app.get('/api/admin/n8n/config', isAdmin, async (req: Request, res: Response) => {
+    try {
+      const webhookUrl = process.env.N8N_WEBHOOK_URL || '';
+      
+      res.json({
+        webhookUrl,
+        configured: !!webhookUrl
+      });
+    } catch (error) {
+      console.error('Erro ao buscar configuração N8N:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  app.post('/api/admin/n8n/config', isAdmin, async (req: Request, res: Response) => {
+    try {
+      const { webhookUrl } = req.body;
+      
+      // Aqui normalmente salvaríamos no banco ou arquivo de configuração
+      // Por ora, apenas definimos a variável de ambiente temporariamente
+      process.env.N8N_WEBHOOK_URL = webhookUrl;
+      
+      res.json({
+        success: true,
+        message: 'Configuração N8N salva com sucesso',
+        webhookUrl
+      });
+    } catch (error) {
+      console.error('Erro ao salvar configuração N8N:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  app.post('/api/admin/n8n/test', isAdmin, async (req: Request, res: Response) => {
+    try {
+      const { testData } = req.body;
+      
+      const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL;
+      
+      if (!N8N_WEBHOOK_URL) {
+        return res.status(400).json({ message: 'N8N_WEBHOOK_URL não configurada' });
+      }
+
+      const payload = {
+        event: 'admin_test',
+        timestamp: new Date().toISOString(),
+        testData,
+        system: {
+          source: 'QUERO_FRETES',
+          environment: process.env.NODE_ENV || 'development',
+          admin: req.user?.name || 'Administrador'
+        }
+      };
+
+      const response = await fetch(N8N_WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'QueroFretes-System/1.0'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        res.json({
+          success: true,
+          message: 'Teste enviado para N8N com sucesso',
+          status: response.status
+        });
+      } else {
+        res.status(400).json({
+          success: false,
+          message: `Erro no teste N8N: ${response.status} - ${response.statusText}`
+        });
+      }
+    } catch (error) {
+      console.error('Erro no teste N8N:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
     }
   });
 
