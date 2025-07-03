@@ -11,6 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { FaWhatsapp } from "react-icons/fa";
 
 // Importando a logo da empresa
 import logoQueroFretes from "@assets/QUEROFRETES BOLINHA.png";
@@ -155,6 +156,18 @@ export default function LoginPage() {
             </Button>
           </CardFooter>
         </Card>
+
+        {/* Botão de Suporte WhatsApp */}
+        <div className="mt-6 text-center">
+          <Button
+            variant="outline"
+            className="w-full max-w-sm mx-auto bg-green-50 border-green-200 text-green-700 hover:bg-green-100 hover:border-green-300"
+            onClick={() => window.open("https://wa.me/5531971559484", "_blank")}
+          >
+            <FaWhatsapp className="mr-2 h-4 w-4" />
+            Falar com Suporte
+          </Button>
+        </div>
       </div>
 
       {/* Footer */}

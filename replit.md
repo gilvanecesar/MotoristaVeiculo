@@ -262,6 +262,8 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Tratamento de erro visual com mensagens específicas para campos em branco
 ✓ Labels com asterisco vermelho (*) indicando campos obrigatórios
 ✓ Validação pré-submit com mensagens de erro detalhadas e amigáveis
+✓ Botão "Falar com Suporte" adicionado nas páginas /auth e /login com ícone WhatsApp
+✓ Link direto para wa.me/5531971559484 com abertura em nova aba
 ```
 
 ## User Preferences
