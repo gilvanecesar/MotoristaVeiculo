@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { FaWhatsapp } from "react-icons/fa";
+import { ArrowLeft } from "lucide-react";
 
 // Importando a logo da empresa
 import logoQueroFretes from "@assets/QUEROFRETES BOLINHA.png";
@@ -92,6 +93,14 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <Card>
           <CardHeader className="text-center">
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate("/")}
+              className="w-fit mb-4 self-start flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Voltar
+            </Button>
             <CardTitle className="text-2xl font-bold">Login</CardTitle>
             <CardDescription>
               Entre com seu e-mail e senha para acessar a plataforma.
