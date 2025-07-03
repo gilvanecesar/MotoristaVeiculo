@@ -2179,6 +2179,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Pesquisar usuário por ID ou email (admin)
+  app.get("/api/admin/user-search", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const searchTerm = req.query.q as string;
+      
+      if (!searchTerm) {
+        return res.status(400).json({ message: "Termo de pesquisa é obrigatório" });
+      }
+      
+      let user = null;
+      
+      // Tentar pesquisar por ID se o termo for um número
+      if (/^\d+$/.test(searchTerm)) {
+        const userId = parseInt(searchTerm);
+        user = await storage.getUserById(userId);
+      }
+      
+      // Se não encontrou por ID, tentar pesquisar por email
+      if (!user) {
+        user = await storage.getUserByEmail(searchTerm);
+      }
+      
+      if (!user) {
+        return res.status(404).json({ message: "Usuário não encontrado" });
+      }
+      
+      // Retornar dados do usuário (sem senha)
+      const userResponse = {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        profile_type: user.profileType,
+        phone: user.phone,
+        whatsapp: user.whatsapp,
+        cpf: user.cpf,
+        cnpj: user.cnpj,
+        antt_vehicle: user.anttVehicle,
+        vehicle_plate: user.vehiclePlate,
+        is_verified: user.isVerified,
+        is_active: user.isActive,
+        created_at: user.createdAt,
+        last_login: user.lastLogin,
+        subscription_active: user.subscriptionActive,
+        subscription_type: user.subscriptionType,
+        subscription_expires_at: user.subscriptionExpiresAt,
+        payment_required: user.paymentRequired,
+        driver_id: user.driverId,
+        client_id: user.clientId
+      };
+      
+      res.json(userResponse);
+    } catch (error) {
+      console.error("Erro ao pesquisar usuário:", error);
+      res.status(500).json({ message: "Erro ao pesquisar usuário" });
+    }
+  });
+
   // Excluir usuário (admin)
   app.delete("/api/admin/users/:id", isAdmin, async (req: Request, res: Response) => {
     try {

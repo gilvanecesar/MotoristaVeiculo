@@ -41,6 +41,7 @@ import AdminPage from "@/pages/admin/index";
 import FinanceDashboard from "@/pages/admin/finance/index";
 import FinanceSettings from "@/pages/admin/finance/settings";
 import AdminUsersPage from "@/pages/admin/users/index";
+import UserSearchPage from "@/pages/admin/user-search";
 import EmailAdminPage from "@/pages/admin/email/index";
 import AdminWebhooksPage from "@/pages/admin/webhooks/index";
 import AdminOpenPixPage from "@/pages/admin/openpix/index";
@@ -115,6 +116,7 @@ function Router() {
       <ProtectedRoute path="/admin/finance" component={FinanceDashboard} />
       <ProtectedRoute path="/admin/finance/settings" component={FinanceSettings} />
       <ProtectedRoute path="/admin/users" component={AdminUsersPage} />
+      <ProtectedRoute path="/admin/user-search" component={UserSearchPage} />
       <ProtectedRoute path="/admin/email" component={EmailAdminPage} />
       <ProtectedRoute path="/admin/webhooks" component={AdminWebhooksPage} />
       <ProtectedRoute path="/admin/openpix" component={AdminOpenPixPage} />

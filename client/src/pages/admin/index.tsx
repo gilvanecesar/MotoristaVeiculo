@@ -32,6 +32,10 @@ export default function AdminPage() {
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight">Painel do Administrador</h2>
         <div className="flex gap-2">
+          <Button onClick={() => navigate("/admin/user-search")} variant="outline" className="flex items-center gap-2">
+            <Icons.search className="h-4 w-4" />
+            Pesquisar Usuário
+          </Button>
           <Button onClick={() => navigate("/admin/email")} variant="outline" className="flex items-center gap-2">
             <Icons.settings className="h-4 w-4" />
             Configurar Email
