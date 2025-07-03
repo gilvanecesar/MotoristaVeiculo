@@ -596,6 +596,19 @@ export default function ProfileSelection() {
                     <form onSubmit={embarcadorForm.handleSubmit(onEmbarcadorSubmit)} className="space-y-4">
                       <FormField
                         control={embarcadorForm.control}
+                        name="cnpj"
+                        render={({ field }) => (
+                          <FormItem>
+                            <RequiredLabel>CNPJ</RequiredLabel>
+                            <FormControl>
+                              <Input placeholder="00.000.000/0000-00" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={embarcadorForm.control}
                         name="name"
                         render={({ field }) => (
                           <FormItem>
@@ -646,19 +659,6 @@ export default function ProfileSelection() {
                           </FormItem>
                         )}
                       />
-                      <FormField
-                        control={embarcadorForm.control}
-                        name="cnpj"
-                        render={({ field }) => (
-                          <FormItem>
-                            <RequiredLabel>CNPJ</RequiredLabel>
-                            <FormControl>
-                              <Input placeholder="00.000.000/0000-00" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
                       <Button type="submit" className="w-full" disabled={isLoading}>
                         {isLoading ? "Processando..." : "Finalizar Cadastro"}
                       </Button>
@@ -684,12 +684,12 @@ export default function ProfileSelection() {
                       />
                       <FormField
                         control={agenciadorForm.control}
-                        name="whatsapp"
+                        name="name"
                         render={({ field }) => (
                           <FormItem>
-                            <RequiredLabel>WhatsApp</RequiredLabel>
+                            <RequiredLabel>Nome Completo</RequiredLabel>
                             <FormControl>
-                              <Input placeholder="(11) 99999-9999" {...field} />
+                              <Input placeholder="Digite seu nome completo" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -703,6 +703,32 @@ export default function ProfileSelection() {
                             <RequiredLabel>E-mail</RequiredLabel>
                             <FormControl>
                               <Input type="email" placeholder="seu@email.com" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={agenciadorForm.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <RequiredLabel>Senha</RequiredLabel>
+                            <FormControl>
+                              <Input type="password" placeholder="Digite sua senha (min. 6 caracteres)" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={agenciadorForm.control}
+                        name="whatsapp"
+                        render={({ field }) => (
+                          <FormItem>
+                            <RequiredLabel>WhatsApp</RequiredLabel>
+                            <FormControl>
+                              <Input placeholder="(11) 99999-9999" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
