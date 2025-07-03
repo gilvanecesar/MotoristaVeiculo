@@ -11,6 +11,7 @@ import { Truck, Building2, Users } from "lucide-react";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { FaWhatsapp } from "react-icons/fa";
 
 // Função utilitária para processar erros da API
 const processApiError = async (response: Response): Promise<string> => {
@@ -717,6 +718,18 @@ export default function ProfileSelection() {
             </Card>
           </div>
         )}
+        
+        {/* Botão Falar com Suporte - SEMPRE VISÍVEL */}
+        <div className="mt-8 text-center">
+          <Button 
+            variant="outline" 
+            onClick={() => window.open('https://wa.me/5531971559484', '_blank')}
+            className="bg-green-600 hover:bg-green-700 text-white border-green-600 hover:border-green-700"
+          >
+            <FaWhatsapp className="mr-2 h-4 w-4" />
+            Falar com Suporte
+          </Button>
+        </div>
       </div>
     </div>
   );

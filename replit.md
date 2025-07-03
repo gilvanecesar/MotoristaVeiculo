@@ -265,6 +265,7 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Botão "Falar com Suporte" adicionado nas páginas /auth e /login com ícone WhatsApp
 ✓ Link direto para wa.me/5531971559484 com abertura em nova aba
 ✓ Botão "Voltar" adicionado na página /login com ícone de seta e redirecionamento para página inicial
+✓ Botão "Falar com Suporte" adicionado na página /profile-selection com ícone WhatsApp verde
 ```
 
 ## User Preferences
