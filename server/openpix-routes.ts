@@ -1,6 +1,6 @@
 import { Express, Request, Response } from 'express';
 import { isAuthenticated } from './middlewares';
-import { createPixCharge, handleOpenPixWebhook, handleOpenPixRefundWebhook, getChargeStatus, listOpenPixCharges, syncOpenPixPayments, getUserPayments, getUserOpenPixCharges, getOpenPixFinanceStats, getOpenPixSubscriptions, getOpenPixInvoices, getOpenPixWebhookConfigAPI, updateOpenPixWebhookConfigAPI, forcePaymentSync } from './openpix-service';
+import { createPixCharge, simulatePixPayment, handleOpenPixWebhook, handleOpenPixRefundWebhook, getChargeStatus, listOpenPixCharges, syncOpenPixPayments, getUserPayments, getUserOpenPixCharges, getOpenPixFinanceStats, getOpenPixSubscriptions, getOpenPixInvoices, getOpenPixWebhookConfigAPI, updateOpenPixWebhookConfigAPI, forcePaymentSync } from './openpix-service';
 import axios from 'axios';
 
 /**
@@ -78,6 +78,9 @@ export function setupOpenPixRoutes(app: Express) {
 
   // Criar cobrança PIX
   app.post('/api/openpix/create-charge', isAuthenticated, createPixCharge);
+
+  // Simular pagamento PIX para testes
+  app.post('/api/openpix/simulate-payment', isAuthenticated, simulatePixPayment);
 
   // Webhook do OpenPix (sem autenticação)
   app.post('/api/webhooks/openpix', handleOpenPixWebhook);

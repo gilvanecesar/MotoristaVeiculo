@@ -10,6 +10,7 @@ export default function AdminOpenPixPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [isSimulating, setIsSimulating] = useState(false);
   const [charges, setCharges] = useState<any[]>([]);
   const [lastCharge, setLastCharge] = useState<any>(null);
 
@@ -97,6 +98,41 @@ export default function AdminOpenPixPage() {
       });
     } finally {
       setIsCreating(false);
+    }
+  };
+
+  const simulatePayment = async (chargeId: string) => {
+    setIsSimulating(true);
+    try {
+      const response = await apiRequest("POST", "/api/openpix/simulate-payment", {
+        chargeId: chargeId,
+        paymentValue: 4990 // R$ 49,90 em centavos
+      });
+      const data = await response.json();
+      
+      if (response.ok) {
+        toast({
+          title: "Pagamento simulado!",
+          description: `O PIX foi marcado como pago. O usuário deve ter acesso liberado.`,
+        });
+        
+        // Recarregar dados
+        testOpenPixConnection();
+        
+        // Limpar última cobrança já que foi "paga"
+        setLastCharge(null);
+      } else {
+        throw new Error(data.details || "Erro ao simular pagamento");
+      }
+    } catch (error: any) {
+      console.error("Erro ao simular pagamento:", error);
+      toast({
+        title: "Erro na simulação",
+        description: `Falha ao simular pagamento: ${error.message}`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSimulating(false);
     }
   };
 
@@ -297,6 +333,74 @@ export default function AdminOpenPixPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Simulação de Pagamentos */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5" />
+              Simulação de Pagamentos
+            </CardTitle>
+            <CardDescription>
+              Teste o fluxo completo de pagamento sem cobrar valor real
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {lastCharge && (
+              <div className="p-4 border rounded-lg bg-muted/50">
+                <h4 className="font-semibold mb-2">Última Cobrança Criada</h4>
+                <div className="grid gap-2 text-sm">
+                  <div><strong>ID:</strong> {lastCharge.charge?.identifier}</div>
+                  <div><strong>Valor:</strong> R$ {(lastCharge.charge?.value / 100)?.toFixed(2)}</div>
+                  <div><strong>Status:</strong> {lastCharge.charge?.status}</div>
+                </div>
+                
+                <Button 
+                  onClick={() => simulatePayment(lastCharge.charge?.identifier)} 
+                  disabled={isSimulating}
+                  className="mt-3"
+                  variant="default"
+                >
+                  {isSimulating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Simulando Pagamento...
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Simular Pagamento
+                    </>
+                  )}
+                </Button>
+                
+                <p className="text-xs text-muted-foreground mt-2">
+                  Clique para simular que este PIX foi pago. O usuário será redirecionado para /home.
+                </p>
+              </div>
+            )}
+            
+            <div className="flex gap-4">
+              <Button 
+                onClick={createTestCharge} 
+                disabled={isCreating}
+                variant="outline"
+              >
+                {isCreating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Criando...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Criar Cobrança Teste
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Informações da API */}
         <Card>

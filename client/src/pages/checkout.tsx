@@ -15,6 +15,7 @@ export default function Checkout() {
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'processing' | 'completed'>('pending');
   const [isCheckingPayment, setIsCheckingPayment] = useState(false);
   const [isManualCheck, setIsManualCheck] = useState(false);
+  const [isSimulating, setIsSimulating] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   
   // Get the plan from URL query parameter
@@ -274,6 +275,56 @@ export default function Checkout() {
     }
   };
 
+  // Função para simular pagamento (apenas em desenvolvimento)
+  const simulateTestPayment = async () => {
+    if (!pixCharge?.charge?.identifier) return;
+    
+    setIsSimulating(true);
+    try {
+      console.log('Simulando pagamento para cobrança:', pixCharge.charge.identifier);
+      
+      const response = await apiRequest("POST", "/api/openpix/simulate-payment", {
+        chargeId: pixCharge.charge.identifier,
+        paymentValue: 4990
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        console.log('Pagamento simulado com sucesso!');
+        setPaymentStatus('completed');
+        
+        // Limpar intervalo automático
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+        
+        toast({
+          title: "Pagamento simulado!",
+          description: "Simulação concluída. Redirecionando para home...",
+        });
+        
+        // Redirecionar para home
+        setTimeout(() => {
+          console.log('Redirecionando para /home...');
+          navigate("/home");
+        }, 1000);
+      } else {
+        throw new Error(data.details || "Erro ao simular pagamento");
+      }
+    } catch (error: any) {
+      console.error('Erro na simulação:', error);
+      toast({
+        title: "Erro na simulação",
+        description: error.message || "Erro ao simular pagamento",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSimulating(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/30 flex items-center justify-center p-3 sm:p-4">
       <div className="w-full max-w-2xl space-y-4 sm:space-y-6">
@@ -483,7 +534,7 @@ export default function Checkout() {
                 </p>
                 
                 {/* Botão de verificação manual */}
-                <div className="flex justify-center">
+                <div className="flex justify-center gap-2">
                   <Button 
                     variant="outline" 
                     size="sm"
@@ -500,6 +551,25 @@ export default function Checkout() {
                       "Verificar Status do Pagamento"
                     )}
                   </Button>
+                  
+                  {process.env.NODE_ENV === 'development' && pixCharge.charge?.identifier && (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={simulateTestPayment}
+                      disabled={isSimulating || paymentStatus === 'completed'}
+                      className="text-xs bg-yellow-50 border-yellow-200 text-yellow-800 hover:bg-yellow-100"
+                    >
+                      {isSimulating ? (
+                        <>
+                          <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                          Simulando...
+                        </>
+                      ) : (
+                        "🧪 Simular Pagamento"
+                      )}
+                    </Button>
+                  )}
                 </div>
                 
                 <p className="text-xs text-center text-muted-foreground">

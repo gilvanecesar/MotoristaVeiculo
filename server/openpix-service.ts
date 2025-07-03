@@ -48,6 +48,73 @@ interface OpenPixCharge {
 }
 
 /**
+ * Simula pagamento PIX para testes (sem cobrar valor real)
+ */
+export async function simulatePixPayment(req: Request, res: Response) {
+  try {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: 'Usuário não autenticado' });
+    }
+
+    const { chargeId, paymentValue = 4990 } = req.body;
+    
+    if (!chargeId) {
+      return res.status(400).json({ error: 'ID da cobrança é obrigatório' });
+    }
+
+    // Buscar a cobrança no banco
+    const [payment] = await db
+      .select()
+      .from(openPixPayments)
+      .where(eq(openPixPayments.openPixChargeId, chargeId));
+
+    if (!payment) {
+      return res.status(404).json({ error: 'Cobrança não encontrada' });
+    }
+
+    // Simular webhook de pagamento aprovado
+    const simulatedWebhookData = {
+      event: "OPENPIX:CHARGE_COMPLETED",
+      charge: {
+        identifier: chargeId,
+        correlationID: payment.correlationId,
+        status: "COMPLETED",
+        value: paymentValue,
+        customer: {
+          name: req.user.name,
+          email: req.user.email
+        },
+        paidAt: new Date().toISOString(),
+        pixKey: "test@openpix.com.br"
+      }
+    };
+
+    // Processar o pagamento simulado
+    await processOpenPixPayment(simulatedWebhookData.charge, req.user);
+
+    console.log(`🧪 [SIMULAÇÃO] Pagamento de R$ ${paymentValue/100} simulado para ${req.user.email}`);
+
+    res.json({
+      success: true,
+      message: "Pagamento simulado com sucesso!",
+      data: {
+        chargeId,
+        status: "COMPLETED",
+        amount: paymentValue/100,
+        simulatedAt: new Date().toISOString()
+      }
+    });
+
+  } catch (error: any) {
+    console.error('Erro ao simular pagamento:', error);
+    res.status(500).json({ 
+      error: 'Erro ao simular pagamento',
+      details: error.message
+    });
+  }
+}
+
+/**
  * Cria uma cobrança PIX via OpenPix
  */
 export async function createPixCharge(req: Request, res: Response) {
