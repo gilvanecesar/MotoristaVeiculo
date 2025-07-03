@@ -120,6 +120,10 @@ class WhatsAppService {
     };
   }
 
+  isWhatsAppReady() {
+    return this.isReady;
+  }
+
   async sendMessage(chatId: string, message: string) {
     if (!this.isReady || !this.client) {
       throw new Error('WhatsApp não está conectado');
@@ -179,6 +183,93 @@ class WhatsAppService {
 
 // Instância singleton
 const whatsappService = new WhatsAppService();
+
+/**
+ * Envia mensagem de boas-vindas via WhatsApp para usuário recém-cadastrado
+ * @param user Objeto do usuário
+ */
+export async function sendWelcomeWhatsApp(user: any) {
+  if (!whatsappService.isWhatsAppReady()) {
+    console.log('WhatsApp não está conectado. Mensagem de boas-vindas não enviada.');
+    return false;
+  }
+
+  try {
+    // Verificar se o usuário tem WhatsApp cadastrado
+    const phoneNumber = user.whatsapp || user.phone;
+    
+    if (!phoneNumber) {
+      console.log(`Usuário ${user.name} não possui WhatsApp cadastrado`);
+      return false;
+    }
+
+    // Formatar número para formato WhatsApp (55 + DDD + número)
+    const formattedNumber = phoneNumber.replace(/\D/g, '');
+    let chatId;
+    
+    // Se o número já tem código do país, usar direto
+    if (formattedNumber.length >= 12 && formattedNumber.startsWith('55')) {
+      chatId = `${formattedNumber}@c.us`;
+    } else {
+      // Adicionar código do Brasil se necessário
+      chatId = `55${formattedNumber}@c.us`;
+    }
+
+    // Criar mensagem personalizada baseada no perfil
+    let welcomeMessage = `🎉 *Bem-vindo ao QUERO FRETES!* 🎉
+
+Olá, *${user.name}*!
+
+Seu cadastro foi realizado com sucesso! 🚛
+
+📋 *Seus dados:*
+📧 Email: ${user.email}
+👤 Perfil: ${user.profileType === 'motorista' ? 'Motorista' : user.profileType === 'embarcador' ? 'Embarcador' : user.profileType === 'agenciador' ? 'Agenciador' : 'Transportador'}
+📅 Data: ${new Date().toLocaleDateString('pt-BR')}`;
+
+    // Adicionar informações específicas por perfil
+    if (user.profileType === 'motorista') {
+      welcomeMessage += `
+
+✅ *Acesso liberado!*
+Como motorista, você já tem acesso completo ao sistema.
+
+🔧 *Próximos passos:*
+• Complete seu perfil na aba "Motoristas"
+• Cadastre seus veículos
+• Explore os fretes disponíveis`;
+    } else {
+      welcomeMessage += `
+
+💳 *Ativação de assinatura:*
+Para acessar todas as funcionalidades, ative sua assinatura de R$ 49,90/mês.
+
+🔧 *Próximos passos:*
+• Ative sua assinatura via PIX
+• Complete seu perfil de cliente
+• Comece a publicar fretes`;
+    }
+
+    welcomeMessage += `
+
+📱 *Suporte:*
+Dúvidas? Entre em contato:
+WhatsApp: (31) 97155-9484
+
+Obrigado por escolher o QUERO FRETES! 🚚💨
+
+*Sistema automatizado QUERO FRETES*`;
+
+    // Enviar mensagem
+    await whatsappService.sendMessage(chatId, welcomeMessage);
+    console.log(`✅ Mensagem de boas-vindas enviada via WhatsApp para ${user.name} (${phoneNumber})`);
+    return true;
+
+  } catch (error) {
+    console.error(`❌ Erro ao enviar WhatsApp de boas-vindas para ${user.name}:`, error);
+    return false;
+  }
+}
 
 // Rotas para gerenciar WhatsApp
 export function setupWhatsAppRoutes(app: any) {

@@ -276,6 +276,12 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Rotas backend /api/admin/users/:userId/activate-subscription e deactivate-subscription criadas
 ✓ Sistema permite ativação manual de assinatura por 30 dias ou desativação imediata
 ✓ Interface administrativa completa para gestão de assinaturas de usuários
+✓ Sistema automático de WhatsApp implementado para novos cadastros
+✓ Função sendWelcomeWhatsApp criada com mensagens personalizadas por perfil
+✓ Integração automática: usuário se cadastra → recebe WhatsApp de boas-vindas
+✓ Mensagens diferenciadas para motoristas (acesso liberado) e outros perfis (assinatura necessária)
+✓ Formatação automática de números brasileiros para WhatsApp
+✓ Sistema robusto com tratamento de erros e logs detalhados
 ```
 
 ## User Preferences

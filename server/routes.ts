@@ -197,6 +197,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const newUser = await storage.createUser(userData);
 
+      // Enviar mensagem de boas-vindas via WhatsApp
+      try {
+        const { sendWelcomeWhatsApp } = await import('./whatsapp-service');
+        await sendWelcomeWhatsApp(newUser);
+      } catch (error) {
+        console.error('Erro ao enviar WhatsApp de boas-vindas:', error);
+      }
+
       // Para motoristas, não precisa de assinatura
       if (profileType === "motorista") {
         // Auto-login do usuário (simular login para motoristas)
