@@ -63,6 +63,10 @@ const embarcadorSchema = z.object({
     .min(1, "Nome da empresa é obrigatório")
     .min(3, "Nome deve ter pelo menos 3 caracteres")
     .max(100, "Nome muito longo"),
+  contactName: z.string()
+    .min(1, "Nome do contato é obrigatório")
+    .min(3, "Nome do contato deve ter pelo menos 3 caracteres")
+    .max(100, "Nome do contato muito longo"),
   email: z.string()
     .min(1, "Email é obrigatório")
     .email("Email inválido"),
@@ -123,6 +127,7 @@ export default function ProfileSelection() {
     resolver: zodResolver(embarcadorSchema),
     defaultValues: {
       name: "",
+      contactName: "",
       email: "",
       password: "",
       cnpj: "",
@@ -184,6 +189,7 @@ export default function ProfileSelection() {
     if (emptyFields.length > 0) {
       const fieldLabels = {
         name: "Nome",
+        contactName: "Nome do Contato",
         email: "Email", 
         password: "Senha",
         cpf: "CPF",
@@ -262,7 +268,7 @@ export default function ProfileSelection() {
 
   const onEmbarcadorSubmit = async (data: z.infer<typeof embarcadorSchema>) => {
     // Validação extra para campos obrigatórios
-    if (!validateRequiredFields(data, ["name", "email", "password", "cnpj", "whatsapp"])) {
+    if (!validateRequiredFields(data, ["name", "contactName", "email", "password", "cnpj", "whatsapp"])) {
       return;
     }
 
@@ -284,6 +290,7 @@ export default function ProfileSelection() {
         ...data,
         profileType: PROFILE_TYPES.EMBARCADOR,
         name: companyData.name,
+        contactName: data.contactName,
         companyData
       };
 
@@ -615,6 +622,19 @@ export default function ProfileSelection() {
                             <RequiredLabel>Nome da Empresa</RequiredLabel>
                             <FormControl>
                               <Input placeholder="Digite o nome da empresa" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={embarcadorForm.control}
+                        name="contactName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <RequiredLabel>Nome do Contato</RequiredLabel>
+                            <FormControl>
+                              <Input placeholder="Digite o nome do responsável/contato" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
