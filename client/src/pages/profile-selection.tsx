@@ -43,7 +43,8 @@ const embarcadorSchema = z.object({
   name: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
   email: z.string().email("Email inválido"),
   password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
-  cnpj: z.string().min(14, "CNPJ deve ter 14 dígitos").max(18)
+  cnpj: z.string().min(14, "CNPJ deve ter 14 dígitos").max(18),
+  whatsapp: z.string().min(10, "WhatsApp deve ter pelo menos 10 dígitos")
 });
 
 const agenciadorSchema = z.object({
@@ -79,7 +80,8 @@ export default function ProfileSelection() {
       name: "",
       email: "",
       password: "",
-      cnpj: ""
+      cnpj: "",
+      whatsapp: ""
     }
   });
 
@@ -530,6 +532,19 @@ export default function ProfileSelection() {
                             <FormLabel>Senha</FormLabel>
                             <FormControl>
                               <Input type="password" placeholder="Digite sua senha (min. 6 caracteres)" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={embarcadorForm.control}
+                        name="whatsapp"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>WhatsApp</FormLabel>
+                            <FormControl>
+                              <Input type="tel" placeholder="(11) 99999-9999" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>

@@ -257,6 +257,7 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Função de simulação aprimorada na página administrativa com redirecionamento
 ✓ Página de teste criada para validar fluxo completo: criar cobrança → simular → redirecionar
 ✓ Ordenação decrescente implementada na página /admin/users (usuários mais recentes primeiro)
+✓ Campo WhatsApp adicionado no formulário de cadastro de embarcador
 ```
 
 ## User Preferences
