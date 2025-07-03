@@ -1,6 +1,6 @@
 import { Express, Request, Response } from 'express';
 import { isAuthenticated } from './middlewares';
-import { createPixCharge, simulatePixPayment, handleOpenPixWebhook, handleOpenPixRefundWebhook, getChargeStatus, listOpenPixCharges, syncOpenPixPayments, getUserPayments, getUserOpenPixCharges, getOpenPixFinanceStats, getOpenPixSubscriptions, getOpenPixInvoices, getOpenPixWebhookConfigAPI, updateOpenPixWebhookConfigAPI, forcePaymentSync, configureOpenPixWebhook, listOpenPixWebhooks } from './openpix-service';
+import { createPixCharge, simulatePixPayment, handleOpenPixWebhook, handleOpenPixRefundWebhook, getChargeStatus, listOpenPixCharges, syncOpenPixPayments, getUserPayments, getUserOpenPixCharges, getOpenPixFinanceStats, getOpenPixSubscriptions, getOpenPixInvoices, getOpenPixWebhookConfigAPI, updateOpenPixWebhookConfigAPI, forcePaymentSync, configureOpenPixWebhook, listOpenPixWebhooks, configureOpenPixApiKey } from './openpix-service';
 import axios from 'axios';
 
 /**
@@ -132,6 +132,9 @@ export function setupOpenPixRoutes(app: Express) {
 
   // Listar webhooks configurados
   app.get('/api/openpix/webhooks', isAuthenticated, listOpenPixWebhooks);
+
+  // Configurar chave API da OpenPix
+  app.post('/api/openpix/configure-api-key', isAuthenticated, configureOpenPixApiKey);
 
   // ===== ROTAS ADMINISTRATIVAS OPENPIX =====
   

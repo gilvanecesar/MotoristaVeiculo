@@ -12,6 +12,7 @@ import { Loader2, CheckCircle, AlertCircle, ExternalLink, Settings } from 'lucid
 
 export default function WebhookConfig() {
   const [webhookUrl, setWebhookUrl] = useState('');
+  const [apiKey, setApiKey] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -36,6 +37,26 @@ export default function WebhookConfig() {
     onError: (error: any) => {
       toast({
         title: "Erro ao configurar webhook",
+        description: error.message || "Erro desconhecido",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Configurar chave API
+  const configureApiKey = useMutation({
+    mutationFn: (key: string) => 
+      apiRequest('POST', '/api/openpix/configure-api-key', { apiKey: key }),
+    onSuccess: () => {
+      toast({
+        title: "Chave API configurada com sucesso",
+        description: "A nova chave API da OpenPix foi salva",
+      });
+      setApiKey('');
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao configurar chave API",
         description: error.message || "Erro desconhecido",
         variant: "destructive",
       });
@@ -112,6 +133,50 @@ export default function WebhookConfig() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Configurar chave API */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Configurar Chave API OpenPix</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label htmlFor="api-key">Nova Chave API</Label>
+            <Input
+              id="api-key"
+              placeholder="Cole aqui a chave API da OpenPix"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+            />
+            <p className="text-sm text-gray-500 mt-1">
+              Cole aqui a nova chave API fornecida pela OpenPix
+            </p>
+            <p className="text-xs text-blue-600 mt-1">
+              Exemplo: Q2xpZW50X0lkX2E4MDg5OGI1LWVkNzgtNDA5Mi1iNjRhLTFhMmIzZjBkMTc2MzpDbGllbnRfU2VjcmV0X3JHU1pGdWFiZXZ3SVlDcWt1dnNYV05SVHFTNmsvUUxpbzZ2enZMOFVFa3M9
+            </p>
+          </div>
+          
+          <Button 
+            onClick={() => configureApiKey.mutate(apiKey)}
+            disabled={configureApiKey.isPending || !apiKey.trim()}
+            className="w-full"
+          >
+            {configureApiKey.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Configurando...
+              </>
+            ) : (
+              <>
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Atualizar Chave API
+              </>
+            )}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Separator />
 
       {/* Configurar webhook */}
       <Card>

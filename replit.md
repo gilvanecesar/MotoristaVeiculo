@@ -255,6 +255,11 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 - July 03, 2025. Funções backend configureOpenPixWebhook e listOpenPixWebhooks implementadas
 - July 03, 2025. Problema "Name is required" na configuração de webhook corrigido
 - July 03, 2025. Validação de webhook de teste implementada para aceitar dados de teste e produção
+- July 03, 2025. Sistema de configuração de chave API OpenPix implementado na interface administrativa
+- July 03, 2025. Nova função configureOpenPixApiKey criada para atualizar chave API em tempo real
+- July 03, 2025. Interface intuitiva na página /admin/webhook-config para configurar nova chave API
+- July 03, 2025. Chave API OpenPix atualizada com sucesso conforme fornecida pelo usuário
+- July 03, 2025. Sistema permite atualização da chave API sem necessidade de reiniciar servidor
 - July 02, 2025. Campos de nome, email e senha adicionados aos formulários de cadastro de todos os perfis
 - July 02, 2025. Planos anuais completamente removidos do sistema, apenas plano mensal R$ 49,90 disponível
 - July 02, 2025. APIs OpenPix e checkout corrigidas para usar somente valor correto de 4990 centavos (R$ 49,90)

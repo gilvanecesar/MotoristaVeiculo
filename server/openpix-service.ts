@@ -1640,3 +1640,40 @@ async function sendRefundNotificationWhatsApp(user: any, payment: any, pixData: 
     console.error('Erro ao enviar notificação WhatsApp de reembolso:', error);
   }
 }
+
+/**
+ * Configurar chave API da OpenPix
+ */
+export async function configureOpenPixApiKey(req: Request, res: Response) {
+  try {
+    const { apiKey } = req.body;
+    
+    if (!apiKey) {
+      return res.status(400).json({ error: 'Chave API é obrigatória' });
+    }
+
+    // Validar o formato da chave API
+    if (!apiKey.startsWith('Q2xpZW50X0lkXw') && !apiKey.startsWith('Q2xpZW50X0lkX2')) {
+      return res.status(400).json({ error: 'Formato da chave API inválido' });
+    }
+
+    // Atualizar a variável de ambiente
+    process.env.OPENPIX_AUTHORIZATION = apiKey;
+    
+    // Atualizar também a configuração
+    openPixConfig.authorization = apiKey;
+
+    console.log('✅ Chave API OpenPix configurada com sucesso');
+    
+    res.json({ 
+      message: 'Chave API configurada com sucesso',
+      status: 'success'
+    });
+  } catch (error) {
+    console.error('❌ Erro ao configurar chave API:', error);
+    res.status(500).json({ 
+      error: 'Erro ao configurar chave API',
+      details: error instanceof Error ? error.message : 'Erro desconhecido'
+    });
+  }
+}
