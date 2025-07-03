@@ -263,6 +263,10 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 - July 03, 2025. Botão "Configurar OpenPix" adicionado na página /admin/webhooks para facilitar navegação
 - July 03, 2025. Usuário com CPF 00475263600 (ID 394) completamente deletado do sistema conforme solicitação
 - July 03, 2025. Todos os dados relacionados removidos: pagamentos OpenPix, dados pessoais e assinatura ativa
+- July 03, 2025. Loop infinito na página de pagamentos PIX corrigido com proteções avançadas
+- July 03, 2025. Verificação inicial de assinatura ativa implementada na página de checkout
+- July 03, 2025. Melhorias na lógica de redirecionamento automático após pagamento confirmado
+- July 03, 2025. Intervalo de verificação otimizado para 5 segundos e timeout de segurança implementado
 - July 02, 2025. Campos de nome, email e senha adicionados aos formulários de cadastro de todos os perfis
 - July 02, 2025. Planos anuais completamente removidos do sistema, apenas plano mensal R$ 49,90 disponível
 - July 02, 2025. APIs OpenPix e checkout corrigidas para usar somente valor correto de 4990 centavos (R$ 49,90)

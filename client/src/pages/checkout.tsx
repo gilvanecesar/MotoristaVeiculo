@@ -35,9 +35,45 @@ export default function Checkout() {
 
   const currentPlan = planDetails[selectedPlan as keyof typeof planDetails];
 
+  // Verificar se usuário já tem assinatura ativa na carga da página
+  useEffect(() => {
+    const checkUserSubscription = async () => {
+      try {
+        const userResponse = await apiRequest("GET", "/api/user");
+        const userData = await userResponse.json();
+        
+        if (userData.subscriptionActive === true) {
+          console.log('Usuário já tem assinatura ativa, redirecionando para /home...');
+          
+          toast({
+            title: "Assinatura já ativa",
+            description: "Você já possui uma assinatura ativa. Redirecionando...",
+          });
+          
+          // Redirecionar imediatamente
+          setTimeout(() => {
+            window.location.href = "/home";
+          }, 1500);
+          
+          return;
+        }
+      } catch (error) {
+        console.error('Erro ao verificar assinatura do usuário:', error);
+      }
+    };
+    
+    checkUserSubscription();
+  }, []); // Executar apenas uma vez na carga da página
+
   // Verificar status do pagamento
   const checkPaymentStatus = async () => {
     if (!pixCharge?.charge?.identifier) return;
+    
+    // Evitar múltiplas verificações simultâneas
+    if (isCheckingPayment || isRedirecting || paymentStatus === 'completed') {
+      console.log('Verificação já em andamento ou pagamento já processado, ignorando...');
+      return;
+    }
     
     try {
       setIsCheckingPayment(true);
@@ -47,13 +83,7 @@ export default function Checkout() {
       const userData = await userResponse.json();
       
       if (userData.subscriptionActive === true) {
-        console.log('Usuário já tem assinatura ativa, redirecionando...');
-        
-        // Evitar redirecionamento múltiplo
-        if (isRedirecting) {
-          console.log('Redirecionamento já em andamento, ignorando...');
-          return;
-        }
+        console.log('Usuário já tem assinatura ativa, finalizando processo...');
         
         setIsRedirecting(true);
         setPaymentStatus('completed');
@@ -69,11 +99,11 @@ export default function Checkout() {
           description: "Sua assinatura foi ativada com sucesso. Redirecionando...",
         });
         
-        // Redirecionar imediatamente
+        // Redirecionar para HOME
         setTimeout(() => {
           console.log('Redirecionando para /home...');
-          navigate("/home");
-        }, 500);
+          window.location.href = "/home"; // Usar window.location para garantir redirecionamento
+        }, 1000);
         
         return;
       }
@@ -89,78 +119,50 @@ export default function Checkout() {
         if (charge.status === 'COMPLETED' || charge.status === 'PAID') {
           console.log('Pagamento confirmado na OpenPix:', charge.status);
           
-          // Aguardar um pouco para o processamento interno
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          // Verificar novamente se a assinatura foi ativada
-          const finalUserResponse = await apiRequest("GET", "/api/user");
-          const finalUserData = await finalUserResponse.json();
-          
-          if (finalUserData.subscriptionActive === true) {
-            console.log('Assinatura ativada com sucesso!');
+          // Forçar sincronização manual
+          try {
+            const syncResponse = await apiRequest("POST", `/api/openpix/force-sync/${pixCharge.charge.identifier}`);
+            const syncData = await syncResponse.json();
+            console.log('Sincronização forçada:', syncData);
             
-            // Evitar redirecionamento múltiplo
-            if (isRedirecting) {
-              console.log('Redirecionamento já em andamento, ignorando...');
+            // Aguardar processamento
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Verificar novamente se a assinatura foi ativada
+            const finalUserResponse = await apiRequest("GET", "/api/user");
+            const finalUserData = await finalUserResponse.json();
+            
+            if (finalUserData.subscriptionActive === true) {
+              console.log('Assinatura ativada após sincronização!');
+              
+              setIsRedirecting(true);
+              setPaymentStatus('completed');
+              
+              // Limpar intervalo
+              if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+                intervalRef.current = null;
+              }
+              
+              toast({
+                title: "Pagamento confirmado!",
+                description: "Sua assinatura foi ativada com sucesso. Redirecionando...",
+              });
+              
+              // Redirecionar para HOME
+              setTimeout(() => {
+                console.log('Redirecionando para /home...');
+                window.location.href = "/home";
+              }, 1000);
+              
               return;
             }
-            
-            setIsRedirecting(true);
-            setPaymentStatus('completed');
-            
-            // Limpar intervalo
-            if (intervalRef.current) {
-              clearInterval(intervalRef.current);
-              intervalRef.current = null;
-            }
-            
-            toast({
-              title: "Pagamento confirmado!",
-              description: "Sua assinatura foi ativada com sucesso. Redirecionando...",
-            });
-            
-            // Redirecionar para HOME
-            setTimeout(() => {
-              console.log('Redirecionando para /home...');
-              navigate("/home");
-            }, 500);
-            
-            return;
+          } catch (syncError) {
+            console.error('Erro na sincronização:', syncError);
           }
         }
       }
       
-      // Fallback: verificar nossos pagamentos locais
-      const response = await apiRequest("GET", "/api/openpix/my-payments");
-      const localData = await response.json();
-      
-      if (localData.success && localData.payments) {
-        const currentPayment = localData.payments.find(
-          (payment: any) => payment.openPixChargeId === pixCharge.charge.identifier
-        );
-        
-        if (currentPayment?.status === 'COMPLETED' && currentPayment?.subscriptionActivated) {
-          setPaymentStatus('completed');
-          
-          // Limpar intervalo
-          if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-            intervalRef.current = null;
-          }
-          
-          toast({
-            title: "Pagamento confirmado!",
-            description: "Sua assinatura foi ativada com sucesso. Redirecionando...",
-          });
-          
-          // Redirecionar para HOME após 1 segundo
-          setTimeout(() => {
-            navigate("/home");
-          }, 1000);
-          
-          return;
-        }
-      }
     } catch (error) {
       console.error('Erro ao verificar status do pagamento:', error);
     } finally {
@@ -170,12 +172,30 @@ export default function Checkout() {
 
   // Iniciar monitoramento quando PIX for criado
   useEffect(() => {
-    if (pixCharge?.charge?.identifier && paymentStatus === 'processing') {
+    // Evitar múltiplas inicializações
+    if (intervalRef.current) {
+      console.log('Intervalo já existe, evitando duplicação');
+      return;
+    }
+    
+    if (pixCharge?.charge?.identifier && paymentStatus === 'processing' && !isRedirecting) {
+      console.log('Iniciando monitoramento de pagamento PIX...');
+      
       // Verificar imediatamente
       checkPaymentStatus();
       
-      // Configurar verificação automática a cada 3 segundos (reduzido de 2 para 3)
-      intervalRef.current = setInterval(checkPaymentStatus, 3000);
+      // Configurar verificação automática a cada 5 segundos (aumentado para reduzir carga)
+      intervalRef.current = setInterval(() => {
+        if (!isRedirecting && paymentStatus !== 'completed') {
+          checkPaymentStatus();
+        } else {
+          // Limpar intervalo se já estiver redirecionando ou completado
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+          }
+        }
+      }, 5000);
       
       // Timeout de segurança - parar verificação após 10 minutos
       const timeoutId = setTimeout(() => {
@@ -183,11 +203,21 @@ export default function Checkout() {
           clearInterval(intervalRef.current);
           intervalRef.current = null;
           console.log('Timeout de verificação atingido - parando monitoramento automático');
+          
+          toast({
+            title: "Tempo limite atingido",
+            description: "Verifique se o pagamento foi processado ou tente novamente.",
+            variant: "destructive",
+          });
         }
       }, 600000); // 10 minutos
       
       return () => {
         clearTimeout(timeoutId);
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
       };
     }
     
@@ -197,7 +227,7 @@ export default function Checkout() {
         intervalRef.current = null;
       }
     };
-  }, [pixCharge, paymentStatus]);
+  }, [pixCharge?.charge?.identifier, paymentStatus, isRedirecting]); // Dependências mais específicas
 
   const createPixPayment = async () => {
     setIsCreatingPayment(true);

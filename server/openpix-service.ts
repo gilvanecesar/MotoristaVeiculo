@@ -11,7 +11,7 @@ interface OpenPixConfig {
 }
 
 const openPixConfig: OpenPixConfig = {
-  authorization: process.env.OPENPIX_AUTHORIZATION || '',
+  authorization: process.env.OPENPIX_AUTHORIZATION || 'Client_Id_a80898b5-ed78-4092-b64a-1a2b3f0d1763',
   apiUrl: 'https://api.openpix.com.br/api/v1'
 };
 
