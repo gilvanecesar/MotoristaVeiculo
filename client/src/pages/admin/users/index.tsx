@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -83,6 +83,7 @@ const getRegistrationType = (user: any) => {
 export default function AdminUsersPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [_, navigate] = useLocation();
   
   // States
   const [searchTerm, setSearchTerm] = useState("");
@@ -368,14 +369,24 @@ export default function AdminUsersPage() {
           <Users className="h-6 w-6 mr-2" />
           <h1 className="text-2xl font-bold">Gerenciamento de Usuários</h1>
         </div>
-        <div className="relative w-full md:w-auto">
-          <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            className="pl-8 w-full md:w-64"
-            placeholder="Buscar usuários..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="flex flex-col md:flex-row gap-3">
+          <div className="relative w-full md:w-auto">
+            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              className="pl-8 w-full md:w-64"
+              placeholder="Buscar usuários..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <Button
+            onClick={() => navigate("/admin/user-search")}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <Search className="h-4 w-4" />
+            Pesquisar Usuário
+          </Button>
         </div>
       </div>
 
