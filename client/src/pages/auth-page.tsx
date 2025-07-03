@@ -545,17 +545,18 @@ export default function AuthPage() {
             </>
           )}
 
-          {/* Botão de Suporte WhatsApp */}
-          <div className="mt-6 text-center">
-            <Button
-              variant="outline"
-              className="w-full max-w-sm mx-auto bg-green-50 border-green-200 text-green-700 hover:bg-green-100 hover:border-green-300"
-              onClick={() => window.open("https://wa.me/5531971559484", "_blank")}
-            >
-              <FaWhatsapp className="mr-2 h-4 w-4" />
-              Falar com Suporte
-            </Button>
-          </div>
+        </div>
+
+        {/* Botão de Suporte WhatsApp - SEMPRE VISÍVEL */}
+        <div className="mt-6 text-center pb-6">
+          <Button
+            variant="outline"
+            className="w-full max-w-sm mx-auto bg-green-50 border-green-200 text-green-700 hover:bg-green-100 hover:border-green-300"
+            onClick={() => window.open("https://wa.me/5531971559484", "_blank")}
+          >
+            <FaWhatsapp className="mr-2 h-4 w-4" />
+            Falar com Suporte
+          </Button>
         </div>
       </div>
 
