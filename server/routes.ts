@@ -2244,6 +2244,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Deletar completamente um usuário e todos os seus dados relacionados (admin)
+  app.delete("/api/admin/users/:cpf/delete-all", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const cpf = req.params.cpf;
+      
+      console.log(`[ADMIN] Iniciando deleção completa do usuário com CPF: ${cpf}`);
+      
+      // Buscar usuário pelo CPF
+      const user = await storage.getUserByCpf(cpf);
+      if (!user) {
+        return res.status(404).json({ message: "Usuário não encontrado" });
+      }
+      
+      console.log(`[ADMIN] Usuário encontrado: ${user.name} (ID: ${user.id})`);
+      
+      // Deletar dados relacionados em ordem
+      const deletionResults: any = {
+        user: user.name,
+        cpf: cpf,
+        deletedData: []
+      };
+      
+      try {
+        // 1. Deletar fretes do usuário
+        const freights = await storage.getFreightsByUserId(user.id);
+        for (const freight of freights) {
+          // Deletar destinos do frete
+          await storage.deleteFreightDestinations(freight.id);
+          deletionResults.deletedData.push(`Destinos do frete ${freight.id}`);
+        }
+        
+        // Deletar os fretes
+        await storage.deleteFreightsByUserId(user.id);
+        deletionResults.deletedData.push(`${freights.length} fretes`);
+        
+        // 2. Deletar veículos do usuário
+        const vehicles = await storage.getVehiclesByUserId(user.id);
+        await storage.deleteVehiclesByUserId(user.id);
+        deletionResults.deletedData.push(`${vehicles.length} veículos`);
+        
+        // 3. Deletar motoristas relacionados
+        const drivers = await storage.getDriversByUserId(user.id);
+        await storage.deleteDriversByUserId(user.id);
+        deletionResults.deletedData.push(`${drivers.length} motoristas`);
+        
+        // 4. Deletar clientes relacionados
+        const clients = await storage.getClientsByUserId(user.id);
+        await storage.deleteClientsByUserId(user.id);
+        deletionResults.deletedData.push(`${clients.length} clientes`);
+        
+        // 5. Deletar assinaturas e pagamentos
+        const subscriptions = await storage.getSubscriptionsByUser(user.id);
+        await storage.deleteSubscriptionsByUserId(user.id);
+        deletionResults.deletedData.push(`${subscriptions.length} assinaturas`);
+        
+        const payments = await storage.getPaymentsByUserId(user.id);
+        await storage.deletePaymentsByUserId(user.id);
+        deletionResults.deletedData.push(`${payments.length} pagamentos`);
+        
+        // 6. Finalmente, deletar o usuário
+        await storage.deleteUser(user.id);
+        deletionResults.deletedData.push('Usuário principal');
+        
+        console.log(`[ADMIN] Deleção completa realizada:`, deletionResults);
+        
+        res.json({
+          message: "Usuário e todos os dados relacionados foram deletados com sucesso",
+          details: deletionResults
+        });
+        
+      } catch (deleteError) {
+        console.error("Erro durante a deleção:", deleteError);
+        res.status(500).json({ 
+          message: "Erro durante a deleção", 
+          error: deleteError instanceof Error ? deleteError.message : "Erro desconhecido",
+          partialResults: deletionResults
+        });
+      }
+      
+    } catch (error) {
+      console.error("Erro ao deletar usuário:", error);
+      res.status(500).json({ message: "Erro ao deletar usuário" });
+    }
+  });
+
   // Pesquisar usuário por ID ou email (admin)
   app.get("/api/admin/user-search", isAdmin, async (req: Request, res: Response) => {
     try {
