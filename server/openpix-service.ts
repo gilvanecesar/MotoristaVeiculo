@@ -378,6 +378,15 @@ export async function handleOpenPixWebhook(req: Request, res: Response) {
   try {
     console.log('Webhook OpenPix recebido:', req.body);
 
+    // Verificar se é um webhook de teste
+    if (req.body.evento === 'teste_webhook') {
+      console.log('✅ Webhook de teste recebido com sucesso');
+      return res.status(200).json({ 
+        message: 'Webhook de teste processado com sucesso',
+        event: req.body.event || req.body.evento
+      });
+    }
+
     const { charge, pix } = req.body;
     
     if (!charge) {
@@ -1479,9 +1488,11 @@ export async function configureOpenPixWebhook(req: Request, res: Response) {
     // Configurar webhook via API da OpenPix
     const webhookConfig = {
       webhook: {
+        name: 'QueroFretes System',
         url: webhookUrl,
         authorization: process.env.OPENPIX_WEBHOOK_AUTHORIZATION || '',
-        isActive: true
+        isActive: true,
+        event: 'OPENPIX:CHARGE_COMPLETED'
       }
     };
 

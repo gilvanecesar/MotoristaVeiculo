@@ -250,6 +250,11 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 - July 03, 2025. Melhorias na função checkPaymentStatus para evitar chamadas desnecessárias e loops
 - July 03, 2025. Timeout automático de 10 minutos implementado para parar verificação contínua
 - July 03, 2025. Intervalo de verificação aumentado de 2 para 3 segundos para reduzir carga no servidor
+- July 03, 2025. Sistema completo de configuração de webhook OpenPix implementado
+- July 03, 2025. Página administrativa (/admin/webhook-config) criada para configuração visual de webhooks
+- July 03, 2025. Funções backend configureOpenPixWebhook e listOpenPixWebhooks implementadas
+- July 03, 2025. Problema "Name is required" na configuração de webhook corrigido
+- July 03, 2025. Validação de webhook de teste implementada para aceitar dados de teste e produção
 - July 02, 2025. Campos de nome, email e senha adicionados aos formulários de cadastro de todos os perfis
 - July 02, 2025. Planos anuais completamente removidos do sistema, apenas plano mensal R$ 49,90 disponível
 - July 02, 2025. APIs OpenPix e checkout corrigidas para usar somente valor correto de 4990 centavos (R$ 49,90)
