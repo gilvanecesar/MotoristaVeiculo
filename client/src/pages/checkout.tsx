@@ -552,7 +552,7 @@ export default function Checkout() {
                     )}
                   </Button>
                   
-                  {process.env.NODE_ENV === 'development' && pixCharge.charge?.identifier && (
+                  {pixCharge.charge?.identifier && (
                     <Button 
                       variant="outline" 
                       size="sm"

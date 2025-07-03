@@ -251,6 +251,11 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 - July 02, 2025. Sistema robusto de tratamento de erros implementado com mensagens amigáveis e códigos específicos
 - July 02, 2025. Acesso administrativo à página /admin corrigido: middleware agora reconhece profileType "administrador"
 - July 02, 2025. Sistema de toasts personalizados criado para diferentes tipos de erro com sugestões automáticas
+✓ Sistema de teste de pagamento OpenPix implementado com página dedicada /test-payment
+✓ Redirecionamento automático configurado após simulação de pagamento bem-sucedida
+✓ Botão de simulação de pagamento adicionado na página de checkout (visível sempre)
+✓ Função de simulação aprimorada na página administrativa com redirecionamento
+✓ Página de teste criada para validar fluxo completo: criar cobrança → simular → redirecionar
 ```
 
 ## User Preferences

@@ -48,6 +48,7 @@ import PaymentSuccessPage from "@/pages/payment-success";
 import PaymentCancelPage from "@/pages/payment-cancel";
 import CheckoutPage from "@/pages/checkout";
 import SubscribePage from "@/pages/subscribe";
+import TestPayment from "@/pages/test-payment";
 import SubscribePlansPage from "@/pages/subscribe/plans";
 
 import InvoicesPage from "@/pages/invoices";
@@ -77,6 +78,7 @@ function Router() {
       <Route path="/payment-success" component={PaymentSuccessPage} />
       <Route path="/payment-cancel" component={PaymentCancelPage} />
       <Route path="/checkout" component={CheckoutPage} />
+      <ProtectedRoute path="/test-payment" component={TestPayment} />
       <ProtectedRoute path="/subscribe" component={SubscribePage} />
       <ProtectedRoute path="/subscribe/plans" component={SubscribePlansPage} />
       <ProtectedRoute path="/subscription-status" component={SubscriptionStatusPage} />

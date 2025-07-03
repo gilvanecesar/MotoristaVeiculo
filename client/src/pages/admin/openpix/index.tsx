@@ -4,9 +4,11 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, CreditCard, RefreshCw, Eye, Plus } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { useLocation } from 'wouter';
 
 export default function AdminOpenPixPage() {
   const { toast } = useToast();
+  const [_, navigate] = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -113,7 +115,7 @@ export default function AdminOpenPixPage() {
       if (response.ok) {
         toast({
           title: "Pagamento simulado!",
-          description: `O PIX foi marcado como pago. O usuário deve ter acesso liberado.`,
+          description: `O PIX foi marcado como pago. Redirecionando para home...`,
         });
         
         // Recarregar dados
@@ -121,6 +123,12 @@ export default function AdminOpenPixPage() {
         
         // Limpar última cobrança já que foi "paga"
         setLastCharge(null);
+        
+        // Redirecionar para home após 1 segundo
+        setTimeout(() => {
+          console.log('Redirecionando para /home após simulação...');
+          navigate("/home");
+        }, 1000);
       } else {
         throw new Error(data.details || "Erro ao simular pagamento");
       }
