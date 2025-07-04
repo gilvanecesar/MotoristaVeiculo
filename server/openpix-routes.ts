@@ -1,5 +1,5 @@
 import { Express, Request, Response } from 'express';
-import { isAuthenticated } from './middlewares';
+import { isAuthenticated, isAdmin } from './middlewares';
 import { createPixCharge, simulatePixPayment, handleOpenPixWebhook, handleOpenPixRefundWebhook, getChargeStatus, listOpenPixCharges, syncOpenPixPayments, getUserPayments, getUserOpenPixCharges, getOpenPixFinanceStats, getOpenPixSubscriptions, getOpenPixInvoices, getOpenPixWebhookConfigAPI, updateOpenPixWebhookConfigAPI, forcePaymentSync, configureOpenPixWebhook, listOpenPixWebhooks, configureOpenPixApiKey } from './openpix-service';
 import axios from 'axios';
 
@@ -124,8 +124,8 @@ export function setupOpenPixRoutes(app: Express) {
   // Consultar pagamentos do usuário
   app.get('/api/openpix/my-payments', isAuthenticated, getUserPayments);
 
-  // Informações da API OpenPix
-  app.get('/api/openpix/info', getOpenPixApiInfo);
+  // Informações da API OpenPix (restrito a administradores)
+  app.get('/api/openpix/info', isAdmin, getOpenPixApiInfo);
 
   // Configurar webhook da OpenPix
   app.post('/api/openpix/configure-webhook', isAuthenticated, configureOpenPixWebhook);
