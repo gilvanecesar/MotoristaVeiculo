@@ -1,4 +1,4 @@
-import { Client, LocalAuth } from 'whatsapp-web.js';
+const { Client, LocalAuth } = require('whatsapp-web.js');
 import QRCode from 'qrcode';
 import { Request, Response } from 'express';
 

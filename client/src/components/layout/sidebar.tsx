@@ -89,6 +89,11 @@ const adminItems = [
     icon: Webhook
   },
   {
+    label: "WhatsApp Config",
+    path: "/admin/whatsapp",
+    icon: MessageCircle
+  },
+  {
     label: "OpenPix",
     path: "/admin/openpix",
     icon: CreditCard
@@ -110,11 +115,6 @@ const subscriptionItems = [
     label: "Faturas",
     path: "/invoices",
     icon: Receipt
-  },
-  {
-    label: "WhatsApp Config",
-    path: "/webhook-config",
-    icon: MessageCircle
   }
 ];
 

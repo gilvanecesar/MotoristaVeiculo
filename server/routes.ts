@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { setupAuth, hashPassword } from "./auth";
 import { storage } from "./storage";
 import { sendPasswordResetEmail, testEmailConnection, sendTestEmail } from "./email-service";
+import { setupWhatsAppRoutes } from "./whatsapp-service-simple";
 
 /**
  * Envia dados do usuário para N8N quando ele se cadastra
@@ -112,7 +113,6 @@ import { sendSubscriptionEmail, sendPaymentReminderEmail } from "./email-service
 import { format } from "date-fns";
 import { setupMercadoPagoRoutes } from "./mercadopago-routes";
 import { setupWebhookRoutes, sendFreightWebhook } from "./webhook-service";
-// import { setupWhatsAppRoutes } from "./whatsapp-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configurar autenticação
@@ -3359,6 +3359,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: 'Erro interno do servidor' });
     }
   });
+
+  // Configurar rotas do WhatsApp
+  setupWhatsAppRoutes(app);
 
   const httpServer = createServer(app);
 
