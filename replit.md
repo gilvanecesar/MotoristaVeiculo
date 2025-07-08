@@ -321,6 +321,10 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Rotas de webhook adicionadas para capturar notificações da OpenPix
 ✓ Sistema robusto para lidar com webhooks de usuários deletados
 ✓ Bug loop infinito de pagamento PIX corrigido com proteções avançadas
+✓ Ordenação decrescente implementada nas assinaturas e faturas da página financeira
+✓ Sistema de ordenação automática por data: assinaturas mais recentes primeiro
+✓ Ordenação das faturas por data de pagamento em ordem decrescente
+✓ Melhoria na experiência do usuário com dados organizados cronologicamente
 ```
 
 ## User Preferences

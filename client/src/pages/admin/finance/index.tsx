@@ -380,7 +380,14 @@ export default function FinancePage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {Array.isArray(subscriptions) ? subscriptions.map((subscription: SubscriptionData) => (
+                  {Array.isArray(subscriptions) ? subscriptions
+                    .sort((a, b) => {
+                      // Ordenação decrescente pela data de criação/início
+                      const dateA = new Date(a.startDate || a.endDate || 0).getTime();
+                      const dateB = new Date(b.startDate || b.endDate || 0).getTime();
+                      return dateB - dateA;
+                    })
+                    .map((subscription: SubscriptionData) => (
                     <TableRow key={subscription.id}>
                       <TableCell>
                         <div>
@@ -456,7 +463,14 @@ export default function FinancePage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {Array.isArray(invoices) ? invoices.map((invoice: InvoiceData) => (
+                  {Array.isArray(invoices) ? invoices
+                    .sort((a, b) => {
+                      // Ordenação decrescente pela data de pagamento
+                      const dateA = new Date(a.date || 0).getTime();
+                      const dateB = new Date(b.date || 0).getTime();
+                      return dateB - dateA;
+                    })
+                    .map((invoice: InvoiceData) => (
                     <TableRow key={invoice.id}>
                       <TableCell className="font-mono text-xs">
                         {invoice.id.slice(0, 8)}...
