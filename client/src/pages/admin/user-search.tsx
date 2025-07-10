@@ -11,6 +11,38 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useMutation } from "@tanstack/react-query";
 
+// Funções de formatação
+const formatCPF = (value: string) => {
+  const numbers = value.replace(/\D/g, '');
+  if (numbers.length <= 11) {
+    return numbers.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+  }
+  return value;
+};
+
+const formatCNPJ = (value: string) => {
+  const numbers = value.replace(/\D/g, '');
+  if (numbers.length <= 14) {
+    return numbers.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+  }
+  return value;
+};
+
+const formatDocument = (value: string) => {
+  const numbers = value.replace(/\D/g, '');
+  
+  // Se tem apenas números
+  if (/^\d+$/.test(value.replace(/[-./]/g, ''))) {
+    if (numbers.length <= 11) {
+      return formatCPF(value);
+    } else if (numbers.length <= 14) {
+      return formatCNPJ(value);
+    }
+  }
+  
+  return value;
+};
+
 interface UserInfo {
   id: number;
   email: string;
@@ -177,7 +209,11 @@ export default function UserSearchPage() {
                 id="search"
                 placeholder="Ex: 390, usuario@email.com, 12345678900 ou 12.345.678/0001-90"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const formatted = formatDocument(value);
+                  setSearchTerm(formatted);
+                }}
                 onKeyPress={(e) => e.key === "Enter" && handleSearch()}
               />
             </div>

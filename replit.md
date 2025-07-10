@@ -330,6 +330,9 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Backend modificado para buscar sequencialmente por ID, email, CPF e CNPJ
 ✓ Busca funciona com documentos formatados e não formatados
 ✓ Regex inteligente para distinguir IDs (até 6 dígitos) de CPF/CNPJ longos
+✓ Formatação automática de CPF/CNPJ implementada no campo de busca
+✓ Sistema detecta automaticamente o tipo de documento e aplica formatação em tempo real
+✓ Formatação não interfere na funcionalidade de busca do backend
 ```
 
 ## User Preferences
