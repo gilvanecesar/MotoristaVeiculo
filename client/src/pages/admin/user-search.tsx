@@ -83,7 +83,7 @@ export default function UserSearchPage() {
     if (!searchTerm.trim()) {
       toast({
         title: "Campo obrigatório",
-        description: "Digite um ID ou email para pesquisar",
+        description: "Digite um ID, email, CPF ou CNPJ para pesquisar",
         variant: "destructive",
       });
       return;
@@ -166,16 +166,16 @@ export default function UserSearchPage() {
         <CardHeader>
           <CardTitle>Buscar Usuário</CardTitle>
           <CardDescription>
-            Digite o ID do usuário ou email para pesquisar
+            Digite o ID, email, CPF ou CNPJ para pesquisar
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex gap-4">
             <div className="flex-1">
-              <Label htmlFor="search">ID do Usuário ou Email</Label>
+              <Label htmlFor="search">ID, Email, CPF ou CNPJ</Label>
               <Input
                 id="search"
-                placeholder="Ex: 390 ou usuario@email.com"
+                placeholder="Ex: 390, usuario@email.com, 12345678900 ou 12.345.678/0001-90"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && handleSearch()}

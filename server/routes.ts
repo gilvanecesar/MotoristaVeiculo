@@ -2329,7 +2329,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Pesquisar usuário por ID ou email (admin)
+  // Pesquisar usuário por ID, email, CPF ou CNPJ (admin)
   app.get("/api/admin/user-search", isAdmin, async (req: Request, res: Response) => {
     try {
       const searchTerm = req.query.q as string;
@@ -2349,6 +2349,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Se não encontrou por ID, tentar pesquisar por email
       if (!user) {
         user = await storage.getUserByEmail(searchTerm);
+      }
+      
+      // Se não encontrou por email, tentar pesquisar por CPF
+      if (!user) {
+        user = await storage.getUserByCpf(searchTerm);
+      }
+      
+      // Se não encontrou por CPF, tentar pesquisar por CNPJ
+      if (!user) {
+        user = await storage.getUserByCnpj(searchTerm);
       }
       
       if (!user) {
