@@ -325,6 +325,11 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Sistema de ordenação automática por data: assinaturas mais recentes primeiro
 ✓ Ordenação das faturas por data de pagamento em ordem decrescente
 ✓ Melhoria na experiência do usuário com dados organizados cronologicamente
+✓ Sistema de busca por CPF/CNPJ implementado na pesquisa administrativa de usuários
+✓ Interface atualizada com novos placeholders e mensagens de ajuda
+✓ Backend modificado para buscar sequencialmente por ID, email, CPF e CNPJ
+✓ Busca funciona com documentos formatados e não formatados
+✓ Regex inteligente para distinguir IDs (até 6 dígitos) de CPF/CNPJ longos
 ```
 
 ## User Preferences

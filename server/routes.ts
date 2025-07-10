@@ -2340,8 +2340,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       let user = null;
       
-      // Tentar pesquisar por ID se o termo for um número
-      if (/^\d+$/.test(searchTerm)) {
+      // Tentar pesquisar por ID se o termo for um número pequeno (até 6 dígitos)
+      if (/^\d{1,6}$/.test(searchTerm)) {
         const userId = parseInt(searchTerm);
         user = await storage.getUserById(userId);
       }
