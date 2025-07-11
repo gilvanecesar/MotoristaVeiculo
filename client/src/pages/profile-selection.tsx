@@ -450,7 +450,7 @@ export default function ProfileSelection() {
       const userData = {
         ...data,
         profileType: PROFILE_TYPES.AGENCIADOR,
-        name: companyData?.name || `Agenciador - ${data.documento}`,
+        name: companyData?.name || data.name,
         companyData
       };
 
