@@ -68,6 +68,8 @@ import PublicComplement from "@/pages/public/complement";
 import WebhookConfig from "@/pages/admin/webhook-config";
 import UserWebhookConfig from "@/pages/webhook-config";
 import MyFreightsPage from "@/pages/my-freights";
+import QuotesPage from "@/pages/quotes/index";
+import CreateQuotePage from "@/pages/quotes/create";
 
 function Router() {
   return (
@@ -115,6 +117,8 @@ function Router() {
       <ProtectedRoute path="/complements/create" component={CreateComplementPage} />
       <ProtectedRoute path="/complements/:id/edit" component={EditComplementPage} />
       <ProtectedRoute path="/complements/:id" component={ComplementDetailPage} />
+      <ProtectedRoute path="/quotes" component={QuotesPage} />
+      <ProtectedRoute path="/quotes/create" component={CreateQuotePage} />
       <ProtectedRoute path="/reports" component={ReportsPage} />
       <ProtectedRoute path="/admin" component={AdminPage} />
       <ProtectedRoute path="/admin/finance" component={FinanceDashboard} />

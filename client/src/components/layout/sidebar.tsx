@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Car, BarChart3, Menu, X, Moon, Sun, Truck, 
   Building2, Home, DollarSign, UserCog, Settings, User, CreditCard,
   Receipt, CalendarClock, AlertCircle, Bell, Webhook, Package, LogOut,
-  ChevronLeft, ChevronRight, MessageCircle
+  ChevronLeft, ChevronRight, MessageCircle, FileText
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -64,6 +64,11 @@ const navItems = [
     label: "Complementos", 
     path: "/complements",
     icon: Package
+  },
+  { 
+    label: "Cotações", 
+    path: "/quotes",
+    icon: FileText
   },
   { 
     label: "Relatórios", 
@@ -154,6 +159,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   const isDriver = user?.profileType === "motorista" || user?.profileType === "driver";
   const isShipper = user?.profileType === "embarcador" || user?.profileType === "shipper";
   const isAgent = user?.profileType === "agente" || user?.profileType === "agent";
+  const isTransportador = user?.profileType === "transportador";
   
   // Lógica para mostrar/ocultar menus baseado no perfil
   const userDataForMenus = {
@@ -185,9 +191,18 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   }
   
   // Filtrar menus baseado no perfil
-  const availableNavItems = showLimitedMenus 
-    ? navItems.filter(item => ["Motoristas", "Veículos", "Fretes", "Relatórios"].includes(item.label))
-    : navItems;
+  let availableNavItems = navItems;
+  
+  if (showLimitedMenus) {
+    // Perfil motorista: apenas menus limitados
+    availableNavItems = navItems.filter(item => ["Motoristas", "Veículos", "Fretes", "Relatórios"].includes(item.label));
+  } else if (isTransportador) {
+    // Perfil transportador: todos os menus incluindo Cotações
+    availableNavItems = navItems;
+  } else {
+    // Outros perfis: todos os menus exceto Cotações
+    availableNavItems = navItems.filter(item => item.label !== "Cotações");
+  }
 
   const isActive = (path: string) => {
     if (path === '/home' && location === '/') return true;

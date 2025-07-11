@@ -9,12 +9,14 @@ import {
   subscriptions,
   invoices,
   payments,
+  quotes,
   CLIENT_TYPES,
   USER_TYPES,
   AUTH_PROVIDERS,
   SUBSCRIPTION_STATUS,
   INVOICE_STATUS,
   PLAN_TYPES,
+  QUOTE_STATUS,
   type Driver,
   type InsertDriver,
   type Vehicle,
@@ -35,6 +37,8 @@ import {
   type InsertInvoice,
   type Payment,
   type InsertPayment,
+  type Quote,
+  type InsertQuote,
   type DriverWithVehicles,
   type FreightWithDestinations,
   type SubscriptionWithInvoices,
@@ -221,6 +225,12 @@ export interface IStorage {
   // Trial usage operations
   getTrialUsage(userId: number): Promise<TrialUsage | undefined>;
   createTrialUsage(trialUsage: InsertTrialUsage): Promise<TrialUsage>;
+  
+  // Quote operations
+  getQuotes(userId: number): Promise<Quote[]>;
+  getQuoteStats(userId: number): Promise<{ total: number; active: number; closed: number; expired: number; thisMonth: number; lastMonth: number; }>;
+  createQuote(quote: InsertQuote): Promise<Quote>;
+  updateQuoteStatus(id: number, status: string, userId: number): Promise<Quote | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -1745,6 +1755,62 @@ export class DatabaseStorage implements IStorage {
       .values(trialUsage)
       .returning();
     return newTrialUsage;
+  }
+
+  // Quote operations
+  async getQuotes(userId: number): Promise<Quote[]> {
+    return await db
+      .select()
+      .from(quotes)
+      .where(eq(quotes.userId, userId))
+      .orderBy(desc(quotes.createdAt));
+  }
+
+  async getQuoteStats(userId: number): Promise<{ total: number; active: number; closed: number; expired: number; thisMonth: number; lastMonth: number; }> {
+    const userQuotes = await db
+      .select()
+      .from(quotes)
+      .where(eq(quotes.userId, userId));
+
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+
+    const total = userQuotes.length;
+    const active = userQuotes.filter(q => q.status === "active").length;
+    const closed = userQuotes.filter(q => q.status === "closed").length;
+    const expired = userQuotes.filter(q => q.status === "expired").length;
+    const thisMonth = userQuotes.filter(q => q.createdAt && q.createdAt >= startOfMonth).length;
+    const lastMonth = userQuotes.filter(q => 
+      q.createdAt && q.createdAt >= startOfLastMonth && q.createdAt <= endOfLastMonth
+    ).length;
+
+    return {
+      total,
+      active,
+      closed,
+      expired,
+      thisMonth,
+      lastMonth
+    };
+  }
+
+  async createQuote(quote: InsertQuote): Promise<Quote> {
+    const [newQuote] = await db
+      .insert(quotes)
+      .values(quote)
+      .returning();
+    return newQuote;
+  }
+
+  async updateQuoteStatus(id: number, status: string, userId: number): Promise<Quote | undefined> {
+    const [updatedQuote] = await db
+      .update(quotes)
+      .set({ status })
+      .where(and(eq(quotes.id, id), eq(quotes.userId, userId)))
+      .returning();
+    return updatedQuote || undefined;
   }
 }
 

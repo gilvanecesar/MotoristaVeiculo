@@ -762,3 +762,82 @@ export const openPixPaymentValidator = insertOpenPixPaymentSchema.extend({
 export type OpenPixPayment = typeof openPixPayments.$inferSelect;
 export type InsertOpenPixPayment = z.infer<typeof insertOpenPixPaymentSchema>;
 export type OpenPixPaymentStatus = typeof OPENPIX_PAYMENT_STATUS[keyof typeof OPENPIX_PAYMENT_STATUS];
+
+// Tipos de transporte para cotações
+export const TRANSPORT_TYPES = {
+  CARGA: "carga",
+  MUDANCA: "mudanca",
+  VEICULO: "veiculo"
+} as const;
+
+export type TransportType = typeof TRANSPORT_TYPES[keyof typeof TRANSPORT_TYPES];
+
+// Status de cotação
+export const QUOTE_STATUS = {
+  ATIVA: "ativa",
+  FECHADA: "fechada",
+  CANCELADA: "cancelada",
+  EXPIRADA: "expirada"
+} as const;
+
+export type QuoteStatus = typeof QUOTE_STATUS[keyof typeof QUOTE_STATUS];
+
+// Tabela de cotações
+export const quotes = pgTable("quotes", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  
+  // Tipo de transporte
+  transportType: text("transport_type").notNull(),
+  
+  // Detalhes da carga
+  origin: text("origin").notNull(),
+  destination: text("destination").notNull(),
+  noteValue: decimal("note_value", { precision: 10, scale: 2 }),
+  quantity: integer("quantity"),
+  totalWeight: decimal("total_weight", { precision: 10, scale: 2 }),
+  
+  // Dados do embarcador
+  shipperName: text("shipper_name").notNull(),
+  shipperEmail: text("shipper_email").notNull(),
+  shipperWhatsapp: text("shipper_whatsapp").notNull(),
+  
+  // Descrição
+  description: text("description"),
+  
+  // Status
+  status: text("status").notNull().default(QUOTE_STATUS.ATIVA),
+  
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  expiresAt: timestamp("expires_at"), // Data de expiração da cotação
+});
+
+// Insert schema para cotações
+export const insertQuoteSchema = createInsertSchema(quotes)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+
+// Validator para cotações
+export const quoteValidator = insertQuoteSchema.extend({
+  transportType: z.enum([
+    TRANSPORT_TYPES.CARGA,
+    TRANSPORT_TYPES.MUDANCA,
+    TRANSPORT_TYPES.VEICULO
+  ]),
+  origin: z.string().min(1, "Origem é obrigatória"),
+  destination: z.string().min(1, "Destino é obrigatório"),
+  shipperName: z.string().min(1, "Nome do embarcador é obrigatório"),
+  shipperEmail: z.string().email("Email inválido"),
+  shipperWhatsapp: z.string().min(1, "WhatsApp é obrigatório"),
+  status: z.enum([
+    QUOTE_STATUS.ATIVA,
+    QUOTE_STATUS.FECHADA,
+    QUOTE_STATUS.CANCELADA,
+    QUOTE_STATUS.EXPIRADA
+  ]).optional(),
+});
+
+// Tipos de cotação
+export type Quote = typeof quotes.$inferSelect;
+export type InsertQuote = z.infer<typeof insertQuoteSchema>;

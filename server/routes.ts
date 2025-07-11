@@ -3370,6 +3370,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ==================== COTAÇÕES ====================
+  // Listar cotações do usuário
+  app.get("/api/quotes", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const quotes = await storage.getQuotes(req.user!.id);
+      res.json(quotes);
+    } catch (error) {
+      console.error("Erro ao buscar cotações:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  // Obter estatísticas de cotações
+  app.get("/api/quotes/stats", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const stats = await storage.getQuoteStats(req.user!.id);
+      res.json(stats);
+    } catch (error) {
+      console.error("Erro ao buscar estatísticas:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  // Criar nova cotação
+  app.post("/api/quotes", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const quoteData = {
+        ...req.body,
+        userId: req.user!.id
+      };
+      
+      const quote = await storage.createQuote(quoteData);
+      res.status(201).json(quote);
+    } catch (error) {
+      console.error("Erro ao criar cotação:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  // Atualizar status da cotação
+  app.patch("/api/quotes/:id/status", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { status } = req.body;
+      
+      if (!status) {
+        return res.status(400).json({ message: "Status é obrigatório" });
+      }
+      
+      const quote = await storage.updateQuoteStatus(id, status, req.user!.id);
+      
+      if (!quote) {
+        return res.status(404).json({ message: "Cotação não encontrada" });
+      }
+      
+      res.json(quote);
+    } catch (error) {
+      console.error("Erro ao atualizar status:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
   // Configurar rotas do WhatsApp
   setupWhatsAppRoutes(app);
 
