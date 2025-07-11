@@ -105,7 +105,6 @@ export default function LandingPage() {
           </div>
         </div>
       </nav>
-
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white py-10 md:py-20">
         <div className="container mx-auto px-4">
@@ -140,7 +139,6 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-
       {/* Features Section */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
@@ -162,20 +160,13 @@ export default function LandingPage() {
             ))}
           </div>
 
-          <div className="mt-16 text-center">
-            <Button className="bg-primary hover:bg-primary/90 text-white px-8 py-6 text-lg" onClick={goToLogin}>
-              Experimente Grátis por 7 dias
-            </Button>
-          </div>
+
         </div>
       </section>
-
       {/* Stats Section */}
       <StatsSection />
-      
       {/* Recent Freights Section */}
       <RecentFreightsSection />
-
       {/* Transportadoras Section */}
       <section className="py-20 bg-gradient-to-br from-primary/5 to-slate-50">
         <div className="container mx-auto px-4">
@@ -297,7 +288,6 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-
       {/* Pricing Section */}
       <section className="py-16 md:py-20 bg-slate-50">
         <div className="container mx-auto px-4">
@@ -381,7 +371,6 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-
       {/* Benefits Section */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
@@ -405,10 +394,8 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-
       {/* Testimonials Section */}
       <TestimonialSection />
-      
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-r from-primary/90 to-primary text-white">
         <div className="container mx-auto px-4 text-center">
@@ -419,13 +406,10 @@ export default function LandingPage() {
           <Button
             className="bg-white text-primary hover:bg-slate-100 px-8 py-6 text-lg"
             onClick={goToLogin}
-          >
-            Criar Conta Grátis
-          </Button>
+          >Criar Conta</Button>
           <p className="mt-4 text-sm">Não é necessário cartão de crédito</p>
         </div>
       </section>
-
       {/* Contact Section */}
       <section className="py-16 md:py-20 bg-slate-50">
         <div className="container mx-auto px-4">
@@ -557,7 +541,6 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-
       {/* Footer */}
       <footer className="bg-slate-900 text-white py-10 md:py-12">
         <div className="container mx-auto px-4">
