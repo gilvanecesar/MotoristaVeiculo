@@ -3569,6 +3569,141 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ==================== ADMIN QUOTES MANAGEMENT ROUTES ====================
+  // Obter todas as cotações (admin)
+  app.get("/api/admin/quotes", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const quotes = await storage.getQuotes();
+      res.json(quotes);
+    } catch (error) {
+      console.error("Erro ao obter cotações:", error);
+      res.status(500).json({ message: "Erro ao obter cotações" });
+    }
+  });
+
+  // Atualizar cotação específica (admin)
+  app.put("/api/admin/quotes/:id", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const quoteId = parseInt(req.params.id);
+      const quoteData = req.body;
+      
+      if (!quoteId || isNaN(quoteId)) {
+        return res.status(400).json({ message: "ID da cotação inválido" });
+      }
+      
+      // Verificar se a cotação existe
+      const existingQuote = await storage.getQuoteById(quoteId);
+      if (!existingQuote) {
+        return res.status(404).json({ message: "Cotação não encontrada" });
+      }
+      
+      // Atualizar a cotação
+      const updatedQuote = await storage.updateQuote(quoteId, quoteData);
+      
+      res.json({
+        message: "Cotação atualizada com sucesso",
+        quote: updatedQuote
+      });
+    } catch (error) {
+      console.error("Erro ao atualizar cotação:", error);
+      res.status(500).json({ message: "Erro ao atualizar cotação" });
+    }
+  });
+
+  // Deletar cotação específica (admin)
+  app.delete("/api/admin/quotes/:id", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const quoteId = parseInt(req.params.id);
+      
+      if (!quoteId || isNaN(quoteId)) {
+        return res.status(400).json({ message: "ID da cotação inválido" });
+      }
+      
+      // Verificar se a cotação existe
+      const existingQuote = await storage.getQuoteById(quoteId);
+      if (!existingQuote) {
+        return res.status(404).json({ message: "Cotação não encontrada" });
+      }
+      
+      // Deletar a cotação
+      await storage.deleteQuote(quoteId);
+      
+      res.json({
+        message: "Cotação deletada com sucesso",
+        deletedQuoteId: quoteId
+      });
+    } catch (error) {
+      console.error("Erro ao deletar cotação:", error);
+      res.status(500).json({ message: "Erro ao deletar cotação" });
+    }
+  });
+
+  // Obter cotação específica (admin)
+  app.get("/api/admin/quotes/:id", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const quoteId = parseInt(req.params.id);
+      
+      if (!quoteId || isNaN(quoteId)) {
+        return res.status(400).json({ message: "ID da cotação inválido" });
+      }
+      
+      const quote = await storage.getQuoteById(quoteId);
+      if (!quote) {
+        return res.status(404).json({ message: "Cotação não encontrada" });
+      }
+      
+      res.json(quote);
+    } catch (error) {
+      console.error("Erro ao obter cotação:", error);
+      res.status(500).json({ message: "Erro ao obter cotação" });
+    }
+  });
+
+  // Obter estatísticas de cotações (admin)
+  app.get("/api/admin/quotes/stats", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const quotes = await storage.getQuotes();
+      
+      // Calcular estatísticas
+      const totalQuotes = quotes.length;
+      const publicQuotes = quotes.filter(q => q.userId === null).length;
+      const registeredQuotes = quotes.filter(q => q.userId !== null).length;
+      const activeQuotes = quotes.filter(q => q.status === 'ativa').length;
+      const closedQuotes = quotes.filter(q => q.status === 'fechada').length;
+      const canceledQuotes = quotes.filter(q => q.status === 'cancelada').length;
+      const expiredQuotes = quotes.filter(q => q.status === 'expirada').length;
+      
+      // Calcular cotações por período
+      const today = new Date();
+      const thisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      const thisWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+      
+      const thisMonthQuotes = quotes.filter(q => new Date(q.createdAt) >= thisMonth).length;
+      const lastMonthQuotes = quotes.filter(q => {
+        const createdAt = new Date(q.createdAt);
+        return createdAt >= lastMonth && createdAt < thisMonth;
+      }).length;
+      const thisWeekQuotes = quotes.filter(q => new Date(q.createdAt) >= thisWeek).length;
+      
+      res.json({
+        totalQuotes,
+        publicQuotes,
+        registeredQuotes,
+        activeQuotes,
+        closedQuotes,
+        canceledQuotes,
+        expiredQuotes,
+        thisMonthQuotes,
+        lastMonthQuotes,
+        thisWeekQuotes
+      });
+    } catch (error) {
+      console.error("Erro ao obter estatísticas de cotações:", error);
+      res.status(500).json({ message: "Erro ao obter estatísticas de cotações" });
+    }
+  });
+
   // Configurar rotas do WhatsApp
   setupWhatsAppRoutes(app);
 

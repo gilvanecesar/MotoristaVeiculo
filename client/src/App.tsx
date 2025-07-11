@@ -48,6 +48,7 @@ import AdminOpenPixPage from "@/pages/admin/openpix/index";
 import AdminWhatsAppPage from "@/pages/admin/whatsapp";
 import AdminWhatsAppConfigPage from "@/pages/admin/whatsapp-config";
 import AdminN8nConfigPage from "@/pages/admin/n8n-config";
+import AdminQuotesPage from "@/pages/admin/quotes/index";
 import PaymentSuccessPage from "@/pages/payment-success";
 import PaymentCancelPage from "@/pages/payment-cancel";
 import CheckoutPage from "@/pages/checkout";
@@ -129,6 +130,7 @@ function Router() {
       <ProtectedRoute path="/admin/user-search" component={UserSearchPage} />
       <ProtectedRoute path="/admin/email" component={EmailAdminPage} />
       <ProtectedRoute path="/admin/webhooks" component={AdminWebhooksPage} />
+      <ProtectedRoute path="/admin/quotes" component={AdminQuotesPage} />
       <ProtectedRoute path="/admin/whatsapp" component={AdminWhatsAppConfigPage} />
       <ProtectedRoute path="/admin/n8n" component={AdminN8nConfigPage} />
       <ProtectedRoute path="/admin/openpix" component={AdminOpenPixPage} />

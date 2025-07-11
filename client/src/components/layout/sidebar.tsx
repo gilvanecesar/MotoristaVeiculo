@@ -84,6 +84,11 @@ const adminItems = [
     icon: UserCog
   },
   {
+    label: "Cotações",
+    path: "/admin/quotes",
+    icon: FileText
+  },
+  {
     label: "Financeiro",
     path: "/admin/finance",
     icon: DollarSign
