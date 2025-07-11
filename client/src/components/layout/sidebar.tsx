@@ -288,6 +288,29 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
             </>
           )}
           
+          {/* Menus de configuração para usuários com assinatura ativa */}
+          {!isDriver && !isAdmin && user?.subscriptionActive && !collapsed && (
+            <>
+              <div className="px-3 py-2">
+                <h3 className="text-xs font-semibold text-white/60 uppercase tracking-wider">
+                  Configurações
+                </h3>
+              </div>
+              <Link href="/webhook-config">
+                <Button
+                  variant={isActive("/webhook-config") ? "secondary" : "ghost"}
+                  className={cn(
+                    "w-full justify-start gap-3 text-white/80 hover:text-white hover:bg-gray-700/50 transition-all duration-200 font-medium",
+                    isActive("/webhook-config") && "bg-gray-600 text-white hover:bg-gray-600/90 shadow-sm"
+                  )}
+                >
+                  <MessageCircle className="h-4 w-4 flex-shrink-0" />
+                  <span>WhatsApp Config</span>
+                </Button>
+              </Link>
+            </>
+          )}
+          
           {/* Menu de assinatura para usuários SEM assinatura ativa */}
           {!isDriver && !user?.subscriptionActive && !collapsed && (
             <>

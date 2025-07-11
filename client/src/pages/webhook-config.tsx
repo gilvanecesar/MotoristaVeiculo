@@ -44,11 +44,16 @@ export default function WebhookConfig() {
   const [isTesting, setIsTesting] = useState(false);
   const [whatsappStatus, setWhatsappStatus] = useState('disconnected');
 
-  // Verificar se o usuário tem permissão (admin ou embarcador com assinatura)
+  // Verificar se o usuário tem permissão (admin ou usuários com assinatura ativa)
   const hasPermission = user?.profileType === 'administrador' || 
     user?.profileType === 'admin' ||
-    (user?.profileType === 'embarcador' && user?.subscriptionActive) ||
-    (user?.profileType === 'shipper' && user?.subscriptionActive);
+    (user?.subscriptionActive && (
+      user?.profileType === 'embarcador' || 
+      user?.profileType === 'shipper' ||
+      user?.profileType === 'agenciador' ||
+      user?.profileType === 'transportador' ||
+      user?.profileType === 'agent'
+    ));
 
   useEffect(() => {
     if (hasPermission) {
