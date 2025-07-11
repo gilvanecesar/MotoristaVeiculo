@@ -485,11 +485,16 @@ export default function Dashboard() {
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={freightsByState} layout="horizontal">
                 <XAxis type="number" />
-                <YAxis dataKey="state" type="category" width={30} />
-                <Tooltip formatter={(value, name) => [`${value} fretes (${freightsByState.find(f => f.count === value)?.percentage}%)`, 'Fretes']} />
+                <YAxis dataKey="state" type="category" width={40} />
+                <Tooltip 
+                  formatter={(value, name, props) => {
+                    const percentage = props.payload?.percentage || "0";
+                    return [`${value} fretes (${percentage}%)`, 'Fretes'];
+                  }}
+                />
                 <Bar dataKey="count">
                   {freightsByState.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                    <Cell key={`state-${entry.state}-${index}`} fill={entry.fill} />
                   ))}
                 </Bar>
               </BarChart>
@@ -517,7 +522,7 @@ export default function Dashboard() {
                   dataKey="count"
                 >
                   {freightStatus.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                    <Cell key={`status-${entry.status}-${index}`} fill={entry.fill} />
                   ))}
                 </Pie>
                 <Tooltip />
@@ -546,7 +551,7 @@ export default function Dashboard() {
                   dataKey="count"
                 >
                   {vehicleTypes.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                    <Cell key={`vehicle-${entry.type}-${index}`} fill={entry.fill} />
                   ))}
                 </Pie>
                 <Tooltip />
