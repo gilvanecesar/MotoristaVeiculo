@@ -83,6 +83,9 @@ export default function Dashboard() {
     )?.length || 0;
     const activeFreightsPercent = totalFreights > 0 ? (activeFreights / totalFreights) * 100 : 0;
     
+    // Veículos sendo utilizados (máximo é o número de veículos disponíveis)
+    const vehiclesInUse = Math.min(activeFreights, totalVehicles);
+    
     // Cotações ativas - ajustar para os status reais do sistema
     const activeQuotes = quotes?.filter(q => 
       q.status === 'ativa' || 
@@ -109,7 +112,7 @@ export default function Dashboard() {
       activeQuotesPercent,
       driversWithoutVehicles,
       driversWithoutVehiclesPercent,
-      utilizationRate: totalVehicles > 0 ? (activeFreights / totalVehicles) * 100 : 0,
+      utilizationRate: totalVehicles > 0 ? (vehiclesInUse / totalVehicles) * 100 : 0,
       conversionRate: totalFreights > 0 ? ((totalQuotes / totalFreights) * 100) : 0
     };
   }, [drivers, vehicles, freights, clients, quotes]);
