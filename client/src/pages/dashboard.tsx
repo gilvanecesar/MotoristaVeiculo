@@ -257,7 +257,11 @@ export default function Dashboard() {
     const colors = {
       'SP': '#8884d8', 'RJ': '#83a6ed', 'MG': '#8dd1e1', 'ES': '#82ca9d',
       'PR': '#a4de6c', 'SC': '#d0ed57', 'RS': '#ffc658', 'MS': '#ff8042',
-      'MT': '#0088FE', 'GO': '#00C49F', 'DF': '#FFBB28', 'BA': '#FF8042'
+      'MT': '#0088FE', 'GO': '#00C49F', 'DF': '#FFBB28', 'BA': '#FF8042',
+      'CE': '#9333ea', 'PE': '#f59e0b', 'AL': '#ef4444', 'SE': '#10b981',
+      'PB': '#6366f1', 'RN': '#8b5cf6', 'PI': '#f97316', 'MA': '#06b6d4',
+      'PA': '#84cc16', 'AM': '#f43f5e', 'RO': '#64748b', 'RR': '#dc2626',
+      'AP': '#059669', 'AC': '#7c3aed', 'TO': '#ea580c'
     };
     return colors[state] || '#8884d8';
   }
@@ -482,23 +486,22 @@ export default function Dashboard() {
             <CardDescription>Distribuição de fretes por estado</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={freightsByState} layout="horizontal">
-                <XAxis type="number" />
-                <YAxis dataKey="state" type="category" width={40} />
-                <Tooltip 
-                  formatter={(value, name, props) => {
-                    const percentage = props.payload?.percentage || "0";
-                    return [`${value} fretes (${percentage}%)`, 'Fretes'];
-                  }}
-                />
-                <Bar dataKey="count">
-                  {freightsByState.map((entry, index) => (
-                    <Cell key={`state-${entry.state}-${index}`} fill={entry.fill} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="space-y-2">
+              {freightsByState.map((item, index) => (
+                <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                  <span className="font-medium">{item.state}</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-20 bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-blue-500 h-2 rounded-full" 
+                        style={{ width: `${Math.min(parseFloat(item.percentage), 100)}%` }}
+                      ></div>
+                    </div>
+                    <span className="text-sm text-gray-600">{item.count} ({item.percentage}%)</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
 
