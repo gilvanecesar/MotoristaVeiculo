@@ -28,6 +28,7 @@ interface Quote {
   status: string;
   createdAt: string;
   updatedAt: string;
+  expiresAt: string | null;
 }
 
 interface QuoteStats {
@@ -40,10 +41,10 @@ interface QuoteStats {
 }
 
 const statusConfig = {
-  active: { label: "Ativo", color: "bg-green-500" },
-  closed: { label: "Fechado", color: "bg-blue-500" },
-  expired: { label: "Expirado", color: "bg-red-500" },
-  pending: { label: "Pendente", color: "bg-yellow-500" },
+  ativa: { label: "Ativa", color: "bg-green-500" },
+  pendente: { label: "Pendente", color: "bg-yellow-500" },
+  fechada: { label: "Fechada", color: "bg-blue-500" },
+  expirada: { label: "Expirada", color: "bg-red-500" },
 } as const;
 
 const urgencyConfig = {
@@ -52,6 +53,20 @@ const urgencyConfig = {
   medium: { label: "Média", color: "bg-yellow-500" },
   low: { label: "Baixa", color: "bg-green-500" },
 } as const;
+
+// Função para verificar se uma cotação expirou
+const isQuoteExpired = (quote: Quote): boolean => {
+  if (!quote.expiresAt) return false;
+  return new Date(quote.expiresAt) < new Date();
+};
+
+// Função para obter o status efetivo da cotação
+const getEffectiveStatus = (quote: Quote): string => {
+  if (isQuoteExpired(quote)) {
+    return 'expirada';
+  }
+  return quote.status;
+};
 
 export default function QuotesPage() {
   const { user } = useAuth();
@@ -207,35 +222,39 @@ export default function QuotesPage() {
             </p>
           </div>
         ) : (
-          quotes?.map((quote) => (
-            <Card key={quote.id} className="hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-                  {/* Informações do Cliente */}
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-3">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {quote.clientName}
-                      </h3>
-                      <Badge 
-                        variant="secondary" 
-                        className={`${statusConfig[quote.status as keyof typeof statusConfig]?.color} text-white`}
-                      >
-                        {statusConfig[quote.status as keyof typeof statusConfig]?.label}
-                      </Badge>
-                      <Badge 
-                        variant="outline"
-                        className={`${urgencyConfig[quote.urgency as keyof typeof urgencyConfig]?.color} text-white border-0`}
-                      >
-                        {urgencyConfig[quote.urgency as keyof typeof urgencyConfig]?.label}
-                      </Badge>
-                      <Badge 
-                        variant="outline"
-                        className={quote.userId === null ? "bg-orange-500 text-white border-0" : "bg-blue-500 text-white border-0"}
-                      >
-                        {quote.userId === null ? "Pública" : "Registrada"}
-                      </Badge>
-                    </div>
+          quotes?.map((quote) => {
+            const effectiveStatus = getEffectiveStatus(quote);
+            const isExpired = isQuoteExpired(quote);
+            
+            return (
+              <Card key={quote.id} className="hover:shadow-lg transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+                    {/* Informações do Cliente */}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-3">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {quote.clientName}
+                        </h3>
+                        <Badge 
+                          variant="secondary" 
+                          className={`${statusConfig[effectiveStatus as keyof typeof statusConfig]?.color} text-white`}
+                        >
+                          {statusConfig[effectiveStatus as keyof typeof statusConfig]?.label}
+                        </Badge>
+                        <Badge 
+                          variant="outline"
+                          className={`${urgencyConfig[quote.urgency as keyof typeof urgencyConfig]?.color} text-white border-0`}
+                        >
+                          {urgencyConfig[quote.urgency as keyof typeof urgencyConfig]?.label}
+                        </Badge>
+                        <Badge 
+                          variant="outline"
+                          className={quote.userId === null ? "bg-orange-500 text-white border-0" : "bg-blue-500 text-white border-0"}
+                        >
+                          {quote.userId === null ? "Pública" : "Registrada"}
+                        </Badge>
+                      </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                       <div className="space-y-2">
@@ -287,11 +306,18 @@ export default function QuotesPage() {
                     <div className="text-xs text-gray-500">
                       {format(new Date(quote.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                     </div>
+                    {quote.expiresAt && (
+                      <div className={`text-xs mt-1 ${isExpired ? 'text-red-500 font-semibold' : 'text-orange-500'}`}>
+                        {isExpired ? 'Expirou em: ' : 'Expira em: '}
+                        {format(new Date(quote.expiresAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>
             </Card>
-          ))
+            );
+          })
         )}
       </div>
     </div>

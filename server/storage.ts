@@ -1837,9 +1837,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createQuote(quote: InsertQuote): Promise<Quote> {
+    // Define automaticamente a data de expiração em 48 horas se não foi fornecida
+    const expiresAt = quote.expiresAt || new Date(Date.now() + 48 * 60 * 60 * 1000);
+    
     const [newQuote] = await db
       .insert(quotes)
-      .values(quote)
+      .values({
+        ...quote,
+        expiresAt
+      })
       .returning();
     return newQuote;
   }
