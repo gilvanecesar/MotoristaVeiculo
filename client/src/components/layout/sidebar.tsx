@@ -163,7 +163,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   const isAdmin = user?.profileType === "administrador" || user?.profileType === "admin";
   const isDriver = user?.profileType === "motorista" || user?.profileType === "driver";
   const isShipper = user?.profileType === "embarcador" || user?.profileType === "shipper";
-  const isAgent = user?.profileType === "agente" || user?.profileType === "agent";
+  const isAgent = user?.profileType === "agenciador" || user?.profileType === "agent";
   const isTransportador = user?.profileType === "transportador";
   
   // Lógica para mostrar/ocultar menus baseado no perfil
@@ -201,8 +201,8 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   if (showLimitedMenus) {
     // Perfil motorista: apenas menus limitados
     availableNavItems = navItems.filter(item => ["Motoristas", "Veículos", "Fretes", "Relatórios"].includes(item.label));
-  } else if (isTransportador || isShipper) {
-    // Perfil transportador e embarcador: todos os menus incluindo Cotações
+  } else if (isTransportador || isShipper || isAgent || isAdmin) {
+    // Perfil transportador, embarcador, agenciador e admin: todos os menus incluindo Cotações
     availableNavItems = navItems;
   } else {
     // Outros perfis: todos os menus exceto Cotações
