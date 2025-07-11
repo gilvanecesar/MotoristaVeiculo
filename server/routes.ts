@@ -3371,10 +3371,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ==================== COTAÇÕES ====================
-  // Listar cotações do usuário
+  // Listar TODAS as cotações (incluindo públicas)
   app.get("/api/quotes", isAuthenticated, async (req: Request, res: Response) => {
     try {
-      const quotes = await storage.getQuotes(req.user!.id);
+      const quotes = await storage.getAllQuotes();
       res.json(quotes);
     } catch (error) {
       console.error("Erro ao buscar cotações:", error);
@@ -3382,10 +3382,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Obter estatísticas de cotações
+  // Obter estatísticas de todas as cotações
   app.get("/api/quotes/stats", isAuthenticated, async (req: Request, res: Response) => {
     try {
-      const stats = await storage.getQuoteStats(req.user!.id);
+      const stats = await storage.getAllQuoteStats();
       res.json(stats);
     } catch (error) {
       console.error("Erro ao buscar estatísticas:", error);

@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 interface Quote {
   id: number;
+  userId: number | null;
   clientName: string;
   clientEmail: string;
   clientPhone: string;
@@ -218,6 +219,12 @@ export default function QuotesPage() {
                       className={`${urgencyConfig[quote.urgency as keyof typeof urgencyConfig]?.color} text-white border-0`}
                     >
                       {urgencyConfig[quote.urgency as keyof typeof urgencyConfig]?.label}
+                    </Badge>
+                    <Badge 
+                      variant="outline"
+                      className={quote.userId === null ? "bg-orange-500 text-white border-0" : "bg-blue-500 text-white border-0"}
+                    >
+                      {quote.userId === null ? "Pública" : "Registrada"}
                     </Badge>
                   </div>
                 </div>

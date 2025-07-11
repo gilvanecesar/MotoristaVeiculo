@@ -1766,6 +1766,46 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(quotes.createdAt));
   }
 
+  async getAllQuotes(): Promise<Quote[]> {
+    return await db
+      .select()
+      .from(quotes)
+      .orderBy(desc(quotes.createdAt));
+  }
+
+  async getAllQuoteStats(): Promise<{ total: number; active: number; closed: number; expired: number; thisMonth: number; lastMonth: number; }> {
+    const allQuotes = await db
+      .select()
+      .from(quotes);
+
+    const now = new Date();
+    const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+
+    const stats = {
+      total: allQuotes.length,
+      active: allQuotes.filter(q => q.status === 'ativa' || q.status === 'pendente').length,
+      closed: allQuotes.filter(q => q.status === 'fechada').length,
+      expired: allQuotes.filter(q => {
+        if (!q.expiresAt) return false;
+        return new Date(q.expiresAt) < now;
+      }).length,
+      thisMonth: allQuotes.filter(q => {
+        if (!q.createdAt) return false;
+        const createdAt = new Date(q.createdAt);
+        return createdAt >= thisMonth;
+      }).length,
+      lastMonth: allQuotes.filter(q => {
+        if (!q.createdAt) return false;
+        const createdAt = new Date(q.createdAt);
+        return createdAt >= lastMonth && createdAt <= lastMonthEnd;
+      }).length
+    };
+
+    return stats;
+  }
+
   async getQuoteStats(userId: number): Promise<{ total: number; active: number; closed: number; expired: number; thisMonth: number; lastMonth: number; }> {
     const userQuotes = await db
       .select()
