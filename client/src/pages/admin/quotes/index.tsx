@@ -170,7 +170,8 @@ export default function AdminQuotesPage() {
 
   const openWhatsApp = (quote: Quote) => {
     const phone = quote.clientPhone.replace(/\D/g, '');
-    const message = `Olá ${quote.clientName}, temos uma proposta para sua cotação de ${quote.origin} para ${quote.destination}. Valor estimado: R$ ${quote.price.toFixed(2)}`;
+    const priceValue = quote.price ? Number(quote.price).toFixed(2) : '0.00';
+    const message = `Olá ${quote.clientName}, temos uma proposta para sua cotação de ${quote.origin} para ${quote.destination}. Valor estimado: R$ ${priceValue}`;
     const whatsappUrl = `https://wa.me/55${phone}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
   };
@@ -196,11 +197,12 @@ export default function AdminQuotesPage() {
     }
   };
 
-  const formatCurrency = (value: number) => {
+  const formatCurrency = (value: number | string | null) => {
+    const numValue = value ? Number(value) : 0;
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL',
-    }).format(value);
+    }).format(numValue);
   };
 
   return (
