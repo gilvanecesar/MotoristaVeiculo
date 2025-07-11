@@ -3638,28 +3638,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Obter cotação específica (admin)
-  app.get("/api/admin/quotes/:id", isAdmin, async (req: Request, res: Response) => {
-    try {
-      const quoteId = parseInt(req.params.id);
-      
-      if (!quoteId || isNaN(quoteId)) {
-        return res.status(400).json({ message: "ID da cotação inválido" });
-      }
-      
-      const quote = await storage.getQuoteById(quoteId);
-      if (!quote) {
-        return res.status(404).json({ message: "Cotação não encontrada" });
-      }
-      
-      res.json(quote);
-    } catch (error) {
-      console.error("Erro ao obter cotação:", error);
-      res.status(500).json({ message: "Erro ao obter cotação" });
-    }
-  });
-
-  // Obter estatísticas de cotações (admin)
+  // Obter estatísticas de cotações (admin) - DEVE vir antes da rota /:id
   app.get("/api/admin/quotes/stats", isAdmin, async (req: Request, res: Response) => {
     try {
       const quotes = await storage.getQuotes();
@@ -3701,6 +3680,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Erro ao obter estatísticas de cotações:", error);
       res.status(500).json({ message: "Erro ao obter estatísticas de cotações" });
+    }
+  });
+
+  // Obter cotação específica (admin)
+  app.get("/api/admin/quotes/:id", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const quoteId = parseInt(req.params.id);
+      
+      if (!quoteId || isNaN(quoteId)) {
+        return res.status(400).json({ message: "ID da cotação inválido" });
+      }
+      
+      const quote = await storage.getQuoteById(quoteId);
+      if (!quote) {
+        return res.status(404).json({ message: "Cotação não encontrada" });
+      }
+      
+      res.json(quote);
+    } catch (error) {
+      console.error("Erro ao obter cotação:", error);
+      res.status(500).json({ message: "Erro ao obter cotação" });
     }
   });
 
