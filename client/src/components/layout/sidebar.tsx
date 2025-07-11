@@ -257,19 +257,37 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
             const active = isActive(item.path);
             
             return (
-              <Link key={item.path} href={item.path}>
-                <Button
-                  variant={active ? "secondary" : "ghost"}
-                  className={cn(
-                    "w-full justify-start gap-3 text-white/80 hover:text-white hover:bg-cyan-500/50 transition-all duration-200 font-medium",
-                    collapsed && "justify-center px-2",
-                    active && "bg-cyan-400 text-cyan-900 hover:bg-cyan-400/90 shadow-sm"
-                  )}
-                >
-                  <Icon className="h-4 w-4 flex-shrink-0" />
-                  {!collapsed && <span>{item.label}</span>}
-                </Button>
-              </Link>
+              <div key={item.path}>
+                <Link href={item.path}>
+                  <Button
+                    variant={active ? "secondary" : "ghost"}
+                    className={cn(
+                      "w-full justify-start gap-3 text-white/80 hover:text-white hover:bg-cyan-500/50 transition-all duration-200 font-medium",
+                      collapsed && "justify-center px-2",
+                      active && "bg-cyan-400 text-cyan-900 hover:bg-cyan-400/90 shadow-sm"
+                    )}
+                  >
+                    <Icon className="h-4 w-4 flex-shrink-0" />
+                    {!collapsed && <span>{item.label}</span>}
+                  </Button>
+                </Link>
+                
+                {/* Botão Adicionar Cotação para embarcadores no menu Cotações */}
+                {item.label === "Cotações" && isShipper && !collapsed && (
+                  <div className="ml-6 mt-1">
+                    <Link href="/quotes/create">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-start gap-2 text-white/60 hover:text-white hover:bg-cyan-500/30 transition-all duration-200 text-sm"
+                      >
+                        <FileText className="h-3 w-3 flex-shrink-0" />
+                        <span>Adicionar Cotação</span>
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+              </div>
             );
           })}
           
