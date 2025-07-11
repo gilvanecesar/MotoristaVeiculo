@@ -55,21 +55,17 @@ export default function ClientsPage() {
 
   // Filter clients based on user role
   useEffect(() => {
-    console.log('Filtering clients:', { clients: clients?.length, isAdmin, user: user?.profileType });
     if (!clients || !Array.isArray(clients)) return;
 
     if (isAdmin) {
       // Admin sees all clients
-      console.log('Admin detected - showing all clients:', clients.length);
       setFilteredClients(clients);
     } else if (user?.clientId) {
       // Regular user only sees their own client
       const userClient = clients.find((client: Client) => client.id === user.clientId);
-      console.log('Regular user - showing own client:', userClient?.name);
       setFilteredClients(userClient ? [userClient] : []);
     } else {
       // User without client sees nothing, but can create their own
-      console.log('User without client - showing empty list');
       setFilteredClients([]);
     }
   }, [clients, user, isAdmin]);

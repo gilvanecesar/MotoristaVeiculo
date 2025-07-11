@@ -66,6 +66,7 @@ import SettingsPage from "@/pages/settings";
 import PublicFreight from "@/pages/public-freight";
 import PublicComplement from "@/pages/public/complement";
 import WebhookConfig from "@/pages/admin/webhook-config";
+import UserWebhookConfig from "@/pages/webhook-config";
 import MyFreightsPage from "@/pages/my-freights";
 
 function Router() {
@@ -126,6 +127,7 @@ function Router() {
       <ProtectedRoute path="/admin/n8n" component={AdminN8nConfigPage} />
       <ProtectedRoute path="/admin/openpix" component={AdminOpenPixPage} />
       <ProtectedRoute path="/admin/webhook-config" component={WebhookConfig} />
+      <ProtectedRoute path="/webhook-config" component={UserWebhookConfig} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
       <ProtectedRoute path="/home" component={Home} />
       <Route component={NotFound} />
