@@ -26,6 +26,7 @@ const processApiError = async (response: Response): Promise<string> => {
 const PROFILE_TYPES = {
   MOTORISTA: "motorista",
   EMBARCADOR: "embarcador",
+  TRANSPORTADOR: "transportador",
   AGENCIADOR: "agenciador"
 } as const;
 
@@ -59,6 +60,31 @@ const motoristaSchema = z.object({
 });
 
 const embarcadorSchema = z.object({
+  name: z.string()
+    .min(1, "Nome da empresa é obrigatório")
+    .min(3, "Nome deve ter pelo menos 3 caracteres")
+    .max(100, "Nome muito longo"),
+  contactName: z.string()
+    .min(1, "Nome do contato é obrigatório")
+    .min(3, "Nome do contato deve ter pelo menos 3 caracteres")
+    .max(100, "Nome do contato muito longo"),
+  email: z.string()
+    .min(1, "Email é obrigatório")
+    .email("Email inválido"),
+  password: z.string()
+    .min(1, "Senha é obrigatória")
+    .min(6, "Senha deve ter pelo menos 6 caracteres"),
+  cnpj: z.string()
+    .min(1, "CNPJ é obrigatório")
+    .min(14, "CNPJ deve ter 14 dígitos")
+    .max(18, "CNPJ inválido"),
+  whatsapp: z.string()
+    .min(1, "WhatsApp é obrigatório")
+    .min(10, "WhatsApp deve ter pelo menos 10 dígitos")
+    .max(15, "WhatsApp inválido")
+});
+
+const transportadorSchema = z.object({
   name: z.string()
     .min(1, "Nome da empresa é obrigatório")
     .min(3, "Nome deve ter pelo menos 3 caracteres")
@@ -125,6 +151,18 @@ export default function ProfileSelection() {
 
   const embarcadorForm = useForm({
     resolver: zodResolver(embarcadorSchema),
+    defaultValues: {
+      name: "",
+      contactName: "",
+      email: "",
+      password: "",
+      cnpj: "",
+      whatsapp: ""
+    }
+  });
+
+  const transportadorForm = useForm({
+    resolver: zodResolver(transportadorSchema),
     defaultValues: {
       name: "",
       contactName: "",
@@ -328,6 +366,68 @@ export default function ProfileSelection() {
     }
   };
 
+  const onTransportadorSubmit = async (data: z.infer<typeof transportadorSchema>) => {
+    // Validação extra para campos obrigatórios
+    if (!validateRequiredFields(data, ["name", "contactName", "email", "password", "cnpj", "whatsapp"])) {
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // Buscar dados da empresa
+      toast({
+        title: "Buscando dados da empresa...",
+        description: "Consultando informações no CNPJ..."
+      });
+
+      const companyData = await fetchCompanyData(data.cnpj);
+      
+      if (!companyData) {
+        throw new Error("CNPJ não encontrado ou inválido");
+      }
+
+      const userData = {
+        ...data,
+        profileType: PROFILE_TYPES.TRANSPORTADOR,
+        name: companyData.name,
+        contactName: data.contactName,
+        companyData
+      };
+
+      const response = await apiRequest("POST", "/api/auth/register-profile", userData);
+      
+      if (response.ok) {
+        const result = await response.json();
+        
+        // Verificar se precisa de assinatura
+        if (result.needsSubscription) {
+          toast({
+            title: "Cadastro realizado!",
+            description: "Redirecionando para o checkout..."
+          });
+          setLocation("/checkout");
+        } else {
+          toast({
+            title: "Bem-vindo!",
+            description: "Redirecionando para o painel principal..."
+          });
+          setLocation("/home");
+        }
+      } else {
+        const errorMessage = await processApiError(response);
+        throw new Error(errorMessage);
+      }
+    } catch (error) {
+      toast({
+        title: "Erro no cadastro",
+        description: error instanceof Error ? error.message : "Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const onAgenciadorSubmit = async (data: z.infer<typeof agenciadorSchema>) => {
     // Validação extra para campos obrigatórios
     if (!validateRequiredFields(data, ["name", "email", "password", "documento", "whatsapp"])) {
@@ -414,7 +514,7 @@ export default function ProfileSelection() {
               </p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {/* Motorista */}
               <Card 
                 className="cursor-pointer transition-all hover:shadow-lg hover:scale-105 border-2 hover:border-blue-500"
@@ -457,6 +557,27 @@ export default function ProfileSelection() {
                 </CardContent>
               </Card>
 
+              {/* Transportador */}
+              <Card 
+                className="cursor-pointer transition-all hover:shadow-lg hover:scale-105 border-2 hover:border-purple-500"
+                onClick={() => setSelectedProfile(PROFILE_TYPES.TRANSPORTADOR)}
+              >
+                <CardHeader className="text-center pb-4">
+                  <div className="w-20 h-20 mx-auto bg-purple-100 rounded-full flex items-center justify-center mb-4">
+                    <Building2 className="w-10 h-10 text-purple-600" />
+                  </div>
+                  <CardTitle className="text-2xl text-purple-600">TRANSPORTADOR</CardTitle>
+                  <CardDescription className="text-gray-600">
+                    Ofereça seus serviços de transporte
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="text-center">
+                  <Button className="w-full bg-purple-600 hover:bg-purple-700">
+                    Começar Agora
+                  </Button>
+                </CardContent>
+              </Card>
+
               {/* Agenciador */}
               <Card 
                 className="cursor-pointer transition-all hover:shadow-lg hover:scale-105 border-2 hover:border-orange-500"
@@ -493,6 +614,7 @@ export default function ProfileSelection() {
                 <CardTitle className="text-center">
                   {selectedProfile === PROFILE_TYPES.MOTORISTA && "Cadastro de Motorista"}
                   {selectedProfile === PROFILE_TYPES.EMBARCADOR && "Cadastro de Embarcador"}
+                  {selectedProfile === PROFILE_TYPES.TRANSPORTADOR && "Cadastro de Transportador"}
                   {selectedProfile === PROFILE_TYPES.AGENCIADOR && "Cadastro de Agenciador"}
                 </CardTitle>
               </CardHeader>
@@ -668,6 +790,94 @@ export default function ProfileSelection() {
                       />
                       <FormField
                         control={embarcadorForm.control}
+                        name="whatsapp"
+                        render={({ field }) => (
+                          <FormItem>
+                            <RequiredLabel>WhatsApp</RequiredLabel>
+                            <FormControl>
+                              <Input type="tel" placeholder="(11) 99999-9999" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Button type="submit" className="w-full" disabled={isLoading}>
+                        {isLoading ? "Processando..." : "Finalizar Cadastro"}
+                      </Button>
+                    </form>
+                  </Form>
+                )}
+
+                {selectedProfile === PROFILE_TYPES.TRANSPORTADOR && (
+                  <Form {...transportadorForm}>
+                    <form onSubmit={transportadorForm.handleSubmit(onTransportadorSubmit)} className="space-y-4">
+                      <FormField
+                        control={transportadorForm.control}
+                        name="cnpj"
+                        render={({ field }) => (
+                          <FormItem>
+                            <RequiredLabel>CNPJ</RequiredLabel>
+                            <FormControl>
+                              <Input placeholder="00.000.000/0000-00" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={transportadorForm.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <RequiredLabel>Nome da Empresa</RequiredLabel>
+                            <FormControl>
+                              <Input placeholder="Digite o nome da empresa" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={transportadorForm.control}
+                        name="contactName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <RequiredLabel>Nome do Contato</RequiredLabel>
+                            <FormControl>
+                              <Input placeholder="Digite o nome do responsável/contato" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={transportadorForm.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <RequiredLabel>E-mail para contato</RequiredLabel>
+                            <FormControl>
+                              <Input type="email" placeholder="seu@email.com" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={transportadorForm.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <RequiredLabel>Senha</RequiredLabel>
+                            <FormControl>
+                              <Input type="password" placeholder="Digite sua senha (min. 6 caracteres)" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={transportadorForm.control}
                         name="whatsapp"
                         render={({ field }) => (
                           <FormItem>
