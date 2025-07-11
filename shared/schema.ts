@@ -785,28 +785,44 @@ export type QuoteStatus = typeof QUOTE_STATUS[keyof typeof QUOTE_STATUS];
 // Tabela de cotações
 export const quotes = pgTable("quotes", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: integer("user_id").references(() => users.id), // Removido notNull() para permitir cotações públicas
   
-  // Tipo de transporte
-  transportType: text("transport_type").notNull(),
+  // Campos para cotações públicas
+  clientName: text("client_name"), // Nome do cliente público
+  clientEmail: text("client_email"), // Email do cliente público
+  clientPhone: text("client_phone"), // Telefone do cliente público
+  
+  // Origem e destino
+  origin: text("origin").notNull(),
+  originState: text("origin_state"),
+  destination: text("destination").notNull(),
+  destinationState: text("destination_state"),
   
   // Detalhes da carga
-  origin: text("origin").notNull(),
-  destination: text("destination").notNull(),
+  cargoType: text("cargo_type"),
+  weight: decimal("weight", { precision: 10, scale: 2 }),
+  volume: decimal("volume", { precision: 10, scale: 2 }),
+  urgency: text("urgency"),
+  deliveryDate: date("delivery_date"),
+  price: decimal("price", { precision: 10, scale: 2 }),
+  
+  // Campos originais (para compatibilidade)
+  transportType: text("transport_type"),
   noteValue: decimal("note_value", { precision: 10, scale: 2 }),
   quantity: integer("quantity"),
   totalWeight: decimal("total_weight", { precision: 10, scale: 2 }),
   
-  // Dados do embarcador
-  shipperName: text("shipper_name").notNull(),
-  shipperEmail: text("shipper_email").notNull(),
-  shipperWhatsapp: text("shipper_whatsapp").notNull(),
+  // Dados do embarcador (para cotações autenticadas)
+  shipperName: text("shipper_name"),
+  shipperEmail: text("shipper_email"),
+  shipperWhatsapp: text("shipper_whatsapp"),
   
   // Descrição
   description: text("description"),
+  observations: text("observations"),
   
   // Status
-  status: text("status").notNull().default(QUOTE_STATUS.ATIVA),
+  status: text("status").notNull().default("pendente"),
   
   // Timestamps
   createdAt: timestamp("created_at").defaultNow(),
