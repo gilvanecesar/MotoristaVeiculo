@@ -3490,6 +3490,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         observations: observations || '',
         status,
         userId: null, // Cotação pública não tem usuário associado
+        transportType: 'carga', // Valor padrão para cotações públicas
         createdAt: new Date(),
         updatedAt: new Date()
       };
