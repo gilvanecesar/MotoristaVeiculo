@@ -94,18 +94,12 @@ export default function AdminQuotesPage() {
   // Buscar cotações
   const { data: quotes = [], isLoading } = useQuery<Quote[]>({
     queryKey: ['/api/admin/quotes'],
-    queryFn: async () => {
-      return await apiRequest('/api/admin/quotes');
-    },
     refetchInterval: 30000, // Atualizar a cada 30 segundos
   });
 
   // Buscar estatísticas
   const { data: stats } = useQuery<QuoteStats>({
     queryKey: ['/api/admin/quotes/stats'],
-    queryFn: async () => {
-      return await apiRequest('/api/admin/quotes/stats');
-    },
     refetchInterval: 30000,
   });
 
