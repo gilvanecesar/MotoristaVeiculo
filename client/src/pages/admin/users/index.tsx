@@ -25,33 +25,40 @@ import { USER_TYPES } from "@shared/schema";
 // Função para retornar o tipo de cadastro do usuário com estilo visual aprimorado
 const getRegistrationType = (user: any) => {
   // Primeiro verificamos o tipo de perfil definido
-  if (user.profileType === USER_TYPES.DRIVER) {
+  if (user.profileType === USER_TYPES.DRIVER || user.profileType === "motorista") {
     return { 
       type: "Motorista", 
       color: "#16a34a", // green-600
       bgColor: "#dcfce7", // green-100
       textColor: "#166534" // green-800
     };
-  } else if (user.profileType === USER_TYPES.SHIPPER) {
+  } else if (user.profileType === USER_TYPES.SHIPPER || user.profileType === "embarcador") {
     return { 
       type: "Embarcador", 
       color: "#2563eb", // blue-600
       bgColor: "#dbeafe", // blue-100
       textColor: "#1e40af" // blue-800
     };
-  } else if (user.profileType === USER_TYPES.AGENT) {
+  } else if (user.profileType === USER_TYPES.CARRIER || user.profileType === "transportador") {
     return { 
-      type: "Transportadora", 
+      type: "Transportador", 
       color: "#ea580c", // orange-600
       bgColor: "#ffedd5", // orange-100
       textColor: "#9a3412" // orange-800
     };
-  } else if (user.profileType === USER_TYPES.ADMIN) {
+  } else if (user.profileType === "agenciador") {
     return { 
-      type: "Administrador", 
+      type: "Agenciador", 
       color: "#7c3aed", // violet-600
       bgColor: "#ede9fe", // violet-100
       textColor: "#5b21b6" // violet-800
+    };
+  } else if (user.profileType === USER_TYPES.ADMIN || user.profileType === "administrador") {
+    return { 
+      type: "Administrador", 
+      color: "#dc2626", // red-600
+      bgColor: "#fef2f2", // red-100
+      textColor: "#991b1b" // red-800
     };
   } else {
     // Se o perfil não estiver definido, verificamos se tem cliente ou motorista associado
