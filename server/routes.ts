@@ -3440,9 +3440,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         clientEmail,
         clientPhone,
         origin,
-        originState,
         destination,
-        destinationState,
         cargoType,
         weight,
         volume,
@@ -3454,23 +3452,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } = req.body;
 
       // Validar campos obrigatórios
-      if (!clientName || !clientEmail || !clientPhone || !origin || !originState || 
-          !destination || !destinationState || !cargoType || !weight || !volume || 
+      if (!clientName || !clientEmail || !clientPhone || !origin || 
+          !destination || !cargoType || !weight || !volume || 
           !urgency || !deliveryDate || !price) {
         return res.status(400).json({ 
           message: "Todos os campos obrigatórios devem ser preenchidos" 
         });
       }
 
+      // Extrair cidade e estado do formato "Cidade - Estado"
+      const parseLocation = (location: string) => {
+        const parts = location.split(' - ');
+        if (parts.length === 2) {
+          return { city: parts[0].trim(), state: parts[1].trim() };
+        }
+        return { city: location, state: '' };
+      };
+
+      const originParsed = parseLocation(origin);
+      const destinationParsed = parseLocation(destination);
+
       // Criar cotação pública (sem userId)
       const quoteData = {
         clientName,
         clientEmail,
         clientPhone,
-        origin,
-        originState,
-        destination,
-        destinationState,
+        origin: originParsed.city,
+        originState: originParsed.state,
+        destination: destinationParsed.city,
+        destinationState: destinationParsed.state,
         cargoType,
         weight: parseFloat(weight),
         volume: parseFloat(volume),
@@ -3487,7 +3497,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const quote = await storage.createQuote(quoteData);
       
       // Log da cotação pública criada
-      console.log(`✅ Cotação pública criada: ${clientName} (${clientEmail}) - ${origin}/${originState} → ${destination}/${destinationState}`);
+      console.log(`✅ Cotação pública criada: ${clientName} (${clientEmail}) - ${originParsed.city}/${originParsed.state} → ${destinationParsed.city}/${destinationParsed.state}`);
       
       res.status(201).json({
         message: "Cotação enviada com sucesso",
