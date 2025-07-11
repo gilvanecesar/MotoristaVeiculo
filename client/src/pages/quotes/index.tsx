@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Plus, FileText, MapPin, Calendar, User, Phone } from "lucide-react";
+import { FileText, MapPin, Calendar, User, Phone } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -120,15 +120,9 @@ export default function QuotesPage() {
             Cotações
           </h1>
           <p className="text-gray-600">
-            Gerencie suas solicitações de cotação de transporte
+            Visualize as solicitações de cotação de transporte
           </p>
         </div>
-        <Link href="/quotes/create">
-          <Button className="mt-4 sm:mt-0">
-            <Plus className="h-4 w-4 mr-2" />
-            Nova Cotação
-          </Button>
-        </Link>
       </div>
 
       {/* Estatísticas */}
