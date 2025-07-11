@@ -98,29 +98,8 @@ export default function LandingPage() {
               Solicitar Cotações
             </Button>
           </div>
-          <div className="md:hidden flex gap-2">
-            <Button 
-              size="sm" 
-              variant="outline" 
-              className="border-slate-300 bg-white text-slate-900 hover:bg-slate-100 text-xs px-2 py-1"
-              onClick={goToLogin}
-            >
-              ENTRAR
-            </Button>
-            <Button 
-              size="sm" 
-              className="bg-primary hover:bg-primary/90 text-white text-xs px-2 py-1" 
-              onClick={goToRegister}
-            >
-              REGISTRAR
-            </Button>
-            <Button 
-              size="sm"
-              className="bg-orange-500 hover:bg-orange-600 text-white text-xs px-2 py-1"
-              onClick={goToQuoteRequest}
-            >
-              COTAÇÕES
-            </Button>
+          <div className="md:hidden">
+            <Menu className="h-6 w-6 text-white" />
           </div>
         </div>
       </nav>
@@ -155,19 +134,21 @@ export default function LandingPage() {
                 >
                   REGISTRAR AGORA
                 </Button>
-                <Button 
-                  variant="outline" 
-                  className="border-2 border-white text-white bg-transparent hover:bg-white hover:text-slate-900 py-4 text-lg font-semibold"
-                  onClick={goToLogin}
-                >
-                  FAZER LOGIN
-                </Button>
-                <Button 
-                  className="bg-orange-500 hover:bg-orange-600 text-white py-4 text-lg font-semibold"
-                  onClick={goToQuoteRequest}
-                >
-                  SOLICITAR COTAÇÕES
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    className="border-2 border-white text-white bg-transparent hover:bg-white hover:text-slate-900 py-3 text-sm font-semibold flex-1"
+                    onClick={goToLogin}
+                  >
+                    FAZER LOGIN
+                  </Button>
+                  <Button 
+                    className="bg-orange-500 hover:bg-orange-600 text-white py-3 text-sm font-semibold flex-1"
+                    onClick={goToQuoteRequest}
+                  >
+                    COTAÇÕES
+                  </Button>
+                </div>
               </div>
             </div>
             <div className="lg:w-1/2 flex justify-center">
