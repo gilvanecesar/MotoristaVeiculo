@@ -358,6 +358,12 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Botão "Nova Cotação" removido para embarcadores e transportadoras conforme solicitado
 ✓ Texto do cabeçalho alterado para "Visualize as solicitações de cotação"
 ✓ Interface limpa focada na visualização de cotações existentes
+✓ Card TRANSPORTADOR adicionado na página de seleção de perfis com cor roxa
+✓ Formulário de cadastro de transportador implementado idêntico ao embarcador
+✓ Sistema de 4 perfis configurado: motorista (gratuito), embarcador, transportador e agenciador (pagos)
+✓ Layout dos cards otimizado com altura uniforme e alinhamento perfeito
+✓ Flexbox aplicado para manter botões sempre alinhados na parte inferior
+✓ Tamanhos de fonte ajustados para melhor proporção visual
 ```
 
 ## User Preferences

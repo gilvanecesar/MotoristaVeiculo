@@ -517,19 +517,19 @@ export default function ProfileSelection() {
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {/* Motorista */}
               <Card 
-                className="cursor-pointer transition-all hover:shadow-lg hover:scale-105 border-2 hover:border-blue-500"
+                className="cursor-pointer transition-all hover:shadow-lg hover:scale-105 border-2 hover:border-blue-500 h-full flex flex-col"
                 onClick={() => setSelectedProfile(PROFILE_TYPES.MOTORISTA)}
               >
-                <CardHeader className="text-center pb-4">
+                <CardHeader className="text-center pb-4 flex-1">
                   <div className="w-20 h-20 mx-auto bg-blue-100 rounded-full flex items-center justify-center mb-4">
                     <Truck className="w-10 h-10 text-blue-600" />
                   </div>
-                  <CardTitle className="text-2xl text-blue-600">SOU MOTORISTA</CardTitle>
-                  <CardDescription className="text-gray-600">
+                  <CardTitle className="text-xl text-blue-600 mb-2">SOU MOTORISTA</CardTitle>
+                  <CardDescription className="text-gray-600 text-sm">
                     Encontre fretes disponíveis na sua região
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="text-center">
+                <CardContent className="text-center pt-0">
                   <Button className="w-full bg-blue-600 hover:bg-blue-700">
                     Começar Agora
                   </Button>
@@ -538,19 +538,19 @@ export default function ProfileSelection() {
 
               {/* Embarcador */}
               <Card 
-                className="cursor-pointer transition-all hover:shadow-lg hover:scale-105 border-2 hover:border-green-500"
+                className="cursor-pointer transition-all hover:shadow-lg hover:scale-105 border-2 hover:border-green-500 h-full flex flex-col"
                 onClick={() => setSelectedProfile(PROFILE_TYPES.EMBARCADOR)}
               >
-                <CardHeader className="text-center pb-4">
+                <CardHeader className="text-center pb-4 flex-1">
                   <div className="w-20 h-20 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-4">
                     <Building2 className="w-10 h-10 text-green-600" />
                   </div>
-                  <CardTitle className="text-2xl text-green-600">EMBARCADOR</CardTitle>
-                  <CardDescription className="text-gray-600">
+                  <CardTitle className="text-xl text-green-600 mb-2">EMBARCADOR</CardTitle>
+                  <CardDescription className="text-gray-600 text-sm">
                     Publique suas cargas e encontre transportadores
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="text-center">
+                <CardContent className="text-center pt-0">
                   <Button className="w-full bg-green-600 hover:bg-green-700">
                     Começar Agora
                   </Button>
@@ -559,19 +559,19 @@ export default function ProfileSelection() {
 
               {/* Transportador */}
               <Card 
-                className="cursor-pointer transition-all hover:shadow-lg hover:scale-105 border-2 hover:border-purple-500"
+                className="cursor-pointer transition-all hover:shadow-lg hover:scale-105 border-2 hover:border-purple-500 h-full flex flex-col"
                 onClick={() => setSelectedProfile(PROFILE_TYPES.TRANSPORTADOR)}
               >
-                <CardHeader className="text-center pb-4">
+                <CardHeader className="text-center pb-4 flex-1">
                   <div className="w-20 h-20 mx-auto bg-purple-100 rounded-full flex items-center justify-center mb-4">
                     <Building2 className="w-10 h-10 text-purple-600" />
                   </div>
-                  <CardTitle className="text-2xl text-purple-600">TRANSPORTADOR</CardTitle>
-                  <CardDescription className="text-gray-600">
+                  <CardTitle className="text-xl text-purple-600 mb-2">TRANSPORTADOR</CardTitle>
+                  <CardDescription className="text-gray-600 text-sm">
                     Ofereça seus serviços de transporte
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="text-center">
+                <CardContent className="text-center pt-0">
                   <Button className="w-full bg-purple-600 hover:bg-purple-700">
                     Começar Agora
                   </Button>
@@ -580,19 +580,19 @@ export default function ProfileSelection() {
 
               {/* Agenciador */}
               <Card 
-                className="cursor-pointer transition-all hover:shadow-lg hover:scale-105 border-2 hover:border-orange-500"
+                className="cursor-pointer transition-all hover:shadow-lg hover:scale-105 border-2 hover:border-orange-500 h-full flex flex-col"
                 onClick={() => setSelectedProfile(PROFILE_TYPES.AGENCIADOR)}
               >
-                <CardHeader className="text-center pb-4">
+                <CardHeader className="text-center pb-4 flex-1">
                   <div className="w-20 h-20 mx-auto bg-orange-100 rounded-full flex items-center justify-center mb-4">
                     <Users className="w-10 h-10 text-orange-600" />
                   </div>
-                  <CardTitle className="text-2xl text-orange-600">SOU AGENCIADOR</CardTitle>
-                  <CardDescription className="text-gray-600">
+                  <CardTitle className="text-xl text-orange-600 mb-2">SOU AGENCIADOR</CardTitle>
+                  <CardDescription className="text-gray-600 text-sm">
                     Conecte motoristas e embarcadores
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="text-center">
+                <CardContent className="text-center pt-0">
                   <Button className="w-full bg-orange-600 hover:bg-orange-700">
                     Começar Agora
                   </Button>
