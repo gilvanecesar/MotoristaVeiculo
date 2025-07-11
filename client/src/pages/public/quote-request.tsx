@@ -14,6 +14,7 @@ import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { CitySearch } from '@/components/ui/city-search';
+import { formatCurrencyInput, parseCurrency } from '@/lib/currency-utils';
 
 // Estados brasileiros
 const brazilianStates = [
@@ -73,6 +74,7 @@ export default function PublicQuoteRequest() {
   const [deliveryDate, setDeliveryDate] = useState<Date | undefined>(undefined);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formattedPrice, setFormattedPrice] = useState('');
   
   const [formData, setFormData] = useState<QuoteFormData>({
     clientName: '',
@@ -363,11 +365,14 @@ export default function PublicQuoteRequest() {
                   <Label htmlFor="price">Valor de NF: *</Label>
                   <Input
                     id="price"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={formData.price || ''}
-                    onChange={(e) => handleInputChange('price', parseFloat(e.target.value) || 0)}
+                    type="text"
+                    value={formattedPrice}
+                    onChange={(e) => {
+                      const formatted = formatCurrencyInput(e.target.value);
+                      setFormattedPrice(formatted);
+                      handleInputChange('price', parseCurrency(formatted));
+                    }}
+                    placeholder="R$ 0,00"
                     required
                   />
                 </div>
