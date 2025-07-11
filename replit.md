@@ -132,6 +132,19 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ## Recent Changes
 
 ```
+✓ Sistema completo de cotações implementado com funcionalidades completas
+✓ Páginas de listagem (/quotes) e criação (/quotes/create) de cotações desenvolvidas
+✓ Backend com operações CRUD completas: criação, listagem, estatísticas e atualização de status
+✓ Menu "Cotações" adicionado na sidebar para perfis embarcador e transportador
+✓ Interface profissional com formulário detalhado para solicitação de cotações
+✓ Rotas protegidas configuradas no App.tsx para sistema de cotações
+✓ Banco de dados preparado com tabela quotes e todos os campos necessários
+✓ Estatísticas em tempo real: total, ativas, fechadas, expiradas por período
+✓ Formulário com validação completa: dados do cliente, origem/destino, carga, prazo
+✓ Sistema de cards responsivos para exibição das cotações com badges coloridos
+✓ Integração com calendario para seleção de data de entrega
+✓ Estados brasileiros pré-configurados nos selects do formulário
+✓ Níveis de urgência configurados (baixa, média, alta, urgente)
 ✓ Sistema completo de reembolso automático OpenPix implementado
 ✓ Cancelamento automático de assinatura quando status for REFUND
 ✓ Email de cancelamento por reembolso com design profissional

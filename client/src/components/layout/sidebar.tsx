@@ -196,8 +196,8 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   if (showLimitedMenus) {
     // Perfil motorista: apenas menus limitados
     availableNavItems = navItems.filter(item => ["Motoristas", "Veículos", "Fretes", "Relatórios"].includes(item.label));
-  } else if (isTransportador) {
-    // Perfil transportador: todos os menus incluindo Cotações
+  } else if (isTransportador || isShipper) {
+    // Perfil transportador e embarcador: todos os menus incluindo Cotações
     availableNavItems = navItems;
   } else {
     // Outros perfis: todos os menus exceto Cotações
