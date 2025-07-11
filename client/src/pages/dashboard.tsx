@@ -73,12 +73,23 @@ export default function Dashboard() {
     // Cálculo de eficiência
     const efficiency = totalDrivers > 0 ? ((totalVehicles / totalDrivers) * 100) : 0;
     
-    // Fretes ativos
-    const activeFreights = freights?.filter(f => f.status === 'ativo' || f.status === 'em_andamento')?.length || 0;
+    // Fretes ativos - ajustar para os status reais do sistema
+    const activeFreights = freights?.filter(f => 
+      f.status === 'ativo' || 
+      f.status === 'em_andamento' || 
+      f.status === 'active' ||
+      f.status === 'in_progress' ||
+      f.status === 'pending'
+    )?.length || 0;
     const activeFreightsPercent = totalFreights > 0 ? (activeFreights / totalFreights) * 100 : 0;
     
-    // Cotações ativas
-    const activeQuotes = quotes?.filter(q => q.status === 'ativa' || q.status === 'pendente')?.length || 0;
+    // Cotações ativas - ajustar para os status reais do sistema
+    const activeQuotes = quotes?.filter(q => 
+      q.status === 'ativa' || 
+      q.status === 'pendente' ||
+      q.status === 'active' ||
+      q.status === 'pending'
+    )?.length || 0;
     const activeQuotesPercent = totalQuotes > 0 ? (activeQuotes / totalQuotes) * 100 : 0;
     
     // Motoristas sem veículos
@@ -105,40 +116,55 @@ export default function Dashboard() {
 
   // Dados para gráfico de fretes por estado (com percentual)
   const freightsByState = useMemo(() => {
-    if (!freights || isLoadingFreights) return [];
+    if (!freights || isLoadingFreights || !Array.isArray(freights) || freights.length === 0) {
+      return [];
+    }
     
     const statesMap = {};
-    const totalFreights = freights.length;
+    let totalCount = 0;
     
     freights.forEach(freight => {
-      if (freight.originState) {
-        const state = freight.originState;
-        statesMap[state] = (statesMap[state] || 0) + 1;
+      // Verificar estado de origem
+      if (freight.originState && freight.originState !== "undefined" && freight.originState !== "null") {
+        const state = freight.originState.trim();
+        if (state) {
+          statesMap[state] = (statesMap[state] || 0) + 1;
+          totalCount++;
+        }
       }
       
-      if (freight.hasMultipleDestinations && freight.destinations) {
+      // Verificar estado de destino
+      if (freight.hasMultipleDestinations && freight.destinations && Array.isArray(freight.destinations)) {
         freight.destinations.forEach(dest => {
-          if (dest?.state) {
-            const state = dest.state;
-            statesMap[state] = (statesMap[state] || 0) + 1;
+          if (dest && dest.state && dest.state !== "undefined" && dest.state !== "null") {
+            const state = dest.state.trim();
+            if (state) {
+              statesMap[state] = (statesMap[state] || 0) + 1;
+              totalCount++;
+            }
           }
         });
-      } else if (freight.destinationState) {
-        const state = freight.destinationState;
-        statesMap[state] = (statesMap[state] || 0) + 1;
+      } else if (freight.destinationState && freight.destinationState !== "undefined" && freight.destinationState !== "null") {
+        const state = freight.destinationState.trim();
+        if (state) {
+          statesMap[state] = (statesMap[state] || 0) + 1;
+          totalCount++;
+        }
       }
     });
     
-    return Object.entries(statesMap)
-      .filter(([state]) => state && state !== "undefined")
+    const result = Object.entries(statesMap)
+      .filter(([state, count]) => state && state !== "undefined" && state !== "null" && count > 0)
       .map(([state, count]) => ({ 
         state, 
         count,
-        percentage: totalFreights > 0 ? ((count / totalFreights) * 100).toFixed(1) : 0,
+        percentage: totalCount > 0 ? ((count / totalCount) * 100).toFixed(1) : "0",
         fill: getStateColor(state)
       }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 10); // Top 10 estados
+    
+    return result;
   }, [freights, isLoadingFreights]);
 
   // Dados para gráfico de performance mensal
@@ -174,57 +200,56 @@ export default function Dashboard() {
 
   // Dados para gráfico de distribuição de tipos de veículos
   const vehicleTypes = useMemo(() => {
-    if (!vehicles || isLoadingVehicles) return [];
+    if (!vehicles || isLoadingVehicles || !Array.isArray(vehicles) || vehicles.length === 0) {
+      return [];
+    }
     
     const typesMap = {};
     const totalVehicles = vehicles.length;
     
     vehicles.forEach(vehicle => {
-      const type = vehicle.type || 'Não especificado';
+      // Verificar diferentes campos possíveis para tipo de veículo
+      const type = vehicle.type || vehicle.vehicleType || vehicle.categoria || 'Não especificado';
       typesMap[type] = (typesMap[type] || 0) + 1;
     });
     
-    return Object.entries(typesMap)
+    const result = Object.entries(typesMap)
       .map(([type, count]) => ({
-        type,
+        type: formatVehicleTypeName(type),
+        originalType: type,
         count,
-        percentage: totalVehicles > 0 ? ((count / totalVehicles) * 100).toFixed(1) : 0,
+        percentage: totalVehicles > 0 ? ((count / totalVehicles) * 100).toFixed(1) : "0",
         fill: getVehicleTypeColor(type)
       }))
       .sort((a, b) => b.count - a.count);
+    
+    return result;
   }, [vehicles, isLoadingVehicles]);
 
   // Dados para gráfico de status de fretes
   const freightStatus = useMemo(() => {
-    if (!freights || isLoadingFreights) return [];
+    if (!freights || isLoadingFreights || !Array.isArray(freights) || freights.length === 0) {
+      return [];
+    }
     
-    const statusMap = {
-      'ativo': 0,
-      'em_andamento': 0,
-      'concluido': 0,
-      'cancelado': 0,
-      'pendente': 0
-    };
-    
+    const statusMap = {};
     const totalFreights = freights.length;
     
     freights.forEach(freight => {
       const status = freight.status || 'pendente';
-      if (statusMap.hasOwnProperty(status)) {
-        statusMap[status]++;
-      } else {
-        statusMap['pendente']++;
-      }
+      statusMap[status] = (statusMap[status] || 0) + 1;
     });
     
-    return Object.entries(statusMap)
+    const result = Object.entries(statusMap)
       .map(([status, count]) => ({
         status: formatStatusName(status),
         count,
-        percentage: totalFreights > 0 ? ((count / totalFreights) * 100).toFixed(1) : 0,
+        percentage: totalFreights > 0 ? ((count / totalFreights) * 100).toFixed(1) : "0",
         fill: getStatusColor(status)
       }))
       .filter(item => item.count > 0);
+    
+    return result;
   }, [freights, isLoadingFreights]);
 
   // Funções auxiliares para cores
@@ -244,9 +269,29 @@ export default function Dashboard() {
       'Carreta': '#82ca9d',
       'Bitrem': '#ffc658',
       'Toco': '#ff8042',
-      'Truck': '#00C49F'
+      'Truck': '#00C49F',
+      'pesado_carreta_ls': '#82ca9d',
+      'leve_todos': '#83a6ed',
+      'leve_fiorino': '#8884d8',
+      'medio_truck': '#00C49F',
+      'pesado_truck': '#ffc658',
+      'leve_van': '#ff8042'
     };
     return colors[type] || '#8884d8';
+  }
+
+  // Função para formatar nomes de tipos de veículos
+  function formatVehicleTypeName(type) {
+    const names = {
+      'pesado_carreta_ls': 'Carreta LS',
+      'leve_todos': 'Leve (Todos)',
+      'leve_fiorino': 'Fiorino',
+      'medio_truck': 'Truck Médio',
+      'pesado_truck': 'Truck Pesado',
+      'leve_van': 'Van',
+      'Não especificado': 'Não Especificado'
+    };
+    return names[type] || type;
   }
 
   function getStatusColor(status) {
@@ -255,7 +300,14 @@ export default function Dashboard() {
       'em_andamento': '#8884d8',
       'concluido': '#82ca9d',
       'cancelado': '#ff8042',
-      'pendente': '#ffc658'
+      'pendente': '#ffc658',
+      'aberto': '#00C49F',
+      'fechado': '#82ca9d',
+      'expirado': '#ff8042',
+      'active': '#00C49F',
+      'pending': '#ffc658',
+      'completed': '#82ca9d',
+      'cancelled': '#ff8042'
     };
     return colors[status] || '#8884d8';
   }
@@ -266,9 +318,16 @@ export default function Dashboard() {
       'em_andamento': 'Em Andamento',
       'concluido': 'Concluído',
       'cancelado': 'Cancelado',
-      'pendente': 'Pendente'
+      'pendente': 'Pendente',
+      'aberto': 'Aberto',
+      'fechado': 'Fechado',
+      'expirado': 'Expirado',
+      'active': 'Ativo',
+      'pending': 'Pendente',
+      'completed': 'Concluído',
+      'cancelled': 'Cancelado'
     };
-    return names[status] || status;
+    return names[status] || status.charAt(0).toUpperCase() + status.slice(1);
   }
 
   // Função para refrescar dados
