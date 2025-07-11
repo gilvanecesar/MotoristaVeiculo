@@ -445,7 +445,7 @@ export default function ProfileSelection() {
                   <div className="w-20 h-20 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-4">
                     <Building2 className="w-10 h-10 text-green-600" />
                   </div>
-                  <CardTitle className="text-2xl text-green-600">TRANSPORTADORA</CardTitle>
+                  <CardTitle className="text-2xl text-green-600">EMBARCADOR</CardTitle>
                   <CardDescription className="text-gray-600">
                     Publique suas cargas e encontre transportadores
                   </CardDescription>
