@@ -176,6 +176,128 @@ export default function LandingPage() {
       {/* Recent Freights Section */}
       <RecentFreightsSection />
 
+      {/* Transportadoras Section */}
+      <section className="py-20 bg-gradient-to-br from-primary/5 to-slate-50">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-bold mb-6 text-slate-900">
+                <span className="text-primary">Transportadoras:</span> Multiplique seus Negócios
+              </h2>
+              <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+                Acesse cotações de clientes reais, conquiste novos contratos e expanda sua operação com nossa plataforma especializada.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+              <div>
+                <div className="space-y-8">
+                  <div className="flex items-start space-x-4">
+                    <div className="bg-primary/10 p-3 rounded-full">
+                      <Truck className="w-8 h-8 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-slate-900 mb-2">
+                        Cotações Ilimitadas
+                      </h3>
+                      <p className="text-slate-600 text-lg">
+                        Acesse todas as solicitações de cotação de embarcadores e clientes que precisam dos seus serviços de transporte.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-4">
+                    <div className="bg-primary/10 p-3 rounded-full">
+                      <Users className="w-8 h-8 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-slate-900 mb-2">
+                        Contato Direto
+                      </h3>
+                      <p className="text-slate-600 text-lg">
+                        Conecte-se diretamente com embarcadores e negocie as melhores condições para seus fretes.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-4">
+                    <div className="bg-primary/10 p-3 rounded-full">
+                      <BarChart3 className="w-8 h-8 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-slate-900 mb-2">
+                        Gestão Completa
+                      </h3>
+                      <p className="text-slate-600 text-lg">
+                        Gerencie sua frota, motoristas e contratos em uma única plataforma profissional.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl shadow-xl p-8 border border-slate-200">
+                <div className="text-center mb-8">
+                  <div className="inline-flex items-center bg-primary/10 px-4 py-2 rounded-full mb-4">
+                    <Truck className="w-5 h-5 text-primary mr-2" />
+                    <span className="text-primary font-semibold">Para Transportadoras</span>
+                  </div>
+                  <h3 className="text-3xl font-bold text-slate-900 mb-2">
+                    Mais Clientes, Mais Negócios
+                  </h3>
+                  <p className="text-slate-600 mb-6">
+                    Conecte-se com empresas que precisam dos seus serviços
+                  </p>
+                </div>
+
+                <div className="space-y-4 mb-8">
+                  <div className="flex items-center space-x-3">
+                    <CheckCircle2 className="w-6 h-6 text-green-500" />
+                    <span className="text-slate-700">Cotações de clientes reais</span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <CheckCircle2 className="w-6 h-6 text-green-500" />
+                    <span className="text-slate-700">Negociação direta com embarcadores</span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <CheckCircle2 className="w-6 h-6 text-green-500" />
+                    <span className="text-slate-700">Gestão completa da sua frota</span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <CheckCircle2 className="w-6 h-6 text-green-500" />
+                    <span className="text-slate-700">Relatórios de performance</span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <CheckCircle2 className="w-6 h-6 text-green-500" />
+                    <span className="text-slate-700">Notificações em tempo real</span>
+                  </div>
+                </div>
+
+                <div className="text-center">
+                  <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-4 rounded-lg mb-6">
+                    <div className="text-2xl font-bold text-primary mb-1">
+                      R$ 49,90/mês
+                    </div>
+                    <div className="text-sm text-slate-600">
+                      Acesso completo • Sem taxa de setup
+                    </div>
+                  </div>
+                  <Button 
+                    className="w-full bg-primary hover:bg-primary/90 text-white py-4 text-lg font-semibold"
+                    onClick={goToRegister}
+                  >
+                    Quero Expandir Meu Negócio
+                  </Button>
+                  <p className="text-xs text-slate-500 mt-3">
+                    Cadastre-se agora e comece a receber cotações
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Pricing Section */}
       <section className="py-16 md:py-20 bg-slate-50">
         <div className="container mx-auto px-4">

@@ -377,6 +377,13 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Layout dos cards otimizado com altura uniforme e alinhamento perfeito
 ✓ Flexbox aplicado para manter botões sempre alinhados na parte inferior
 ✓ Tamanhos de fonte ajustados para melhor proporção visual
+✓ Seção atrativa para transportadoras criada na página inicial
+✓ Conteúdo focado em cotações de clientes reais para atrair transportadoras
+✓ Destaque para acesso direto a negociações com embarcadores
+✓ Benefícios específicos para transportadoras: cotações, gestão de frota, relatórios
+✓ Call-to-action direcionado "Quero Expandir Meu Negócio"
+✓ Preço R$ 49,90/mês destacado com design atrativo
+✓ Informações removidas sobre teste gratuito conforme solicitação
 ```
 
 ## User Preferences
