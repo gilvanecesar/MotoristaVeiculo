@@ -13,6 +13,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
+import { CitySearch } from '@/components/ui/city-search';
 
 // Estados brasileiros
 const brazilianStates = [
@@ -58,9 +59,7 @@ interface QuoteFormData {
   clientEmail: string;
   clientPhone: string;
   origin: string;
-  originState: string;
   destination: string;
-  destinationState: string;
   cargoType: string;
   weight: number;
   volume: number;
@@ -80,9 +79,7 @@ export default function PublicQuoteRequest() {
     clientEmail: '',
     clientPhone: '',
     origin: '',
-    originState: '',
     destination: '',
-    destinationState: '',
     cargoType: '',
     weight: 0,
     volume: 0,
@@ -251,53 +248,19 @@ export default function PublicQuoteRequest() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="origin">Cidade de Origem *</Label>
-                    <Input
-                      id="origin"
+                    <CitySearch
                       value={formData.origin}
-                      onChange={(e) => handleInputChange('origin', e.target.value)}
-                      required
+                      onSelect={(city) => handleInputChange('origin', city)}
+                      placeholder="Digite o nome da cidade de origem"
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="originState">Estado de Origem *</Label>
-                    <Select value={formData.originState} onValueChange={(value) => handleInputChange('originState', value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o estado" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {brazilianStates.map((state) => (
-                          <SelectItem key={state.value} value={state.value}>
-                            {state.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="destination">Cidade de Destino *</Label>
-                    <Input
-                      id="destination"
+                    <CitySearch
                       value={formData.destination}
-                      onChange={(e) => handleInputChange('destination', e.target.value)}
-                      required
+                      onSelect={(city) => handleInputChange('destination', city)}
+                      placeholder="Digite o nome da cidade de destino"
                     />
-                  </div>
-                  <div>
-                    <Label htmlFor="destinationState">Estado de Destino *</Label>
-                    <Select value={formData.destinationState} onValueChange={(value) => handleInputChange('destinationState', value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o estado" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {brazilianStates.map((state) => (
-                          <SelectItem key={state.value} value={state.value}>
-                            {state.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
                   </div>
                 </div>
               </CardContent>

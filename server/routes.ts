@@ -3504,6 +3504,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ==================== BUSCA DE CIDADES BRASILEIRAS ====================
+  // Buscar cidades brasileiras na API do IBGE
+  app.get("/api/cities", async (req: Request, res: Response) => {
+    try {
+      const { search } = req.query;
+      
+      if (!search || typeof search !== 'string') {
+        return res.status(400).json({ message: "Parâmetro de busca é obrigatório" });
+      }
+
+      const searchTerm = search.trim();
+      
+      if (searchTerm.length < 2) {
+        return res.status(400).json({ message: "Termo de busca deve ter pelo menos 2 caracteres" });
+      }
+
+      console.log(`🔍 Buscando cidades: "${searchTerm}"`);
+
+      // Buscar cidades na API do IBGE
+      const response = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/municipios`);
+      
+      if (!response.ok) {
+        throw new Error(`Erro na API do IBGE: ${response.status}`);
+      }
+
+      const cities = await response.json();
+
+      // Filtrar cidades que começam com o termo de busca
+      const filteredCities = cities
+        .filter((city: any) => 
+          city.nome.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+        .slice(0, 50) // Limitar a 50 resultados para performance
+        .map((city: any) => ({
+          id: city.id,
+          name: city.nome,
+          state: city.microrregiao.mesorregiao.UF.sigla,
+          fullName: `${city.nome} - ${city.microrregiao.mesorregiao.UF.sigla}`,
+          region: city.microrregiao.mesorregiao.UF.regiao.nome
+        }))
+        .sort((a: any, b: any) => a.name.localeCompare(b.name));
+
+      console.log(`✅ Encontradas ${filteredCities.length} cidades para "${searchTerm}"`);
+
+      res.json({
+        cities: filteredCities,
+        total: filteredCities.length
+      });
+    } catch (error) {
+      console.error("Erro ao buscar cidades:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
   // Configurar rotas do WhatsApp
   setupWhatsAppRoutes(app);
 
