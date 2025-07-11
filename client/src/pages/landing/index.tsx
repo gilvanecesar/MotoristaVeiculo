@@ -98,9 +98,28 @@ export default function LandingPage() {
               Solicitar Cotações
             </Button>
           </div>
-          <div className="md:hidden">
-            <Button size="sm" variant="ghost" className="text-white" onClick={goToLogin}>
-              <Menu className="h-6 w-6" />
+          <div className="md:hidden flex gap-2">
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="border-slate-300 bg-white text-slate-900 hover:bg-slate-100 text-xs px-2 py-1"
+              onClick={goToLogin}
+            >
+              ENTRAR
+            </Button>
+            <Button 
+              size="sm" 
+              className="bg-primary hover:bg-primary/90 text-white text-xs px-2 py-1" 
+              onClick={goToRegister}
+            >
+              REGISTRAR
+            </Button>
+            <Button 
+              size="sm"
+              className="bg-orange-500 hover:bg-orange-600 text-white text-xs px-2 py-1"
+              onClick={goToQuoteRequest}
+            >
+              COTAÇÕES
             </Button>
           </div>
         </div>
@@ -126,6 +145,29 @@ export default function LandingPage() {
               </div>
               <div className="mt-8 flex flex-col sm:flex-row items-center justify-center lg:justify-start text-center lg:text-left">
                 <p className="text-primary font-bold text-lg mb-2 sm:mb-0 sm:mr-4">PAGUE APENAS 49,90 e tenha acesso a todas as funções do sistema</p>
+              </div>
+              
+              {/* Botões Mobile no Hero Section */}
+              <div className="mt-8 md:hidden flex flex-col gap-3 w-full max-w-sm mx-auto">
+                <Button 
+                  className="bg-primary hover:bg-primary/90 text-white py-4 text-lg font-semibold"
+                  onClick={goToRegister}
+                >
+                  REGISTRAR AGORA
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="border-2 border-white text-white bg-transparent hover:bg-white hover:text-slate-900 py-4 text-lg font-semibold"
+                  onClick={goToLogin}
+                >
+                  FAZER LOGIN
+                </Button>
+                <Button 
+                  className="bg-orange-500 hover:bg-orange-600 text-white py-4 text-lg font-semibold"
+                  onClick={goToQuoteRequest}
+                >
+                  SOLICITAR COTAÇÕES
+                </Button>
               </div>
             </div>
             <div className="lg:w-1/2 flex justify-center">
