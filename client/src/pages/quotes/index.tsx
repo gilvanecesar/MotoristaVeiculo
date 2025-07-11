@@ -71,13 +71,15 @@ const getEffectiveStatus = (quote: Quote): string => {
 export default function QuotesPage() {
   const { user } = useAuth();
   
-  // Verificar se o usuário é transportador ou embarcador
+  // Verificar se o usuário é transportador, embarcador, agenciador ou administrador
   if (!user || (
     user.profileType !== "carrier" && 
     user.profileType !== "transportador" && 
     user.profileType !== "transportadora" &&
     user.profileType !== "shipper" && 
-    user.profileType !== "embarcador"
+    user.profileType !== "embarcador" &&
+    user.profileType !== "agenciador" &&
+    user.profileType !== "administrador"
   )) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -87,7 +89,7 @@ export default function QuotesPage() {
             Acesso Restrito
           </h3>
           <p className="mt-1 text-sm text-gray-500">
-            Apenas transportadores e embarcadores têm acesso às cotações.
+            Apenas transportadores, embarcadores, agenciadores e administradores têm acesso às cotações.
           </p>
         </div>
       </div>

@@ -307,6 +307,10 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Seção hero mobile com botões destacados: REGISTRAR AGORA, FAZER LOGIN e SOLICITAR COTAÇÕES
 ✓ Experiência mobile otimizada com botões maiores e melhor visibilidade para dispositivos móveis
 ✓ Design responsivo completo mantendo funcionalidade em todas as telas
+✓ Acesso administrativo às cotações corrigido: administradores agora têm acesso à página /quotes
+✓ Página de cotações atualizada para incluir administradores e agenciadores
+✓ Sistema de permissões de cotações funcionando para todos os perfis autorizados
+✓ Duas opções de acesso para administradores: /quotes (visualização) e /admin/quotes (gestão completa)
 ✓ Sistema de teste de pagamento OpenPix implementado com página dedicada /test-payment
 ✓ Redirecionamento automático configurado após simulação de pagamento bem-sucedida
 ✓ Botão de simulação de pagamento adicionado na página de checkout (visível sempre)
