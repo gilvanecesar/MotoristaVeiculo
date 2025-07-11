@@ -3432,6 +3432,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Criar cotação pública (sem autenticação)
+  app.post("/api/quotes/public", async (req: Request, res: Response) => {
+    try {
+      const {
+        clientName,
+        clientEmail,
+        clientPhone,
+        origin,
+        originState,
+        destination,
+        destinationState,
+        cargoType,
+        weight,
+        volume,
+        urgency,
+        deliveryDate,
+        price,
+        observations,
+        status = 'pendente'
+      } = req.body;
+
+      // Validar campos obrigatórios
+      if (!clientName || !clientEmail || !clientPhone || !origin || !originState || 
+          !destination || !destinationState || !cargoType || !weight || !volume || 
+          !urgency || !deliveryDate || !price) {
+        return res.status(400).json({ 
+          message: "Todos os campos obrigatórios devem ser preenchidos" 
+        });
+      }
+
+      // Criar cotação pública (sem userId)
+      const quoteData = {
+        clientName,
+        clientEmail,
+        clientPhone,
+        origin,
+        originState,
+        destination,
+        destinationState,
+        cargoType,
+        weight: parseFloat(weight),
+        volume: parseFloat(volume),
+        urgency,
+        deliveryDate: new Date(deliveryDate),
+        price: parseFloat(price),
+        observations: observations || '',
+        status,
+        userId: null, // Cotação pública não tem usuário associado
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      const quote = await storage.createQuote(quoteData);
+      
+      // Log da cotação pública criada
+      console.log(`✅ Cotação pública criada: ${clientName} (${clientEmail}) - ${origin}/${originState} → ${destination}/${destinationState}`);
+      
+      res.status(201).json({
+        message: "Cotação enviada com sucesso",
+        quote: {
+          id: quote.id,
+          clientName: quote.clientName,
+          status: quote.status,
+          createdAt: quote.createdAt
+        }
+      });
+    } catch (error) {
+      console.error("Erro ao criar cotação pública:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
   // Configurar rotas do WhatsApp
   setupWhatsAppRoutes(app);
 

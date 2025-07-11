@@ -70,6 +70,7 @@ import UserWebhookConfig from "@/pages/webhook-config";
 import MyFreightsPage from "@/pages/my-freights";
 import QuotesPage from "@/pages/quotes/index";
 import CreateQuotePage from "@/pages/quotes/create";
+import PublicQuoteRequest from "@/pages/public/quote-request";
 
 function Router() {
   return (
@@ -77,6 +78,7 @@ function Router() {
       <Route path="/" component={LandingPage} />
       <Route path="/freight/:id" component={PublicFreight} />
       <Route path="/public/complements/:id" component={PublicComplement} />
+      <Route path="/public/quote-request" component={PublicQuoteRequest} />
       <ProtectedRoute path="/home" component={Home} />
       <Route path="/auth" component={ProfileSelection} />
       <Route path="/login" component={LoginPage} />

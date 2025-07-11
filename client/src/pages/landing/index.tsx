@@ -21,6 +21,10 @@ export default function LandingPage() {
     setLocation("/auth");
   };
 
+  const goToQuoteRequest = () => {
+    setLocation("/public/quote-request");
+  };
+
   const features = [
     {
       icon: <Truck className="w-10 h-10 text-primary" />,
@@ -86,6 +90,12 @@ export default function LandingPage() {
             </Button>
             <Button className="bg-primary hover:bg-primary/90" onClick={goToRegister}>
               Registrar
+            </Button>
+            <Button 
+              className="bg-orange-500 hover:bg-orange-600 text-white"
+              onClick={goToQuoteRequest}
+            >
+              Solicitar Cotações
             </Button>
           </div>
           <div className="md:hidden">
