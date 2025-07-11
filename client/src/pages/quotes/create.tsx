@@ -367,7 +367,7 @@ export default function CreateQuotePage() {
                 </div>
               </div>
               <div>
-                <Label htmlFor="price">Preço Estimado (R$) *</Label>
+                <Label htmlFor="price">Valor de NF: *</Label>
                 <Input
                   id="price"
                   type="number"
