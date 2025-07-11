@@ -56,8 +56,14 @@ const urgencyConfig = {
 export default function QuotesPage() {
   const { user } = useAuth();
   
-  // Verificar se o usuário é transportador
-  if (!user || (user.profileType !== "carrier" && user.profileType !== "transportador" && user.profileType !== "transportadora")) {
+  // Verificar se o usuário é transportador ou embarcador
+  if (!user || (
+    user.profileType !== "carrier" && 
+    user.profileType !== "transportador" && 
+    user.profileType !== "transportadora" &&
+    user.profileType !== "shipper" && 
+    user.profileType !== "embarcador"
+  )) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center py-12">
@@ -66,7 +72,7 @@ export default function QuotesPage() {
             Acesso Restrito
           </h3>
           <p className="mt-1 text-sm text-gray-500">
-            Apenas transportadoras têm acesso às cotações.
+            Apenas transportadores e embarcadores têm acesso às cotações.
           </p>
         </div>
       </div>
