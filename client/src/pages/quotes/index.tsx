@@ -283,7 +283,8 @@ export default function QuotesPage() {
                   
                   {/* Preço e Data */}
                   <div className="flex flex-col items-end text-right">
-                    <div className="text-2xl font-bold text-green-600 mb-2">
+                    <div className="text-lg font-bold text-green-600 mb-2">
+                      <span className="text-sm text-gray-600 font-normal">Valor de NF:</span><br />
                       R$ {quote.price.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                     </div>
                     <div className="text-xs text-gray-500">
