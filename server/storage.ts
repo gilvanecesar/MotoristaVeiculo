@@ -228,9 +228,13 @@ export interface IStorage {
   
   // Quote operations
   getQuotes(userId: number): Promise<Quote[]>;
+  getAllQuotes(): Promise<Quote[]>;
   getQuoteStats(userId: number): Promise<{ total: number; active: number; closed: number; expired: number; thisMonth: number; lastMonth: number; }>;
   createQuote(quote: InsertQuote): Promise<Quote>;
   updateQuoteStatus(id: number, status: string, userId: number): Promise<Quote | undefined>;
+  getQuoteById(id: number): Promise<Quote | undefined>;
+  updateQuote(id: number, quote: Partial<InsertQuote>): Promise<Quote | undefined>;
+  deleteQuote(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -1857,6 +1861,30 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(quotes.id, id), eq(quotes.userId, userId)))
       .returning();
     return updatedQuote || undefined;
+  }
+
+  async getQuoteById(id: number): Promise<Quote | undefined> {
+    const [quote] = await db
+      .select()
+      .from(quotes)
+      .where(eq(quotes.id, id));
+    return quote || undefined;
+  }
+
+  async updateQuote(id: number, quote: Partial<InsertQuote>): Promise<Quote | undefined> {
+    const [updatedQuote] = await db
+      .update(quotes)
+      .set(quote)
+      .where(eq(quotes.id, id))
+      .returning();
+    return updatedQuote || undefined;
+  }
+
+  async deleteQuote(id: number): Promise<boolean> {
+    const result = await db
+      .delete(quotes)
+      .where(eq(quotes.id, id));
+    return true;
   }
 }
 

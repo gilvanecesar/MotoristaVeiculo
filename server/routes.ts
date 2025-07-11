@@ -3573,7 +3573,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obter todas as cotações (admin)
   app.get("/api/admin/quotes", isAdmin, async (req: Request, res: Response) => {
     try {
-      const quotes = await storage.getQuotes();
+      const quotes = await storage.getAllQuotes();
       res.json(quotes);
     } catch (error) {
       console.error("Erro ao obter cotações:", error);
@@ -3641,13 +3641,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obter estatísticas de cotações (admin) - DEVE vir antes da rota /:id
   app.get("/api/admin/quotes/stats", isAdmin, async (req: Request, res: Response) => {
     try {
-      const quotes = await storage.getQuotes();
+      const quotes = await storage.getAllQuotes();
       
       // Calcular estatísticas
       const totalQuotes = quotes.length;
       const publicQuotes = quotes.filter(q => q.userId === null).length;
       const registeredQuotes = quotes.filter(q => q.userId !== null).length;
-      const activeQuotes = quotes.filter(q => q.status === 'ativa').length;
+      const activeQuotes = quotes.filter(q => q.status === 'ativa' || q.status === 'pendente').length;
       const closedQuotes = quotes.filter(q => q.status === 'fechada').length;
       const canceledQuotes = quotes.filter(q => q.status === 'cancelada').length;
       const expiredQuotes = quotes.filter(q => q.status === 'expirada').length;
