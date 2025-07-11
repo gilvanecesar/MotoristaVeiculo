@@ -347,6 +347,13 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Sistema detecta automaticamente o tipo de documento e aplica formatação em tempo real
 ✓ Formatação não interfere na funcionalidade de busca do backend
 ✓ Campo "Preço Estimado (R$)" alterado para "Valor de NF:" no formulário de cotações
+✓ Sistema completo de cotações públicas implementado para usuários não registrados
+✓ Botão "Solicitar Cotações" adicionado na navbar da landing page com cor laranja
+✓ Página pública /public/quote-request criada com formulário completo de cotações
+✓ Rota backend /api/quotes/public implementada para receber cotações sem autenticação
+✓ Validação rigorosa de campos obrigatórios no formulário público
+✓ Mensagem de sucesso e redirecionamento automático após envio
+✓ Cotações públicas armazenadas no banco com userId null para diferenciação
 ```
 
 ## User Preferences
