@@ -407,6 +407,15 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Página /admin/quotes carrega sem erros JavaScript e exibe cotações existentes
 ✓ Botões de editar, deletar e WhatsApp funcionando corretamente na interface administrativa
 ✓ Botão "Experimente Grátis por 7 dias" removido da seção de recursos
+✓ Layout mobile em cards implementado na página de cotações
+✓ Cards compactos e otimizados para dispositivos móveis com borda lateral colorida
+✓ Ícone do WhatsApp adicionado no campo de telefone das cotações
+✓ Mensagem personalizada automática do WhatsApp implementada com detalhes da cotação
+✓ Função generateWhatsAppMessage() criada para gerar texto profissional de contato
+✓ Estatísticas reorganizadas em grid 2x3 para melhor visualização mobile
+✓ Layout responsivo: cards mobile compactos vs lista expandida desktop
+✓ Informações organizadas em seções: cliente, rota, carga, preço no layout mobile
+✓ Botão WhatsApp integrado no footer de cada card mobile com ícone MessageCircle
 ```
 
 ## User Preferences

@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { FileText, MapPin, Calendar, User, Phone } from "lucide-react";
+import { FileText, MapPin, Calendar, User, Phone, MessageCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -67,6 +67,25 @@ const getEffectiveStatus = (quote: Quote): string => {
     return 'expirada';
   }
   return quote.status;
+};
+
+// Função para gerar mensagem personalizada do WhatsApp
+const generateWhatsAppMessage = (quote: Quote): string => {
+  const message = `Olá ${quote.clientName}! 👋
+
+Recebemos seu pedido de cotação através da plataforma QUERO FRETES e gostaríamos de fazer contato para apresentar nossa proposta.
+
+📋 *Detalhes da sua cotação:*
+• *Rota:* ${quote.origin}/${quote.originState} → ${quote.destination}/${quote.destinationState}
+• *Carga:* ${quote.cargoType}
+• *Peso:* ${quote.weight}kg | *Volume:* ${quote.volume}m³
+• *Entrega:* ${format(new Date(quote.deliveryDate), "dd/MM/yyyy", { locale: ptBR })}
+
+Temos uma excelente proposta para atender suas necessidades de transporte. Quando seria um bom momento para conversarmos?
+
+Aguardo seu retorno! 🚛`;
+  
+  return message;
 };
 
 export default function QuotesPage() {
@@ -294,12 +313,13 @@ export default function QuotesPage() {
                       <div className="flex items-center justify-between pt-2">
                         <div className="flex items-center space-x-2">
                           <a 
-                            href={`https://wa.me/55${quote.clientPhone.replace(/\D/g, '')}`}
+                            href={`https://wa.me/55${quote.clientPhone.replace(/\D/g, '')}?text=${encodeURIComponent(generateWhatsAppMessage(quote))}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-green-600 hover:text-green-700 text-sm font-medium"
+                            className="flex items-center space-x-1 text-green-600 hover:text-green-700 text-sm font-medium"
                           >
-                            WhatsApp
+                            <MessageCircle className="h-4 w-4" />
+                            <span>WhatsApp</span>
                           </a>
                           <Badge 
                             variant="outline"
@@ -363,13 +383,15 @@ export default function QuotesPage() {
                           </div>
                           <div className="flex items-center text-gray-600">
                             <Phone className="h-4 w-4 mr-2" />
+                            <span className="mr-2">{quote.clientPhone}</span>
                             <a 
-                              href={`https://wa.me/55${quote.clientPhone.replace(/\D/g, '')}`}
+                              href={`https://wa.me/55${quote.clientPhone.replace(/\D/g, '')}?text=${encodeURIComponent(generateWhatsAppMessage(quote))}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-green-600 hover:text-green-700 hover:underline"
+                              className="text-green-600 hover:text-green-700 hover:scale-110 transition-transform"
+                              title="Enviar mensagem no WhatsApp"
                             >
-                              {quote.clientPhone}
+                              <MessageCircle className="h-4 w-4" />
                             </a>
                           </div>
                           <div className="flex items-center text-gray-600">
