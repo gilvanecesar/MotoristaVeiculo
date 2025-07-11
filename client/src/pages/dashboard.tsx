@@ -110,7 +110,7 @@ export default function Dashboard() {
       driversWithoutVehicles,
       driversWithoutVehiclesPercent,
       utilizationRate: totalVehicles > 0 ? (activeFreights / totalVehicles) * 100 : 0,
-      conversionRate: totalQuotes > 0 ? ((totalFreights / totalQuotes) * 100) : 0
+      conversionRate: totalFreights > 0 ? ((totalQuotes / totalFreights) * 100) : 0
     };
   }, [drivers, vehicles, freights, clients, quotes]);
 
