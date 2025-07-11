@@ -289,8 +289,8 @@ export default function PublicQuoteRequest() {
                       type="number"
                       min="0"
                       step="0.01"
-                      value={formData.weight}
-                      onChange={(e) => handleInputChange('weight', parseFloat(e.target.value))}
+                      value={formData.weight || ''}
+                      onChange={(e) => handleInputChange('weight', parseFloat(e.target.value) || 0)}
                       required
                     />
                   </div>
@@ -301,8 +301,8 @@ export default function PublicQuoteRequest() {
                       type="number"
                       min="0"
                       step="0.01"
-                      value={formData.volume}
-                      onChange={(e) => handleInputChange('volume', parseFloat(e.target.value))}
+                      value={formData.volume || ''}
+                      onChange={(e) => handleInputChange('volume', parseFloat(e.target.value) || 0)}
                       required
                     />
                   </div>
@@ -366,8 +366,8 @@ export default function PublicQuoteRequest() {
                     type="number"
                     min="0"
                     step="0.01"
-                    value={formData.price}
-                    onChange={(e) => handleInputChange('price', parseFloat(e.target.value))}
+                    value={formData.price || ''}
+                    onChange={(e) => handleInputChange('price', parseFloat(e.target.value) || 0)}
                     required
                   />
                 </div>
