@@ -355,6 +355,10 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Recuperação de dados históricos: 7 usuários agenciadores com nome recuperado a partir dos emails
 ✓ Nomes corrigidos: Petras Lopes, Gustavo, Carlos Rizzutto, Resende, Romão Cargo Logística, Usuário PHG, Usuário JPPS
 ✓ 100% dos usuários agenciadores agora possuem nomes apropriados (0 com "Nome não informado")
+✓ Bug adicional descoberto e corrigido: 16 motoristas com padrão "Motorista - [CPF]" no nome
+✓ Nomes dos motoristas corrigidos: Rayssa Caroline, Uanderson Sanguinete, Merivala Araujo, P. Amaral, W. N. de Lima, Marcos, Eduardo Nenning, Trans Mosquito Transportes, Ingrid Monte, União Nacional Transportes, Deco Inacio, Esmael, Braulio de Paula, Maico Castanho, Ariel Kaue, Aristecio Coelho Marques
+✓ Sistema completo de limpeza de nomes: 0 usuários com "Nome não informado", 16 motoristas com nomes corrigidos
+✓ Verificação final: 362 usuários no sistema, todos os perfis principais (motorista, agenciador) com nomes apropriados
 ✓ Campo "Preço Estimado (R$)" alterado para "Valor de NF:" no formulário de cotações
 ✓ Sistema completo de cotações públicas implementado para usuários não registrados
 ✓ Botão "Solicitar Cotações" adicionado na navbar da landing page com cor laranja
