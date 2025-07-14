@@ -216,7 +216,22 @@ export function setupWebhookRoutes(app: any) {
   app.post('/api/webhook/config', async (req: Request, res: Response) => {
     try {
       const config = req.body;
-      const updatedConfig = await setWebhookConfig(config);
+      console.log('Dados recebidos do frontend:', JSON.stringify(config, null, 2));
+      
+      // Limpar dados antes de enviar para o banco
+      const cleanConfig = {
+        enabled: config.enabled || false,
+        url: config.url || "",
+        groupIds: Array.isArray(config.groupIds) ? config.groupIds : [],
+        minFreightValue: config.minFreightValue || "0",
+        allowedRoutes: Array.isArray(config.allowedRoutes) ? config.allowedRoutes : [],
+        useDirectWhatsApp: config.useDirectWhatsApp || false,
+        whatsappGroups: Array.isArray(config.whatsappGroups) ? config.whatsappGroups : []
+      };
+      
+      console.log('Dados limpos para o banco:', JSON.stringify(cleanConfig, null, 2));
+      
+      const updatedConfig = await setWebhookConfig(cleanConfig);
       res.json({ success: true, config: updatedConfig });
     } catch (error) {
       console.error('Erro ao atualizar configuração do webhook:', error);

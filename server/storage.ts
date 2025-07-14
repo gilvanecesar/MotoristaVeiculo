@@ -1899,12 +1899,53 @@ export class DatabaseStorage implements IStorage {
 
   // Webhook config operations
   async getWebhookConfig(): Promise<WebhookConfig | undefined> {
-    const [config] = await db
-      .select()
-      .from(webhookConfigs)
-      .orderBy(desc(webhookConfigs.id))
-      .limit(1);
-    return config || undefined;
+    const query = `
+      SELECT * FROM webhook_configs 
+      ORDER BY id DESC 
+      LIMIT 1
+    `;
+    
+    const result = await pool.query(query);
+    
+    if (result.rows.length === 0) {
+      return undefined;
+    }
+    
+    const config = result.rows[0] as any;
+    
+    // Debug removido - funcionando corretamente
+    
+    // Converter campos JSON de volta para arrays e ajustar nomes das colunas
+    try {
+      // Se os campos já são arrays, não precisa fazer parse
+      const groupIds = Array.isArray(config.group_ids) ? config.group_ids : 
+                      config.group_ids ? JSON.parse(config.group_ids) : [];
+      const allowedRoutes = Array.isArray(config.allowed_routes) ? config.allowed_routes : 
+                           config.allowed_routes ? JSON.parse(config.allowed_routes) : [];
+      const whatsappGroups = Array.isArray(config.whatsapp_groups) ? config.whatsapp_groups : 
+                            config.whatsapp_groups ? JSON.parse(config.whatsapp_groups) : [];
+      
+      return {
+        id: config.id,
+        enabled: config.enabled,
+        url: config.url,
+        groupIds,
+        minFreightValue: config.min_freight_value,
+        allowedRoutes,
+        useDirectWhatsApp: config.use_direct_whatsapp,
+        whatsappGroups,
+        createdAt: config.created_at,
+        updatedAt: config.updated_at
+      };
+    } catch (error) {
+      console.error('Erro ao fazer parse dos campos JSON:', error);
+      console.error('Dados problemáticos:', {
+        group_ids: config.group_ids,
+        allowed_routes: config.allowed_routes,
+        whatsapp_groups: config.whatsapp_groups
+      });
+      throw error;
+    }
   }
 
   async updateWebhookConfig(config: Partial<InsertWebhookConfig>): Promise<WebhookConfig> {
@@ -1943,36 +1984,69 @@ export class DatabaseStorage implements IStorage {
       const updatedConfig = result.rows[0] as any;
       
       // Converter campos JSON de volta para arrays e ajustar nomes das colunas
+      
+      const groupIds = Array.isArray(updatedConfig.group_ids) ? updatedConfig.group_ids : 
+                      updatedConfig.group_ids ? JSON.parse(updatedConfig.group_ids) : [];
+      const allowedRoutes = Array.isArray(updatedConfig.allowed_routes) ? updatedConfig.allowed_routes : 
+                           updatedConfig.allowed_routes ? JSON.parse(updatedConfig.allowed_routes) : [];
+      const whatsappGroups = Array.isArray(updatedConfig.whatsapp_groups) ? updatedConfig.whatsapp_groups : 
+                            updatedConfig.whatsapp_groups ? JSON.parse(updatedConfig.whatsapp_groups) : [];
+      
       return {
         id: updatedConfig.id,
         enabled: updatedConfig.enabled,
         url: updatedConfig.url,
-        groupIds: JSON.parse(updatedConfig.group_ids || '[]'),
+        groupIds,
         minFreightValue: updatedConfig.min_freight_value,
-        allowedRoutes: JSON.parse(updatedConfig.allowed_routes || '[]'),
+        allowedRoutes,
         useDirectWhatsApp: updatedConfig.use_direct_whatsapp,
-        whatsappGroups: JSON.parse(updatedConfig.whatsapp_groups || '[]'),
+        whatsappGroups,
         createdAt: updatedConfig.created_at,
         updatedAt: updatedConfig.updated_at
       };
     } else {
-      // Cria uma nova configuração
-      const insertData = {
-        enabled: false,
-        url: "",
-        groupIds: [],
-        minFreightValue: "0",
-        allowedRoutes: [],
-        useDirectWhatsApp: false,
-        whatsappGroups: [],
-        ...config
-      };
+      // Cria uma nova configuração usando SQL direto
+      const insertQuery = `
+        INSERT INTO webhook_configs (
+          enabled, url, group_ids, min_freight_value, allowed_routes, 
+          use_direct_whatsapp, whatsapp_groups, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+        RETURNING *
+      `;
       
-      const [newConfig] = await db
-        .insert(webhookConfigs)
-        .values(insertData)
-        .returning();
-      return newConfig;
+      const values = [
+        config.enabled ?? false,
+        config.url ?? "",
+        JSON.stringify(config.groupIds ?? []),
+        config.minFreightValue ?? "0",
+        JSON.stringify(config.allowedRoutes ?? []),
+        config.useDirectWhatsApp ?? false,
+        JSON.stringify(config.whatsappGroups ?? [])
+      ];
+      
+      const result = await pool.query(insertQuery, values);
+      const newConfig = result.rows[0] as any;
+      
+      // Converter campos JSON de volta para arrays e ajustar nomes das colunas
+      const groupIds = Array.isArray(newConfig.group_ids) ? newConfig.group_ids : 
+                      newConfig.group_ids ? JSON.parse(newConfig.group_ids) : [];
+      const allowedRoutes = Array.isArray(newConfig.allowed_routes) ? newConfig.allowed_routes : 
+                           newConfig.allowed_routes ? JSON.parse(newConfig.allowed_routes) : [];
+      const whatsappGroups = Array.isArray(newConfig.whatsapp_groups) ? newConfig.whatsapp_groups : 
+                            newConfig.whatsapp_groups ? JSON.parse(newConfig.whatsapp_groups) : [];
+      
+      return {
+        id: newConfig.id,
+        enabled: newConfig.enabled,
+        url: newConfig.url,
+        groupIds,
+        minFreightValue: newConfig.min_freight_value,
+        allowedRoutes,
+        useDirectWhatsApp: newConfig.use_direct_whatsapp,
+        whatsappGroups,
+        createdAt: newConfig.created_at,
+        updatedAt: newConfig.updated_at
+      };
     }
   }
 }
