@@ -102,7 +102,8 @@ export default function Navigation() {
   const isAdmin = user?.profileType === "administrador" || user?.profileType === "admin";
   const isDriver = user?.profileType === "motorista" || user?.profileType === "driver";
   const isShipper = user?.profileType === "embarcador" || user?.profileType === "shipper";
-  const isAgent = user?.profileType === "agente" || user?.profileType === "agent";
+  const isAgent = user?.profileType === "agente" || user?.profileType === "agent" || user?.profileType === "agenciador";
+  const isTransportador = user?.profileType === "transportador";
   
   // Para depuração
   console.log("Tipo de perfil do usuário:", user?.profileType);
@@ -207,7 +208,20 @@ export default function Navigation() {
     } 
     // Se for agente com assinatura ativa
     else if (isAgent && hasActiveSubscription) {
-      // Transportadoras podem gerenciar motoristas, veículos, fretes e complementos
+      // Agenciadores podem gerenciar motoristas, veículos, fretes e complementos
+      menuItems = [
+        navItems[0],  // Home
+        navItems[2],  // Motoristas
+        navItems[3],  // Veículos
+        navItems[4],  // Fretes
+        navItems[6],  // Complementos
+        navItems[5],  // Clientes
+        navItems[7]   // Relatórios
+      ];
+    }
+    // Se for transportador com assinatura ativa
+    else if (isTransportador && hasActiveSubscription) {
+      // Transportadores podem gerenciar motoristas, veículos, fretes e complementos
       menuItems = [
         navItems[0],  // Home
         navItems[2],  // Motoristas

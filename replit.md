@@ -463,6 +463,11 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Configuração de webhook funcionando perfeitamente: salvar, carregar e testar
 ✓ Formatação automática de campos JSON mantida para compatibilidade com interface
 ✓ Webhook de teste funcionando corretamente com integração Make/Zapier
+✓ Menu "Clientes" liberado para perfis transportador e agenciador
+✓ Controle de acesso atualizado na sidebar e navigation para incluir novos perfis
+✓ Sistema de detecção de perfis aprimorado com suporte a múltiplas variações de nome
+✓ Teste completo realizado: transportadores e agenciadores têm acesso completo ao menu Clientes
+✓ Filtros de interface funcionando corretamente para todos os perfis de usuário
 ```
 
 ## User Preferences

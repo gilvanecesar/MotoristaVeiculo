@@ -163,7 +163,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   const isAdmin = user?.profileType === "administrador" || user?.profileType === "admin";
   const isDriver = user?.profileType === "motorista" || user?.profileType === "driver";
   const isShipper = user?.profileType === "embarcador" || user?.profileType === "shipper";
-  const isAgent = user?.profileType === "agenciador" || user?.profileType === "agent";
+  const isAgent = user?.profileType === "agenciador" || user?.profileType === "agent" || user?.profileType === "agente";
   const isTransportador = user?.profileType === "transportador";
   
   // Lógica para mostrar/ocultar menus baseado no perfil
