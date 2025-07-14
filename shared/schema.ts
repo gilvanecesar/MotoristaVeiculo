@@ -869,7 +869,7 @@ export const webhookConfigs = pgTable("webhook_configs", {
   useDirectWhatsApp: boolean("use_direct_whatsapp").default(false),
   whatsappGroups: json("whatsapp_groups").default("[]"),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at"),
 });
 
 // Insert schema para configurações do webhook

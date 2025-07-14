@@ -1913,14 +1913,12 @@ export class DatabaseStorage implements IStorage {
     
     if (existingConfig) {
       // Atualiza a configuração existente
-      const updateData = {
-        ...config,
-        updatedAt: new Date().toISOString()
-      };
-      
       const [updatedConfig] = await db
         .update(webhookConfigs)
-        .set(updateData)
+        .set({
+          ...config,
+          updatedAt: new Date()
+        })
         .where(eq(webhookConfigs.id, existingConfig.id))
         .returning();
       return updatedConfig;
@@ -1934,9 +1932,7 @@ export class DatabaseStorage implements IStorage {
         allowedRoutes: [],
         useDirectWhatsApp: false,
         whatsappGroups: [],
-        ...config,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        ...config
       };
       
       const [newConfig] = await db

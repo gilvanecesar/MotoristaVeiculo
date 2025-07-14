@@ -455,6 +455,10 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Erro "value.toISOString is not a function" resolvido com formatação adequada
 ✓ Sistema de salvamento de configurações funcionando perfeitamente
 ✓ Configurações de webhook agora podem ser salvas e editadas via interface administrativa
+✓ Schema webhook_configs atualizado: campo updatedAt sem defaultNow() para permitir controle manual
+✓ Função updateWebhookConfig corrigida para usar new Date() em vez de toISOString()
+✓ Teste completo realizado: salvar, carregar e persistir configurações após reinicialização
+✓ Sistema de configuração webhook 100% funcional via interface administrativa
 ```
 
 ## User Preferences
