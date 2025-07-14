@@ -1912,16 +1912,49 @@ export class DatabaseStorage implements IStorage {
     const existingConfig = await this.getWebhookConfig();
     
     if (existingConfig) {
-      // Atualiza a configuração existente
-      const [updatedConfig] = await db
-        .update(webhookConfigs)
-        .set({
-          ...config,
-          updatedAt: new Date()
-        })
-        .where(eq(webhookConfigs.id, existingConfig.id))
-        .returning();
-      return updatedConfig;
+      // Atualiza a configuração existente usando SQL direto para evitar problemas com timestamp
+      const updateQuery = `
+        UPDATE webhook_configs 
+        SET 
+          enabled = $1,
+          url = $2,
+          group_ids = $3,
+          min_freight_value = $4,
+          allowed_routes = $5,
+          use_direct_whatsapp = $6,
+          whatsapp_groups = $7,
+          updated_at = NOW()
+        WHERE id = $8
+        RETURNING *
+      `;
+      
+      const values = [
+        config.enabled ?? existingConfig.enabled,
+        config.url ?? existingConfig.url,
+        JSON.stringify(config.groupIds ?? existingConfig.groupIds),
+        config.minFreightValue ?? existingConfig.minFreightValue,
+        JSON.stringify(config.allowedRoutes ?? existingConfig.allowedRoutes),
+        config.useDirectWhatsApp ?? existingConfig.useDirectWhatsApp,
+        JSON.stringify(config.whatsappGroups ?? existingConfig.whatsappGroups),
+        existingConfig.id
+      ];
+      
+      const result = await pool.query(updateQuery, values);
+      const updatedConfig = result.rows[0] as any;
+      
+      // Converter campos JSON de volta para arrays e ajustar nomes das colunas
+      return {
+        id: updatedConfig.id,
+        enabled: updatedConfig.enabled,
+        url: updatedConfig.url,
+        groupIds: JSON.parse(updatedConfig.group_ids || '[]'),
+        minFreightValue: updatedConfig.min_freight_value,
+        allowedRoutes: JSON.parse(updatedConfig.allowed_routes || '[]'),
+        useDirectWhatsApp: updatedConfig.use_direct_whatsapp,
+        whatsappGroups: JSON.parse(updatedConfig.whatsapp_groups || '[]'),
+        createdAt: updatedConfig.created_at,
+        updatedAt: updatedConfig.updated_at
+      };
     } else {
       // Cria uma nova configuração
       const insertData = {

@@ -459,6 +459,10 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Função updateWebhookConfig corrigida para usar new Date() em vez de toISOString()
 ✓ Teste completo realizado: salvar, carregar e persistir configurações após reinicialização
 ✓ Sistema de configuração webhook 100% funcional via interface administrativa
+✓ Solução definitiva implementada: SQL direto via pool.query para evitar problemas de timestamp do Drizzle ORM
+✓ Configuração de webhook funcionando perfeitamente: salvar, carregar e testar
+✓ Formatação automática de campos JSON mantida para compatibilidade com interface
+✓ Webhook de teste funcionando corretamente com integração Make/Zapier
 ```
 
 ## User Preferences
