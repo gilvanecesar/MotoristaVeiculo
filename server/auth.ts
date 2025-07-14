@@ -70,9 +70,9 @@ export function setupAuth(app: Express) {
     store: storage.sessionStore,
     cookie: {
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 dias
-      secure: isProd, // Em produção, apenas usa conexões HTTPS
-      httpOnly: true, // Impede acesso via JavaScript
-      sameSite: isProd ? 'none' : 'lax' // Em produção, permite cookies em cross-site requests
+      secure: false, // Força false para desenvolvimento
+      httpOnly: false, // Permite acesso via JavaScript para debug
+      sameSite: 'lax' // Configuração para desenvolvimento
     }
   };
 

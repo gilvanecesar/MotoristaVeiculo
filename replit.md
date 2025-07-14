@@ -359,6 +359,10 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Formatação automática de CPF/CNPJ implementada no campo de busca
 ✓ Sistema detecta automaticamente o tipo de documento e aplica formatação em tempo real
 ✓ Formatação não interfere na funcionalidade de busca do backend
+✓ Erro crítico "Method is not valid HTTP token" na exclusão de cotações corrigido
+✓ Problema de autenticação administrativa resolvido com configuração de cookies para desenvolvimento
+✓ Sistema de sessão configurado corretamente para ambiente de desenvolvimento
+✓ Funcionalidades de editar e deletar cotações funcionando via API
 ✓ Bug crítico no cadastro de agenciadores corrigido completamente
 ✓ Lógica de fallback corrigida para usar nome real do usuário em vez de "Agenciador - [documento]"
 ✓ Banco de dados limpo: 7 usuários tiveram nomes corrigidos para "Nome não informado"

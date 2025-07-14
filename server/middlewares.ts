@@ -166,7 +166,8 @@ export function isAdmin(req: Request, res: Response, next: NextFunction) {
   }
   console.log("[isAdmin] Acesso negado:", {
     userId: req.user?.id,
-    profileType: req.user?.profileType
+    profileType: req.user?.profileType,
+    isAuthenticated: req.isAuthenticated()
   });
   res.status(403).json({ message: "Acesso não autorizado" });
 }
