@@ -804,9 +804,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   constructor() {
-    this.sessionStore = new PostgresSessionStore({
-      pool,
-      createTableIfMissing: true,
+    // Usar memória para sessões no desenvolvimento
+    const MemoryStore = createMemoryStore(session);
+    this.sessionStore = new MemoryStore({
+      checkPeriod: 86400000, // 24 horas
+      ttl: 86400000, // 24 horas
+      stale: false
     });
   }
 
