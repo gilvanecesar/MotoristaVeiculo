@@ -161,17 +161,12 @@ export default function AdminUsersPage() {
   });
   
   // Buscar lista de usuários
-  const { data: users, isLoading, error } = useQuery({
+  const { data: users, isLoading } = useQuery({
     queryKey: ["/api/admin/users"],
     queryFn: async () => {
-      const res = await fetch("/api/admin/users", {
-        credentials: "include"
-      });
-      if (!res.ok) {
-        throw new Error("Falha ao carregar usuários");
-      }
+      const res = await apiRequest("GET", "/api/admin/users");
+      if (!res.ok) throw new Error("Falha ao carregar usuários");
       const userData = await res.json();
-      console.log("Usuários carregados:", userData);
       // Ordenar por ID decrescente (usuários mais recentes primeiro)
       return userData.sort((a: any, b: any) => b.id - a.id);
     },
@@ -304,41 +299,6 @@ export default function AdminUsersPage() {
     return (
       <div className="container mx-auto py-10 flex justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="container mx-auto py-10">
-        <Card>
-          <CardHeader>
-            <CardTitle>Erro ao carregar usuários</CardTitle>
-            <CardDescription>
-              Erro: {error.message || "Erro desconhecido"}
-            </CardDescription>
-          </CardHeader>
-          <CardFooter>
-            <Button onClick={() => window.location.reload()}>
-              Tentar novamente
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
-    );
-  }
-
-  if (!users || users.length === 0) {
-    return (
-      <div className="container mx-auto py-10">
-        <Card>
-          <CardHeader>
-            <CardTitle>Nenhum usuário encontrado</CardTitle>
-            <CardDescription>
-              Não há usuários cadastrados no sistema.
-            </CardDescription>
-          </CardHeader>
-        </Card>
       </div>
     );
   }

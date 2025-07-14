@@ -667,40 +667,6 @@ export type SubscriptionStatus = typeof SUBSCRIPTION_STATUS[keyof typeof SUBSCRI
 export type InvoiceStatus = typeof INVOICE_STATUS[keyof typeof INVOICE_STATUS];
 export type PlanType = typeof PLAN_TYPES[keyof typeof PLAN_TYPES];
 
-// Tabela de configurações do webhook
-export const webhookConfigs = pgTable("webhook_configs", {
-  id: serial("id").primaryKey(),
-  configType: text("config_type").notNull().unique(), // 'whatsapp', 'openpix', 'n8n', etc.
-  enabled: boolean("enabled").default(false),
-  url: text("url"),
-  groupIds: json("group_ids"), // Array de IDs de grupos
-  minFreightValue: decimal("min_freight_value", { precision: 10, scale: 2 }),
-  allowedRoutes: json("allowed_routes"), // Array de rotas permitidas
-  useDirectWhatsApp: boolean("use_direct_whatsapp").default(false),
-  whatsappGroups: json("whatsapp_groups"), // Array de grupos WhatsApp
-  notifyPayments: boolean("notify_payments").default(true),
-  notifySubscriptions: boolean("notify_subscriptions").default(true),
-  apiKey: text("api_key"), // Para OpenPix e outros serviços
-  metadata: json("metadata"), // Dados adicionais específicos do tipo
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-// Insert schema para configurações do webhook
-export const insertWebhookConfigSchema = createInsertSchema(webhookConfigs)
-  .omit({ id: true, createdAt: true, updatedAt: true });
-
-// Validator para configurações do webhook
-export const webhookConfigValidator = insertWebhookConfigSchema.extend({
-  configType: z.string().min(1, "Tipo de configuração é obrigatório"),
-  enabled: z.boolean().default(false),
-  url: z.string().url().optional(),
-});
-
-// Tipos para configurações do webhook
-export type WebhookConfig = typeof webhookConfigs.$inferSelect;
-export type InsertWebhookConfig = z.infer<typeof insertWebhookConfigSchema>;
-
 // Tipos para relacionamentos
 export type DriverWithVehicles = Driver & { vehicles: Vehicle[] };
 export type FreightWithDestinations = Freight & { destinations?: FreightDestination[] };

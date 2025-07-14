@@ -10,7 +10,6 @@ import {
   invoices,
   payments,
   quotes,
-  webhookConfigs,
   CLIENT_TYPES,
   USER_TYPES,
   AUTH_PROVIDERS,
@@ -40,8 +39,6 @@ import {
   type InsertPayment,
   type Quote,
   type InsertQuote,
-  type WebhookConfig,
-  type InsertWebhookConfig,
   type DriverWithVehicles,
   type FreightWithDestinations,
   type SubscriptionWithInvoices,
@@ -238,12 +235,6 @@ export interface IStorage {
   getQuoteById(id: number): Promise<Quote | undefined>;
   updateQuote(id: number, quote: Partial<InsertQuote>): Promise<Quote | undefined>;
   deleteQuote(id: number): Promise<boolean>;
-  
-  // Webhook configuration operations
-  getWebhookConfig(configType: string): Promise<WebhookConfig | undefined>;
-  createWebhookConfig(config: InsertWebhookConfig): Promise<WebhookConfig>;
-  updateWebhookConfig(configType: string, config: Partial<InsertWebhookConfig>): Promise<WebhookConfig | undefined>;
-  deleteWebhookConfig(configType: string): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -1893,39 +1884,6 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .delete(quotes)
       .where(eq(quotes.id, id));
-    return true;
-  }
-
-  // Webhook configuration operations
-  async getWebhookConfig(configType: string): Promise<WebhookConfig | undefined> {
-    const [config] = await db
-      .select()
-      .from(webhookConfigs)
-      .where(eq(webhookConfigs.configType, configType));
-    return config || undefined;
-  }
-
-  async createWebhookConfig(config: InsertWebhookConfig): Promise<WebhookConfig> {
-    const [newConfig] = await db
-      .insert(webhookConfigs)
-      .values(config)
-      .returning();
-    return newConfig;
-  }
-
-  async updateWebhookConfig(configType: string, config: Partial<InsertWebhookConfig>): Promise<WebhookConfig | undefined> {
-    const [updatedConfig] = await db
-      .update(webhookConfigs)
-      .set({ ...config, updatedAt: new Date() })
-      .where(eq(webhookConfigs.configType, configType))
-      .returning();
-    return updatedConfig || undefined;
-  }
-
-  async deleteWebhookConfig(configType: string): Promise<boolean> {
-    await db
-      .delete(webhookConfigs)
-      .where(eq(webhookConfigs.configType, configType));
     return true;
   }
 }

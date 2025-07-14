@@ -359,17 +359,6 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Formatação automática de CPF/CNPJ implementada no campo de busca
 ✓ Sistema detecta automaticamente o tipo de documento e aplica formatação em tempo real
 ✓ Formatação não interfere na funcionalidade de busca do backend
-✓ Sistema de persistência de webhook implementado no banco de dados
-✓ Configurações de webhook WhatsApp agora são salvas permanentemente
-✓ Tabela webhook_configs criada com campos para todas as configurações
-✓ Sistema de cache implementado para melhor performance
-✓ Funções async/await implementadas para todas as operações de webhook
-✓ Problema de perda de configurações após reinicialização do sistema resolvido
-✓ Sistema de autenticação administrativa corrigido completamente
-✓ Middlewares de autenticação funcionando corretamente para perfil administrador
-✓ Todos os endpoints administrativos acessíveis: usuários, webhooks, cotações e fretes
-✓ Dados sendo exibidos corretamente em todas as interfaces administrativas
-✓ Webhook service integrado com banco de dados funcionando perfeitamente
 ✓ Bug crítico no cadastro de agenciadores corrigido completamente
 ✓ Lógica de fallback corrigida para usar nome real do usuário em vez de "Agenciador - [documento]"
 ✓ Banco de dados limpo: 7 usuários tiveram nomes corrigidos para "Nome não informado"
