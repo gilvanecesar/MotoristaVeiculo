@@ -196,10 +196,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Cadastro por perfil (novo sistema)
   app.post("/api/auth/register-profile", async (req: Request, res: Response) => {
     try {
-      const { profileType, cpf, cnpj, whatsapp, email, anttVehicle, vehiclePlate, documento, name, companyData, vehicleData } = req.body;
+      const { profileType, cpf, cnpj, whatsapp, email, anttVehicle, vehiclePlate, documento, name, password, companyData, vehicleData } = req.body;
 
       if (!profileType || !name) {
         return res.status(400).json({ message: "Campos obrigatórios não preenchidos" });
+      }
+      
+      // Validar senha para perfis que não são motorista
+      if (profileType !== "motorista" && !password) {
+        return res.status(400).json({ message: "Senha é obrigatória" });
       }
 
       // Validações específicas por perfil
@@ -224,7 +229,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(409).json({ message: "CNPJ_ALREADY_EXISTS" });
         }
       } else if (profileType === "agenciador") {
-        if (!documento || !whatsapp || !email) {
+        if (!documento || !whatsapp || !email || !password) {
           return res.status(400).json({ message: "Dados de agenciador incompletos" });
         }
         
@@ -241,6 +246,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userData = {
         name,
         email: email || null,
+        password: password ? await hashPassword(password) : null,
         profileType,
         cpf: cpf || (documento?.length < 14 ? documento : null) || null,
         cnpj: cnpj || (documento?.length >= 14 ? documento : null) || null,

@@ -472,6 +472,9 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Agenciadores seguem modelo transportador/embarcador: podem cadastrar apenas seu próprio cliente
 ✓ Lógica corrigida: agenciadores não têm acesso a todos os clientes, apenas ao seu cliente associado
 ✓ Sistema de permissões ajustado: agenciadores funcionam como usuários regulares com clientId próprio
+✓ Bug no cadastro de agenciador corrigido: campo senha agora é obrigatório e processado corretamente
+✓ Validação de senha implementada para todos os perfis exceto motorista
+✓ Hash de senha aplicado corretamente no processo de criação de usuário agenciador
 ```
 
 ## User Preferences
