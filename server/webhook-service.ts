@@ -1,6 +1,4 @@
 import { Request, Response } from "express";
-// import { whatsappService } from "./whatsapp-service";
-
 import { storage } from "./storage";
 import { WebhookConfig } from "@shared/schema";
 
@@ -17,115 +15,44 @@ interface WebhookConfigData {
 // Cache local para configurações (atualizado do banco)
 let webhookConfigCache: WebhookConfigData | null = null;
 
-/**
- * Formata dados do frete para envio via webhook
- */
-export function formatFreightForWebhook(freight: any, client: any) {
-  // Formatação dos destinos
-  let destinosText = `🏁 *Destino:* ${freight.destination}, ${freight.destinationState}`;
-  
-  if (freight.destination1) {
-    destinosText += `\n🏁 *Destino 2:* ${freight.destination1}, ${freight.destinationState1}`;
+// Utility functions for formatting
+const formatCurrency = (value: string | number) => {
+  const numValue = typeof value === 'string' ? parseFloat(value) : value;
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  }).format(numValue || 0);
+};
+
+const formatMultipleVehicleTypes = (freight: any) => {
+  if (freight.vehicleTypesSelected) {
+    return freight.vehicleTypesSelected.split(',').map((type: string) => type.trim()).join(', ');
   }
-  
-  if (freight.destination2) {
-    destinosText += `\n🏁 *Destino 3:* ${freight.destination2}, ${freight.destinationState2}`;
+  return freight.vehicleType || 'Não especificado';
+};
+
+const formatMultipleBodyTypes = (freight: any) => {
+  if (freight.bodyTypesSelected) {
+    return freight.bodyTypesSelected.split(',').map((type: string) => type.trim()).join(', ');
   }
+  return freight.bodyType || 'Não especificado';
+};
 
-  // Formatar valor
-  const formatCurrency = (value: string | number) => {
-    const numValue = typeof value === 'string' ? parseFloat(value) : value;
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(numValue || 0);
-  };
-
-  // Formatar data
-  const formatDate = (dateString: string | Date | null) => {
-    if (!dateString) return 'Data não disponível';
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return 'Data inválida';
-    return date.toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  // Formatar tipos de veículo
-  const formatMultipleVehicleTypes = (freight: any) => {
-    if (freight.vehicleTypesSelected) {
-      return freight.vehicleTypesSelected.split(',').map((type: string) => type.trim()).join(', ');
-    }
-    return freight.vehicleType || 'Não especificado';
-  };
-
-  // Formatar tipos de carroceria
-  const formatMultipleBodyTypes = (freight: any) => {
-    if (freight.bodyTypesSelected) {
-      return freight.bodyTypesSelected.split(',').map((type: string) => type.trim()).join(', ');
-    }
-    return freight.bodyType || 'Não especificado';
-  };
-
-  // Categoria do veículo
-  const getVehicleCategory = (vehicleType: string) => {
-    if (!vehicleType) return 'Não especificado';
-    
-    const lightVehicles = ['van', 'utilitario', 'pickup'];
-    const mediumVehicles = ['3_4', 'toco'];
-    const heavyVehicles = ['truck', 'bitruck', 'carreta', 'bicarreta'];
-    
-    const type = vehicleType.toLowerCase();
-    
-    if (lightVehicles.some(v => type.includes(v))) return 'Leve';
-    if (mediumVehicles.some(v => type.includes(v))) return 'Médio';
-    if (heavyVehicles.some(v => type.includes(v))) return 'Pesado';
-    
-    return 'Não especificado';
-  };
-
-  const message = `🚛 *FRETE DISPONÍVEL* 🚛
-
-🏢 *${client?.name || 'Cliente não encontrado'}*
-📍 *Origem:* ${freight.origin}, ${freight.originState}
-${destinosText}
-🚚 *Categoria:* ${getVehicleCategory(freight.vehicleType)}
-🚚 *Veículo:* ${formatMultipleVehicleTypes(freight)}
-🚐 *Carroceria:* ${formatMultipleBodyTypes(freight)}
-📦 *Tipo de Carga:* ${freight.cargoType === 'completa' ? 'Completa' : 'Complemento'}
-⚖️ *Peso:* ${freight.cargoWeight} Kg
-💰 *Pagamento:* ${freight.paymentMethod}
-💵 *Valor:* ${formatCurrency(freight.freightValue)}
-
-
-
-👤 *Contato:* ${freight.contactName}
-📞 *Telefone:* ${freight.contactPhone}
-${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : ''}
-🌐 *Sistema QUERO FRETES:* https://querofretes.com.br
-🔗 *Link do frete:* ${process.env.NODE_ENV === 'production' ? 'https://querofretes.com.br' : 'http://localhost:5000'}/freight/${freight.id}`;
-
-  return {
-    freightId: freight.id,
-    message,
-    freight: {
-      id: freight.id,
-      origin: `${freight.origin}, ${freight.originState}`,
-      destination: `${freight.destination}, ${freight.destinationState}`,
-      value: parseFloat(freight.freightValue || '0'),
-      clientName: client?.name || 'Cliente não encontrado',
-      contactName: freight.contactName,
-      contactPhone: freight.contactPhone,
-      createdAt: freight.createdAt,
-      expirationDate: freight.expirationDate
-    },
-    groupIds: currentConfig.groupIds
-  };
-}
+const getVehicleCategory = (vehicleType: string) => {
+  if (!vehicleType) return 'Não especificado';
+  
+  const lightVehicles = ['van', 'utilitario', 'pickup'];
+  const mediumVehicles = ['3_4', 'toco'];
+  const heavyVehicles = ['truck', 'bitruck', 'carreta', 'bicarreta'];
+  
+  const type = vehicleType.toLowerCase();
+  
+  if (lightVehicles.some(v => type.includes(v))) return 'Leve';
+  if (mediumVehicles.some(v => type.includes(v))) return 'Médio';
+  if (heavyVehicles.some(v => type.includes(v))) return 'Pesado';
+  
+  return 'Não especificado';
+};
 
 /**
  * Formatar dados do frete para webhook usando configurações do banco
@@ -337,6 +264,39 @@ export async function getWebhookConfig(): Promise<WebhookConfigData> {
       useDirectWhatsApp: false,
       whatsappGroups: []
     };
+  }
+}
+
+/**
+ * Enviar notificação via webhook (função auxiliar)
+ */
+export async function sendWebhookNotification(data: any) {
+  const currentConfig = await getWebhookConfig();
+  
+  if (!currentConfig.enabled || !currentConfig.url) {
+    console.log('Webhook não configurado ou desabilitado');
+    return false;
+  }
+  
+  try {
+    const response = await fetch(currentConfig.url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data)
+    });
+
+    if (response.ok) {
+      console.log('Notificação webhook enviada com sucesso');
+      return true;
+    } else {
+      console.error(`Erro ao enviar notificação webhook: ${response.status} ${response.statusText}`);
+      return false;
+    }
+  } catch (error) {
+    console.error('Erro ao enviar notificação webhook:', error);
+    return false;
   }
 }
 
