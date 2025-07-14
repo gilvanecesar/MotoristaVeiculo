@@ -857,3 +857,25 @@ export const quoteValidator = insertQuoteSchema.extend({
 // Tipos de cotação
 export type Quote = typeof quotes.$inferSelect;
 export type InsertQuote = z.infer<typeof insertQuoteSchema>;
+
+// Tabela de configurações do webhook
+export const webhookConfigs = pgTable("webhook_configs", {
+  id: serial("id").primaryKey(),
+  enabled: boolean("enabled").default(false),
+  url: text("url").default(""),
+  groupIds: json("group_ids").default("[]"),
+  minFreightValue: decimal("min_freight_value", { precision: 10, scale: 2 }).default("0"),
+  allowedRoutes: json("allowed_routes").default("[]"),
+  useDirectWhatsApp: boolean("use_direct_whatsapp").default(false),
+  whatsappGroups: json("whatsapp_groups").default("[]"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Insert schema para configurações do webhook
+export const insertWebhookConfigSchema = createInsertSchema(webhookConfigs)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+
+// Tipos de configuração do webhook
+export type WebhookConfig = typeof webhookConfigs.$inferSelect;
+export type InsertWebhookConfig = z.infer<typeof insertWebhookConfigSchema>;

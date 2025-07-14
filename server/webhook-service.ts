@@ -1,25 +1,19 @@
 import { Request, Response } from "express";
-// import { whatsappService } from "./whatsapp-service";
+import { storage } from "./storage";
+import { WebhookConfig } from "@shared/schema";
 
-interface WebhookConfig {
-  enabled: boolean;
-  url: string;
-  groupIds: string[];
-  minFreightValue?: number;
-  allowedRoutes?: string[];
-  useDirectWhatsApp?: boolean;
-  whatsappGroups?: string[];
-}
-
-// Configuração padrão do webhook (será salva no banco posteriormente)
-let webhookConfig: WebhookConfig = {
+// Configuração padrão do webhook
+const defaultWebhookConfig: WebhookConfig = {
+  id: 0,
   enabled: false,
   url: "",
   groupIds: [],
-  minFreightValue: 0,
+  minFreightValue: "0",
   allowedRoutes: [],
   useDirectWhatsApp: false,
-  whatsappGroups: []
+  whatsappGroups: [],
+  createdAt: new Date(),
+  updatedAt: new Date()
 };
 
 /**
@@ -128,7 +122,7 @@ ${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : '
       createdAt: freight.createdAt,
       expirationDate: freight.expirationDate
     },
-    groupIds: webhookConfig.groupIds
+    groupIds: [] // Será preenchido dinamicamente quando necessário
   };
 }
 
@@ -136,13 +130,16 @@ ${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : '
  * Envia webhook e/ou WhatsApp direto após cadastro de frete
  */
 export async function sendFreightWebhook(freight: any, client: any) {
-  if (!webhookConfig.enabled) {
+  const webhookConfig = await storage.getWebhookConfig();
+  
+  if (!webhookConfig || !webhookConfig.enabled) {
     console.log('Envio automático desabilitado');
     return false;
   }
 
   // Verificar valor mínimo se configurado
-  if (webhookConfig.minFreightValue && parseFloat(freight.freightValue || '0') < webhookConfig.minFreightValue) {
+  const minValue = parseFloat(webhookConfig.minFreightValue || '0');
+  if (minValue > 0 && parseFloat(freight.freightValue || '0') < minValue) {
     console.log(`Frete abaixo do valor mínimo configurado: R$ ${freight.freightValue}`);
     return false;
   }
@@ -186,16 +183,18 @@ export async function sendFreightWebhook(freight: any, client: any) {
 /**
  * Configurar webhook
  */
-export function setWebhookConfig(config: Partial<WebhookConfig>) {
-  webhookConfig = { ...webhookConfig, ...config };
-  console.log('Configuração do webhook atualizada:', webhookConfig);
+export async function setWebhookConfig(config: Partial<WebhookConfig>) {
+  const updatedConfig = await storage.updateWebhookConfig(config);
+  console.log('Configuração do webhook atualizada:', updatedConfig);
+  return updatedConfig;
 }
 
 /**
  * Obter configuração atual do webhook
  */
-export function getWebhookConfig(): WebhookConfig {
-  return { ...webhookConfig };
+export async function getWebhookConfig(): Promise<WebhookConfig> {
+  const config = await storage.getWebhookConfig();
+  return config || defaultWebhookConfig;
 }
 
 /**
@@ -203,16 +202,22 @@ export function getWebhookConfig(): WebhookConfig {
  */
 export function setupWebhookRoutes(app: any) {
   // Obter configuração do webhook
-  app.get('/api/webhook/config', (req: Request, res: Response) => {
-    res.json(getWebhookConfig());
+  app.get('/api/webhook/config', async (req: Request, res: Response) => {
+    try {
+      const config = await getWebhookConfig();
+      res.json(config);
+    } catch (error) {
+      console.error('Erro ao obter configuração do webhook:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
   });
 
   // Atualizar configuração do webhook
-  app.post('/api/webhook/config', (req: Request, res: Response) => {
+  app.post('/api/webhook/config', async (req: Request, res: Response) => {
     try {
       const config = req.body;
-      setWebhookConfig(config);
-      res.json({ success: true, config: getWebhookConfig() });
+      const updatedConfig = await setWebhookConfig(config);
+      res.json({ success: true, config: updatedConfig });
     } catch (error) {
       console.error('Erro ao atualizar configuração do webhook:', error);
       res.status(500).json({ error: 'Erro interno do servidor' });
@@ -222,6 +227,8 @@ export function setupWebhookRoutes(app: any) {
   // Testar webhook
   app.post('/api/webhook/test', async (req: Request, res: Response) => {
     try {
+      const webhookConfig = await getWebhookConfig();
+      
       const testData = {
         freightId: 'TEST',
         message: '🧪 *TESTE DE WEBHOOK* 🧪\n\nEste é um teste de configuração do webhook para envio automático de fretes.',

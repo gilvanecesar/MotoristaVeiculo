@@ -10,6 +10,7 @@ import {
   invoices,
   payments,
   quotes,
+  webhookConfigs,
   CLIENT_TYPES,
   USER_TYPES,
   AUTH_PROVIDERS,
@@ -39,6 +40,8 @@ import {
   type InsertPayment,
   type Quote,
   type InsertQuote,
+  type WebhookConfig,
+  type InsertWebhookConfig,
   type DriverWithVehicles,
   type FreightWithDestinations,
   type SubscriptionWithInvoices,
@@ -235,6 +238,10 @@ export interface IStorage {
   getQuoteById(id: number): Promise<Quote | undefined>;
   updateQuote(id: number, quote: Partial<InsertQuote>): Promise<Quote | undefined>;
   deleteQuote(id: number): Promise<boolean>;
+
+  // Webhook config operations
+  getWebhookConfig(): Promise<WebhookConfig | undefined>;
+  updateWebhookConfig(config: Partial<InsertWebhookConfig>): Promise<WebhookConfig>;
 }
 
 export class MemStorage implements IStorage {
@@ -1888,6 +1895,50 @@ export class DatabaseStorage implements IStorage {
       .delete(quotes)
       .where(eq(quotes.id, id));
     return true;
+  }
+
+  // Webhook config operations
+  async getWebhookConfig(): Promise<WebhookConfig | undefined> {
+    const [config] = await db
+      .select()
+      .from(webhookConfigs)
+      .orderBy(desc(webhookConfigs.id))
+      .limit(1);
+    return config || undefined;
+  }
+
+  async updateWebhookConfig(config: Partial<InsertWebhookConfig>): Promise<WebhookConfig> {
+    // Verifica se já existe uma configuração
+    const existingConfig = await this.getWebhookConfig();
+    
+    if (existingConfig) {
+      // Atualiza a configuração existente
+      const [updatedConfig] = await db
+        .update(webhookConfigs)
+        .set({
+          ...config,
+          updatedAt: new Date()
+        })
+        .where(eq(webhookConfigs.id, existingConfig.id))
+        .returning();
+      return updatedConfig;
+    } else {
+      // Cria uma nova configuração
+      const [newConfig] = await db
+        .insert(webhookConfigs)
+        .values({
+          enabled: false,
+          url: "",
+          groupIds: [],
+          minFreightValue: "0",
+          allowedRoutes: [],
+          useDirectWhatsApp: false,
+          whatsappGroups: [],
+          ...config
+        })
+        .returning();
+      return newConfig;
+    }
   }
 }
 
