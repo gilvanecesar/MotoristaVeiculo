@@ -118,12 +118,16 @@ export function setupAuth(app: Express) {
   
   passport.deserializeUser(async (id: number, done) => {
     try {
+      console.log(`[deserializeUser] Buscando usuário com ID: ${id}`);
       const user = await storage.getUserById(id);
       
       // Se o usuário não existir mais ou estiver inativo, consideramos como não autenticado
       if (!user || user.isActive === false) {
+        console.log(`[deserializeUser] Usuário não encontrado ou inativo: ${id}`);
         return done(null, false);
       }
+      
+      console.log(`[deserializeUser] Usuário encontrado: ${user.id}, ${user.email}, ${user.profileType}`);
       
       // Verificar expiração da assinatura durante a deserialização
       if (user.subscriptionActive && 
@@ -151,6 +155,7 @@ export function setupAuth(app: Express) {
         }
       }
       
+      console.log(`[deserializeUser] Retornando usuário: ${user.id}, ${user.email}, ${user.profileType}`);
       done(null, user);
     } catch (error) {
       console.error("Erro ao deserializar usuário:", error);
