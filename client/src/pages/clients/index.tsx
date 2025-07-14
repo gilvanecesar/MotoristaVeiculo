@@ -47,6 +47,9 @@ export default function ClientsPage() {
 
   // Determine if user is admin
   const isAdmin = user?.profileType === 'admin' || user?.profileType === 'administrador';
+  
+  // Determine if user is agenciador (can create clients)
+  const isAgenciador = user?.profileType === 'agenciador';
 
   // Fetch data
   const { data: clients, isLoading } = useQuery({
@@ -60,6 +63,9 @@ export default function ClientsPage() {
     if (isAdmin) {
       // Admin sees all clients
       setFilteredClients(clients);
+    } else if (isAgenciador) {
+      // Agenciador sees all clients (can work with multiple clients)
+      setFilteredClients(clients);
     } else if (user?.clientId) {
       // Regular user only sees their own client
       const userClient = clients.find((client: Client) => client.id === user.clientId);
@@ -68,12 +74,12 @@ export default function ClientsPage() {
       // User without client sees nothing, but can create their own
       setFilteredClients([]);
     }
-  }, [clients, user, isAdmin]);
+  }, [clients, user, isAdmin, isAgenciador]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim() || !clients || !Array.isArray(clients)) {
-      setFilteredClients(isAdmin ? 
+      setFilteredClients((isAdmin || isAgenciador) ? 
         (Array.isArray(clients) ? clients : []) : 
         (Array.isArray(clients) ? clients.filter((client: Client) => client.id === user?.clientId) : [])
       );
@@ -82,8 +88,8 @@ export default function ClientsPage() {
 
     const query = searchQuery.toLowerCase();
     const results = clients.filter((client: Client) => {
-      // Admin can search all clients
-      if (isAdmin) {
+      // Admin and agenciador can search all clients
+      if (isAdmin || isAgenciador) {
         return (
           client.name.toLowerCase().includes(query) ||
           client.email.toLowerCase().includes(query) ||
@@ -109,8 +115,8 @@ export default function ClientsPage() {
   const handleDelete = async () => {
     if (!selectedClient) return;
     
-    // Only allow admin or the client owner to delete
-    if (!isAdmin && user?.clientId !== selectedClient.id) {
+    // Only allow admin, agenciador or the client owner to delete
+    if (!isAdmin && !isAgenciador && user?.clientId !== selectedClient.id) {
       toast({
         title: "Acesso negado",
         description: "Você não tem permissão para excluir este cliente",
@@ -173,8 +179,8 @@ export default function ClientsPage() {
             </Button>
           </form>
 
-          {/* Mostrar botão de novo cliente apenas para administradores ou quando o usuário não tem cliente */}
-          {(isAdmin || !user?.clientId) && (
+          {/* Mostrar botão de novo cliente para administradores, agenciadores ou quando o usuário não tem cliente */}
+          {(isAdmin || isAgenciador || !user?.clientId) && (
             <Button onClick={() => navigate("/clients/new")}>
               <Plus className="h-4 w-4 mr-2" />
               {!user?.clientId ? "Cadastrar meu cliente" : "Novo Cliente"}
@@ -309,7 +315,7 @@ export default function ClientsPage() {
               </div>
               <p>Nenhum cliente encontrado.</p>
               <p className="text-sm">
-                {isAdmin ? 
+                {(isAdmin || isAgenciador) ? 
                   "Cadastre um novo cliente através do botão acima." : 
                   "Não há clientes associados à sua conta."}
               </p>
@@ -319,7 +325,7 @@ export default function ClientsPage() {
         <CardFooter className="border-t border-slate-100 dark:border-slate-700">
           <div className="text-xs text-slate-500">
             Total de registros: {filteredClients.length}
-            {isAdmin && clients && Array.isArray(clients) && filteredClients.length !== clients.length && (
+            {(isAdmin || isAgenciador) && clients && Array.isArray(clients) && filteredClients.length !== clients.length && (
               <span className="ml-2">(Total no sistema: {clients.length})</span>
             )}
           </div>
