@@ -67,13 +67,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       
       const isDriver = user.profileType === 'motorista' || user.profileType === 'driver';
+      const isTransportador = user.profileType === 'transportador';
+      const isAgenciador = user.profileType === 'agenciador';
       
       if (isDriver) {
         // Se for motorista, redireciona para a página de fretes
         setTimeout(() => setLocation("/freights"), 1000);
       } else if (user.subscriptionActive) {
-        // Se já tem assinatura ativa, vai para a página Home
-        setTimeout(() => setLocation("/home"), 1000);
+        // Se já tem assinatura ativa, verificar perfil específico
+        if ((isTransportador || isAgenciador) && !user.clientId) {
+          // Transportador ou agenciador sem cliente cadastrado vai para criar cliente
+          setTimeout(() => setLocation("/clients/new"), 1000);
+        } else {
+          // Outros perfis ou já tem cliente, vai para Home
+          setTimeout(() => setLocation("/home"), 1000);
+        }
       } else {
         // Se não tem assinatura ativa e não é motorista, redireciona para checkout
         setTimeout(() => setLocation("/checkout"), 1000);

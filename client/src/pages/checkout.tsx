@@ -135,10 +135,24 @@ export default function Checkout() {
           description: "Sua assinatura foi ativada com sucesso. Redirecionando...",
         });
         
-        // Redirecionar para HOME
+        // Buscar dados do usuário para redirecionamento específico
+        const userResponse = await apiRequest("GET", "/api/user");
+        const userData = await userResponse.json();
+        
+        const isTransportador = userData.profileType === 'transportador';
+        const isAgenciador = userData.profileType === 'agenciador';
+        
+        // Redirecionar baseado no perfil do usuário
         setTimeout(() => {
-          console.log('Redirecionando para /home...');
-          window.location.href = "/home";
+          if ((isTransportador || isAgenciador) && !userData.clientId) {
+            // Transportador ou agenciador sem cliente cadastrado vai para criar cliente
+            console.log('Redirecionando para /clients/new...');
+            window.location.href = "/clients/new";
+          } else {
+            // Outros perfis ou já tem cliente, vai para Home
+            console.log('Redirecionando para /home...');
+            window.location.href = "/home";
+          }
         }, 1000);
         
         return;
@@ -286,10 +300,24 @@ export default function Checkout() {
           description: "Sua assinatura foi ativada com sucesso. Redirecionando...",
         });
         
-        // Redirecionar para home
+        // Buscar dados do usuário para redirecionamento específico
+        const userResponse = await apiRequest("GET", "/api/user");
+        const userData = await userResponse.json();
+        
+        const isTransportador = userData.profileType === 'transportador';
+        const isAgenciador = userData.profileType === 'agenciador';
+        
+        // Redirecionar baseado no perfil do usuário
         setTimeout(() => {
-          console.log('Redirecionando para /home...');
-          navigate("/home");
+          if ((isTransportador || isAgenciador) && !userData.clientId) {
+            // Transportador ou agenciador sem cliente cadastrado vai para criar cliente
+            console.log('Redirecionando para /clients/new...');
+            navigate("/clients/new");
+          } else {
+            // Outros perfis ou já tem cliente, vai para Home
+            console.log('Redirecionando para /home...');
+            navigate("/home");
+          }
         }, 1000);
       } else {
         toast({
@@ -337,13 +365,27 @@ export default function Checkout() {
         
         toast({
           title: "Pagamento simulado!",
-          description: "Simulação concluída. Redirecionando para home...",
+          description: "Simulação concluída. Redirecionando...",
         });
         
-        // Redirecionar para home
+        // Buscar dados do usuário para redirecionamento específico
+        const userResponse = await apiRequest("GET", "/api/user");
+        const userData = await userResponse.json();
+        
+        const isTransportador = userData.profileType === 'transportador';
+        const isAgenciador = userData.profileType === 'agenciador';
+        
+        // Redirecionar baseado no perfil do usuário
         setTimeout(() => {
-          console.log('Redirecionando para /home...');
-          navigate("/home");
+          if ((isTransportador || isAgenciador) && !userData.clientId) {
+            // Transportador ou agenciador sem cliente cadastrado vai para criar cliente
+            console.log('Redirecionando para /clients/new...');
+            navigate("/clients/new");
+          } else {
+            // Outros perfis ou já tem cliente, vai para Home
+            console.log('Redirecionando para /home...');
+            navigate("/home");
+          }
         }, 1000);
       } else {
         throw new Error(data.details || "Erro ao simular pagamento");

@@ -394,6 +394,12 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Validação de campos obrigatórios aprimorada: nome, CNPJ, email e telefone são obrigatórios
 ✓ Sistema de criação de cliente por agenciadores funcionando: teste realizado com sucesso
 ✓ Cliente ID 92 criado com sucesso e associado ao usuário agenciador ID 385
+✓ Lógica de redirecionamento para agenciadores implementada igual ao transportador
+✓ Após login: agenciador com assinatura ativa mas sem cliente vai para /clients/new
+✓ Após checkout PIX: agenciador sem cliente cadastrado redireciona para /clients/new
+✓ Redirecionamento implementado em 3 funções: checkPaymentStatus, manualStatusCheck e simulateTestPayment
+✓ Hook use-auth.tsx atualizado para verificar clientId em transportadores e agenciadores
+✓ Página checkout.tsx atualizada para buscar dados do usuário e redirecionar corretamente
 ✓ Campo "Preço Estimado (R$)" alterado para "Valor de NF:" no formulário de cotações
 ✓ Sistema completo de cotações públicas implementado para usuários não registrados
 ✓ Botão "Solicitar Cotações" adicionado na navbar da landing page com cor laranja
