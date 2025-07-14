@@ -3704,6 +3704,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Rota de teste para verificar conexão com banco de dados
+  app.get("/api/test/db", async (req, res) => {
+    try {
+      const users = await storage.getUsers();
+      res.json({ 
+        message: "Banco de dados funcionando!", 
+        totalUsers: users.length,
+        firstUser: users[0] ? { id: users[0].id, email: users[0].email, name: users[0].name } : null
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Erro no banco de dados", error: error.message });
+    }
+  });
+
   // Configurar rotas do WhatsApp
   setupWhatsAppRoutes(app);
 

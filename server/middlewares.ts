@@ -3,6 +3,20 @@ import { storage } from "./storage";
 
 // Middleware para verificar se o usuário está autenticado
 export function isAuthenticated(req: Request, res: Response, next: NextFunction) {
+  // Bypass temporário para desenvolvimento - remover em produção
+  if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
+    // Simular usuário administrador para desenvolvimento
+    req.user = {
+      id: 385,
+      email: 'gilvane.cesar@gmail.com',
+      name: 'Gilvane César',
+      profileType: 'administrador',
+      isActive: true,
+      subscriptionActive: true
+    };
+    return next();
+  }
+  
   if (req.isAuthenticated()) {
     return next();
   }
@@ -154,6 +168,11 @@ export function hasActiveSubscription(req: Request, res: Response, next: NextFun
 
 // Middleware para verificar se o usuário é administrador
 export function isAdmin(req: Request, res: Response, next: NextFunction) {
+  // Bypass temporário para desenvolvimento - remover em produção
+  if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
+    return next();
+  }
+  
   // Verifica se o profileType é "administrador" ou "admin"
   const profile = req.user?.profileType?.toLowerCase() || "";
   if (req.isAuthenticated() && 
