@@ -321,9 +321,24 @@ export const vehicleValidator = insertVehicleSchema.extend({
 });
 
 export const clientValidator = insertClientSchema.extend({
-  cnpj: z.string().min(14).max(18).refine(
-    (value) => /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/.test(value) || /^\d{14}$/.test(value),
-    { message: "CNPJ inválido. Use o formato XX.XXX.XXX/XXXX-XX ou XXXXXXXXXXXXXX" }
+  cnpj: z.string().min(11).max(18).refine(
+    (value) => {
+      // Remove formatação
+      const cleanValue = value.replace(/\D/g, '');
+      
+      // Verifica se é um CNPJ válido (14 dígitos)
+      if (cleanValue.length === 14) {
+        return /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/.test(value) || /^\d{14}$/.test(value);
+      }
+      
+      // Verifica se é um CPF válido (11 dígitos)
+      if (cleanValue.length === 11) {
+        return /^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(value) || /^\d{11}$/.test(value);
+      }
+      
+      return false;
+    },
+    { message: "CNPJ/CPF inválido. Use o formato XX.XXX.XXX/XXXX-XX (CNPJ) ou XXX.XXX.XXX-XX (CPF)" }
   ),
   clientType: z.enum([
     CLIENT_TYPES.SHIPPER, 

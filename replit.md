@@ -400,6 +400,11 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Redirecionamento implementado em 3 funções: checkPaymentStatus, manualStatusCheck e simulateTestPayment
 ✓ Hook use-auth.tsx atualizado para verificar clientId em transportadores e agenciadores
 ✓ Página checkout.tsx atualizada para buscar dados do usuário e redirecionar corretamente
+✓ Campo CNPJ no formulário de clientes atualizado para aceitar CPF e CNPJ
+✓ Validação no schema clientValidator modificada para suportar ambos os documentos
+✓ Formatação automática implementada: detecta CPF (11 dígitos) ou CNPJ (14 dígitos)
+✓ Interface atualizada: label "CNPJ / CPF" com placeholder e descrição para ambos formatos
+✓ Função formatDocument criada para aplicar máscara automaticamente durante digitação
 ✓ Campo "Preço Estimado (R$)" alterado para "Valor de NF:" no formulário de cotações
 ✓ Sistema completo de cotações públicas implementado para usuários não registrados
 ✓ Botão "Solicitar Cotações" adicionado na navbar da landing page com cor laranja

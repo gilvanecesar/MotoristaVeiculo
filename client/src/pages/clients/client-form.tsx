@@ -70,6 +70,28 @@ const BRAZILIAN_STATES = [
   { value: "TO", label: "Tocantins" },
 ];
 
+// Função para formatar CPF/CNPJ automaticamente
+const formatDocument = (value: string) => {
+  // Remove tudo que não é dígito
+  const cleanValue = value.replace(/\D/g, '');
+  
+  // CPF: 000.000.000-00
+  if (cleanValue.length <= 11) {
+    return cleanValue
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+  }
+  // CNPJ: 00.000.000/0000-00
+  else {
+    return cleanValue
+      .replace(/(\d{2})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1/$2')
+      .replace(/(\d{4})(\d{1,2})$/, '$1-$2');
+  }
+};
+
 export default function ClientForm() {
   const params = useParams<{ id: string }>();
   const isEditing = !!params.id;
@@ -527,21 +549,26 @@ export default function ClientForm() {
                   )}
                 />
 
-                {/* CNPJ */}
+                {/* CNPJ/CPF */}
                 <FormField
                   control={form.control}
                   name="cnpj"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>CNPJ</FormLabel>
+                      <FormLabel>CNPJ / CPF</FormLabel>
                       <FormControl>
                         <Input 
-                          placeholder="00.123.456/0001-00" 
-                          {...field} 
+                          placeholder="00.123.456/0001-00 ou 000.000.000-00" 
+                          {...field}
+                          onChange={(e) => {
+                            const formatted = formatDocument(e.target.value);
+                            field.onChange(formatted);
+                          }}
+                          maxLength={18} // Máximo para CNPJ formatado
                         />
                       </FormControl>
                       <FormDescription>
-                        Formato: XX.XXX.XXX/XXXX-XX ou XXXXXXXXXXXXXX
+                        Formato CNPJ: XX.XXX.XXX/XXXX-XX ou CPF: XXX.XXX.XXX-XX
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
