@@ -106,7 +106,8 @@ import {
   Driver, 
   InsertDriver, 
   FreightDestination, 
-  Vehicle
+  Vehicle,
+  CLIENT_TYPES
 } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { sendSubscriptionEmail, sendPaymentReminderEmail } from "./email-service";
@@ -645,6 +646,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/clients", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const clientData = req.body;
+      
+      // Validar campos obrigatórios
+      if (!clientData.name || !clientData.cnpj || !clientData.email || !clientData.phone) {
+        return res.status(400).json({ 
+          message: "Campos obrigatórios não preenchidos: nome, CNPJ, email e telefone são obrigatórios." 
+        });
+      }
+      
+      // Garantir que clientType seja definido
+      if (!clientData.clientType) {
+        clientData.clientType = CLIENT_TYPES.SHIPPER; // Valor padrão
+      }
       
       // Verificar se já existe um cliente com o mesmo CNPJ
       const existingClientByCnpj = await storage.getClientByCnpj(clientData.cnpj);
