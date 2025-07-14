@@ -302,6 +302,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } catch (error: any) {
       console.error("Erro no cadastro por perfil:", error);
+      console.error("Erro detalhado:", JSON.stringify(error, null, 2));
       
       // Verificar se é erro de email duplicado
       if (error.code === '23505' && error.constraint === 'users_email_unique') {
@@ -313,7 +314,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Este CNPJ já está cadastrado no sistema" });
       }
       
-      res.status(500).json({ message: "Erro interno do servidor" });
+      // Verificar se é erro de CPF duplicado
+      if (error.code === '23505' && error.constraint === 'users_cpf_unique') {
+        return res.status(400).json({ message: "Este CPF já está cadastrado no sistema" });
+      }
+      
+      // Verificar se é erro de constraint de NOT NULL
+      if (error.code === '23502') {
+        return res.status(400).json({ message: "Dados obrigatórios não preenchidos: " + error.column });
+      }
+      
+      res.status(500).json({ message: "Erro interno do servidor: " + error.message });
     }
   });
 
