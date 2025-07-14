@@ -67,12 +67,13 @@ export function setupAuth(app: Express) {
     secret: process.env.SESSION_SECRET || "querofretes-secret-key",
     resave: false,
     saveUninitialized: false,
-    store: storage.sessionStore,
+    // Usar memória temporariamente para resolver problemas de sessão
+    // store: storage.sessionStore,
     cookie: {
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 dias
-      secure: isProd, // Em produção, apenas usa conexões HTTPS
+      secure: false, // Forçar false para desenvolvimento
       httpOnly: true, // Impede acesso via JavaScript
-      sameSite: isProd ? 'none' : 'lax' // Em produção, permite cookies em cross-site requests
+      sameSite: 'lax' // Em desenvolvimento, usar lax
     }
   };
 
