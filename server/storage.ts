@@ -1913,29 +1913,35 @@ export class DatabaseStorage implements IStorage {
     
     if (existingConfig) {
       // Atualiza a configuração existente
+      const updateData = {
+        ...config,
+        updatedAt: new Date().toISOString()
+      };
+      
       const [updatedConfig] = await db
         .update(webhookConfigs)
-        .set({
-          ...config,
-          updatedAt: new Date()
-        })
+        .set(updateData)
         .where(eq(webhookConfigs.id, existingConfig.id))
         .returning();
       return updatedConfig;
     } else {
       // Cria uma nova configuração
+      const insertData = {
+        enabled: false,
+        url: "",
+        groupIds: [],
+        minFreightValue: "0",
+        allowedRoutes: [],
+        useDirectWhatsApp: false,
+        whatsappGroups: [],
+        ...config,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      
       const [newConfig] = await db
         .insert(webhookConfigs)
-        .values({
-          enabled: false,
-          url: "",
-          groupIds: [],
-          minFreightValue: "0",
-          allowedRoutes: [],
-          useDirectWhatsApp: false,
-          whatsappGroups: [],
-          ...config
-        })
+        .values(insertData)
         .returning();
       return newConfig;
     }

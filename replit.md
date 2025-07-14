@@ -451,6 +451,10 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Funções webhook-service.ts atualizadas para usar storage do banco de dados
 ✓ Todas as rotas webhook convertidas para operações assíncronas
 ✓ Teste de persistência confirmado: configurações mantidas após restart
+✓ Bug crítico de timestamp no banco de dados corrigido
+✓ Erro "value.toISOString is not a function" resolvido com formatação adequada
+✓ Sistema de salvamento de configurações funcionando perfeitamente
+✓ Configurações de webhook agora podem ser salvas e editadas via interface administrativa
 ```
 
 ## User Preferences
