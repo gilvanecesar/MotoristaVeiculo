@@ -106,10 +106,7 @@ export default function AdminQuotesPage() {
   // Mutation para atualizar cotação
   const updateQuoteMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<Quote> }) => {
-      return await apiRequest(`/api/admin/quotes/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(data),
-      });
+      return await apiRequest('PUT', `/api/admin/quotes/${id}`, data);
     },
     onSuccess: () => {
       toast({
@@ -133,9 +130,7 @@ export default function AdminQuotesPage() {
   // Mutation para deletar cotação
   const deleteQuoteMutation = useMutation({
     mutationFn: async (id: number) => {
-      return await apiRequest(`/api/admin/quotes/${id}`, {
-        method: 'DELETE',
-      });
+      return await apiRequest('DELETE', `/api/admin/quotes/${id}`);
     },
     onSuccess: () => {
       toast({
