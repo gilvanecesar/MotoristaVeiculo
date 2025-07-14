@@ -67,13 +67,12 @@ export function setupAuth(app: Express) {
     secret: process.env.SESSION_SECRET || "querofretes-secret-key",
     resave: false,
     saveUninitialized: false,
-    // Usar memória temporariamente para resolver problemas de sessão
-    // store: storage.sessionStore,
+    store: storage.sessionStore,
     cookie: {
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 dias
-      secure: false, // Forçar false para desenvolvimento
+      secure: isProd, // Em produção, apenas usa conexões HTTPS
       httpOnly: true, // Impede acesso via JavaScript
-      sameSite: 'lax' // Em desenvolvimento, usar lax
+      sameSite: isProd ? 'none' : 'lax' // Em produção, permite cookies em cross-site requests
     }
   };
 
@@ -118,16 +117,12 @@ export function setupAuth(app: Express) {
   
   passport.deserializeUser(async (id: number, done) => {
     try {
-      console.log(`[deserializeUser] Buscando usuário com ID: ${id}`);
       const user = await storage.getUserById(id);
       
       // Se o usuário não existir mais ou estiver inativo, consideramos como não autenticado
       if (!user || user.isActive === false) {
-        console.log(`[deserializeUser] Usuário não encontrado ou inativo: ${id}`);
         return done(null, false);
       }
-      
-      console.log(`[deserializeUser] Usuário encontrado: ${user.id}, ${user.email}, ${user.profileType}`);
       
       // Verificar expiração da assinatura durante a deserialização
       if (user.subscriptionActive && 
@@ -155,7 +150,6 @@ export function setupAuth(app: Express) {
         }
       }
       
-      console.log(`[deserializeUser] Retornando usuário: ${user.id}, ${user.email}, ${user.profileType}`);
       done(null, user);
     } catch (error) {
       console.error("Erro ao deserializar usuário:", error);

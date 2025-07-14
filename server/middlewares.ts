@@ -154,20 +154,10 @@ export function hasActiveSubscription(req: Request, res: Response, next: NextFun
 
 // Middleware para verificar se o usuário é administrador
 export function isAdmin(req: Request, res: Response, next: NextFunction) {
-  console.log("[isAdmin] DEBUG - Verificando autenticação:", {
-    isAuthenticated: req.isAuthenticated(),
-    user: req.user,
-    sessionID: req.sessionID
-  });
-  
-  if (!req.isAuthenticated()) {
-    console.log("[isAdmin] Usuário não autenticado");
-    return res.status(401).json({ message: "Não autenticado" });
-  }
-  
   // Verifica se o profileType é "administrador" ou "admin"
   const profile = req.user?.profileType?.toLowerCase() || "";
-  if (profile === "administrador" || profile === "admin") {
+  if (req.isAuthenticated() && 
+      (profile === "administrador" || profile === "admin")) {
     console.log("[isAdmin] Usuário verificado como administrador:", {
       userId: req.user?.id,
       profileType: req.user?.profileType
