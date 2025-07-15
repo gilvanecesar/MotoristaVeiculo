@@ -405,6 +405,9 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Formatação automática implementada: detecta CPF (11 dígitos) ou CNPJ (14 dígitos)
 ✓ Interface atualizada: label "CNPJ / CPF" com placeholder e descrição para ambos formatos
 ✓ Função formatDocument criada para aplicar máscara automaticamente durante digitação
+✓ Tratamento de erro global implementado para capturar runtime errors do JavaScript
+✓ Função formatDocument melhorada com validações extras para evitar erros de runtime
+✓ Handler onChange do campo CNPJ/CPF com tratamento de erro específico implementado
 ✓ Campo "Preço Estimado (R$)" alterado para "Valor de NF:" no formulário de cotações
 ✓ Sistema completo de cotações públicas implementado para usuários não registrados
 ✓ Botão "Solicitar Cotações" adicionado na navbar da landing page com cor laranja

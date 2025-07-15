@@ -72,23 +72,38 @@ const BRAZILIAN_STATES = [
 
 // Função para formatar CPF/CNPJ automaticamente
 const formatDocument = (value: string) => {
-  // Remove tudo que não é dígito
-  const cleanValue = value.replace(/\D/g, '');
-  
-  // CPF: 000.000.000-00
-  if (cleanValue.length <= 11) {
-    return cleanValue
-      .replace(/(\d{3})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-  }
-  // CNPJ: 00.000.000/0000-00
-  else {
-    return cleanValue
-      .replace(/(\d{2})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d)/, '$1/$2')
-      .replace(/(\d{4})(\d{1,2})$/, '$1-$2');
+  try {
+    // Verificar se o valor é válido
+    if (!value || typeof value !== 'string') {
+      return '';
+    }
+    
+    // Remove tudo que não é dígito
+    const cleanValue = value.replace(/\D/g, '');
+    
+    // Limitar tamanho máximo
+    if (cleanValue.length > 14) {
+      return value; // Retorna valor original se exceder limite
+    }
+    
+    // CPF: 000.000.000-00
+    if (cleanValue.length <= 11) {
+      return cleanValue
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    }
+    // CNPJ: 00.000.000/0000-00
+    else {
+      return cleanValue
+        .replace(/(\d{2})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1/$2')
+        .replace(/(\d{4})(\d{1,2})$/, '$1-$2');
+    }
+  } catch (error) {
+    console.error('Erro na formatação do documento:', error);
+    return value; // Retorna valor original em caso de erro
   }
 };
 
@@ -561,8 +576,14 @@ export default function ClientForm() {
                           placeholder="00.123.456/0001-00 ou 000.000.000-00" 
                           {...field}
                           onChange={(e) => {
-                            const formatted = formatDocument(e.target.value);
-                            field.onChange(formatted);
+                            try {
+                              const inputValue = e.target.value || '';
+                              const formatted = formatDocument(inputValue);
+                              field.onChange(formatted);
+                            } catch (error) {
+                              console.error('Erro no onChange do campo CNPJ/CPF:', error);
+                              field.onChange(e.target.value);
+                            }
                           }}
                           maxLength={18} // Máximo para CNPJ formatado
                         />
