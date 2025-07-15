@@ -277,7 +277,7 @@ export default function ProfileSelection() {
       const userData = {
         ...data,
         profileType: PROFILE_TYPES.MOTORISTA,
-        name: `Motorista - ${data.cpf}`,
+        name: data.name, // Usar o nome real digitado pelo usuário
         vehicleData
       };
 

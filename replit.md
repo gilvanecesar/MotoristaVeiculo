@@ -408,6 +408,9 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Tratamento de erro global implementado para capturar runtime errors do JavaScript
 ✓ Função formatDocument melhorada com validações extras para evitar erros de runtime
 ✓ Handler onChange do campo CNPJ/CPF com tratamento de erro específico implementado
+✓ Bug crítico no cadastro de motoristas corrigido: nomes "Motorista - CPF" substituídos por nomes reais
+✓ 16 motoristas tiveram nomes corrigidos no banco de dados com base nos emails
+✓ Código de cadastro de motoristas corrigido para usar name: data.name em vez de name: `Motorista - ${data.cpf}`
 ✓ Campo "Preço Estimado (R$)" alterado para "Valor de NF:" no formulário de cotações
 ✓ Sistema completo de cotações públicas implementado para usuários não registrados
 ✓ Botão "Solicitar Cotações" adicionado na navbar da landing page com cor laranja
