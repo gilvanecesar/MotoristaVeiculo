@@ -62,6 +62,11 @@ export default function EditComplementPage() {
 
   // Selecionar cliente automaticamente baseado no usuário
   useEffect(() => {
+    // Apenas para edição, não alterar o clientId se já estiver definido no complemento
+    if (complement && complement.clientId) {
+      return; // Manter o cliente original do complemento
+    }
+    
     if (user?.clientId && clients.length > 0) {
       // Encontra o cliente associado ao usuário
       const userClient = clients.find(client => client.id === user.clientId);
@@ -69,7 +74,7 @@ export default function EditComplementPage() {
         form.setValue("clientId", userClient.id.toString());
       }
     }
-  }, [user, clients, form]);
+  }, [user, clients, form, complement]);
 
   // Preencher formulário quando complemento for carregado
   useEffect(() => {

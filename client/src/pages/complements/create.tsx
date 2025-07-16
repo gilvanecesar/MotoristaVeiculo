@@ -52,11 +52,21 @@ export default function CreateComplementPage() {
 
   // Selecionar cliente automaticamente baseado no usuário
   useEffect(() => {
+    // Verificar se o usuário tem clientId e se a lista de clientes foi carregada
     if (user?.clientId && clients.length > 0) {
       // Encontra o cliente associado ao usuário
       const userClient = clients.find(client => client.id === user.clientId);
+      
       if (userClient) {
         form.setValue("clientId", userClient.id.toString());
+      } else {
+        // Se o cliente não foi encontrado, pode ser um problema de timing ou filtragem
+        console.warn("Cliente não encontrado na lista:", {
+          userId: user.id,
+          profileType: user.profileType,
+          clientId: user.clientId,
+          availableClients: clients.map(c => ({ id: c.id, name: c.name }))
+        });
       }
     }
   }, [user, clients, form]);
