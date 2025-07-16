@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 
+// Updated navigation items - Cache busting update
 const navItems = [
   { 
     label: "Home", 
