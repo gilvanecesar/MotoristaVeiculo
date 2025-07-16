@@ -56,7 +56,7 @@ const navItems = [
     icon: Package
   },
   { 
-    label: "Clientes", 
+    label: "Cadastro", 
     path: "/clients",
     icon: Building2
   },

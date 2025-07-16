@@ -284,11 +284,49 @@ export default function ProfileSelection() {
       const response = await apiRequest("POST", "/api/auth/register-profile", userData);
       
       if (response.ok) {
+        const result = await response.json();
+        
         toast({
           title: "Cadastro realizado com sucesso!",
           description: "Redirecionando para os fretes disponíveis..."
         });
-        setLocation("/freights");
+        
+        // Verificar se a autenticação foi processada e redirecionar
+        let attempts = 0;
+        const maxAttempts = 10; // Máximo 5 segundos de tentativas
+        
+        const checkAuthAndRedirect = async () => {
+          try {
+            attempts++;
+            
+            // Verificar se o usuário está autenticado
+            const userResponse = await fetch("/api/user", {
+              credentials: "include"
+            });
+            
+            if (userResponse.ok) {
+              // Usuário autenticado, redirecionar
+              setLocation("/freights");
+            } else if (attempts < maxAttempts) {
+              // Tentar novamente após um breve delay
+              setTimeout(checkAuthAndRedirect, 500);
+            } else {
+              // Máximo de tentativas atingido, redirecionar mesmo assim
+              console.warn("Máximo de tentativas de autenticação atingido, redirecionando...");
+              setLocation("/freights");
+            }
+          } catch (error) {
+            console.error("Erro ao verificar autenticação:", error);
+            if (attempts < maxAttempts) {
+              setTimeout(checkAuthAndRedirect, 500);
+            } else {
+              // Fallback: redirecionar mesmo com erro
+              setLocation("/freights");
+            }
+          }
+        };
+        
+        checkAuthAndRedirect();
       } else {
         const errorMessage = await processApiError(response);
         throw new Error(errorMessage);
