@@ -52,7 +52,7 @@ const navItems = [
     icon: Truck
   },
   { 
-    label: "Cadastro", 
+    label: "Cadastro",
     path: "/clients",
     icon: Building2
   },
