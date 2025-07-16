@@ -503,6 +503,12 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Bug no cadastro de agenciador corrigido: campo senha agora é obrigatório e processado corretamente
 ✓ Validação de senha implementada para todos os perfis exceto motorista
 ✓ Hash de senha aplicado corretamente no processo de criação de usuário agenciador
+✓ Bug crítico no campo cliente dos complementos investigado e corrigido
+✓ Sistema de debug implementado para detectar problemas de timing no preenchimento automático
+✓ Lógica de preenchimento automático aprimorada com verificações de segurança
+✓ Mensagem de warning adicionada para casos onde o cliente não é encontrado
+✓ Correção na página de edição para manter o cliente original do complemento
+✓ Texto do menu "Clientes" alterado para "Cadastro" na sidebar conforme solicitado
 ```
 
 ## User Preferences
