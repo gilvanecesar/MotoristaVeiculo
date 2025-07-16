@@ -147,10 +147,11 @@ export default function LoginPage() {
                 />
                 <Button 
                   type="submit" 
-                  className="w-full h-11 bg-teal-600 hover:bg-teal-700"
+                  size="lg"
+                  className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-lg font-semibold shadow-md hover:shadow-lg transition-all duration-200"
                   disabled={loginMutation.isPending}
                 >
-                  {loginMutation.isPending ? "Entrando..." : "Entrar"}
+                  {loginMutation.isPending ? "Entrando..." : "FAZER LOGIN"}
                 </Button>
               </form>
             </Form>
