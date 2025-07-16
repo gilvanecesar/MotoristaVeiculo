@@ -82,20 +82,26 @@ export default function LandingPage() {
           </div>
           <div className="hidden md:flex space-x-4">
             <Button
+              size="lg"
               variant="outline"
-              className="border-slate-300 bg-white text-slate-900 hover:bg-slate-100 hover:border-primary"
+              className="border-2 border-slate-300 bg-white text-slate-900 hover:bg-slate-100 hover:border-primary px-6 py-2 text-lg font-semibold"
               onClick={goToLogin}
             >
-              Entrar
-            </Button>
-            <Button className="bg-primary hover:bg-primary/90" onClick={goToRegister}>
-              Registrar
+              🔑 ENTRAR
             </Button>
             <Button 
-              className="bg-orange-500 hover:bg-orange-600 text-white"
+              size="lg" 
+              className="bg-primary hover:bg-primary/90 px-6 py-2 text-lg font-semibold" 
+              onClick={goToRegister}
+            >
+              REGISTRAR
+            </Button>
+            <Button 
+              size="lg"
+              className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 text-lg font-semibold"
               onClick={goToQuoteRequest}
             >
-              Solicitar Cotações
+              SOLICITAR COTAÇÕES
             </Button>
           </div>
           <div className="md:hidden">
@@ -137,13 +143,13 @@ export default function LandingPage() {
                 <div className="flex gap-2">
                   <Button 
                     variant="outline" 
-                    className="border-2 border-white text-white bg-transparent hover:bg-white hover:text-slate-900 py-3 text-sm font-semibold flex-1"
+                    className="border-2 border-white text-white bg-transparent hover:bg-white hover:text-slate-900 py-4 text-base font-bold flex-1"
                     onClick={goToLogin}
                   >
-                    FAZER LOGIN
+                    🔑 FAZER LOGIN
                   </Button>
                   <Button 
-                    className="bg-orange-500 hover:bg-orange-600 text-white py-3 text-sm font-semibold flex-1"
+                    className="bg-orange-500 hover:bg-orange-600 text-white py-4 text-base font-semibold flex-1"
                     onClick={goToQuoteRequest}
                   >
                     COTAÇÕES

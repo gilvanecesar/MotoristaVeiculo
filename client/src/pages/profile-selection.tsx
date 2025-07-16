@@ -531,15 +531,15 @@ export default function ProfileSelection() {
       <div className="max-w-4xl w-full">
         {!selectedProfile ? (
           <div className="text-center space-y-8">
-            {/* Link para usuários existentes */}
-            <div className="mb-4">
-              <p className="text-gray-600 mb-2">Já tem uma conta?</p>
+            {/* Link para usuários existentes - DESTAQUE */}
+            <div className="mb-6 bg-white rounded-lg shadow-lg p-6 border-2 border-blue-200">
+              <p className="text-gray-700 mb-4 text-lg font-medium">Já tem uma conta?</p>
               <Button 
-                variant="outline" 
+                size="lg"
                 onClick={() => setLocation("/login")}
-                className="border-blue-500 text-blue-600 hover:bg-blue-50"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg font-semibold shadow-md hover:shadow-lg transition-all duration-200"
               >
-                Fazer Login
+                🔑 FAZER LOGIN
               </Button>
             </div>
             
