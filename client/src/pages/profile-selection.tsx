@@ -535,9 +535,10 @@ export default function ProfileSelection() {
             <div className="mb-4">
               <p className="text-gray-600 mb-2">Já tem uma conta?</p>
               <Button 
+                size="lg"
                 variant="outline" 
                 onClick={() => setLocation("/login")}
-                className="border-blue-500 text-blue-600 hover:bg-blue-50"
+                className="border-blue-500 text-blue-600 hover:bg-blue-50 px-8 py-3 text-lg font-medium"
               >
                 Fazer Login
               </Button>
