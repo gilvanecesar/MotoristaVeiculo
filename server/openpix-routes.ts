@@ -59,7 +59,7 @@ export async function getOpenPixApiInfo(req: Request, res: Response) {
       apiInfo.status.apiConnection = 'Erro na conexão';
     }
 
-    console.log('Informações da API OpenPix:', apiInfo);
+    // Dados da API carregados com sucesso
     res.json(apiInfo);
   } catch (error) {
     console.error('Erro ao buscar informações da API OpenPix:', error);
@@ -90,13 +90,13 @@ export function setupOpenPixRoutes(app: Express) {
 
   // Webhook com ID específico usado pela OpenPix (no padrão /api/)
   app.post('/api/webhook/7a2c033e-98e4-4ce2-b499-2e6dd16556f4', (req, res) => {
-    console.log('🎯 Webhook OpenPix com ID específico atingido - dados recebidos:', JSON.stringify(req.body, null, 2));
+    // Webhook OpenPix recebido
     handleOpenPixWebhook(req, res);
   });
 
   // Webhook genérico para qualquer ID (no padrão /api/)
   app.post('/api/webhook/:webhookId', (req, res) => {
-    console.log(`🎯 Webhook genérico atingido - ID: ${req.params.webhookId} - dados recebidos:`, JSON.stringify(req.body, null, 2));
+    // Webhook genérico processado
     handleOpenPixWebhook(req, res);
   });
 

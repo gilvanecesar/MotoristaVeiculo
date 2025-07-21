@@ -120,13 +120,7 @@ export async function initEmailService() {
         emailConfig.socketTimeout = parseInt(process.env.EMAIL_SOCKET_TIMEOUT);
       }
 
-      console.log(`[EMAIL-CONFIG] Configuração SMTP:`, {
-        host: emailConfig.host,
-        port: emailConfig.port,
-        secure: emailConfig.secure,
-        service: emailConfig.service || 'custom',
-        user: process.env.EMAIL_USER
-      });
+      // Configuração SMTP carregada (dados sensíveis omitidos)
       
       transporter = nodemailer.createTransport(emailConfig);
       
