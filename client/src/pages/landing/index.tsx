@@ -25,7 +25,7 @@ export default function LandingPage() {
   const [_, setLocation] = useLocation();
 
   const goToLogin = () => {
-    setLocation("/auth");
+    setLocation("/login");
   };
 
   const goToRegister = () => {
