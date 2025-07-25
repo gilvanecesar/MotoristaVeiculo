@@ -583,6 +583,15 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Bug de associação cliente-usuário identificado e corrigido: clientes criados agora são automaticamente associados
 ✓ Sistema de exclusão de usuários teste aprimorado: remoção completa de registros relacionados funcionando
 ✓ Validação de fluxo agenciador completada: cadastro → pagamento → cliente → desbloqueio de menus
+✓ BUG CRÍTICO DE ASSOCIAÇÃO CLIENTE-USUÁRIO IDENTIFICADO E CORRIGIDO COMPLETAMENTE
+✓ Problema raiz descoberto: middleware de desenvolvimento forçava req.user.id = 385 para todas as sessões
+✓ Sistema estava associando mesmo cliente (ID correto) a múltiplos usuários devido ao bypass problemático
+✓ Todos os bypasses de desenvolvimento removidos do arquivo server/middlewares.ts
+✓ Autenticação real via Passport.js restaurada em vez de ID hardcoded
+✓ Teste completo validado: usuários 538-540 com clientes 103-105 funcionando corretamente
+✓ Sistema de associação automática cliente-usuário 100% funcional após correção
+✓ Agenciadores agora criam clientes corretamente associados ao seu próprio ID de usuário
+✓ Fluxo completo testado: cadastro → pagamento → criação cliente → desbloqueio menus
 ```
 
 ## User Preferences
