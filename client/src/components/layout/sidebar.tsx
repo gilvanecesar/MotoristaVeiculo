@@ -265,7 +265,6 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
             
             // Verificar se deve bloquear o acesso para agenciadores sem cliente
             const shouldBlock = needsClientRegistration && 
-              item.path !== "/home" && 
               item.path !== "/clients/new" && 
               item.path !== "/clients";
             
