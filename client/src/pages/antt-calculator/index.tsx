@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -9,19 +9,21 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Calculator, MapPin, Truck, AlertCircle, DollarSign, Route } from "lucide-react";
+import { Calculator, MapPin, Truck, AlertCircle, DollarSign, Route, Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { ANTT_CARGO_TYPES } from "@shared/schema";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // Schema para validação do formulário
 const anttCalculatorSchema = z.object({
   cargoType: z.string().min(1, "Selecione o tipo de carga"),
   axles: z.string().min(1, "Selecione o número de eixos"),
-  distance: z.string().min(1, "Distância é obrigatória")
-    .refine(val => !isNaN(Number(val)) && Number(val) > 0, "Digite uma distância válida"),
-  origin: z.string().min(3, "Origem deve ter pelo menos 3 caracteres"),
-  destination: z.string().min(3, "Destino deve ter pelo menos 3 caracteres"),
+  originCity: z.string().min(1, "Selecione a cidade de origem"),
+  destinationCity: z.string().min(1, "Selecione a cidade de destino"),
   isComposition: z.boolean().default(false),
   isHighPerformance: z.boolean().default(false),
   emptyReturn: z.boolean().default(false),
@@ -62,11 +64,34 @@ interface CalculationResult {
   totalValue: number;
   distance: number;
   route: string;
+  calculation: {
+    baseRate: number;
+    loadUnloadCoefficient: number;
+    distanceCoefficient: number;
+    adjustments: any[];
+  };
+}
+
+interface IBGECity {
+  id: number;
+  nome: string;
+  microrregiao: {
+    mesorregiao: {
+      UF: {
+        sigla: string;
+        nome: string;
+      };
+    };
+  };
 }
 
 export default function AnttCalculatorPage() {
   const [calculationResult, setCalculationResult] = useState<CalculationResult | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
+  const [cities, setCities] = useState<IBGECity[]>([]);
+  const [loadingCities, setLoadingCities] = useState(false);
+  const [openOrigin, setOpenOrigin] = useState(false);
+  const [openDestination, setOpenDestination] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<AnttCalculatorForm>({
@@ -74,29 +99,61 @@ export default function AnttCalculatorPage() {
     defaultValues: {
       cargoType: "",
       axles: "",
-      distance: "",
-      origin: "",
-      destination: "",
+      originCity: "",
+      destinationCity: "",
       isComposition: false,
       isHighPerformance: false,
       emptyReturn: false,
     },
   });
 
+  // Carregar cidades do IBGE
+  useEffect(() => {
+    const loadCities = async () => {
+      setLoadingCities(true);
+      try {
+        const response = await fetch('/api/ibge/cities');
+        if (response.ok) {
+          const data = await response.json();
+          setCities(data);
+        } else {
+          console.error('Erro ao carregar cidades');
+        }
+      } catch (error) {
+        console.error('Erro ao carregar cidades:', error);
+      } finally {
+        setLoadingCities(false);
+      }
+    };
+
+    loadCities();
+  }, []);
+
   const onSubmit = async (data: AnttCalculatorForm) => {
     setIsCalculating(true);
     
     try {
+      const payload = {
+        cargoType: data.cargoType,
+        axles: data.axles,
+        originCity: data.originCity,
+        destinationCity: data.destinationCity,
+        isComposition: data.isComposition,
+        isHighPerformance: data.isHighPerformance,
+        emptyReturn: data.emptyReturn
+      };
+
       const response = await fetch("/api/antt/calculate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-        throw new Error("Erro ao calcular frete");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Erro ao calcular frete");
       }
 
       const result = await response.json();
@@ -110,7 +167,7 @@ export default function AnttCalculatorPage() {
       console.error("Erro ao calcular:", error);
       toast({
         title: "Erro no cálculo",
-        description: "Não foi possível calcular o frete. Tente novamente.",
+        description: error instanceof Error ? error.message : "Não foi possível calcular o frete. Tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -154,16 +211,65 @@ export default function AnttCalculatorPage() {
                   {/* Origem */}
                   <FormField
                     control={form.control}
-                    name="origin"
+                    name="originCity"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="flex flex-col">
                         <FormLabel className="flex items-center gap-2">
                           <MapPin className="h-4 w-4" />
-                          Origem
+                          Cidade de Origem
                         </FormLabel>
-                        <FormControl>
-                          <Input placeholder="Ex: Betim-MG" {...field} />
-                        </FormControl>
+                        <Popover open={openOrigin} onOpenChange={setOpenOrigin}>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                className={cn(
+                                  "w-full justify-between",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value
+                                  ? cities.find((city) => `${city.nome}-${city.microrregiao.mesorregiao.UF.sigla}` === field.value)
+                                    ? `${cities.find((city) => `${city.nome}-${city.microrregiao.mesorregiao.UF.sigla}` === field.value)?.nome} - ${cities.find((city) => `${city.nome}-${city.microrregiao.mesorregiao.UF.sigla}` === field.value)?.microrregiao.mesorregiao.UF.sigla}`
+                                    : "Selecione a cidade..."
+                                  : "Selecione a cidade..."}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-full p-0">
+                            <Command>
+                              <CommandInput placeholder="Buscar cidade..." />
+                              <CommandList>
+                                <CommandEmpty>Nenhuma cidade encontrada.</CommandEmpty>
+                                <CommandGroup>
+                                  {cities.map((city) => {
+                                    const cityValue = `${city.nome}-${city.microrregiao.mesorregiao.UF.sigla}`;
+                                    return (
+                                      <CommandItem
+                                        key={city.id}
+                                        value={cityValue}
+                                        onSelect={() => {
+                                          form.setValue("originCity", cityValue);
+                                          setOpenOrigin(false);
+                                        }}
+                                      >
+                                        <Check
+                                          className={cn(
+                                            "mr-2 h-4 w-4",
+                                            field.value === cityValue ? "opacity-100" : "opacity-0"
+                                          )}
+                                        />
+                                        {city.nome} - {city.microrregiao.mesorregiao.UF.sigla}
+                                      </CommandItem>
+                                    );
+                                  })}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -172,16 +278,65 @@ export default function AnttCalculatorPage() {
                   {/* Destino */}
                   <FormField
                     control={form.control}
-                    name="destination"
+                    name="destinationCity"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="flex flex-col">
                         <FormLabel className="flex items-center gap-2">
                           <Route className="h-4 w-4" />
-                          Destino
+                          Cidade de Destino
                         </FormLabel>
-                        <FormControl>
-                          <Input placeholder="Ex: Guarulhos-SP" {...field} />
-                        </FormControl>
+                        <Popover open={openDestination} onOpenChange={setOpenDestination}>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                className={cn(
+                                  "w-full justify-between",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value
+                                  ? cities.find((city) => `${city.nome}-${city.microrregiao.mesorregiao.UF.sigla}` === field.value)
+                                    ? `${cities.find((city) => `${city.nome}-${city.microrregiao.mesorregiao.UF.sigla}` === field.value)?.nome} - ${cities.find((city) => `${city.nome}-${city.microrregiao.mesorregiao.UF.sigla}` === field.value)?.microrregiao.mesorregiao.UF.sigla}`
+                                    : "Selecione a cidade..."
+                                  : "Selecione a cidade..."}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-full p-0">
+                            <Command>
+                              <CommandInput placeholder="Buscar cidade..." />
+                              <CommandList>
+                                <CommandEmpty>Nenhuma cidade encontrada.</CommandEmpty>
+                                <CommandGroup>
+                                  {cities.map((city) => {
+                                    const cityValue = `${city.nome}-${city.microrregiao.mesorregiao.UF.sigla}`;
+                                    return (
+                                      <CommandItem
+                                        key={city.id}
+                                        value={cityValue}
+                                        onSelect={() => {
+                                          form.setValue("destinationCity", cityValue);
+                                          setOpenDestination(false);
+                                        }}
+                                      >
+                                        <Check
+                                          className={cn(
+                                            "mr-2 h-4 w-4",
+                                            field.value === cityValue ? "opacity-100" : "opacity-0"
+                                          )}
+                                        />
+                                        {city.nome} - {city.microrregiao.mesorregiao.UF.sigla}
+                                      </CommandItem>
+                                    );
+                                  })}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -242,20 +397,15 @@ export default function AnttCalculatorPage() {
                   />
                 </div>
 
-                {/* Distância */}
-                <FormField
-                  control={form.control}
-                  name="distance"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Distância (km)</FormLabel>
-                      <FormControl>
-                        <Input type="number" placeholder="Ex: 580" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {/* Informação sobre cálculo automático de distância */}
+                <div className="col-span-full">
+                  <Alert>
+                    <Route className="h-4 w-4" />
+                    <AlertDescription>
+                      A distância será calculada automaticamente com base nas cidades selecionadas.
+                    </AlertDescription>
+                  </Alert>
+                </div>
 
                 {/* Opções avançadas */}
                 <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
@@ -328,10 +478,22 @@ export default function AnttCalculatorPage() {
                 <div className="flex gap-3">
                   <Button 
                     type="submit" 
-                    disabled={isCalculating}
+                    disabled={isCalculating || loadingCities}
                     className="flex-1"
                   >
-                    {isCalculating ? "Calculando..." : "Calcular Frete"}
+                    {isCalculating ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Calculando...
+                      </>
+                    ) : loadingCities ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Carregando cidades...
+                      </>
+                    ) : (
+                      "Calcular Frete"
+                    )}
                   </Button>
                   <Button 
                     type="button" 
@@ -414,10 +576,10 @@ export default function AnttCalculatorPage() {
               <CardTitle className="text-lg">Como usar a calculadora</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
-              <p>• <strong>Origem e Destino:</strong> Informe as cidades de origem e destino</p>
+              <p>• <strong>Origem e Destino:</strong> Selecione as cidades usando a busca integrada ao IBGE</p>
               <p>• <strong>Tipo de Carga:</strong> Selecione conforme a classificação ANTT</p>
               <p>• <strong>Número de Eixos:</strong> Considere todos os eixos do veículo</p>
-              <p>• <strong>Distância:</strong> Insira a quilometragem da rota</p>
+              <p>• <strong>Distância:</strong> Calculada automaticamente entre as cidades</p>
               <p>• <strong>Opções Avançadas:</strong> Marque conforme características do transporte</p>
             </CardContent>
           </Card>
