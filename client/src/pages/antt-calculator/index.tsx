@@ -573,14 +573,11 @@ export default function AnttCalculatorPage() {
                     <span>Valor do Frete:</span>
                     <span className="font-medium">{formatCurrency(calculationResult.freightValue)}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Pedágios:</span>
-                    <span className="font-medium">{formatCurrency(calculationResult.tollValue)}</span>
-                  </div>
+
                   <div className="border-t pt-2">
                     <div className="flex justify-between text-lg font-bold">
-                      <span>Total:</span>
-                      <span className="text-green-600">{formatCurrency(calculationResult.totalValue)}</span>
+                      <span>Valor ANTT:</span>
+                      <span className="text-green-600">{formatCurrency(calculationResult.freightValue)}</span>
                     </div>
                   </div>
                 </div>

@@ -3964,13 +3964,10 @@ async function calculateAnttFreight(params: AnttCalculationParams): Promise<Antt
       adjustments.push({ type: 'Retorno Vazio', factor: 0.85 });
     }
 
-    // Calcular pedágios estimados
-    const tollInfo = await calculateTollCosts(params.origin, params.destination, axles);
-
     const result: AnttCalculationResult = {
       freightValue: Math.round(freightValue * 100) / 100,
-      tollValue: tollInfo.totalCost,
-      totalValue: Math.round((freightValue + tollInfo.totalCost) * 100) / 100,
+      tollValue: 0, // Pedágio removido conforme solicitado
+      totalValue: Math.round(freightValue * 100) / 100,
       distance: params.distance,
       route: `${params.origin} → ${params.destination}`,
       calculation: {

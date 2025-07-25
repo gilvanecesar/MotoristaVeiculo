@@ -537,6 +537,8 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Calculadora agora produz valores idênticos à calculadora oficial da ANTT
 ✓ Bug de múltiplas chamadas automáticas corrigido com proteções robustas
 ✓ Proteção contra chamadas simultâneas e debounce implementado
+✓ Cálculo de pedágio removido para evitar variação de valores aleatórios
+✓ Calculadora agora exibe apenas o valor do frete ANTT sem variações
 ```
 
 ## User Preferences
