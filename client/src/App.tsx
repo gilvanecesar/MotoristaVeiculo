@@ -8,6 +8,9 @@ import { AuthProvider as ClientAuthProvider } from "@/lib/auth-context";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { ClientRegistrationCheck } from "@/components/client-registration-check";
 import { SubscriptionStatusBanner } from "@/components/ui/subscription-status-banner";
+import { useEffect } from "react";
+import { initGA } from "@/lib/analytics";
+import { useAnalytics } from "@/hooks/use-analytics";
 
 import NotFound from "@/pages/not-found";
 import AppLayout from "@/components/layout/app-layout";
@@ -74,6 +77,9 @@ import CreateQuotePage from "@/pages/quotes/create";
 import PublicQuoteRequest from "@/pages/public/quote-request";
 
 function Router() {
+  // Track page views when routes change
+  useAnalytics();
+  
   return (
     <Switch>
       <Route path="/" component={LandingPage} />
@@ -149,6 +155,16 @@ function App() {
   const isAuthPage = location === "/auth" || location === "/login" || location === "/reset-password";
   const isCheckoutPage = location === "/checkout";
   const isPublicPage = isLandingPage || isAuthPage || isCheckoutPage || location.startsWith("/freight/") || location.startsWith("/public/");
+
+  // Initialize Google Analytics when app loads
+  useEffect(() => {
+    // Verify required environment variable is present
+    if (!import.meta.env.VITE_GA_MEASUREMENT_ID) {
+      console.warn('Missing required Google Analytics key: VITE_GA_MEASUREMENT_ID');
+    } else {
+      initGA();
+    }
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

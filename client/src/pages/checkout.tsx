@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, QrCode, Check, ArrowLeft, Copy } from "lucide-react";
 import { useLocation } from 'wouter';
 import { Badge } from "@/components/ui/badge";
+import { trackEvent } from "@/lib/analytics";
 
 export default function Checkout() {
   const { toast } = useToast();
@@ -226,6 +227,7 @@ export default function Checkout() {
 
   const createPixPayment = async () => {
     setIsCreatingPayment(true);
+    trackEvent('payment', 'checkout', 'pix_creation_started');
     try {
       const response = await apiRequest("POST", "/api/openpix/create-charge", {
         planType: selectedPlan,
@@ -237,11 +239,13 @@ export default function Checkout() {
       if (response.ok) {
         setPixCharge(data);
         setPaymentStatus('processing');
+        trackEvent('payment', 'checkout', 'pix_creation_success');
         toast({
           title: "PIX gerado com sucesso",
           description: "Escaneie o QR Code ou copie o código PIX para pagar",
         });
       } else {
+        trackEvent('payment', 'checkout', 'pix_creation_error');
         throw new Error(data.details || "Erro ao criar cobrança PIX");
       }
     } catch (error: any) {
@@ -260,6 +264,7 @@ export default function Checkout() {
     if (pixCharge?.charge?.brCode) {
       try {
         await navigator.clipboard.writeText(pixCharge.charge.brCode);
+        trackEvent('payment', 'checkout', 'pix_code_copy');
         toast({
           title: "Código copiado",
           description: "Código PIX copiado para a área de transferência",
@@ -295,6 +300,7 @@ export default function Checkout() {
           intervalRef.current = null;
         }
         
+        trackEvent('conversion', 'checkout', 'payment_completed');
         toast({
           title: "Pagamento confirmado!",
           description: "Sua assinatura foi ativada com sucesso. Redirecionando...",

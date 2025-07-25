@@ -20,19 +20,23 @@ import { TestimonialSection } from "./TestimonialSection";
 import { StatsSection } from "./StatsSection";
 import { RecentFreightsSection } from "./RecentFreightsSection";
 import DashboardPreview from "@/assets/dashboard-preview";
+import { trackEvent } from "@/lib/analytics";
 
 export default function LandingPage() {
   const [_, setLocation] = useLocation();
 
   const goToLogin = () => {
+    trackEvent('navigation', 'landing_page', 'click_login');
     setLocation("/login");
   };
 
   const goToRegister = () => {
+    trackEvent('navigation', 'landing_page', 'click_register');
     setLocation("/auth");
   };
 
   const goToQuoteRequest = () => {
+    trackEvent('navigation', 'landing_page', 'click_quote_request');
     setLocation("/public/quote-request");
   };
 
