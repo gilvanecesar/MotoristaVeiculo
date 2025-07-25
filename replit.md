@@ -539,7 +539,9 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Proteção contra chamadas simultâneas e debounce implementado
 ✓ Cálculo de pedágio removido para evitar variação de valores aleatórios
 ✓ Calculadora agora exibe apenas o valor do frete ANTT sem variações
-✓ Coeficientes para 5 eixos articulado ajustados para valor oficial R$ 3.746,79
+✓ Coeficientes para 5 eixos corrigidos com valores oficiais ANTT
+✓ CCD: 5,6013 R$/km e CC: 498,04 R$ (dados oficiais fornecidos pelo usuário)
+✓ Teste 500km: R$ 3.298,69 EXATO conforme documentação oficial
 ```
 
 ## User Preferences
