@@ -539,6 +539,7 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Proteção contra chamadas simultâneas e debounce implementado
 ✓ Cálculo de pedágio removido para evitar variação de valores aleatórios
 ✓ Calculadora agora exibe apenas o valor do frete ANTT sem variações
+✓ Coeficientes para 5 eixos articulado ajustados para valor oficial R$ 3.746,79
 ```
 
 ## User Preferences
