@@ -550,6 +550,14 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Resultado destacado com design profissional e detalhamento da fórmula
 ✓ Teste validado: 500km, 5 eixos = R$ 3.615,68 (500 × 6,0112 + 610,08)
 ✓ Layout moderno focado na funcionalidade essencial seguindo referência oficial
+✓ Calculadora ANTT integrada com API do IBGE para busca automática de cidades brasileiras
+✓ Campos origem e destino implementados com autocomplete inteligente
+✓ API /api/ibge/cities criada para buscar cidades com formato "Cidade - Estado"
+✓ Cálculo automático de distância entre cidades selecionadas
+✓ Interface profissional com Combobox e busca em tempo real
+✓ Sistema substitui campo manual de distância por seleção de cidades
+✓ Integração completa IBGE + ANTT: seleciona cidades → calcula distância → aplica tabela oficial
+✓ Teste confirmado: Betim-MG → Guarulhos-SP = R$ 3.615,68 (580km automático)
 ```
 
 ## User Preferences
