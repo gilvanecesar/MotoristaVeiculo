@@ -18,6 +18,7 @@ export default function Checkout() {
   const [isManualCheck, setIsManualCheck] = useState(false);
   const [isSimulating, setIsSimulating] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   
   // Get the plan from URL query parameter
@@ -43,6 +44,9 @@ export default function Checkout() {
         const userResponse = await apiRequest("GET", "/api/user");
         const userData = await userResponse.json();
         
+        // Salvar dados do usuário para controle de acesso
+        setUserProfile(userData);
+        
         if (userData.subscriptionActive === true) {
           console.log('Usuário já tem assinatura ativa, redirecionando para /home...');
           
@@ -60,6 +64,7 @@ export default function Checkout() {
         }
       } catch (error) {
         console.error('Erro ao verificar assinatura do usuário:', error);
+        setUserProfile(null);
       }
     };
     
@@ -635,7 +640,7 @@ export default function Checkout() {
                     )}
                   </Button>
                   
-                  {pixCharge.charge?.identifier && (
+                  {pixCharge.charge?.identifier && userProfile?.profileType === 'administrador' && (
                     <Button 
                       variant="outline" 
                       size="sm"

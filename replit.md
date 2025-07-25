@@ -558,6 +558,11 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Sistema substitui campo manual de distância por seleção de cidades
 ✓ Integração completa IBGE + ANTT: seleciona cidades → calcula distância → aplica tabela oficial
 ✓ Teste confirmado: Betim-MG → Guarulhos-SP = R$ 3.615,68 (580km automático)
+✓ CORREÇÃO CRÍTICA DE SEGURANÇA: Botão simular pagamento restrito apenas a administradores
+✓ Sistema de controle de acesso implementado na página checkout baseado em profileType
+✓ Funcionalidade de simulação removida completamente do MercadoPagoButton
+✓ Verificação de usuário logado implementada para controlar exibição do botão de teste
+✓ Segurança aprimorada: usuários regulares nunca veem opções de simulação de pagamento
 ```
 
 ## User Preferences
