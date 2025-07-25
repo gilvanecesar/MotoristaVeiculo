@@ -580,6 +580,9 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Cliente ID 101 criado com sucesso para usuário agenciador ID 535 com tipo "agente" conforme especificação
 ✓ Sistema de bloqueio 100% funcional: todos os menus bloqueados até cadastro de cliente concluído
 ✓ Teste completo validado: agenciador pode criar cliente tipo "agente" e sistema desbloqueado automaticamente
+✓ Bug de associação cliente-usuário identificado e corrigido: clientes criados agora são automaticamente associados
+✓ Sistema de exclusão de usuários teste aprimorado: remoção completa de registros relacionados funcionando
+✓ Validação de fluxo agenciador completada: cadastro → pagamento → cliente → desbloqueio de menus
 ```
 
 ## User Preferences
