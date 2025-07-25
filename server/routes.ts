@@ -623,6 +623,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const clientData = req.body;
       
+      // DEBUG: Log detalhado da sessão do usuário
+      console.log(`[DEBUG] Criando cliente - req.user:`, {
+        id: req.user?.id,
+        email: req.user?.email,
+        name: req.user?.name,
+        sessionData: req.session?.passport?.user
+      });
+      
       // Validar campos obrigatórios
       if (!clientData.name || !clientData.cnpj || !clientData.email || !clientData.phone) {
         return res.status(400).json({ 
