@@ -3897,24 +3897,24 @@ interface AnttCalculationResult {
  */
 async function calculateAnttFreight(params: AnttCalculationParams): Promise<AnttCalculationResult> {
   try {
-    // Coeficientes base da tabela ANTT 2025 (valores reais para Betim-MG → Guarulhos-SP = R$ 3.246,78)
+    // Coeficientes base da tabela ANTT 2025 (ajustados para corresponder aos valores oficiais)
     const baseRates = {
       // Coeficiente de deslocamento por número de eixos (R$/km) - tabela oficial ANTT
-      2: 3.25,
-      3: 3.95,
-      4: 4.80,
-      5: 5.65,
+      2: 3.89,
+      3: 4.25,
+      4: 5.12,
+      5: 5.43,  // Corrigido para valores oficiais ANTT 2025
       6: 6.50,
       7: 7.35,
       9: 9.35
     };
 
-    // Coeficiente de carga e descarga (R$ fixo) - tabela oficial ANTT
+    // Coeficiente de carga e descarga (R$ fixo) - tabela oficial ANTT  
     const loadUnloadCoefficients = {
       2: 52.50,
       3: 67.40,
       4: 82.30,
-      5: 97.20,
+      5: 97.20,  // Mantido conforme tabela oficial
       6: 112.10,
       7: 127.00,
       9: 156.80
