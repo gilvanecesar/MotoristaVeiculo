@@ -1,12 +1,14 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CarFront, Users, BarChart3, ClipboardList, Truck, Building2, AlertTriangle, X } from "lucide-react";
+import { CarFront, Users, BarChart3, ClipboardList, Truck, Building2, AlertTriangle, X, AlertCircle } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { useAgentClientCheck } from "@/hooks/use-agent-client-check";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function Home() {
   const { user } = useAuth();
+  const { needsClientRegistration } = useAgentClientCheck();
   const [_, setLocation] = useLocation();
   
   // Verifica se o usuário tem uma assinatura expirada
@@ -27,6 +29,26 @@ export default function Home() {
   
   return (
     <div className="space-y-6">
+      {/* Alerta para agenciadores que precisam cadastrar cliente */}
+      {needsClientRegistration && (
+        <Alert className="mb-4 border-orange-200 bg-orange-50 text-orange-800">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Cadastro de cliente necessário</AlertTitle>
+          <AlertDescription>
+            Para acessar todas as funcionalidades do sistema, você precisa primeiro cadastrar um cliente.
+            <Link href="/clients/new">
+              <Button 
+                variant="default" 
+                size="sm" 
+                className="mt-2 bg-orange-600 hover:bg-orange-700"
+              >
+                Cadastrar cliente agora
+              </Button>
+            </Link>
+          </AlertDescription>
+        </Alert>
+      )}
+      
       {/* Alerta de assinatura expirada */}
       {hasExpiredSubscription && (
         <Alert variant="destructive" className="mb-4">

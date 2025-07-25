@@ -187,7 +187,7 @@ export default function Checkout() {
       
       // Configurar verificação automática a cada 5 segundos (aumentado para reduzir carga)
       intervalRef.current = setInterval(() => {
-        if (!isRedirecting && paymentStatus !== 'completed') {
+        if (!isRedirecting && paymentStatus === 'processing') {
           checkPaymentStatus();
         } else {
           // Limpar intervalo se já estiver redirecionando ou completado

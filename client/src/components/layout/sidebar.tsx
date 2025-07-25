@@ -13,6 +13,7 @@ import { useTheme } from "@/lib/theme-provider";
 import { useAuth } from "@/hooks/use-auth";
 
 import { useToast } from "@/hooks/use-toast";
+import { useAgentClientCheck } from "@/hooks/use-agent-client-check";
 import logoImage from "../../assets/logo.png";
 import { 
   DropdownMenu,
@@ -144,6 +145,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   const { theme, toggleTheme } = useTheme();
   const { user, logoutMutation } = useAuth();
   const { toast } = useToast();
+  const { needsClientRegistration, handleProtectedClick } = useAgentClientCheck();
   
   const [_, navigate] = useLocation();
   
@@ -261,21 +263,43 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
             const Icon = item.icon;
             const active = isActive(item.path);
             
+            // Verificar se deve bloquear o acesso para agenciadores sem cliente
+            const shouldBlock = needsClientRegistration && 
+              item.path !== "/home" && 
+              item.path !== "/clients/new" && 
+              item.path !== "/clients";
+            
             return (
               <div key={item.path}>
-                <Link href={item.path}>
+                {shouldBlock ? (
+                  // Menu bloqueado para agenciadores sem cliente
                   <Button
-                    variant={active ? "secondary" : "ghost"}
+                    variant="ghost"
                     className={cn(
-                      "w-full justify-start gap-3 text-white/80 hover:text-white hover:bg-cyan-500/50 transition-all duration-200 font-medium",
-                      collapsed && "justify-center px-2",
-                      active && "bg-cyan-400 text-cyan-900 hover:bg-cyan-400/90 shadow-sm"
+                      "w-full justify-start gap-3 text-white/40 cursor-not-allowed opacity-50",
+                      collapsed && "justify-center px-2"
                     )}
+                    onClick={handleProtectedClick(() => {}, item.label)}
                   >
                     <Icon className="h-4 w-4 flex-shrink-0" />
                     {!collapsed && <span>{item.label}</span>}
                   </Button>
-                </Link>
+                ) : (
+                  // Menu normal
+                  <Link href={item.path}>
+                    <Button
+                      variant={active ? "secondary" : "ghost"}
+                      className={cn(
+                        "w-full justify-start gap-3 text-white/80 hover:text-white hover:bg-cyan-500/50 transition-all duration-200 font-medium",
+                        collapsed && "justify-center px-2",
+                        active && "bg-cyan-400 text-cyan-900 hover:bg-cyan-400/90 shadow-sm"
+                      )}
+                    >
+                      <Icon className="h-4 w-4 flex-shrink-0" />
+                      {!collapsed && <span>{item.label}</span>}
+                    </Button>
+                  </Link>
+                )}
                 
                 {/* Botão Adicionar Cotação para embarcadores no menu Cotações */}
                 {item.label === "Cotações" && isShipper && !collapsed && (
