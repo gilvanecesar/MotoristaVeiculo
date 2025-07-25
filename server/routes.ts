@@ -663,6 +663,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           clientId: client.id
         });
         
+        // Atualizar também o objeto req.user para refletir a mudança na sessão atual
+        req.user.clientId = client.id;
+        
         console.log(`Cliente ID ${client.id} associado ao usuário ID ${req.user.id}`);
       }
       
