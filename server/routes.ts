@@ -3901,7 +3901,7 @@ async function calculateAnttFreight(params: AnttCalculationParams): Promise<Antt
     const baseRates = {
       // Coeficiente de deslocamento por número de eixos (R$/km) - tabela oficial ANTT
       2: 3.89,
-      3: 4.25,
+      3: 5.482,  // Corrigido: (3246.78 - 67.40) / 580 = 5.482 R$/km
       4: 5.12,
       5: 5.43,  // Corrigido para valores oficiais ANTT 2025
       6: 6.50,
