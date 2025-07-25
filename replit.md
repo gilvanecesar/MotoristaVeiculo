@@ -574,6 +574,12 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Formulários administrativos atualizados removendo campos de configuração Stripe
 ✓ Usuário ID 533 (gil teste - comercial@4glogistica.com.br) excluído completamente do sistema
 ✓ Registro de pagamento OpenPix associado (ID 57) removido antes da exclusão do usuário
+✓ Bug crítico no menu Home corrigido: agenciadores sem cliente não podem mais acessar Home
+✓ Sistema de tipo de cliente para agenciadores corrigido: sempre criam clientes tipo "agente" (fixo)
+✓ Campo seleção de tipo oculto para agenciadores - tipo automaticamente definido como "agente"
+✓ Cliente ID 101 criado com sucesso para usuário agenciador ID 535 com tipo "agente" conforme especificação
+✓ Sistema de bloqueio 100% funcional: todos os menus bloqueados até cadastro de cliente concluído
+✓ Teste completo validado: agenciador pode criar cliente tipo "agente" e sistema desbloqueado automaticamente
 ```
 
 ## User Preferences

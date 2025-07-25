@@ -135,7 +135,8 @@ export default function ClientForm() {
     notes: "",
     logoUrl: user?.avatarUrl || "",
     cnpj: "",
-    clientType: CLIENT_TYPES.SHIPPER,
+    // Agenciadores criam clientes do tipo "agente", outros perfis criam "embarcador"
+    clientType: user?.profileType === "agenciador" ? CLIENT_TYPES.AGENT : CLIENT_TYPES.SHIPPER,
   };
 
   // Registra os valores iniciais no console para debug
@@ -504,35 +505,37 @@ export default function ClientForm() {
             }} className="space-y-6">
               <h3 className="text-lg font-medium">Dados Básicos</h3>
               <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
-                {/* Client Type */}
-                <FormField
-                  control={form.control}
-                  name="clientType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tipo de Cliente</FormLabel>
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o tipo de cliente" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value={CLIENT_TYPES.SHIPPER}>Embarcador</SelectItem>
-                          <SelectItem value={CLIENT_TYPES.CARRIER}>Transportador</SelectItem>
-                          <SelectItem value={CLIENT_TYPES.AGENT}>Agente</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        Tipo de operação do cliente no sistema.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {/* Client Type - Oculto para agenciadores (sempre "agente") */}
+                {user?.profileType !== "agenciador" && (
+                  <FormField
+                    control={form.control}
+                    name="clientType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tipo de Cliente</FormLabel>
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o tipo de cliente" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value={CLIENT_TYPES.SHIPPER}>Embarcador</SelectItem>
+                            <SelectItem value={CLIENT_TYPES.CARRIER}>Transportador</SelectItem>
+                            <SelectItem value={CLIENT_TYPES.AGENT}>Agente</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Tipo de operação do cliente no sistema.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
                 
                 {/* Name */}
                 <FormField
