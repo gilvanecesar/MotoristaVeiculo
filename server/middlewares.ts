@@ -3,19 +3,8 @@ import { storage } from "./storage";
 
 // Middleware para verificar se o usuário está autenticado
 export function isAuthenticated(req: Request, res: Response, next: NextFunction) {
-  // Bypass temporário para desenvolvimento - remover em produção
-  if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
-    // Simular usuário administrador para desenvolvimento
-    req.user = {
-      id: 385,
-      email: 'gilvane.cesar@gmail.com',
-      name: 'Gilvane César',
-      profileType: 'administrador',
-      isActive: true,
-      subscriptionActive: true
-    };
-    return next();
-  }
+  // CORREÇÃO: Desativando bypass que causava conflito de sessões
+  // Para desenvolvimento, usar autenticação real via Passport
   
   if (req.isAuthenticated()) {
     return next();
@@ -25,11 +14,6 @@ export function isAuthenticated(req: Request, res: Response, next: NextFunction)
 
 // Middleware para verificar se o usuário está ativo
 export function isActive(req: Request, res: Response, next: NextFunction) {
-  // Bypass temporário para desenvolvimento - remover em produção
-  if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
-    return next();
-  }
-  
   if (!req.isAuthenticated()) {
     return res.status(401).json({ message: "Não autenticado" });
   }
@@ -45,10 +29,6 @@ export function isActive(req: Request, res: Response, next: NextFunction) {
 
 // Middleware para verificar se a assinatura do usuário está ativa e não expirada
 export function hasActiveSubscription(req: Request, res: Response, next: NextFunction) {
-  // Bypass temporário para desenvolvimento - remover em produção
-  if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
-    return next();
-  }
   
   if (!req.isAuthenticated()) {
     return res.status(401).json({ message: "Não autenticado" });
@@ -178,10 +158,6 @@ export function hasActiveSubscription(req: Request, res: Response, next: NextFun
 
 // Middleware para verificar se o usuário é administrador
 export function isAdmin(req: Request, res: Response, next: NextFunction) {
-  // Bypass temporário para desenvolvimento - remover em produção
-  if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
-    return next();
-  }
   
   // Verifica se o profileType é "administrador" ou "admin"
   const profile = req.user?.profileType?.toLowerCase() || "";
@@ -203,10 +179,6 @@ export function isAdmin(req: Request, res: Response, next: NextFunction) {
 
 // Middleware para verificar se é o próprio usuário ou administrador
 export function isAdminOrSelf(req: Request, res: Response, next: NextFunction) {
-  // Bypass temporário para desenvolvimento - remover em produção
-  if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
-    return next();
-  }
   
   if (!req.isAuthenticated()) {
     return res.status(401).json({ message: "Não autenticado" });
@@ -223,10 +195,6 @@ export function isAdminOrSelf(req: Request, res: Response, next: NextFunction) {
 
 // Middleware para verificar se motorista pode criar fretes (bloquear criação)
 export function canCreateFreight(req: Request, res: Response, next: NextFunction) {
-  // Bypass temporário para desenvolvimento - remover em produção
-  if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
-    return next();
-  }
   
   if (!req.isAuthenticated()) {
     return res.status(401).json({ message: "Não autenticado" });
@@ -245,10 +213,6 @@ export function canCreateFreight(req: Request, res: Response, next: NextFunction
 }
 
 export function canCreateDriver(req: Request, res: Response, next: NextFunction) {
-  // Bypass temporário para desenvolvimento - remover em produção
-  if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
-    return next();
-  }
   
   if (!req.isAuthenticated()) {
     return res.status(401).json({ message: "Não autenticado" });
@@ -272,10 +236,6 @@ export function canCreateDriver(req: Request, res: Response, next: NextFunction)
 
 // Middleware para verificar se o usuário tem permissão para acessar um cliente
 export function hasClientAccess(req: Request, res: Response, next: NextFunction) {
-  // Bypass temporário para desenvolvimento - remover em produção
-  if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
-    return next();
-  }
   
   if (!req.isAuthenticated()) {
     return res.status(401).json({ message: "Não autenticado" });
@@ -296,10 +256,6 @@ export function hasClientAccess(req: Request, res: Response, next: NextFunction)
 
 // Middleware para verificar se o usuário tem permissão para acessar um motorista
 export function hasDriverAccess(req: Request, res: Response, next: NextFunction) {
-  // Bypass temporário para desenvolvimento - remover em produção
-  if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
-    return next();
-  }
   
   if (!req.isAuthenticated()) {
     return res.status(401).json({ message: "Não autenticado" });
