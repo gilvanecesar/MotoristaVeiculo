@@ -3795,7 +3795,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Calcular frete ANTT
   app.post("/api/antt/calculate", isAuthenticated, async (req: Request, res: Response) => {
     try {
-      const { cargoType, axles, originCity, destinationCity, isComposition, isHighPerformance, emptyReturn } = req.body;
+      const { cargoType, axles, originCity, destinationCity, transportCategory, isComposition, emptyReturn } = req.body;
 
       // Validar dados obrigatórios
       if (!cargoType || !axles || !originCity || !destinationCity) {
@@ -3824,8 +3824,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         distance,
         origin: originCity,
         destination: destinationCity,
+        transportCategory: transportCategory || 'CARGA_LOTACAO',
         isComposition: !!isComposition,
-        isHighPerformance: !!isHighPerformance,
         emptyReturn: !!emptyReturn
       });
 
@@ -3873,8 +3873,8 @@ interface AnttCalculationParams {
   distance: number;
   origin: string;
   destination: string;
+  transportCategory: string;
   isComposition: boolean;
-  isHighPerformance: boolean;
   emptyReturn: boolean;
 }
 
@@ -3911,41 +3911,70 @@ async function calculateAnttFreight(params: AnttCalculationParams): Promise<Antt
       9: 8.2680    // Valor oficial ANTT RESOLUÇÃO 6.067/2025
     };
 
-    // CC - Carga e Descarga (R$ fixo por viagem) - RESOLUÇÃO 6.067/2025 - Tabela A - Carga Geral
-    const loadUnloadCoefficients = {
-      2: 417.95,   // Valor oficial ANTT RESOLUÇÃO 6.067/2025
-      3: 509.43,   // Valor oficial ANTT RESOLUÇÃO 6.067/2025
-      4: 559.08,   // Valor oficial ANTT RESOLUÇÃO 6.067/2025
-      5: 610.08,   // Valor oficial ANTT RESOLUÇÃO 6.067/2025
-      6: 660.12,   // Valor oficial ANTT RESOLUÇÃO 6.067/2025
-      7: 752.64,   // Valor oficial ANTT RESOLUÇÃO 6.067/2025
-      8: 815.30,   // Valor oficial ANTT RESOLUÇÃO 6.067/2025 (não listado, usando estimativa)
-      9: 815.30    // Valor oficial ANTT RESOLUÇÃO 6.067/2025
+    // Coeficientes por tabela ANTT conforme RESOLUÇÃO 6.067/2025
+    const getCoefficientsForTable = (table: string, cargoType: string, axles: number) => {
+      const coefficientsTable = {
+        // Tabela A - Transporte Rodoviário de Carga Lotação
+        'A': {
+          'CARGA_GERAL': {
+            CCD: { 2: 3.6735, 3: 4.6502, 4: 5.3306, 5: 6.0112, 6: 6.7301, 7: 7.3085, 9: 8.2680 },
+            CC: { 2: 417.95, 3: 509.43, 4: 559.08, 5: 610.08, 6: 660.12, 7: 752.64, 9: 815.30 }
+          },
+          'GRANEL_SOLIDO': {
+            CCD: { 2: 3.7050, 3: 4.6875, 4: 5.3526, 5: 6.0301, 6: 6.7408, 7: 7.3130, 9: 8.2420 },
+            CC: { 2: 426.61, 3: 519.67, 4: 565.14, 5: 615.26, 6: 663.07, 7: 753.88, 9: 808.17 }
+          },
+          'GRANEL_LIQUIDO': {
+            CCD: { 2: 3.7622, 3: 4.7615, 4: 5.5685, 5: 6.1801, 6: 6.8811, 7: 7.4723, 9: 8.4114 },
+            CC: { 2: 433.79, 3: 531.46, 4: 607.41, 5: 639.41, 6: 684.54, 7: 780.59, 9: 837.65 }
+          },
+          'FRIGORIFICADA': {
+            CCD: { 2: 4.3393, 3: 5.4569, 4: 6.3427, 5: 7.1099, 6: 7.8970, 7: 8.7884, 9: 9.8648 },
+            CC: { 2: 486.21, 3: 582.22, 4: 662.76, 5: 713.06, 6: 754.06, 7: 932.67, 9: 993.46 }
+          },
+          'CONTEINERIZADA': {
+            CCD: { 3: 4.7626, 4: 5.2867, 5: 5.9579, 6: 6.6621, 7: 7.3528, 9: 8.1922 },
+            CC: { 3: 540.34, 4: 547.03, 5: 595.41, 6: 641.42, 7: 764.84, 9: 794.47 }
+          },
+          'NEOGRANEL': {
+            CCD: { 2: 3.3436, 3: 4.6495, 4: 5.3428, 5: 6.0021, 6: 6.7230, 7: 7.3493, 9: 8.2608 },
+            CC: { 2: 417.95, 3: 509.23, 4: 562.44, 5: 607.56, 6: 658.16, 7: 763.86, 9: 813.33 }
+          }
+        }
+      };
+
+      const tableData = coefficientsTable[table as keyof typeof coefficientsTable];
+      if (!tableData) return null;
+
+      const cargoData = tableData[cargoType as keyof typeof tableData];
+      if (!cargoData) return tableData['CARGA_GERAL']; // Fallback para carga geral
+
+      return {
+        CCD: cargoData.CCD[axles as keyof typeof cargoData.CCD] || cargoData.CCD[5], // Fallback para 5 eixos
+        CC: cargoData.CC[axles as keyof typeof cargoData.CC] || cargoData.CC[5]      // Fallback para 5 eixos
+      };
     };
 
-    // Multiplicadores por tipo de carga conforme tabela ANTT
-    const cargoMultipliers: { [key: string]: number } = {
-      'carga_geral': 1.0,
-      'frigorificada_ou_aquecida': 1.15,
-      'perigosa_carga_geral': 1.25,
-      'conteinerizada': 1.05,
-      'granel_liquido': 0.95,
-      'granel_solido': 0.90,
-      'neogranel': 1.10,
-      'carga_granel_pressurizada': 1.20,
-      'perigosa_conteinerizada': 1.30,
-      'perigosa_frigorificada': 1.35,
-      'perigosa_granel_liquido': 1.20,
-      'perigosa_granel_solido': 1.15
+    // Determinar tabela baseada na categoria de transporte
+    const tableMap = {
+      'CARGA_LOTACAO': 'A',
+      'VEICULO_AUTOMOTOR': 'B', 
+      'ALTO_DESEMPENHO': 'C',
+      'VEICULO_ALTO_DESEMPENHO': 'D'
     };
 
-    const axles = params.axles;
-    const baseRate = baseRates[axles as keyof typeof baseRates] || baseRates[5];
-    const loadUnloadCoeff = loadUnloadCoefficients[axles as keyof typeof loadUnloadCoefficients] || loadUnloadCoefficients[5];
-    const cargoMultiplier = cargoMultipliers[params.cargoType] || 1.0;
+    const table = tableMap[params.transportCategory as keyof typeof tableMap] || 'A';
+    const coefficients = getCoefficientsForTable(table, params.cargoType, params.axles);
 
-    // Cálculo base: (Distância × Coef. Deslocamento × Multiplicador) + Coef. Carga/Descarga
-    let freightValue = (params.distance * baseRate * cargoMultiplier) + loadUnloadCoeff;
+    if (!coefficients) {
+      throw new Error('Coeficientes não encontrados para os parâmetros informados');
+    }
+
+    const baseRate = coefficients.CCD;
+    const loadUnloadCoeff = coefficients.CC;
+
+    // Cálculo base: (Distância × CCD) + CC
+    let freightValue = (params.distance * baseRate) + loadUnloadCoeff;
 
     // Ajustes
     const adjustments = [];
@@ -3974,8 +4003,10 @@ async function calculateAnttFreight(params: AnttCalculationParams): Promise<Antt
       calculation: {
         baseRate,
         loadUnloadCoefficient: loadUnloadCoeff,
-        distanceCoefficient: baseRate * cargoMultiplier,
-        adjustments
+        distanceCoefficient: baseRate,
+        adjustments,
+        table: table,
+        cargoType: params.cargoType
       }
     };
 

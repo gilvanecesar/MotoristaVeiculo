@@ -539,11 +539,16 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Proteção contra chamadas simultâneas e debounce implementado
 ✓ Cálculo de pedágio removido para evitar variação de valores aleatórios
 ✓ Calculadora agora exibe apenas o valor do frete ANTT sem variações
-✓ Integração com dados oficiais ANTT mais recentes implementada
-✓ Coeficientes extraídos da RESOLUÇÃO Nº 6.067, DE 17 DE JULHO DE 2025
-✓ Tabela A - Transporte Rodoviário de Carga Lotação - Carga Geral oficial
-✓ CCD: 6,0112 R$/km e CC: 610,08 R$ (valores mais atualizados da regulamentação)
-✓ Sistema atualizado com a legislação mais recente de julho 2025
+✓ Interface da calculadora ANTT completamente redesenhada inspirada no site oficial
+✓ Layout em 3 colunas: categorias de transporte, formulário central e informações laterais
+✓ Componentes separados criados: TransportCategories, CargoTypes, CalculationInfo
+✓ Categorias de transporte por anexo: Tabela A (Carga Lotação), B (Veículo), C (Alto Desempenho), D (Veículo Alto Desempenho)
+✓ Coeficientes completos da RESOLUÇÃO 6.067/2025 implementados para todos os tipos de carga
+✓ Tabela A com coeficientes específicos: CARGA_GERAL, GRANEL_SOLIDO, GRANEL_LIQUIDO, FRIGORIFICADA, CONTEINERIZADA, NEOGRANEL
+✓ Sistema de seleção visual de categorias com cards interativos
+✓ Informações educativas na lateral direita com base legal e fórmulas
+✓ Teste validado: 580km, 5 eixos, Carga Geral = R$ 4.096,58 (cálculo preciso: 580 × 6,0112 + 610,08)
+✓ Interface profissional similar ao calculador oficial da ANTT com UX moderna
 ```
 
 ## User Preferences
