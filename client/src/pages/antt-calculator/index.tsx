@@ -132,6 +132,7 @@ export default function AnttCalculatorPage() {
   }, []);
 
   const onSubmit = async (data: AnttCalculatorForm) => {
+    console.log("🚛 Iniciando cálculo ANTT:", data);
     setIsCalculating(true);
     
     try {
@@ -144,6 +145,8 @@ export default function AnttCalculatorPage() {
         isHighPerformance: data.isHighPerformance,
         emptyReturn: data.emptyReturn
       };
+
+      console.log("📦 Payload enviado:", payload);
 
       const response = await fetch("/api/antt/calculate", {
         method: "POST",
@@ -159,6 +162,7 @@ export default function AnttCalculatorPage() {
       }
 
       const result = await response.json();
+      console.log("✅ Resultado do cálculo:", result);
       setCalculationResult(result);
       
       toast({
@@ -166,7 +170,7 @@ export default function AnttCalculatorPage() {
         description: `Valor total: R$ ${result.totalValue.toFixed(2)}`,
       });
     } catch (error) {
-      console.error("Erro ao calcular:", error);
+      console.error("❌ Erro ao calcular:", error);
       toast({
         title: "Erro no cálculo",
         description: error instanceof Error ? error.message : "Não foi possível calcular o frete. Tente novamente.",

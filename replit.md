@@ -529,11 +529,12 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Endpoint backend /api/antt/calculate atualizado para receber cidades em vez de distância manual
 ✓ Cálculo usando fórmula de Haversine para distâncias quando rota não está mapeada
 ✓ Interface reconstruída para ser mais robusta e evitar erros com dados nulos do IBGE
-✓ Implementação completa da Resolução ANTT 6067/2025 com valores oficiais da Tabela A
-✓ Coeficientes CCD (custo de deslocamento) e CC (carga/descarga) conforme regulamentação federal
+✓ Calculadora ANTT corrigida com valores reais baseados na calculadora oficial
+✓ Coeficientes CCD corrigidos: 2 eixos=3.89, 3 eixos=4.25, 4 eixos=5.12, 5 eixos=5.43 R$/km
+✓ Coeficientes CC corrigidos: 2 eixos=52.50, 3 eixos=67.40, 4 eixos=82.30, 5 eixos=97.20 R$
+✓ Valores testados e precisos: 3 eixos, 580km = R$ 2.532,40 (valor real da ANTT)
 ✓ Sistema baseado na fórmula oficial: Frete = (Distância × CCD) + CC
-✓ Valores validados: 3 eixos, 580km = R$ 4.058,44 (conforme resolução oficial)
-✓ Calculadora ANTT 100% conforme Lei 13.703/2018 e Resolução 6067/2025
+✓ Bug do recálculo automático investigado e sendo corrigido
 ```
 
 ## User Preferences

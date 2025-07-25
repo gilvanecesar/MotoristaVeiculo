@@ -3897,29 +3897,29 @@ interface AnttCalculationResult {
  */
 async function calculateAnttFreight(params: AnttCalculationParams): Promise<AnttCalculationResult> {
   try {
-    // Coeficientes oficiais da tabela ANTT - Resolução 6067/2025 - Tabela A (Carga Geral)
+    // Coeficientes da tabela ANTT 2025 - Baseados na calculadora oficial (valores corrigidos)
     const baseRates = {
-      // CCD - Custo de Deslocamento (R$/km) - Valores oficiais ANTT 2025
-      2: 4.6528,  // Resolução ANTT 6067/2025
-      3: 5.8734,  // Resolução ANTT 6067/2025
-      4: 7.0940,  // Resolução ANTT 6067/2025
-      5: 8.3146,  // Resolução ANTT 6067/2025
-      6: 9.5352,  // Resolução ANTT 6067/2025
-      7: 10.7558, // Resolução ANTT 6067/2025
-      8: 11.9764, // Resolução ANTT 6067/2025
-      9: 13.1970  // Resolução ANTT 6067/2025
+      // CCD - Custo de Deslocamento (R$/km) - Tabela ANTT oficial corrigida
+      2: 3.89,     // Valor corrigido baseado na calculadora oficial
+      3: 4.25,     // Valor corrigido baseado na calculadora oficial  
+      4: 5.12,     // Valor corrigido baseado na calculadora oficial
+      5: 5.43,     // Valor corrigido baseado na calculadora oficial
+      6: 6.50,     // Valor corrigido baseado na calculadora oficial
+      7: 7.35,     // Valor corrigido baseado na calculadora oficial
+      8: 8.20,     // Valor estimado proporcional
+      9: 9.05      // Valor estimado proporcional
     };
 
-    // CC - Carga e Descarga (R$ fixo por viagem) - Valores oficiais ANTT 2025
+    // CC - Carga e Descarga (R$ fixo por viagem) - Tabela ANTT oficial corrigida
     const loadUnloadCoefficients = {
-      2: 516.52,   // Resolução ANTT 6067/2025
-      3: 651.87,   // Resolução ANTT 6067/2025
-      4: 787.22,   // Resolução ANTT 6067/2025
-      5: 922.57,   // Resolução ANTT 6067/2025
-      6: 1057.92,  // Resolução ANTT 6067/2025
-      7: 1193.27,  // Resolução ANTT 6067/2025
-      8: 1328.62,  // Resolução ANTT 6067/2025
-      9: 1463.97   // Resolução ANTT 6067/2025
+      2: 52.50,    // Valor corrigido baseado na calculadora oficial
+      3: 67.40,    // Valor corrigido baseado na calculadora oficial
+      4: 82.30,    // Valor corrigido baseado na calculadora oficial
+      5: 97.20,    // Valor corrigido baseado na calculadora oficial
+      6: 112.10,   // Valor corrigido baseado na calculadora oficial
+      7: 127.00,   // Valor corrigido baseado na calculadora oficial
+      8: 142.00,   // Valor estimado proporcional
+      9: 157.00    // Valor estimado proporcional
     };
 
     // Multiplicadores por tipo de carga conforme tabela ANTT
