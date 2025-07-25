@@ -3894,33 +3894,33 @@ interface AnttCalculationResult {
 
 /**
  * Calcula o frete mínimo conforme tabela ANTT oficial
- * Coeficientes extraídos da PORTARIA Nº 3, DE 7 DE FEVEREIRO DE 2025
+ * Coeficientes extraídos da RESOLUÇÃO Nº 6.067, DE 17 DE JULHO DE 2025
  * Tabela A - Transporte Rodoviário de Carga Lotação - Carga Geral
  */
 async function calculateAnttFreight(params: AnttCalculationParams): Promise<AnttCalculationResult> {
   try {
-    // CCD - Custo de Deslocamento (R$/km) - PORTARIA SUROC Nº 3/2025 - Tabela A - Carga Geral
+    // CCD - Custo de Deslocamento (R$/km) - RESOLUÇÃO 6.067/2025 - Tabela A - Carga Geral
     const baseRates = {
-      2: 3.7116,   // Valor oficial ANTT PORTARIA 3/2025
-      3: 4.7063,   // Valor oficial ANTT PORTARIA 3/2025
-      4: 5.3919,   // Valor oficial ANTT PORTARIA 3/2025
-      5: 5.7491,   // Valor oficial ANTT PORTARIA 3/2025
-      6: 6.4328,   // Valor oficial ANTT PORTARIA 3/2025
-      7: 7.3819,   // Valor oficial ANTT PORTARIA 3/2025
-      8: 8.3597,   // Valor oficial ANTT PORTARIA 3/2025 (não listado, usando estimativa)
-      9: 8.3597    // Valor oficial ANTT PORTARIA 3/2025
+      2: 3.6735,   // Valor oficial ANTT RESOLUÇÃO 6.067/2025
+      3: 4.6502,   // Valor oficial ANTT RESOLUÇÃO 6.067/2025
+      4: 5.3306,   // Valor oficial ANTT RESOLUÇÃO 6.067/2025
+      5: 6.0112,   // Valor oficial ANTT RESOLUÇÃO 6.067/2025
+      6: 6.7301,   // Valor oficial ANTT RESOLUÇÃO 6.067/2025
+      7: 7.3085,   // Valor oficial ANTT RESOLUÇÃO 6.067/2025
+      8: 8.2680,   // Valor oficial ANTT RESOLUÇÃO 6.067/2025 (não listado, usando estimativa)
+      9: 8.2680    // Valor oficial ANTT RESOLUÇÃO 6.067/2025
     };
 
-    // CC - Carga e Descarga (R$ fixo por viagem) - PORTARIA SUROC Nº 3/2025 - Tabela A - Carga Geral
+    // CC - Carga e Descarga (R$ fixo por viagem) - RESOLUÇÃO 6.067/2025 - Tabela A - Carga Geral
     const loadUnloadCoefficients = {
-      2: 404.67,   // Valor oficial ANTT PORTARIA 3/2025
-      3: 493.25,   // Valor oficial ANTT PORTARIA 3/2025
-      4: 541.33,   // Valor oficial ANTT PORTARIA 3/2025
-      5: 498.04,   // Valor oficial ANTT PORTARIA 3/2025
-      6: 532.13,   // Valor oficial ANTT PORTARIA 3/2025
-      7: 728.74,   // Valor oficial ANTT PORTARIA 3/2025
-      8: 789.41,   // Valor oficial ANTT PORTARIA 3/2025 (não listado, usando estimativa)
-      9: 789.41    // Valor oficial ANTT PORTARIA 3/2025
+      2: 417.95,   // Valor oficial ANTT RESOLUÇÃO 6.067/2025
+      3: 509.43,   // Valor oficial ANTT RESOLUÇÃO 6.067/2025
+      4: 559.08,   // Valor oficial ANTT RESOLUÇÃO 6.067/2025
+      5: 610.08,   // Valor oficial ANTT RESOLUÇÃO 6.067/2025
+      6: 660.12,   // Valor oficial ANTT RESOLUÇÃO 6.067/2025
+      7: 752.64,   // Valor oficial ANTT RESOLUÇÃO 6.067/2025
+      8: 815.30,   // Valor oficial ANTT RESOLUÇÃO 6.067/2025 (não listado, usando estimativa)
+      9: 815.30    // Valor oficial ANTT RESOLUÇÃO 6.067/2025
     };
 
     // Multiplicadores por tipo de carga conforme tabela ANTT
