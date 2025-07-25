@@ -121,7 +121,7 @@ export function ProtectedRoute({
     
     // Se a data de expiração for anterior à data atual, a assinatura expirou
     if (subscriptionEndDate < currentDate) {
-      console.log("Assinatura expirada, verificando se tem stripe customer ID");
+      console.log("Assinatura expirada, verificando status de pagamento OpenPix");
       
       // Lista de páginas que podem ser acessadas mesmo com assinatura expirada
       const allowedPaths = [

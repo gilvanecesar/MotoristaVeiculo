@@ -89,8 +89,7 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserByCpf(cpf: string): Promise<User | undefined>;
   getUserByCnpj(cnpj: string): Promise<User | undefined>;
-  getUserByStripeCustomerId(stripeCustomerId: string): Promise<User | undefined>;
-  getClientByStripeCustomerId(stripeCustomerId: string): Promise<Client | undefined>;
+  // Métodos do Stripe removidos - apenas OpenPix agora
   getSubscriptionsByClientId(clientId: number): Promise<Subscription[]>;
   searchClientsByEmail(email: string): Promise<Client[]>;
   createUser(user: InsertUser): Promise<User>;
@@ -178,9 +177,7 @@ export interface IStorage {
   getSubscriptionsByClient(clientId: number): Promise<Subscription[]>;
   getSubscriptionsByClientId(clientId: number): Promise<Subscription[]>;
   getSubscription(id: number): Promise<SubscriptionWithInvoices | undefined>;
-  getSubscriptionByStripeId(
-    stripeId: string,
-  ): Promise<Subscription | undefined>;
+  // Métodos do Stripe removidos - apenas OpenPix agora
   createSubscription(subscription: InsertSubscription): Promise<Subscription>;
   updateSubscription(
     id: number,
@@ -194,7 +191,7 @@ export interface IStorage {
   getInvoicesByClient(clientId: number): Promise<Invoice[]>;
   getInvoicesBySubscription(subscriptionId: number): Promise<Invoice[]>;
   getInvoice(id: number): Promise<InvoiceWithPayments | undefined>;
-  getInvoiceByStripeId(stripeId: string): Promise<Invoice | undefined>;
+  // Métodos do Stripe removidos - apenas OpenPix agora
   createInvoice(invoice: InsertInvoice): Promise<Invoice>;
   updateInvoice(
     id: number,
@@ -208,7 +205,7 @@ export interface IStorage {
   getPaymentsByClient(clientId: number): Promise<Payment[]>;
   getPaymentsByInvoice(invoiceId: number): Promise<Payment[]>;
   getPayment(id: number): Promise<Payment | undefined>;
-  getPaymentByStripeId(stripeId: string): Promise<Payment | undefined>;
+  // Métodos do Stripe removidos - apenas OpenPix agora
 
   createPayment(payment: InsertPayment): Promise<Payment>;
   updatePayment(
@@ -299,33 +296,7 @@ export class MemStorage implements IStorage {
     );
   }
   
-  async getUserByStripeCustomerId(stripeCustomerId: string): Promise<User | undefined> {
-    return Array.from(this.usersData.values()).find(
-      (user) => user.stripeCustomerId === stripeCustomerId
-    );
-  }
-  
-  async getClientByStripeCustomerId(stripeCustomerId: string): Promise<Client | undefined> {
-    // Como o campo stripeCustomerId não existe na tabela de clientes, vamos buscar
-    // primeiro o usuário que tem esse stripeCustomerId
-    const user = await this.getUserByStripeCustomerId(stripeCustomerId);
-    
-    // Se encontrarmos o usuário e ele tiver um clientId, retornamos o cliente correspondente
-    if (user && user.clientId) {
-      return this.getClient(user.clientId);
-    }
-    
-    // Se não encontrarmos o usuário, tentamos procurar nas assinaturas
-    const subscription = Array.from(this.subscriptionsData.values()).find(
-      sub => sub.stripeCustomerId === stripeCustomerId
-    );
-    
-    if (subscription && subscription.clientId) {
-      return this.getClient(subscription.clientId);
-    }
-    
-    return undefined;
-  }
+  // Funções do Stripe removidas - apenas OpenPix agora
   
   async searchClientsByEmail(email: string): Promise<Client[]> {
     return Array.from(this.clientsData.values()).filter(
@@ -469,13 +440,7 @@ export class MemStorage implements IStorage {
     };
   }
 
-  async getSubscriptionByStripeId(
-    stripeId: string,
-  ): Promise<Subscription | undefined> {
-    return Array.from(this.subscriptionsData.values()).find(
-      (sub) => sub.stripeId === stripeId,
-    );
-  }
+  // Função do Stripe removida
 
   async createSubscription(
     subscription: InsertSubscription,
@@ -547,12 +512,6 @@ export class MemStorage implements IStorage {
     };
   }
 
-  async getInvoiceByStripeId(stripeId: string): Promise<Invoice | undefined> {
-    return Array.from(this.invoicesData.values()).find(
-      (invoice) => invoice.stripeId === stripeId,
-    );
-  }
-
   async createInvoice(invoice: InsertInvoice): Promise<Invoice> {
     const newInvoice: Invoice = {
       ...invoice,
@@ -615,12 +574,6 @@ export class MemStorage implements IStorage {
 
   async getPayment(id: number): Promise<Payment | undefined> {
     return this.paymentsData.get(id);
-  }
-
-  async getPaymentByStripeId(stripeId: string): Promise<Payment | undefined> {
-    return Array.from(this.paymentsData.values()).find(
-      (payment) => payment.stripeId === stripeId,
-    );
   }
 
   async createPayment(payment: InsertPayment): Promise<Payment> {
@@ -907,16 +860,6 @@ export class DatabaseStorage implements IStorage {
         eq(users.cnpj, cnpj)
       )
     );
-    return results[0];
-  }
-  
-  async getUserByStripeCustomerId(stripeCustomerId: string): Promise<User | undefined> {
-    const results = await db.select().from(users).where(eq(users.stripeCustomerId, stripeCustomerId));
-    return results[0];
-  }
-  
-  async getClientByStripeCustomerId(stripeCustomerId: string): Promise<Client | undefined> {
-    const results = await db.select().from(clients).where(eq(clients.stripeCustomerId, stripeCustomerId));
     return results[0];
   }
   
@@ -1364,15 +1307,7 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getSubscriptionByStripeId(
-    stripeId: string,
-  ): Promise<Subscription | undefined> {
-    const results = await db
-      .select()
-      .from(subscriptions)
-      .where(eq(subscriptions.stripeSubscriptionId, stripeId));
-    return results[0];
-  }
+  // Função do Stripe removida
 
   async createSubscription(
     subscription: InsertSubscription,
@@ -1452,14 +1387,6 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getInvoiceByStripeId(stripeId: string): Promise<Invoice | undefined> {
-    const results = await db
-      .select()
-      .from(invoices)
-      .where(eq(invoices.stripeInvoiceId, stripeId));
-    return results[0];
-  }
-
   async createInvoice(invoice: InsertInvoice): Promise<Invoice> {
     const results = await db.insert(invoices).values(invoice).returning();
     return results[0];
@@ -1530,14 +1457,6 @@ export class DatabaseStorage implements IStorage {
 
   async getPayment(id: number): Promise<Payment | undefined> {
     const results = await db.select().from(payments).where(eq(payments.id, id));
-    return results[0];
-  }
-
-  async getPaymentByStripeId(stripeId: string): Promise<Payment | undefined> {
-    const results = await db
-      .select()
-      .from(payments)
-      .where(eq(payments.stripePaymentIntentId, stripeId));
     return results[0];
   }
 

@@ -504,8 +504,7 @@ export const users = pgTable("users", {
   subscriptionActive: boolean("subscription_active").notNull().default(false),
   subscriptionType: text("subscription_type"),  // "monthly" ou "annual"
   subscriptionExpiresAt: timestamp("subscription_expires_at"),
-  stripeCustomerId: text("stripe_customer_id"),
-  stripeSubscriptionId: text("stripe_subscription_id"),
+  // Dados de pagamento removidos - apenas OpenPix agora
   paymentRequired: boolean("payment_required").default(false),
   
   // Referências opcionais para ligar o usuário aos perfis específicos
@@ -574,9 +573,7 @@ export const subscriptions = pgTable("subscriptions", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
   clientId: integer("client_id").references(() => clients.id),
-  stripeSubscriptionId: text("stripe_subscription_id").unique(),
-  stripePriceId: text("stripe_price_id"),
-  stripeCustomerId: text("stripe_customer_id"),
+  // Dados do Stripe removidos - apenas OpenPix agora
   status: text("status").notNull(),  // SUBSCRIPTION_STATUS
   planType: text("plan_type").notNull(), // PLAN_TYPES
   currentPeriodStart: timestamp("current_period_start").notNull(),
@@ -595,7 +592,7 @@ export const invoices = pgTable("invoices", {
   subscriptionId: integer("subscription_id").references(() => subscriptions.id),
   userId: integer("user_id").notNull().references(() => users.id),
   clientId: integer("client_id").references(() => clients.id),
-  stripeInvoiceId: text("stripe_invoice_id").unique(),
+  // Dados do Stripe removidos - apenas OpenPix agora
   status: text("status").notNull(), // INVOICE_STATUS
   invoiceNumber: text("invoice_number"),
   description: text("description"),
@@ -618,8 +615,7 @@ export const payments = pgTable("payments", {
   invoiceId: integer("invoice_id").references(() => invoices.id),
   userId: integer("user_id").notNull().references(() => users.id),
   clientId: integer("client_id").references(() => clients.id),
-  stripePaymentIntentId: text("stripe_payment_intent_id").unique(),
-  stripePaymentMethodId: text("stripe_payment_method_id"),
+  // Dados do Stripe removidos - apenas OpenPix agora
   amount: decimal("amount").notNull(),
   currency: text("currency").default("brl"),
   status: text("status").notNull(), // succeeded, processing, canceled, etc.

@@ -246,7 +246,7 @@ export default function SubscriptionDetails({
                   <div className="text-sm">
                     {safeSubscriptionData.paymentMethod === 'mercadopago' 
                       ? 'Mercado Pago' 
-                      : safeSubscriptionData.paymentMethod === 'stripe' 
+                      : false  // Stripe removido - apenas OpenPix agora 
                       ? 'Cartão de crédito' 
                       : safeSubscriptionData.paymentMethod}
                   </div>

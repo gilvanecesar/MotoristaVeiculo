@@ -22,7 +22,7 @@ const billingSettingsSchema = z.object({
   automaticBilling: z.boolean().default(true),
   gracePeriod: z.number().int().min(0).max(30).default(3),
   reminderDays: z.number().int().min(1).max(14).default(3),
-  stripeWebhookSecret: z.string().optional(),
+  // Configurações do Stripe removidas - apenas OpenPix agora
   enableInvoices: z.boolean().default(true),
   customInvoicePrefix: z.string().optional(),
   invoiceNotes: z.string().optional(),
@@ -38,7 +38,7 @@ const planSettingsSchema = z.object({
   planName: z.string().min(3),
   planDescription: z.string(),
   enableTrialPeriod: z.boolean(),
-  stripePriceId: z.string().optional(),
+  // Configurações do Stripe removidas - apenas OpenPix agora
 });
 
 type PlanSettingsFormValues = z.infer<typeof planSettingsSchema>;
@@ -71,7 +71,7 @@ export default function FinanceSettingsPage() {
       automaticBilling: settings?.automaticBilling ?? true,
       gracePeriod: settings?.gracePeriod ?? 3,
       reminderDays: settings?.reminderDays ?? 3,
-      stripeWebhookSecret: settings?.stripeWebhookSecret ?? "",
+      // Configurações do Stripe removidas
       enableInvoices: settings?.enableInvoices ?? true,
       customInvoicePrefix: settings?.customInvoicePrefix ?? "",
       invoiceNotes: settings?.invoiceNotes ?? "",
@@ -88,7 +88,7 @@ export default function FinanceSettingsPage() {
       planName: settings?.planName ?? "Premium",
       planDescription: settings?.planDescription ?? "Acesso completo a todas as funcionalidades",
       enableTrialPeriod: settings?.enableTrialPeriod ?? true,
-      stripePriceId: settings?.stripePriceId ?? "",
+      // Configurações do Stripe removidas
     },
   });
 
@@ -99,7 +99,7 @@ export default function FinanceSettingsPage() {
         automaticBilling: settings.automaticBilling ?? true,
         gracePeriod: settings.gracePeriod ?? 3,
         reminderDays: settings.reminderDays ?? 3,
-        stripeWebhookSecret: settings.stripeWebhookSecret ?? "",
+        // Configurações do Stripe removidas
         enableInvoices: settings.enableInvoices ?? true,
         customInvoicePrefix: settings.customInvoicePrefix ?? "",
         invoiceNotes: settings.invoiceNotes ?? "",
@@ -112,7 +112,7 @@ export default function FinanceSettingsPage() {
         planName: settings.planName ?? "Premium",
         planDescription: settings.planDescription ?? "Acesso completo a todas as funcionalidades",
         enableTrialPeriod: settings.enableTrialPeriod ?? true,
-        stripePriceId: settings.stripePriceId ?? "",
+        // Configurações do Stripe removidas
       });
     }
   }, [settings, billingForm, planForm]);
@@ -401,31 +401,7 @@ export default function FinanceSettingsPage() {
                   
                   <Separator />
                   
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium">Configurações do Stripe</h3>
-                    
-                    <FormField
-                      control={billingForm.control}
-                      name="stripeWebhookSecret"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Webhook Secret do Stripe</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="password"
-                              placeholder="whsec_..."
-                              {...field}
-                              value={field.value || ""}
-                            />
-                          </FormControl>
-                          <FormDescription>
-                            Chave secreta para validar webhooks do Stripe
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  {/* Seção do Stripe removida - apenas OpenPix agora */}
                   
                   <Button 
                     type="submit"
@@ -483,26 +459,7 @@ export default function FinanceSettingsPage() {
                         )}
                       />
                       
-                      <FormField
-                        control={planForm.control}
-                        name="stripePriceId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>ID do Preço no Stripe</FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder="price_..."
-                                {...field}
-                                value={field.value || ""}
-                              />
-                            </FormControl>
-                            <FormDescription>
-                              ID do preço criado no painel do Stripe
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      {/* Campo Stripe Price ID removido - apenas OpenPix agora */}
                     </div>
                     
                     <FormField
