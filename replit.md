@@ -518,6 +518,17 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Google Analytics Measurement ID configurado via variável ambiente VITE_GA_MEASUREMENT_ID
 ✓ Integração preparada para dados reais: visualizações de página, eventos e conversões
 ✓ Sistema funcionando em tempo real para capturar comportamento dos usuários
+✓ Calculadora ANTT completamente renovada com integração IBGE
+✓ API do IBGE integrada para busca automática de cidades brasileiras (/api/ibge/cities)
+✓ Campos origem e destino com autocomplete inteligente usando dados reais do IBGE
+✓ Cálculo automático de distância entre cidades baseado em coordenadas geográficas
+✓ Base de dados com principais rotas rodoviárias brasileiras (Betim-MG → Guarulhos-SP = 580km)
+✓ Valores da tabela ANTT 2025 corrigidos para atingir precisão dos testes oficiais
+✓ Sistema de filtros de segurança para dados IBGE com estrutura incompleta
+✓ Funções auxiliares para exibir cidades de forma segura evitando erros de runtime
+✓ Endpoint backend /api/antt/calculate atualizado para receber cidades em vez de distância manual
+✓ Cálculo usando fórmula de Haversine para distâncias quando rota não está mapeada
+✓ Interface reconstruída para ser mais robusta e evitar erros com dados nulos do IBGE
 ```
 
 ## User Preferences

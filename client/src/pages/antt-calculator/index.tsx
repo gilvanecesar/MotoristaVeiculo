@@ -31,20 +31,12 @@ const anttCalculatorSchema = z.object({
 
 type AnttCalculatorForm = z.infer<typeof anttCalculatorSchema>;
 
-// Tipos de carga com labels em português
-const cargoTypeLabels = {
-  [ANTT_CARGO_TYPES.CARGA_GERAL]: "Carga Geral",
-  [ANTT_CARGO_TYPES.CARGA_GRANEL_PRESSURIZADA]: "Carga Granel Pressurizada",
-  [ANTT_CARGO_TYPES.CONTEINERIZADA]: "Conteinerizada",
-  [ANTT_CARGO_TYPES.FRIGORIFICADA_OU_AQUECIDA]: "Frigorificada ou Aquecida",
-  [ANTT_CARGO_TYPES.GRANEL_LIQUIDO]: "Granel Líquido",
-  [ANTT_CARGO_TYPES.GRANEL_SOLIDO]: "Granel Sólido",
-  [ANTT_CARGO_TYPES.NEOGRANEL]: "Neogranel",
-  [ANTT_CARGO_TYPES.PERIGOSA_CARGA_GERAL]: "Perigosa (Carga Geral)",
-  [ANTT_CARGO_TYPES.PERIGOSA_CONTEINERIZADA]: "Perigosa (Conteinerizada)",
-  [ANTT_CARGO_TYPES.PERIGOSA_FRIGORIFICADA]: "Perigosa (Frigorificada)",
-  [ANTT_CARGO_TYPES.PERIGOSA_GRANEL_LIQUIDO]: "Perigosa (Granel Líquido)",
-  [ANTT_CARGO_TYPES.PERIGOSA_GRANEL_SOLIDO]: "Perigosa (Granel Sólido)",
+// Formatação de moeda
+const formatCurrency = (value: number): string => {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  }).format(value);
 };
 
 // Opções de eixos
@@ -115,7 +107,17 @@ export default function AnttCalculatorPage() {
         const response = await fetch('/api/ibge/cities');
         if (response.ok) {
           const data = await response.json();
-          setCities(data);
+          // Filtrar apenas cidades com estrutura completa
+          const validCities = data.filter((city: IBGECity) => {
+            try {
+              return city?.nome && 
+                     city?.microrregiao?.mesorregiao?.UF?.sigla &&
+                     city?.microrregiao?.mesorregiao?.UF?.nome;
+            } catch (error) {
+              return false;
+            }
+          });
+          setCities(validCities);
         } else {
           console.error('Erro ao carregar cidades');
         }
@@ -180,6 +182,23 @@ export default function AnttCalculatorPage() {
     setCalculationResult(null);
   };
 
+  // Função helper para exibir cidades seguramente
+  const getCityDisplayName = (city: IBGECity): string => {
+    try {
+      return `${city.nome} - ${city.microrregiao.mesorregiao.UF.sigla}`;
+    } catch (error) {
+      return city.nome || "Cidade";
+    }
+  };
+
+  const getCityValue = (city: IBGECity): string => {
+    try {
+      return `${city.nome}-${city.microrregiao.mesorregiao.UF.sigla}`;
+    } catch (error) {
+      return city.nome || "";
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="mb-8">
@@ -229,11 +248,7 @@ export default function AnttCalculatorPage() {
                                   !field.value && "text-muted-foreground"
                                 )}
                               >
-                                {field.value
-                                  ? cities.find((city) => `${city.nome}-${city.microrregiao.mesorregiao.UF.sigla}` === field.value)
-                                    ? `${cities.find((city) => `${city.nome}-${city.microrregiao.mesorregiao.UF.sigla}` === field.value)?.nome} - ${cities.find((city) => `${city.nome}-${city.microrregiao.mesorregiao.UF.sigla}` === field.value)?.microrregiao.mesorregiao.UF.sigla}`
-                                    : "Selecione a cidade..."
-                                  : "Selecione a cidade..."}
+                                {field.value ? field.value.replace('-', ' - ') : "Selecione a cidade..."}
                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                               </Button>
                             </FormControl>
@@ -245,7 +260,8 @@ export default function AnttCalculatorPage() {
                                 <CommandEmpty>Nenhuma cidade encontrada.</CommandEmpty>
                                 <CommandGroup>
                                   {cities.map((city) => {
-                                    const cityValue = `${city.nome}-${city.microrregiao.mesorregiao.UF.sigla}`;
+                                    const cityValue = getCityValue(city);
+                                    const displayName = getCityDisplayName(city);
                                     return (
                                       <CommandItem
                                         key={city.id}
@@ -261,7 +277,7 @@ export default function AnttCalculatorPage() {
                                             field.value === cityValue ? "opacity-100" : "opacity-0"
                                           )}
                                         />
-                                        {city.nome} - {city.microrregiao.mesorregiao.UF.sigla}
+                                        {displayName}
                                       </CommandItem>
                                     );
                                   })}
@@ -296,11 +312,7 @@ export default function AnttCalculatorPage() {
                                   !field.value && "text-muted-foreground"
                                 )}
                               >
-                                {field.value
-                                  ? cities.find((city) => `${city.nome}-${city.microrregiao.mesorregiao.UF.sigla}` === field.value)
-                                    ? `${cities.find((city) => `${city.nome}-${city.microrregiao.mesorregiao.UF.sigla}` === field.value)?.nome} - ${cities.find((city) => `${city.nome}-${city.microrregiao.mesorregiao.UF.sigla}` === field.value)?.microrregiao.mesorregiao.UF.sigla}`
-                                    : "Selecione a cidade..."
-                                  : "Selecione a cidade..."}
+                                {field.value ? field.value.replace('-', ' - ') : "Selecione a cidade..."}
                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                               </Button>
                             </FormControl>
@@ -312,7 +324,8 @@ export default function AnttCalculatorPage() {
                                 <CommandEmpty>Nenhuma cidade encontrada.</CommandEmpty>
                                 <CommandGroup>
                                   {cities.map((city) => {
-                                    const cityValue = `${city.nome}-${city.microrregiao.mesorregiao.UF.sigla}`;
+                                    const cityValue = getCityValue(city);
+                                    const displayName = getCityDisplayName(city);
                                     return (
                                       <CommandItem
                                         key={city.id}
@@ -328,7 +341,7 @@ export default function AnttCalculatorPage() {
                                             field.value === cityValue ? "opacity-100" : "opacity-0"
                                           )}
                                         />
-                                        {city.nome} - {city.microrregiao.mesorregiao.UF.sigla}
+                                        {displayName}
                                       </CommandItem>
                                     );
                                   })}
@@ -337,60 +350,6 @@ export default function AnttCalculatorPage() {
                             </Command>
                           </PopoverContent>
                         </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Tipo de Carga */}
-                  <FormField
-                    control={form.control}
-                    name="cargoType"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tipo de Carga</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione o tipo de carga" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {Object.entries(cargoTypeLabels).map(([value, label]) => (
-                              <SelectItem key={value} value={value}>
-                                {label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* Número de Eixos */}
-                  <FormField
-                    control={form.control}
-                    name="axles"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Número de Eixos</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione o número de eixos" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {axleOptions.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -406,6 +365,58 @@ export default function AnttCalculatorPage() {
                     </AlertDescription>
                   </Alert>
                 </div>
+
+                {/* Tipo de carga */}
+                <FormField
+                  control={form.control}
+                  name="cargoType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tipo de Carga</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o tipo de carga" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {Object.entries(ANTT_CARGO_TYPES).map(([key, value]) => (
+                            <SelectItem key={key} value={key}>
+                              {value}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Número de eixos */}
+                <FormField
+                  control={form.control}
+                  name="axles"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Número de Eixos</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o número de eixos" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {axleOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 {/* Opções avançadas */}
                 <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
@@ -423,11 +434,9 @@ export default function AnttCalculatorPage() {
                           />
                         </FormControl>
                         <div className="space-y-1 leading-none">
-                          <FormLabel>
-                            É composição veicular?
-                          </FormLabel>
+                          <FormLabel>Veículo articulado (CVC)</FormLabel>
                           <p className="text-sm text-muted-foreground">
-                            Veículo automotor + implemento ou caminhão simples
+                            Combinação de Veículos de Carga
                           </p>
                         </div>
                       </FormItem>
@@ -446,9 +455,10 @@ export default function AnttCalculatorPage() {
                           />
                         </FormControl>
                         <div className="space-y-1 leading-none">
-                          <FormLabel>
-                            É alto desempenho?
-                          </FormLabel>
+                          <FormLabel>Veículo de alto desempenho</FormLabel>
+                          <p className="text-sm text-muted-foreground">
+                            Aplica coeficiente adicional para veículos especiais
+                          </p>
                         </div>
                       </FormItem>
                     )}
@@ -466,9 +476,10 @@ export default function AnttCalculatorPage() {
                           />
                         </FormControl>
                         <div className="space-y-1 leading-none">
-                          <FormLabel>
-                            Retorno vazio?
-                          </FormLabel>
+                          <FormLabel>Retorno vazio</FormLabel>
+                          <p className="text-sm text-muted-foreground">
+                            Considera retorno sem carga
+                          </p>
                         </div>
                       </FormItem>
                     )}
@@ -495,6 +506,7 @@ export default function AnttCalculatorPage() {
                       "Calcular Frete"
                     )}
                   </Button>
+                  
                   <Button 
                     type="button" 
                     variant="outline" 
@@ -509,68 +521,54 @@ export default function AnttCalculatorPage() {
           </CardContent>
         </Card>
 
-        {/* Resultado */}
+        {/* Sidebar com informações */}
         <div className="space-y-6">
-          {calculationResult ? (
+          {/* Resultado do cálculo */}
+          {calculationResult && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="h-5 w-5" />
+                  <DollarSign className="h-5 w-5 text-green-600" />
                   Resultado do Cálculo
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                    <span className="font-medium">Frete Mínimo ANTT:</span>
-                    <Badge variant="secondary" className="text-lg">
-                      R$ {calculationResult.freightValue.toFixed(2)}
-                    </Badge>
+                <div className="grid gap-3">
+                  <div className="flex justify-between">
+                    <span>Rota:</span>
+                    <Badge variant="outline">{calculationResult.route}</Badge>
                   </div>
-
-                  <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                    <span className="font-medium">Pedágios Estimados:</span>
-                    <Badge variant="outline" className="text-lg">
-                      R$ {calculationResult.tollValue.toFixed(2)}
-                    </Badge>
+                  <div className="flex justify-between">
+                    <span>Distância:</span>
+                    <span className="font-medium">{calculationResult.distance} km</span>
                   </div>
-
-                  <div className="flex justify-between items-center p-4 bg-primary/10 rounded-lg border-2 border-primary/20">
-                    <span className="font-bold text-lg">Valor Total:</span>
-                    <Badge className="text-xl px-4 py-2">
-                      R$ {calculationResult.totalValue.toFixed(2)}
-                    </Badge>
+                  <div className="flex justify-between">
+                    <span>Valor do Frete:</span>
+                    <span className="font-medium">{formatCurrency(calculationResult.freightValue)}</span>
                   </div>
-
-                  <div className="pt-2 space-y-2 text-sm text-muted-foreground">
-                    <p><strong>Rota:</strong> {calculationResult.route}</p>
-                    <p><strong>Distância:</strong> {calculationResult.distance} km</p>
+                  <div className="flex justify-between">
+                    <span>Pedágios:</span>
+                    <span className="font-medium">{formatCurrency(calculationResult.tollValue)}</span>
+                  </div>
+                  <div className="border-t pt-2">
+                    <div className="flex justify-between text-lg font-bold">
+                      <span>Total:</span>
+                      <span className="text-green-600">{formatCurrency(calculationResult.totalValue)}</span>
+                    </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-center py-8">
-                  <Calculator className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">
-                    Preencha os dados do formulário para calcular o frete mínimo
-                  </p>
-                </div>
+
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Este é o valor mínimo conforme tabela ANTT. O valor final pode incluir outros custos e margens.
+                  </AlertDescription>
+                </Alert>
               </CardContent>
             </Card>
           )}
 
-          {/* Informações importantes */}
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              <strong>Importante:</strong> Os valores são calculados conforme a tabela oficial da ANTT. 
-              Qualquer valor abaixo do piso mínimo é considerado infração com multa de R$ 550,00.
-            </AlertDescription>
-          </Alert>
-
+          {/* Informações de uso */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Como usar a calculadora</CardTitle>
@@ -581,6 +579,19 @@ export default function AnttCalculatorPage() {
               <p>• <strong>Número de Eixos:</strong> Considere todos os eixos do veículo</p>
               <p>• <strong>Distância:</strong> Calculada automaticamente entre as cidades</p>
               <p>• <strong>Opções Avançadas:</strong> Marque conforme características do transporte</p>
+            </CardContent>
+          </Card>
+
+          {/* Informações legais */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Informações Legais</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <p>• Valores baseados na <strong>tabela oficial ANTT 2025</strong></p>
+              <p>• Lei nº 11.442/2007 - Transporte Rodoviário de Cargas</p>
+              <p>• Resolução ANTT nº 5.820/2018</p>
+              <p>• <strong>Importante:</strong> Estes são os valores mínimos obrigatórios</p>
             </CardContent>
           </Card>
         </div>
