@@ -2,8 +2,7 @@ import { pgTable, text, serial, integer, boolean, timestamp, date, decimal, json
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Exportar tipos e esquemas do MercadoPago
-export * from "./mercadopago-schema";
+
 
 // Enums para tipos de veículos e carrocerias
 export const VEHICLE_TYPES = {

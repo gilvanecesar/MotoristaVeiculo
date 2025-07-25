@@ -48,11 +48,7 @@ import {
   type InvoiceWithPayments,
   type ClientWithSubscriptions,
 } from "@shared/schema";
-import {
-  trialUsages,
-  type TrialUsage,
-  type InsertTrialUsage,
-} from "@shared/mercadopago-schema";
+
 import { db, pool } from "./db";
 import { and, eq, ilike, or, sql, desc } from "drizzle-orm";
 import crypto from "crypto";
@@ -213,7 +209,7 @@ export interface IStorage {
   getPaymentsByInvoice(invoiceId: number): Promise<Payment[]>;
   getPayment(id: number): Promise<Payment | undefined>;
   getPaymentByStripeId(stripeId: string): Promise<Payment | undefined>;
-  getMercadoPagoPaymentsByUser(userId: number): Promise<Payment[]>;
+
   createPayment(payment: InsertPayment): Promise<Payment>;
   updatePayment(
     id: number,
@@ -224,10 +220,7 @@ export interface IStorage {
   // Finance operations
   getFinanceStats(): Promise<any>;
   updateFinanceSettings(settings: any): Promise<any>;
-  
-  // Trial usage operations
-  getTrialUsage(userId: number): Promise<TrialUsage | undefined>;
-  createTrialUsage(trialUsage: InsertTrialUsage): Promise<TrialUsage>;
+
   
   // Quote operations
   getQuotes(userId: number): Promise<Quote[]>;
@@ -600,11 +593,7 @@ export class MemStorage implements IStorage {
     return Array.from(this.paymentsData.values());
   }
   
-  async getMercadoPagoPaymentsByUser(userId: number): Promise<Payment[]> {
-    return Array.from(this.paymentsData.values()).filter(
-      (payment) => payment.userId === userId && payment.paymentMethod === 'mercadopago'
-    );
-  }
+
 
   async getPaymentsByUser(userId: number): Promise<Payment[]> {
     return Array.from(this.paymentsData.values()).filter(
@@ -753,22 +742,86 @@ export class MemStorage implements IStorage {
     return settings;
   }
 
-  // Trial usage operations
-  async getTrialUsage(userId: number): Promise<TrialUsage | undefined> {
-    // Simular busca em memória - retorna undefined (não usado durante trial)
+  // Missing user operations
+  async getUserByCpf(cpf: string): Promise<User | undefined> {
+    for (const user of this.usersData.values()) {
+      if (user.cpf === cpf) return user;
+    }
     return undefined;
   }
 
-  async createTrialUsage(trialUsage: InsertTrialUsage): Promise<TrialUsage> {
-    // Simular criação em memória
-    return {
-      id: Date.now(),
-      userId: trialUsage.userId,
-      startDate: trialUsage.startDate,
-      endDate: trialUsage.endDate,
-      createdAt: new Date()
-    };
+  async getUserByCnpj(cnpj: string): Promise<User | undefined> {
+    for (const user of this.usersData.values()) {
+      if (user.cnpj === cnpj) return user;
+    }
+    return undefined;
   }
+
+  // Missing subscription operations
+  async getSubscriptionEvents(subscriptionId: number): Promise<any[]> {
+    return [];
+  }
+
+  async createSubscriptionEvent(data: any): Promise<any> {
+    return { id: Date.now(), ...data };
+  }
+
+  // Additional missing methods
+  async getAllPayments(): Promise<any[]> {
+    return Array.from(this.paymentsData.values());
+  }
+
+  async getSubscriptions(): Promise<any[]> {
+    return Array.from(this.subscriptionsData.values());
+  }
+
+  async getInvoices(): Promise<any[]> {
+    return Array.from(this.invoicesData.values());
+  }
+
+  // WebhookConfig operations
+  async getWebhookConfig(): Promise<any> {
+    return { id: 1, name: 'default', url: '', isActive: true };
+  }
+
+  async updateWebhookConfig(config: any): Promise<any> {
+    return config;
+  }
+
+  // Missing analytics operations  
+  async getAnalyticsData(): Promise<any> {
+    return { users: 0, freights: 0, quotes: 0 };
+  }
+
+  // Missing user management operations
+  async activateUserSubscription(userId: number): Promise<boolean> {
+    const user = this.usersData.get(userId);
+    if (user) {
+      user.subscriptionActive = true;
+      return true;
+    }
+    return false;
+  }
+
+  async deactivateUserSubscription(userId: number): Promise<boolean> {
+    const user = this.usersData.get(userId);
+    if (user) {
+      user.subscriptionActive = false;
+      return true;
+    }
+    return false;
+  }
+
+  // Missing quote operations for public quotes
+  async getAllQuotes(): Promise<Quote[]> {
+    return Array.from(this.quotesData.values());
+  }
+
+  // Missing generic operations
+  async createSupportTicket(ticket: any): Promise<any> {
+    return { id: Date.now(), ...ticket };
+  }
+
 }
 
 const PostgresSessionStore = connectPg(session);
@@ -1459,17 +1512,7 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(payments);
   }
 
-  async getMercadoPagoPaymentsByUser(userId: number): Promise<Payment[]> {
-    return await db
-      .select()
-      .from(payments)
-      .where(
-        and(
-          eq(payments.userId, userId),
-          eq(payments.paymentMethod, 'mercadopago')
-        )
-      );
-  }
+
   
   async getPaymentsByClient(clientId: number): Promise<Payment[]> {
     return await db
@@ -1754,22 +1797,7 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(complements.createdAt));
   }
 
-  // Trial usage operations
-  async getTrialUsage(userId: number): Promise<TrialUsage | undefined> {
-    const [trialUsage] = await db
-      .select()
-      .from(trialUsages)
-      .where(eq(trialUsages.userId, userId));
-    return trialUsage || undefined;
-  }
 
-  async createTrialUsage(trialUsage: InsertTrialUsage): Promise<TrialUsage> {
-    const [newTrialUsage] = await db
-      .insert(trialUsages)
-      .values(trialUsage)
-      .returning();
-    return newTrialUsage;
-  }
 
   // Quote operations
   async getQuotes(userId: number): Promise<Quote[]> {

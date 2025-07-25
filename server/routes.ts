@@ -112,15 +112,14 @@ import {
 import { eq } from "drizzle-orm";
 import { sendSubscriptionEmail, sendPaymentReminderEmail } from "./email-service";
 import { format } from "date-fns";
-import { setupMercadoPagoRoutes } from "./mercadopago-routes";
+
 import { setupWebhookRoutes, sendFreightWebhook } from "./webhook-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configurar autenticação
   setupAuth(app);
   
-  // Configurar rotas do Mercado Pago
-  setupMercadoPagoRoutes(app);
+
   
   // Configurar rotas do webhook
   setupWebhookRoutes(app);
@@ -1304,67 +1303,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obter todas as assinaturas (admin)
   app.get("/api/admin/subscriptions", isAdmin, async (req: Request, res: Response) => {
     try {
-      // Obter assinaturas regulares do banco de dados
+      // Obter assinaturas do banco de dados
       const subscriptions = await storage.getSubscriptions();
-      console.log("[ANÁLISE MERCADO PAGO] Assinaturas regulares:", subscriptions.length);
       
-      // Obter pagamentos do Mercado Pago que representam assinaturas
-      const allPayments = await storage.getAllPayments();
-      console.log("[ANÁLISE MERCADO PAGO] Total de pagamentos:", allPayments.length);
-      console.log("[ANÁLISE MERCADO PAGO] Pagamentos do Mercado Pago:", 
-        allPayments.filter(p => p.paymentMethod === 'mercadopago').length);
-      console.log("[ANÁLISE MERCADO PAGO] Pagamentos aprovados do Mercado Pago:", 
-        allPayments.filter(p => p.paymentMethod === 'mercadopago' && p.status === 'approved').length);
-        
-      const mercadoPagoPayments = allPayments.filter(p => 
-        p.paymentMethod === 'mercadopago' && 
-        p.status === 'approved' &&
-        // Verificar pagamentos que não estão associados a uma assinatura existente
-        !subscriptions.some(s => s.id === p.subscriptionId)
-      );
-      
-      console.log("[ANÁLISE MERCADO PAGO] Pagamentos do Mercado Pago que serão convertidos em assinaturas:", 
-        mercadoPagoPayments.length);
-      
-      // Converter pagamentos do Mercado Pago para o formato de assinatura
-      const mercadoPagoSubscriptions = mercadoPagoPayments.map(payment => {
-        // Calcular datas de início e fim baseadas na data do pagamento
-        const paymentDate = new Date(payment.createdAt || new Date());
-        const endDate = new Date(paymentDate);
-        
-        // Para pagamentos mensais, adicionar 30 dias
-        endDate.setDate(paymentDate.getDate() + 30);
-        
-        // Determinar o tipo de plano com base no valor
-        const amount = parseFloat(String(payment.amount));
-        const planType = amount >= 600 ? 'annual' : 'monthly';
-        
-        return {
-          id: payment.id,
-          userId: payment.userId,
-          clientId: payment.clientId,
-          status: 'active',
-          planType: planType,
-          amount: String(payment.amount),
-          currentPeriodStart: paymentDate,
-          currentPeriodEnd: endDate,
-          createdAt: paymentDate,
-          updatedAt: paymentDate,
-          cancelAt: null,
-          canceledAt: null,
-          paymentMethod: 'mercadopago',
-          mercadoPagoId: payment.mercadoPagoId,
-          metadata: payment.metadata
-        };
-      });
-      
-      // Combinar assinaturas regulares com assinaturas do Mercado Pago
-      const allSubscriptions = [...subscriptions, ...mercadoPagoSubscriptions];
-      
-      console.log("[ANÁLISE MERCADO PAGO] Total de assinaturas enviadas para o frontend:", allSubscriptions.length);
-      console.log("[ANÁLISE MERCADO PAGO] Assinaturas convertidas do Mercado Pago:", mercadoPagoSubscriptions.length);
-      
-      res.json(allSubscriptions);
+      res.json(subscriptions);
     } catch (error) {
       console.error("Erro ao obter assinaturas:", error);
       res.status(500).json({ message: "Erro ao obter assinaturas" });
@@ -1902,58 +1844,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.send({ received: true });
   });
 
-  // Endpoint para redirecionamento para Mercado Pago
-  app.post("/api/create-payment-intent", isAuthenticated, async (req: Request, res: Response) => {
-    try {
-      const { planType = 'monthly' } = req.body;
-      
-      // Links diretos para os planos do Mercado Pago
-      const mercadoPagoLinks = {
-        monthly: "https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=2c93808496c606170196c6d5ebde0047",
-        annual: "https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=2c93808496c606170196c9eaef0c0171"
-      };
-      
-      // Retorna a URL do Mercado Pago para o frontend
-      const url = mercadoPagoLinks[planType as keyof typeof mercadoPagoLinks] || mercadoPagoLinks.monthly;
-      
-      // Logar a ação para auditoria
-      console.log(`Redirecionando usuário ${req.user?.id} para checkout do Mercado Pago (plano: ${planType})`);
-      
-      res.json({ url });
-    } catch (error: any) {
-      console.error("Erro ao processar redirecionamento para Mercado Pago:", error.message);
-      res.status(500).json({ error: error.message });
-    }
-  });
 
-  // Endpoint para redirecionamento para assinatura do Mercado Pago
-  app.post("/api/get-or-create-subscription", isAuthenticated, async (req: Request, res: Response) => {
-    try {
-      const { planType = 'monthly' } = req.body;
-      const user = req.user;
-      
-      if (!user) {
-        return res.status(401).json({ error: { message: "Não autenticado" } });
-      }
-      
-      // Links diretos para os planos do Mercado Pago
-      const mercadoPagoLinks = {
-        monthly: "https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=2c93808496c606170196c6d5ebde0047",
-        annual: "https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=2c93808496c606170196c9eaef0c0171"
-      };
-      
-      // Retorna a URL do Mercado Pago para o frontend
-      const url = mercadoPagoLinks[planType as keyof typeof mercadoPagoLinks] || mercadoPagoLinks.monthly;
-      
-      // Logar a ação para auditoria
-      console.log(`Redirecionando usuário ${user.id} para assinatura do Mercado Pago (plano: ${planType})`);
-      
-      res.json({ url });
-    } catch (error: any) {
-      console.error("Erro ao processar redirecionamento para Mercado Pago:", error.message);
-      res.status(500).json({ error: error.message });
-    }
-  });
+
+
 
   // ==================== ADMIN FINANCE ROUTES ====================
   // Obter estatísticas financeiras (admin)
@@ -1965,7 +1858,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Obter todas as faturas
       const invoices = await storage.getInvoices();
       
-      // Obter todos os pagamentos (inclusive do Mercado Pago)
+      // Obter todos os pagamentos
       const allPayments = await storage.getAllPayments();
       
       // Estatísticas básicas
@@ -1988,15 +1881,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Adicionar faturamento do Mercado Pago
-      for (const payment of allPayments) {
-        if (payment.status === 'approved' && payment.paymentMethod === 'mercadopago') {
-          // Evitar duplicação se o pagamento já está associado a uma fatura
-          if (!payment.invoiceId) {
-            totalRevenue += parseFloat(String(payment.amount || 0));
-          }
-        }
-      }
+
       
       // Calcular média mensal
       const today = new Date();
@@ -2011,19 +1896,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         )
         .reduce((sum, invoice) => sum + parseFloat(String(invoice.amount || 0)), 0);
       
-      // Adicionando receita mensal dos pagamentos do Mercado Pago
-      const mercadoPagoMonthlyRevenue = allPayments
-        .filter(payment => 
-          payment.status === 'approved' && 
-          payment.paymentMethod === 'mercadopago' && 
-          payment.createdAt && 
-          new Date(payment.createdAt) >= firstDayOfMonth && 
-          // Evitar duplicação se o pagamento já está associado a uma fatura
-          !payment.invoiceId
-        )
-        .reduce((sum, payment) => sum + parseFloat(String(payment.amount || 0)), 0);
-      
-      monthlyRevenue += mercadoPagoMonthlyRevenue;
+
       
       // Calcular taxa de cancelamento (churn rate)
       const canceledSubscriptions = subscriptions.filter(s => s.status === 'canceled').length;
@@ -2056,22 +1929,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Adicionar receita por mês dos pagamentos do Mercado Pago
-      for (const payment of allPayments) {
-        if (
-          payment.status === 'approved' && 
-          payment.paymentMethod === 'mercadopago' && 
-          payment.createdAt && 
-          // Evitar duplicação se o pagamento já está associado a uma fatura
-          !payment.invoiceId
-        ) {
-          const paymentDate = new Date(payment.createdAt);
-          if (paymentDate.getFullYear() === currentYear) {
-            const monthIndex = paymentDate.getMonth();
-            monthlyData[monthIndex].revenue += parseFloat(String(payment.amount || 0));
-          }
-        }
-      }
+
       
       // Dados para o gráfico de assinaturas por status
       const statusCounts = {
@@ -2549,7 +2407,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // As rotas do Mercado Pago já foram configuradas no início do arquivo
+
   
   // Rota específica para corrigir o usuário logistica@inovaccbrasil.com.br
   app.post("/api/admin/fix-user-subscription", isAdmin, async (req: Request, res: Response) => {
