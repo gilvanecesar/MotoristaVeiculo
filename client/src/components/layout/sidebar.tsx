@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Car, BarChart3, Menu, X, Moon, Sun, Truck, 
   Building2, Home, DollarSign, UserCog, Settings, User, CreditCard,
   Receipt, CalendarClock, AlertCircle, Bell, Webhook, Package, LogOut,
-  ChevronLeft, ChevronRight, MessageCircle, FileText
+  ChevronLeft, ChevronRight, MessageCircle, FileText, Calculator
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -69,6 +69,11 @@ const navItems = [
     label: "Cotações", 
     path: "/quotes",
     icon: FileText
+  },
+  { 
+    label: "Calculadora ANTT", 
+    path: "/antt-calculator",
+    icon: Calculator
   },
   { 
     label: "Relatórios", 
@@ -199,8 +204,8 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   let availableNavItems = navItems;
   
   if (showLimitedMenus) {
-    // Perfil motorista: apenas menus limitados
-    availableNavItems = navItems.filter(item => ["Motoristas", "Veículos", "Fretes", "Relatórios"].includes(item.label));
+    // Perfil motorista: apenas menus limitados incluindo Calculadora ANTT
+    availableNavItems = navItems.filter(item => ["Motoristas", "Veículos", "Fretes", "Relatórios", "Calculadora ANTT"].includes(item.label));
   } else if (isTransportador || isShipper || isAgent || isAdmin) {
     // Perfil transportador, embarcador, agenciador e admin: todos os menus incluindo Cotações
     availableNavItems = navItems;

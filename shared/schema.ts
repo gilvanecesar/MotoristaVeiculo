@@ -65,6 +65,24 @@ export type CargoType = typeof CARGO_TYPES[keyof typeof CARGO_TYPES];
 export type TarpOption = typeof TARP_OPTIONS[keyof typeof TARP_OPTIONS];
 export type TollOption = typeof TOLL_OPTIONS[keyof typeof TOLL_OPTIONS];
 
+// ANTT Calculator Types
+export const ANTT_CARGO_TYPES = {
+  CARGA_GERAL: "carga_geral",
+  CARGA_GRANEL_PRESSURIZADA: "carga_granel_pressurizada", 
+  CONTEINERIZADA: "conteinerizada",
+  FRIGORIFICADA_OU_AQUECIDA: "frigorificada_ou_aquecida",
+  GRANEL_LIQUIDO: "granel_liquido",
+  GRANEL_SOLIDO: "granel_solido",
+  NEOGRANEL: "neogranel",
+  PERIGOSA_CARGA_GERAL: "perigosa_carga_geral",
+  PERIGOSA_CONTEINERIZADA: "perigosa_conteinerizada",
+  PERIGOSA_FRIGORIFICADA: "perigosa_frigorificada",
+  PERIGOSA_GRANEL_LIQUIDO: "perigosa_granel_liquido",
+  PERIGOSA_GRANEL_SOLIDO: "perigosa_granel_solido"
+} as const;
+
+export type AnttCargoType = typeof ANTT_CARGO_TYPES[keyof typeof ANTT_CARGO_TYPES];
+
 // Driver schema
 export const drivers = pgTable("drivers", {
   id: serial("id").primaryKey(),

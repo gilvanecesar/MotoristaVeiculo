@@ -3748,10 +3748,312 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===============================
+  // CALCULADORA ANTT
+  // ===============================
+
+  // Calcular frete ANTT
+  app.post("/api/antt/calculate", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { cargoType, axles, distance, origin, destination, isComposition, isHighPerformance, emptyReturn } = req.body;
+
+      // Validar dados obrigatórios
+      if (!cargoType || !axles || !distance || !origin || !destination) {
+        return res.status(400).json({ 
+          error: "Dados obrigatórios: cargoType, axles, distance, origin, destination" 
+        });
+      }
+
+      const numDistance = parseFloat(distance);
+      const numAxles = parseInt(axles);
+
+      if (isNaN(numDistance) || numDistance <= 0) {
+        return res.status(400).json({ error: "Distância deve ser um número positivo" });
+      }
+
+      if (isNaN(numAxles) || numAxles < 2 || numAxles > 9) {
+        return res.status(400).json({ error: "Número de eixos deve ser entre 2 e 9" });
+      }
+
+      // Chamar serviço de cálculo ANTT
+      const result = await calculateAnttFreight({
+        cargoType,
+        axles: numAxles,
+        distance: numDistance,
+        origin,
+        destination,
+        isComposition: !!isComposition,
+        isHighPerformance: !!isHighPerformance,
+        emptyReturn: !!emptyReturn
+      });
+
+      res.json(result);
+    } catch (error) {
+      console.error("Erro ao calcular frete ANTT:", error);
+      res.status(500).json({ error: "Erro interno do servidor" });
+    }
+  });
+
+  // Buscar dados de pedágio para uma rota
+  app.post("/api/antt/toll-info", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { origin, destination, axles } = req.body;
+
+      if (!origin || !destination || !axles) {
+        return res.status(400).json({ 
+          error: "Dados obrigatórios: origin, destination, axles" 
+        });
+      }
+
+      const tollInfo = await calculateTollCosts(origin, destination, parseInt(axles));
+      res.json(tollInfo);
+    } catch (error) {
+      console.error("Erro ao buscar informações de pedágio:", error);
+      res.status(500).json({ error: "Erro interno do servidor" });
+    }
+  });
+
   // Configurar rotas do WhatsApp
   setupWhatsAppRoutes(app);
 
   const httpServer = createServer(app);
 
   return httpServer;
+}
+
+// ===============================
+// SERVIÇOS ANTT
+// ===============================
+
+interface AnttCalculationParams {
+  cargoType: string;
+  axles: number;
+  distance: number;
+  origin: string;
+  destination: string;
+  isComposition: boolean;
+  isHighPerformance: boolean;
+  emptyReturn: boolean;
+}
+
+interface AnttCalculationResult {
+  freightValue: number;
+  tollValue: number;
+  totalValue: number;
+  distance: number;
+  route: string;
+  calculation: {
+    baseRate: number;
+    loadUnloadCoefficient: number;
+    distanceCoefficient: number;
+    adjustments: any[];
+  };
+}
+
+/**
+ * Calcula o frete mínimo conforme tabela ANTT
+ */
+async function calculateAnttFreight(params: AnttCalculationParams): Promise<AnttCalculationResult> {
+  try {
+    // Coeficientes base da tabela ANTT 2025 (simplificados para demonstração)
+    const baseRates = {
+      // Carga geral por número de eixos (R$/km)
+      2: 2.89,
+      3: 3.42,
+      4: 4.15,
+      5: 4.88,
+      6: 5.61,
+      7: 6.34,
+      9: 8.07
+    };
+
+    // Coeficiente de carga e descarga (R$ fixo)
+    const loadUnloadCoefficients = {
+      2: 45.50,
+      3: 58.20,
+      4: 70.90,
+      5: 83.60,
+      6: 96.30,
+      7: 109.00,
+      9: 134.40
+    };
+
+    // Multiplicadores por tipo de carga
+    const cargoMultipliers: { [key: string]: number } = {
+      'carga_geral': 1.0,
+      'frigorificada_ou_aquecida': 1.15,
+      'perigosa_carga_geral': 1.25,
+      'conteinerizada': 1.05,
+      'granel_liquido': 0.95,
+      'granel_solido': 0.90,
+      'neogranel': 1.10
+    };
+
+    const axles = params.axles;
+    const baseRate = baseRates[axles as keyof typeof baseRates] || baseRates[3];
+    const loadUnloadCoeff = loadUnloadCoefficients[axles as keyof typeof loadUnloadCoefficients] || loadUnloadCoefficients[3];
+    const cargoMultiplier = cargoMultipliers[params.cargoType] || 1.0;
+
+    // Cálculo base: (Distância × Coef. Deslocamento × Multiplicador) + Coef. Carga/Descarga
+    let freightValue = (params.distance * baseRate * cargoMultiplier) + loadUnloadCoeff;
+
+    // Ajustes
+    const adjustments = [];
+
+    if (params.isComposition) {
+      freightValue *= 1.05; // 5% adicional para composição veicular
+      adjustments.push({ type: 'Composição Veicular', factor: 1.05 });
+    }
+
+    if (params.isHighPerformance) {
+      freightValue *= 1.08; // 8% adicional para alto desempenho
+      adjustments.push({ type: 'Alto Desempenho', factor: 1.08 });
+    }
+
+    if (params.emptyReturn) {
+      freightValue *= 0.85; // 15% desconto para retorno vazio
+      adjustments.push({ type: 'Retorno Vazio', factor: 0.85 });
+    }
+
+    // Calcular pedágios estimados
+    const tollInfo = await calculateTollCosts(params.origin, params.destination, axles);
+
+    const result: AnttCalculationResult = {
+      freightValue: Math.round(freightValue * 100) / 100,
+      tollValue: tollInfo.totalCost,
+      totalValue: Math.round((freightValue + tollInfo.totalCost) * 100) / 100,
+      distance: params.distance,
+      route: `${params.origin} → ${params.destination}`,
+      calculation: {
+        baseRate,
+        loadUnloadCoefficient: loadUnloadCoeff,
+        distanceCoefficient: baseRate * cargoMultiplier,
+        adjustments
+      }
+    };
+
+    return result;
+  } catch (error) {
+    console.error('Erro no cálculo ANTT:', error);
+    throw new Error('Erro ao calcular frete ANTT');
+  }
+}
+
+/**
+ * Calcula custos de pedágios para uma rota
+ */
+async function calculateTollCosts(origin: string, destination: string, axles: number): Promise<{ totalCost: number; tollPlazas: any[] }> {
+  try {
+    // Base de dados simplificada de principais rotas de pedágio
+    const tollRoutes: { [key: string]: any } = {
+      // Fernão Dias (BR-381): BH/Betim para SP/Guarulhos
+      'betim-guarulhos': {
+        plazas: 8,
+        costPerAxle: 5.80,
+        route: 'BR-381 (Fernão Dias)',
+        plazaNames: ['Itatiaiuçu', 'Carmópolis', 'Santo Antônio', 'Carmo da Cachoeira', 'São Gonçalo', 'Cambuí', 'Vargem', 'Mairiporã']
+      },
+      'belo horizonte-sao paulo': {
+        plazas: 8,
+        costPerAxle: 5.80,
+        route: 'BR-381 (Fernão Dias)',
+        plazaNames: ['Itatiaiuçu', 'Carmópolis', 'Santo Antônio', 'Carmo da Cachoeira', 'São Gonçalo', 'Cambuí', 'Vargem', 'Mairiporã']
+      },
+      'guarulhos-betim': {
+        plazas: 8,
+        costPerAxle: 5.80,
+        route: 'BR-381 (Fernão Dias)',
+        plazaNames: ['Mairiporã', 'Vargem', 'Cambuí', 'São Gonçalo', 'Carmo da Cachoeira', 'Santo Antônio', 'Carmópolis', 'Itatiaiuçu']
+      },
+      // Presidente Dutra (BR-116): SP para RJ
+      'sao paulo-rio de janeiro': {
+        plazas: 6,
+        costPerAxle: 6.20,
+        route: 'BR-116 (Presidente Dutra)',
+        plazaNames: ['Jacareí', 'Santa Isabel', 'Arujá', 'Itatiaia', 'Seropédica', 'Rio']
+      },
+      'rio de janeiro-sao paulo': {
+        plazas: 6,
+        costPerAxle: 6.20,
+        route: 'BR-116 (Presidente Dutra)',
+        plazaNames: ['Rio', 'Seropédica', 'Itatiaia', 'Arujá', 'Santa Isabel', 'Jacareí']
+      },
+      // Outras rotas principais
+      'sao paulo-curitiba': {
+        plazas: 4,
+        costPerAxle: 5.50,
+        route: 'BR-116',
+        plazaNames: ['Registro', 'Miracatu', 'Campina Grande do Sul', 'Curitiba']
+      },
+      'curitiba-sao paulo': {
+        plazas: 4,
+        costPerAxle: 5.50,
+        route: 'BR-116',
+        plazaNames: ['Curitiba', 'Campina Grande do Sul', 'Miracatu', 'Registro']
+      }
+    };
+
+    // Normalizar nomes das cidades para busca
+    const normalizedOrigin = origin.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z-]/g, '');
+    const normalizedDestination = destination.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z-]/g, '');
+    const normalizedRoute = `${normalizedOrigin}-${normalizedDestination}`;
+    
+    // Buscar rota na base de dados
+    let routeData = tollRoutes[normalizedRoute];
+    
+    // Se não encontrar rota exata, tentar algumas variações comuns
+    if (!routeData) {
+      const variations = [
+        normalizedRoute.replace('sao-paulo', 'sp').replace('rio-de-janeiro', 'rj'),
+        normalizedRoute.replace('belo-horizonte', 'betim'),
+        normalizedRoute.replace('sp', 'sao-paulo').replace('rj', 'rio-de-janeiro'),
+        normalizedRoute.replace('betim', 'belo-horizonte')
+      ];
+      
+      for (const variation of variations) {
+        if (tollRoutes[variation]) {
+          routeData = tollRoutes[variation];
+          break;
+        }
+      }
+    }
+      
+    // Se ainda não encontrar, usar estimativa padrão baseada na distância
+    if (!routeData) {
+      routeData = {
+        plazas: Math.max(1, Math.floor(Math.random() * 3) + 2), // 2-4 praças estimadas
+        costPerAxle: 5.80, // Valor médio
+        route: 'Rota Estimada',
+        plazaNames: ['Pedágio 1', 'Pedágio 2']
+      };
+    }
+
+    // Calcular custo total baseado no número de eixos
+    // Para caminhões, cobrança é por eixo ou categoria
+    let axleMultiplier = 1;
+    if (axles <= 2) axleMultiplier = 1;
+    else if (axles === 3) axleMultiplier = 1;
+    else if (axles === 4) axleMultiplier = 1.5;
+    else if (axles === 5) axleMultiplier = 2;
+    else if (axles >= 6) axleMultiplier = 2.5;
+
+    const totalCost = Math.round(routeData.plazas * routeData.costPerAxle * axleMultiplier * 100) / 100;
+
+    return {
+      totalCost,
+      tollPlazas: [{
+        route: routeData.route,
+        plazas: routeData.plazas,
+        costPerPlaza: Math.round(routeData.costPerAxle * axleMultiplier * 100) / 100,
+        plazaNames: routeData.plazaNames
+      }]
+    };
+  } catch (error) {
+    console.error('Erro ao calcular pedágios:', error);
+    // Retornar estimativa mínima em caso de erro
+    return {
+      totalCost: 0,
+      tollPlazas: []
+    };
+  }
 }

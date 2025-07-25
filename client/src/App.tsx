@@ -75,6 +75,7 @@ import MyFreightsPage from "@/pages/my-freights";
 import QuotesPage from "@/pages/quotes/index";
 import CreateQuotePage from "@/pages/quotes/create";
 import PublicQuoteRequest from "@/pages/public/quote-request";
+import AnttCalculatorPage from "@/pages/antt-calculator/index";
 
 function Router() {
   // Track page views when routes change
@@ -128,6 +129,7 @@ function Router() {
       <ProtectedRoute path="/complements/:id" component={ComplementDetailPage} />
       <ProtectedRoute path="/quotes" component={QuotesPage} />
       <ProtectedRoute path="/quotes/create" component={CreateQuotePage} />
+      <ProtectedRoute path="/antt-calculator" component={AnttCalculatorPage} />
       <ProtectedRoute path="/reports" component={ReportsPage} />
       <ProtectedRoute path="/admin" component={AdminPage} />
       <ProtectedRoute path="/admin/finance" component={FinanceDashboard} />
