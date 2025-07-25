@@ -3753,16 +3753,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===============================
 
   // Buscar cidades do IBGE
-  app.get("/api/ibge/cities", isAuthenticated, async (req: Request, res: Response) => {
+  app.get("/api/ibge/cities", async (req: Request, res: Response) => {
     try {
+      const { search, limit = 20 } = req.query;
+      
+      if (!search || typeof search !== 'string') {
+        return res.status(400).json({ error: 'Parâmetro de busca é obrigatório' });
+      }
+
+      const searchTerm = search.trim().toLowerCase();
+      
+      if (searchTerm.length < 2) {
+        return res.status(400).json({ error: 'Termo de busca deve ter pelo menos 2 caracteres' });
+      }
+
+      console.log(`🔍 Buscando cidades: "${searchTerm}"`);
+
+      // Buscar todas as cidades na API do IBGE
       const response = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/municipios?orderBy=nome');
       
       if (!response.ok) {
         throw new Error('Erro ao buscar cidades do IBGE');
       }
       
-      const cities = await response.json();
-      res.json(cities);
+      const allCities = await response.json();
+
+      // Filtrar cidades que contenham o termo de busca
+      const filteredCities = allCities
+        .filter((city: any) => 
+          city.nome && 
+          city.microrregiao?.mesorregiao?.UF?.sigla &&
+          city.nome.toLowerCase().includes(searchTerm)
+        )
+        .slice(0, parseInt(limit.toString())) // Limitar resultados
+        .map((city: any) => ({
+          id: city.id,
+          name: city.nome,
+          state: city.microrregiao.mesorregiao.UF.sigla,
+          displayName: `${city.nome} - ${city.microrregiao.mesorregiao.UF.sigla}`
+        }))
+        .sort((a: any, b: any) => a.name.localeCompare(b.name));
+
+      console.log(`✅ Encontradas ${filteredCities.length} cidades para "${searchTerm}"`);
+      
+      res.json(filteredCities);
     } catch (error) {
       console.error('Erro ao buscar cidades:', error);
       res.status(500).json({ error: 'Erro ao buscar cidades' });

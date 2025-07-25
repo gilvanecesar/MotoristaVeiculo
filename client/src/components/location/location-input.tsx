@@ -134,32 +134,25 @@ const LocationInput: React.FC<LocationInputProps> = ({
       
       console.log("Buscando cidades com a query:", searchQuery);
       
-      const cities = await searchCitiesByName(searchQuery);
+      // Usar a API do backend que já processa os dados do IBGE
+      const response = await fetch(`/api/ibge/cities?search=${encodeURIComponent(searchQuery)}&limit=10`);
+      
+      if (!response.ok) {
+        throw new Error(`Erro na API: ${response.status}`);
+      }
+      
+      const cities = await response.json();
       console.log("Cidades encontradas:", cities);
       
       if (cities.length > 0) {
-        // Formatar os resultados para exibição
-        const suggestions: CitySuggestion[] = cities.map(city => {
-          try {
-            const state = city.microrregiao?.mesorregiao?.UF?.sigla || "N/A";
-            return {
-              id: city.id,
-              name: city.nome,
-              fullName: `${city.nome} - ${state}`,
-              state,
-              displayText: `${city.nome} - ${state}`
-            };
-          } catch (err) {
-            console.error("Erro ao processar cidade:", city, err);
-            return {
-              id: city.id || 0,
-              name: city.nome || "Desconhecido",
-              fullName: `${city.nome || "Desconhecido"} - N/A`,
-              state: "N/A",
-              displayText: `${city.nome || "Desconhecido"} - N/A`
-            };
-          }
-        });
+        // As cidades já vêm formatadas da API
+        const suggestions: CitySuggestion[] = cities.map((city: any) => ({
+          id: city.id,
+          name: city.name,
+          fullName: city.displayName,
+          state: city.state,
+          displayText: city.displayName
+        }));
         
         console.log("Sugestões formatadas:", suggestions);
         setCitySuggestions(suggestions);
