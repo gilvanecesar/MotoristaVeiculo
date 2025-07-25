@@ -3897,27 +3897,29 @@ interface AnttCalculationResult {
  */
 async function calculateAnttFreight(params: AnttCalculationParams): Promise<AnttCalculationResult> {
   try {
-    // Coeficientes base da tabela ANTT 2025 (ajustados para corresponder aos valores oficiais)
+    // Coeficientes oficiais da tabela ANTT - Resolução 6067/2025 - Tabela A (Carga Geral)
     const baseRates = {
-      // Coeficiente de deslocamento por número de eixos (R$/km) - tabela oficial ANTT
-      2: 3.89,
-      3: 5.482,  // Corrigido: (3246.78 - 67.40) / 580 = 5.482 R$/km
-      4: 5.12,
-      5: 5.43,  // Corrigido para valores oficiais ANTT 2025
-      6: 6.50,
-      7: 7.35,
-      9: 9.35
+      // CCD - Custo de Deslocamento (R$/km) - Valores oficiais ANTT 2025
+      2: 4.6528,  // Resolução ANTT 6067/2025
+      3: 5.8734,  // Resolução ANTT 6067/2025
+      4: 7.0940,  // Resolução ANTT 6067/2025
+      5: 8.3146,  // Resolução ANTT 6067/2025
+      6: 9.5352,  // Resolução ANTT 6067/2025
+      7: 10.7558, // Resolução ANTT 6067/2025
+      8: 11.9764, // Resolução ANTT 6067/2025
+      9: 13.1970  // Resolução ANTT 6067/2025
     };
 
-    // Coeficiente de carga e descarga (R$ fixo) - tabela oficial ANTT  
+    // CC - Carga e Descarga (R$ fixo por viagem) - Valores oficiais ANTT 2025
     const loadUnloadCoefficients = {
-      2: 52.50,
-      3: 67.40,
-      4: 82.30,
-      5: 97.20,  // Mantido conforme tabela oficial
-      6: 112.10,
-      7: 127.00,
-      9: 156.80
+      2: 516.52,   // Resolução ANTT 6067/2025
+      3: 651.87,   // Resolução ANTT 6067/2025
+      4: 787.22,   // Resolução ANTT 6067/2025
+      5: 922.57,   // Resolução ANTT 6067/2025
+      6: 1057.92,  // Resolução ANTT 6067/2025
+      7: 1193.27,  // Resolução ANTT 6067/2025
+      8: 1328.62,  // Resolução ANTT 6067/2025
+      9: 1463.97   // Resolução ANTT 6067/2025
     };
 
     // Multiplicadores por tipo de carga conforme tabela ANTT

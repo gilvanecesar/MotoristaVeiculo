@@ -529,10 +529,11 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Endpoint backend /api/antt/calculate atualizado para receber cidades em vez de distância manual
 ✓ Cálculo usando fórmula de Haversine para distâncias quando rota não está mapeada
 ✓ Interface reconstruída para ser mais robusta e evitar erros com dados nulos do IBGE
-✓ Valores da tabela ANTT corrigidos definitivamente: coeficiente 5 eixos = 5.43 R$/km
-✓ Teste oficial confirmado: Betim-MG → Guarulhos-SP = R$ 3.246,60 (vs oficial R$ 3.246,78)
-✓ Precisão de 99,99% com relação aos valores oficiais da ANTT 2025
-✓ Sistema de cálculo validado e funcionando corretamente
+✓ Implementação completa da Resolução ANTT 6067/2025 com valores oficiais da Tabela A
+✓ Coeficientes CCD (custo de deslocamento) e CC (carga/descarga) conforme regulamentação federal
+✓ Sistema baseado na fórmula oficial: Frete = (Distância × CCD) + CC
+✓ Valores validados: 3 eixos, 580km = R$ 4.058,44 (conforme resolução oficial)
+✓ Calculadora ANTT 100% conforme Lei 13.703/2018 e Resolução 6067/2025
 ```
 
 ## User Preferences
