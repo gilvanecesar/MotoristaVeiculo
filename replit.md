@@ -535,6 +535,8 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Teste validado: Betim-MG → Guarulhos-SP, 580km, 3 eixos = R$ 3.246,78 (valor exato da ANTT)
 ✓ Sistema baseado na fórmula oficial: Frete = (Distância × CCD) + CC
 ✓ Calculadora agora produz valores idênticos à calculadora oficial da ANTT
+✓ Bug de múltiplas chamadas automáticas corrigido com proteções robustas
+✓ Proteção contra chamadas simultâneas e debounce implementado
 ```
 
 ## User Preferences

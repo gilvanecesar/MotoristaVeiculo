@@ -84,6 +84,7 @@ export default function AnttCalculatorPage() {
   const [loadingCities, setLoadingCities] = useState(false);
   const [openOrigin, setOpenOrigin] = useState(false);
   const [openDestination, setOpenDestination] = useState(false);
+  const [lastRequestTime, setLastRequestTime] = useState(0);
   const { toast } = useToast();
 
   const form = useForm<AnttCalculatorForm>({
@@ -132,8 +133,23 @@ export default function AnttCalculatorPage() {
   }, []);
 
   const onSubmit = async (data: AnttCalculatorForm) => {
+    const currentTime = Date.now();
+    
+    // Proteção contra múltiplas chamadas simultâneas
+    if (isCalculating) {
+      console.warn("⚠️ Cálculo já em andamento, ignorando nova chamada");
+      return;
+    }
+
+    // Proteção contra cliques muito rápidos (debounce de 1 segundo)
+    if (currentTime - lastRequestTime < 1000) {
+      console.warn("⚠️ Chamada muito rápida após anterior, ignorando");
+      return;
+    }
+
     console.log("🚛 Iniciando cálculo ANTT:", data);
     setIsCalculating(true);
+    setLastRequestTime(currentTime);
     
     try {
       const payload = {
@@ -495,6 +511,13 @@ export default function AnttCalculatorPage() {
                     type="submit" 
                     disabled={isCalculating || loadingCities}
                     className="flex-1"
+                    onClick={(e) => {
+                      // Proteção adicional contra cliques múltiplos
+                      if (isCalculating) {
+                        e.preventDefault();
+                        return;
+                      }
+                    }}
                   >
                     {isCalculating ? (
                       <>
