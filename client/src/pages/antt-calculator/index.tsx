@@ -5,6 +5,7 @@ import { z } from "zod";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
@@ -18,16 +19,15 @@ import { cn } from "@/lib/utils";
 import TransportCategories from "./components/transport-categories";
 import CargoTypes from "./components/cargo-types";
 import CalculationInfo from "./components/calculation-info";
+import ResolutionSelector from "./components/resolution-selector";
 
 // Schema para validação do formulário
 const anttCalculatorSchema = z.object({
+  resolution: z.string().min(1, "Selecione a resolução"),
   transportCategory: z.string().min(1, "Selecione a categoria do transporte"),
   cargoType: z.string().min(1, "Selecione o tipo de carga"),
   axles: z.string().min(1, "Selecione o número de eixos"),
-  originCity: z.string().min(1, "Selecione a cidade de origem"),
-  destinationCity: z.string().min(1, "Selecione a cidade de destino"),
-  isComposition: z.boolean().default(false),
-  emptyReturn: z.boolean().default(false),
+  distance: z.string().min(1, "Digite a distância em km").refine((val) => !isNaN(Number(val)) && Number(val) > 0, "Distância deve ser um número maior que 0"),
 });
 
 type AnttCalculatorForm = z.infer<typeof anttCalculatorSchema>;
@@ -90,16 +90,15 @@ export default function AnttCalculatorPage() {
   const form = useForm<AnttCalculatorForm>({
     resolver: zodResolver(anttCalculatorSchema),
     defaultValues: {
+      resolution: "6067_2025",
       transportCategory: "CARGA_LOTACAO",
       cargoType: "",
       axles: "",
-      originCity: "",
-      destinationCity: "",
-      isComposition: false,
-      emptyReturn: false,
+      distance: "",
     },
   });
 
+  const resolution = form.watch("resolution");
   const transportCategory = form.watch("transportCategory");
   const cargoType = form.watch("cargoType");
   const axles = form.watch("axles");
@@ -140,14 +139,12 @@ export default function AnttCalculatorPage() {
       const payload = {
         cargoType: data.cargoType,
         axles: data.axles,
-        originCity: data.originCity,
-        destinationCity: data.destinationCity,
+        distance: parseFloat(data.distance),
         transportCategory: data.transportCategory,
-        isComposition: data.isComposition,
-        emptyReturn: data.emptyReturn
+        resolution: data.resolution
       };
 
-      const response = await fetch("/api/antt/calculate", {
+      const response = await fetch("/api/antt/calculate-direct", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -211,37 +208,55 @@ export default function AnttCalculatorPage() {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Coluna Esquerda - Categorias de Transporte */}
-          <div className="lg:col-span-1">
-            <TransportCategories
-              selectedCategory={transportCategory}
-              onCategoryChange={(category) => form.setValue("transportCategory", category)}
-            />
-          </div>
-
-          {/* Coluna Central - Formulário */}
+        <div className="grid lg:grid-cols-2 gap-8">
+          {/* Coluna Esquerda - Formulário */}
           <div className="lg:col-span-1">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Truck className="h-5 w-5" />
-                  Dados da Operação
-                </CardTitle>
+                <CardTitle className="text-xl">Simulador da tabela de pisos mínimos</CardTitle>
                 <CardDescription>
-                  Preencha os dados para o cálculo do frete mínimo
+                  Use o simulador para cálculo dos pisos mínimos de frete com base na tabela da ANTT estabelecida pela Resolução abaixo.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    {/* Seletor de Resolução */}
+                    <FormField
+                      control={form.control}
+                      name="resolution"
+                      render={({ field }) => (
+                        <FormItem>
+                          <ResolutionSelector
+                            selectedResolution={field.value}
+                            onResolutionChange={field.onChange}
+                          />
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Categoria de Transporte */}
+                    <FormField
+                      control={form.control}
+                      name="transportCategory"
+                      render={({ field }) => (
+                        <FormItem>
+                          <TransportCategories
+                            selectedCategory={field.value}
+                            onCategoryChange={field.onChange}
+                          />
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
                     {/* Tipo de Carga */}
                     <FormField
                       control={form.control}
                       name="cargoType"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Tipo de carga:</FormLabel>
                           <CargoTypes
                             value={field.value}
                             onValueChange={field.onChange}
@@ -257,21 +272,42 @@ export default function AnttCalculatorPage() {
                       name="axles"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Número de eixos:</FormLabel>
+                          <label className="text-sm font-medium">Num. eixos:</label>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Selecione o número de eixos" />
+                                <SelectValue placeholder="Selecionar" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
                               {axleOptions.map((option) => (
                                 <SelectItem key={option.value} value={option.value}>
-                                  {option.label}
+                                  {option.value}
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Distância */}
+                    <FormField
+                      control={form.control}
+                      name="distance"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Distância (km):</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="Digite a distância em km"
+                              {...field}
+                              min="1"
+                              step="0.1"
+                            />
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -453,7 +489,7 @@ export default function AnttCalculatorPage() {
                     {/* Botão Calcular */}
                     <Button 
                       type="submit" 
-                      className="w-full" 
+                      className="w-full bg-blue-600 hover:bg-blue-700" 
                       disabled={isCalculating}
                     >
                       {isCalculating ? (
@@ -461,63 +497,80 @@ export default function AnttCalculatorPage() {
                       ) : (
                         <Calculator className="mr-2 h-4 w-4" />
                       )}
-                      {isCalculating ? "Calculando..." : "Calcular Frete"}
+                      {isCalculating ? "Calculando..." : "Calcular valor do frete"}
                     </Button>
                   </form>
                 </Form>
               </CardContent>
             </Card>
+          </div>
 
-            {/* Resultado */}
-            {calculationResult && (
-              <Card className="mt-6 border-green-200 bg-green-50">
+          {/* Coluna Direita - Resultado */}
+          <div className="lg:col-span-1">
+            {!calculationResult ? (
+              <Card className="h-fit">
+                <CardContent className="p-8 text-center">
+                  <div className="text-gray-400 mb-4">
+                    <Calculator className="h-16 w-16 mx-auto mb-4" />
+                  </div>
+                  <p className="text-gray-500">
+                    Preencha os campos ao lado para calcular o valor do frete.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="border-green-200 bg-green-50">
                 <CardHeader>
-                  <CardTitle className="text-green-800">Resultado do Cálculo</CardTitle>
+                  <CardTitle className="text-green-800 text-center">
+                    💰 Valor do Frete Calculado
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm text-green-700">Distância:</p>
-                        <p className="text-lg font-semibold text-green-800">
+                  <div className="text-center space-y-4">
+                    <div className="bg-white p-6 rounded-lg border border-green-200">
+                      <p className="text-4xl font-bold text-green-800 mb-2">
+                        {formatCurrency(calculationResult.totalValue)}
+                      </p>
+                      <p className="text-sm text-green-600">
+                        Valor mínimo conforme tabela ANTT
+                      </p>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div className="bg-white p-3 rounded border border-green-200">
+                        <p className="text-green-700 font-medium">Distância</p>
+                        <p className="text-green-800 text-lg font-semibold">
                           {calculationResult.distance} km
                         </p>
                       </div>
-                      <div>
-                        <p className="text-sm text-green-700">Rota:</p>
-                        <p className="text-lg font-semibold text-green-800">
-                          {calculationResult.route}
+                      <div className="bg-white p-3 rounded border border-green-200">
+                        <p className="text-green-700 font-medium">Eixos</p>
+                        <p className="text-green-800 text-lg font-semibold">
+                          {axles} eixos
                         </p>
                       </div>
                     </div>
-                    
-                    <div className="pt-4 border-t border-green-200">
-                      <p className="text-sm text-green-700 mb-2">Valor do Frete Mínimo:</p>
-                      <p className="text-3xl font-bold text-green-800">
-                        {formatCurrency(calculationResult.totalValue)}
-                      </p>
-                    </div>
 
-                    <div className="text-xs text-green-600 space-y-1">
-                      <p>CCD: R$ {calculationResult.calculation.baseRate.toFixed(4)}/km</p>
-                      <p>CC: {formatCurrency(calculationResult.calculation.loadUnloadCoefficient)}</p>
-                      {calculationResult.calculation.adjustments.map((adj, idx) => (
-                        <p key={idx}>{adj.type}: {(adj.factor * 100).toFixed(1)}%</p>
-                      ))}
+                    <div className="bg-white p-4 rounded border border-green-200">
+                      <h4 className="text-sm font-medium text-green-800 mb-2">Detalhes do Cálculo:</h4>
+                      <div className="text-xs text-green-600 space-y-1">
+                        <p><strong>CCD:</strong> R$ {calculationResult.calculation.baseRate.toFixed(4)}/km</p>
+                        <p><strong>CC:</strong> {formatCurrency(calculationResult.calculation.loadUnloadCoefficient)}</p>
+                        <p><strong>Fórmula:</strong> ({calculationResult.distance} km × R$ {calculationResult.calculation.baseRate.toFixed(4)}) + {formatCurrency(calculationResult.calculation.loadUnloadCoefficient)}</p>
+                        {calculationResult.calculation.adjustments.length > 0 && (
+                          <div className="pt-2 border-t border-green-200">
+                            <p className="font-medium">Ajustes aplicados:</p>
+                            {calculationResult.calculation.adjustments.map((adj, idx) => (
+                              <p key={idx}>• {adj.type}: {((adj.factor - 1) * 100).toFixed(1)}%</p>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             )}
-          </div>
-
-          {/* Coluna Direita - Informações */}
-          <div className="lg:col-span-1">
-            <CalculationInfo
-              selectedCategory={transportCategory}
-              selectedCargoType={cargoType}
-              selectedAxles={axles}
-            />
           </div>
         </div>
       </div>

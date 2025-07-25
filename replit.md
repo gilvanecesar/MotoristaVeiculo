@@ -539,16 +539,17 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Proteção contra chamadas simultâneas e debounce implementado
 ✓ Cálculo de pedágio removido para evitar variação de valores aleatórios
 ✓ Calculadora agora exibe apenas o valor do frete ANTT sem variações
-✓ Interface da calculadora ANTT completamente redesenhada inspirada no site oficial
-✓ Layout em 3 colunas: categorias de transporte, formulário central e informações laterais
-✓ Componentes separados criados: TransportCategories, CargoTypes, CalculationInfo
-✓ Categorias de transporte por anexo: Tabela A (Carga Lotação), B (Veículo), C (Alto Desempenho), D (Veículo Alto Desempenho)
-✓ Coeficientes completos da RESOLUÇÃO 6.067/2025 implementados para todos os tipos de carga
-✓ Tabela A com coeficientes específicos: CARGA_GERAL, GRANEL_SOLIDO, GRANEL_LIQUIDO, FRIGORIFICADA, CONTEINERIZADA, NEOGRANEL
-✓ Sistema de seleção visual de categorias com cards interativos
-✓ Informações educativas na lateral direita com base legal e fórmulas
-✓ Teste validado: 580km, 5 eixos, Carga Geral = R$ 4.096,58 (cálculo preciso: 580 × 6,0112 + 610,08)
-✓ Interface profissional similar ao calculador oficial da ANTT com UX moderna
+✓ Calculadora ANTT totalmente reestruturada seguindo padrão do tabelasdefrete.com.br
+✓ Layout compacto em 2 colunas: formulário à esquerda, resultado à direita
+✓ Dropdown de resoluções/portarias com histórico completo desde 2020
+✓ Campo de distância manual em km (mais prático que busca de cidades)
+✓ Interface limpa inspirada no site oficial: https://www.tabelasdefrete.com.br/p/calculo-carreteiro
+✓ Nova API /api/antt/calculate-direct para cálculo direto com distância
+✓ Componente ResolutionSelector criado para seleção de legislação
+✓ Sistema de selects compactos substituindo cards visuais extensos
+✓ Resultado destacado com design profissional e detalhamento da fórmula
+✓ Teste validado: 500km, 5 eixos = R$ 3.615,68 (500 × 6,0112 + 610,08)
+✓ Layout moderno focado na funcionalidade essencial seguindo referência oficial
 ```
 
 ## User Preferences

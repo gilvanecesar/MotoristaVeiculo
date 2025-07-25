@@ -3792,7 +3792,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // CALCULADORA ANTT
   // ===============================
 
-  // Calcular frete ANTT
+  // Calcular frete ANTT (com cidades)
   app.post("/api/antt/calculate", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const { cargoType, axles, originCity, destinationCity, transportCategory, isComposition, emptyReturn } = req.body;
@@ -3832,6 +3832,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(result);
     } catch (error) {
       console.error("Erro ao calcular frete ANTT:", error);
+      res.status(500).json({ error: "Erro interno do servidor" });
+    }
+  });
+
+  // Calcular frete ANTT (com distância direta)
+  app.post("/api/antt/calculate-direct", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { cargoType, axles, distance, transportCategory } = req.body;
+
+      // Validar dados obrigatórios
+      if (!cargoType || !axles || !distance) {
+        return res.status(400).json({ 
+          error: "Dados obrigatórios: cargoType, axles, distance" 
+        });
+      }
+
+      const numAxles = parseInt(axles);
+      const numDistance = parseFloat(distance);
+
+      if (isNaN(numAxles) || numAxles < 2 || numAxles > 9) {
+        return res.status(400).json({ error: "Número de eixos deve ser entre 2 e 9" });
+      }
+
+      if (isNaN(numDistance) || numDistance <= 0) {
+        return res.status(400).json({ error: "Distância deve ser um número maior que 0" });
+      }
+
+      // Chamar serviço de cálculo ANTT
+      const result = await calculateAnttFreight({
+        cargoType,
+        axles: numAxles,
+        distance: numDistance,
+        origin: "Manual",
+        destination: "Manual",
+        transportCategory: transportCategory || 'CARGA_LOTACAO',
+        isComposition: false,
+        emptyReturn: false
+      });
+
+      res.json(result);
+    } catch (error) {
+      console.error("Erro ao calcular frete ANTT direto:", error);
       res.status(500).json({ error: "Erro interno do servidor" });
     }
   });
