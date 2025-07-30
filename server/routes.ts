@@ -3643,6 +3643,45 @@ async function calculateTollCosts(origin: string, destination: string, axles: nu
 }
 
 /**
+ * Busca coordenadas de uma cidade via API do IBGE
+ */
+async function fetchCityCoordinatesFromIBGE(cityName: string): Promise<{ lat: number; lng: number } | null> {
+  try {
+    // Primeiro buscar a cidade para obter o ID
+    const searchResponse = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/municipios?nome=${encodeURIComponent(cityName)}`);
+    if (!searchResponse.ok) return null;
+    
+    const cities = await searchResponse.json();
+    if (!cities || cities.length === 0) return null;
+    
+    // Pegar a primeira cidade encontrada
+    const city = cities[0];
+    const cityId = city.id;
+    
+    // Buscar coordenadas via API de distritos (mais precisa)
+    const coordsResponse = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/municipios/${cityId}/distritos`);
+    if (!coordsResponse.ok) return null;
+    
+    const districts = await coordsResponse.json();
+    if (!districts || districts.length === 0) return null;
+    
+    // Usar coordenadas do primeiro distrito (sede municipal)
+    const mainDistrict = districts[0];
+    if (mainDistrict && mainDistrict.coordenadas) {
+      return {
+        lat: parseFloat(mainDistrict.coordenadas.latitude),
+        lng: parseFloat(mainDistrict.coordenadas.longitude)
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Erro ao buscar coordenadas no IBGE:', error);
+    return null;
+  }
+}
+
+/**
  * Calcula distância aproximada entre duas cidades brasileiras
  */
 async function calculateDistanceBetweenCities(originCity: string, destinationCity: string): Promise<number> {
@@ -3777,14 +3816,69 @@ async function calculateDistanceBetweenCities(originCity: string, destinationCit
         'cuiaba-mt': { lat: -15.6014, lng: -56.0979 },
         'palmas-to': { lat: -10.1753, lng: -48.2982 },
         'vitoria-es': { lat: -20.3155, lng: -40.3128 },
-        'florianopolis-sc': { lat: -27.5954, lng: -48.5480 }
+        'florianopolis-sc': { lat: -27.5954, lng: -48.5480 },
+        'goiana-pe': { lat: -7.5600, lng: -35.0000 },
+        'petrolina-pe': { lat: -9.3891, lng: -40.5030 },
+        'caruaru-pe': { lat: -8.2837, lng: -35.9761 },
+        'garanhuns-pe': { lat: -8.8903, lng: -36.4969 },
+        'serra-talhada-pe': { lat: -7.9856, lng: -38.2906 },
+        'cabo-de-santo-agostinho-pe': { lat: -8.2905, lng: -35.0349 },
+        'camaragibe-pe': { lat: -8.0209, lng: -34.9888 },
+        'jaboatao-dos-guararapes-pe': { lat: -8.1130, lng: -35.0149 },
+        'olinda-pe': { lat: -8.0089, lng: -34.8553 },
+        'paulista-pe': { lat: -7.9407, lng: -34.8730 },
+        'abreu-e-lima-pe': { lat: -7.9073, lng: -34.8999 },
+        'arcos-mg': { lat: -20.2869, lng: -45.5386 },
+        'uberlandia-mg': { lat: -18.9113, lng: -48.2622 },
+        'juiz-de-fora-mg': { lat: -21.7642, lng: -43.3502 },
+        'montes-claros-mg': { lat: -16.7288, lng: -43.8608 },
+        'divinopolis-mg': { lat: -20.1439, lng: -44.8839 },
+        'ipatinga-mg': { lat: -19.4682, lng: -42.5369 },
+        'sete-lagoas-mg': { lat: -19.4661, lng: -44.2467 },
+        'patos-de-minas-mg': { lat: -18.5789, lng: -46.5180 },
+        'pocos-de-caldas-mg': { lat: -21.7879, lng: -46.5614 },
+        'varginha-mg': { lat: -21.5511, lng: -45.4306 },
+        'passos-mg': { lat: -20.7188, lng: -46.6097 },
+        'itu-sp': { lat: -23.2640, lng: -47.2990 },
+        'jundiai-sp': { lat: -23.1864, lng: -46.8842 },
+        'piracicaba-sp': { lat: -22.7253, lng: -47.6492 },
+        'bauru-sp': { lat: -22.3147, lng: -49.0608 },
+        'marilia-sp': { lat: -22.2133, lng: -49.9456 },
+        'presidente-prudente-sp': { lat: -22.1256, lng: -51.3889 },
+        'aracatuba-sp': { lat: -21.2089, lng: -50.4328 },
+        'sao-jose-do-rio-preto-sp': { lat: -20.8197, lng: -49.3794 }
       };
 
-      const originCoords = cityCoords[normalizedOrigin];
-      const destCoords = cityCoords[normalizedDestination];
+      let originCoords = cityCoords[normalizedOrigin];
+      let destCoords = cityCoords[normalizedDestination];
       
       console.log(`  Coordenadas origem: ${originCoords ? `(${originCoords.lat}, ${originCoords.lng})` : 'NÃO ENCONTRADA'}`);
       console.log(`  Coordenadas destino: ${destCoords ? `(${destCoords.lat}, ${destCoords.lng})` : 'NÃO ENCONTRADA'}`);
+
+      // Se não encontrou as coordenadas, tentar buscar via IBGE API
+      if (!originCoords || !destCoords) {
+        console.log(`  🔍 Tentando buscar coordenadas via IBGE API...`);
+        
+        try {
+          if (!originCoords) {
+            const originIBGE = await fetchCityCoordinatesFromIBGE(originCity);
+            if (originIBGE) {
+              originCoords = originIBGE;
+              console.log(`  ✅ Coordenadas origem IBGE: (${originCoords.lat}, ${originCoords.lng})`);
+            }
+          }
+          
+          if (!destCoords) {
+            const destIBGE = await fetchCityCoordinatesFromIBGE(destinationCity);
+            if (destIBGE) {
+              destCoords = destIBGE;
+              console.log(`  ✅ Coordenadas destino IBGE: (${destCoords.lat}, ${destCoords.lng})`);
+            }
+          }
+        } catch (error) {
+          console.log(`  ❌ Erro ao buscar coordenadas via IBGE: ${error}`);
+        }
+      }
 
       if (originCoords && destCoords) {
         // Cálculo de distância usando fórmula de Haversine
