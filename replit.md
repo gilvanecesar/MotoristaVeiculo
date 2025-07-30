@@ -598,6 +598,12 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Eventos de conversão configurados para checkout e pagamentos PIX
 ✓ Rastreamento de cliques em botões importantes da landing page
 ✓ Sistema de analytics em tempo real capturando comportamento dos usuários
+✓ Calculadora ANTT simplificada com campo manual de distância em km
+✓ Sistema de busca automática de cidades removido completamente
+✓ API atualizada para usar distância direta sem dependência de coordenadas
+✓ Bug crítico de nomes contaminados com CPF/CNPJ corrigido no banco de dados
+✓ 9 usuários tiveram nomes limpos: IDs 546, 531, 505, 426, 387, 485, 484, 475, 472
+✓ Sistema de exibição de nomes funcionando corretamente na interface administrativa
 ```
 
 ## User Preferences
