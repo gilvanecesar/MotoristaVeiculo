@@ -3694,7 +3694,14 @@ async function calculateDistanceBetweenCities(originCity: string, destinationCit
 
     // Normalizar nomes das cidades
     const normalizeCity = (city: string) => {
-      return city.toLowerCase()
+      // Se a cidade vem no formato "Cidade - Estado", processar corretamente
+      let normalizedCity = city.toLowerCase();
+      
+      // Substituir " - " por "-" para converter "Betim - MG" em "betim-mg"
+      normalizedCity = normalizedCity.replace(/\s+-\s+/g, '-');
+      
+      // Normalizar caracteres especiais
+      normalizedCity = normalizedCity
         .replace(/\s+/g, '-')
         .replace(/[àáâãä]/g, 'a')
         .replace(/[èéêë]/g, 'e')
@@ -3703,11 +3710,18 @@ async function calculateDistanceBetweenCities(originCity: string, destinationCit
         .replace(/[ùúûü]/g, 'u')
         .replace(/[ç]/g, 'c')
         .replace(/[^a-z-]/g, '');
+        
+      return normalizedCity;
     };
 
     const normalizedOrigin = normalizeCity(originCity);
     const normalizedDestination = normalizeCity(destinationCity);
     const routeKey = `${normalizedOrigin}_${normalizedDestination}`;
+    
+    console.log(`[DEBUG] Calculando distância:`);
+    console.log(`  Origem: "${originCity}" → "${normalizedOrigin}"`); 
+    console.log(`  Destino: "${destinationCity}" → "${normalizedDestination}"`);
+    console.log(`  Chave da rota: "${routeKey}"`);
 
     // Buscar distância na base de dados
     let distance = cityDistances[routeKey];
@@ -3716,6 +3730,13 @@ async function calculateDistanceBetweenCities(originCity: string, destinationCit
       // Tentar rota inversa
       const reverseRouteKey = `${normalizedDestination}_${normalizedOrigin}`;
       distance = cityDistances[reverseRouteKey];
+      console.log(`  Tentando rota inversa: "${reverseRouteKey}"`);
+    }
+    
+    if (distance) {
+      console.log(`  ✅ Distância encontrada na base: ${distance}km`);
+    } else {
+      console.log(`  ❌ Rota não encontrada na base de dados, calculando via coordenadas...`);
     }
 
     // Se não encontrar, calcular estimativa baseada em coordenadas aproximadas
@@ -3733,11 +3754,37 @@ async function calculateDistanceBetweenCities(originCity: string, destinationCit
         'porto-alegre-rs': { lat: -30.0346, lng: -51.2177 },
         'recife-pe': { lat: -8.0476, lng: -34.8770 },
         'manaus-am': { lat: -3.1190, lng: -60.0217 },
-        'goiania-go': { lat: -16.6869, lng: -49.2648 }
+        'goiania-go': { lat: -16.6869, lng: -49.2648 },
+        'belo-horizonte-mg': { lat: -19.9208, lng: -43.9378 },
+        'campinas-sp': { lat: -22.9099, lng: -47.0626 },
+        'santos-sp': { lat: -23.9608, lng: -46.3335 },
+        'sorocaba-sp': { lat: -23.5015, lng: -47.4526 },
+        'ribeirao-preto-sp': { lat: -21.1704, lng: -47.8103 },
+        'joinville-sc': { lat: -26.3045, lng: -48.8487 },
+        'londrina-pr': { lat: -23.3045, lng: -51.1696 },
+        'caxias-do-sul-rs': { lat: -29.1634, lng: -51.1797 },
+        'campo-grande-ms': { lat: -20.4697, lng: -54.6201 },
+        'natal-rn': { lat: -5.7945, lng: -35.2110 },
+        'maceio-al': { lat: -9.6498, lng: -35.7089 },
+        'aracaju-se': { lat: -10.9472, lng: -37.0731 },
+        'teresina-pi': { lat: -5.0892, lng: -42.8019 },
+        'sao-luis-ma': { lat: -2.5387, lng: -44.2825 },
+        'belem-pa': { lat: -1.4558, lng: -48.5044 },
+        'macapa-ap': { lat: 0.0349, lng: -51.0694 },
+        'boa-vista-rr': { lat: 2.8235, lng: -60.6758 },
+        'rio-branco-ac': { lat: -9.9754, lng: -67.8249 },
+        'porto-velho-ro': { lat: -8.7619, lng: -63.9039 },
+        'cuiaba-mt': { lat: -15.6014, lng: -56.0979 },
+        'palmas-to': { lat: -10.1753, lng: -48.2982 },
+        'vitoria-es': { lat: -20.3155, lng: -40.3128 },
+        'florianopolis-sc': { lat: -27.5954, lng: -48.5480 }
       };
 
       const originCoords = cityCoords[normalizedOrigin];
       const destCoords = cityCoords[normalizedDestination];
+      
+      console.log(`  Coordenadas origem: ${originCoords ? `(${originCoords.lat}, ${originCoords.lng})` : 'NÃO ENCONTRADA'}`);
+      console.log(`  Coordenadas destino: ${destCoords ? `(${destCoords.lat}, ${destCoords.lng})` : 'NÃO ENCONTRADA'}`);
 
       if (originCoords && destCoords) {
         // Cálculo de distância usando fórmula de Haversine
@@ -3751,14 +3798,17 @@ async function calculateDistanceBetweenCities(originCity: string, destinationCit
         
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         distance = Math.round(R * c * 1.2); // Multiplicar por 1.2 para considerar rotas rodoviárias
+        console.log(`  ✅ Distância calculada via Haversine: ${distance}km`);
       }
     }
 
     // Se ainda não conseguiu calcular, usar estimativa padrão
     if (!distance) {
       distance = 500; // Distância padrão em km
+      console.log(`  ⚠️  Usando distância padrão: ${distance}km`);
     }
-
+    
+    console.log(`[DEBUG] Distância final calculada: ${distance}km\n`);
     return distance;
   } catch (error) {
     console.error('Erro ao calcular distância entre cidades:', error);
