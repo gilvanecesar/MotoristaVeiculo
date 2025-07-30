@@ -196,7 +196,7 @@ export default function UsersManagement() {
             {users.map((user: any) => (
               <TableRow key={user.id}>
                 <TableCell>{user.id}</TableCell>
-                <TableCell>{user.name}</TableCell>
+                <TableCell className="uppercase">{user.name}</TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>{getProfileTypeLabel(user.profileType)}</TableCell>
                 <TableCell>{user.isVerified ? "Sim" : "Não"}</TableCell>

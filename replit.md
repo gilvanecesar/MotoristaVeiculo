@@ -611,6 +611,8 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Proteção implementada contra padrões: "123.456.789-01 NOME" e "12.345.678/0001-01 NOME"
 ✓ Garantia completa de que próximos cadastros terão nomes limpos sem contaminação de documentos
 ✓ Sistema preventivo testado e funcionando: futuros usuários não terão problemas de nome contaminado
+✓ Nomes no gerenciamento administrativo de usuários configurados para exibir em maiúsculas
+✓ Classe CSS "uppercase" aplicada na exibição de nomes nas páginas administrativas
 ```
 
 ## User Preferences

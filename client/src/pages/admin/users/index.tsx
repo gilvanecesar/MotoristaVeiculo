@@ -420,7 +420,7 @@ export default function AdminUsersPage() {
                   <TableRow key={user.id}>
                     <TableCell className="font-medium">{user.id}</TableCell>
                     <TableCell>
-                      <div className="font-medium">{user.name}</div>
+                      <div className="font-medium uppercase">{user.name}</div>
                       <div className="text-sm text-muted-foreground md:hidden">{user.email}</div>
                       {user.profileType && (
                         <div className="flex flex-col md:hidden gap-1 mt-1">
