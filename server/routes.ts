@@ -170,6 +170,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Função para limpar nome de CPF/CNPJ contaminados
+  const cleanUserName = (name: string, cpf?: string, cnpj?: string): string => {
+    if (!name) return name;
+    
+    let cleanedName = name;
+    
+    // Remover CPF do início do nome (padrões: "123.456.789-01 NOME" ou "12345678901 NOME")
+    if (cpf) {
+      const cpfClean = cpf.replace(/\D/g, '');
+      const cpfFormatted = cpf;
+      cleanedName = cleanedName.replace(new RegExp(`^${cpfFormatted}\\s+`, 'i'), '');
+      cleanedName = cleanedName.replace(new RegExp(`^${cpfClean}\\s+`, 'i'), '');
+    }
+    
+    // Remover CNPJ do início do nome (padrões: "12.345.678/0001-01 NOME" ou "12345678000101 NOME")
+    if (cnpj) {
+      const cnpjClean = cnpj.replace(/\D/g, '');
+      const cnpjFormatted = cnpj;
+      cleanedName = cleanedName.replace(new RegExp(`^${cnpjFormatted}\\s+`, 'i'), '');
+      cleanedName = cleanedName.replace(new RegExp(`^${cnpjClean}\\s+`, 'i'), '');
+    }
+    
+    // Remover padrões genéricos de CPF/CNPJ do início
+    cleanedName = cleanedName.replace(/^\d{2}\.\d{3}\.\d{3}-\d{2}\s+/i, ''); // CPF formatado
+    cleanedName = cleanedName.replace(/^\d{11}\s+/i, ''); // CPF sem formatação
+    cleanedName = cleanedName.replace(/^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}\s+/i, ''); // CNPJ formatado
+    cleanedName = cleanedName.replace(/^\d{14}\s+/i, ''); // CNPJ sem formatação
+    
+    return cleanedName.trim();
+  };
+
   // Cadastro por perfil (novo sistema)
   app.post("/api/auth/register-profile", async (req: Request, res: Response) => {
     try {
@@ -219,9 +250,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      // Limpar nome de possíveis contaminações de CPF/CNPJ
+      const cleanedName = cleanUserName(name, cpf || (documento?.length < 14 ? documento : null), cnpj || (documento?.length >= 14 ? documento : null));
+      
       // Criar usuário baseado no perfil
       const userData = {
-        name,
+        name: cleanedName,
         email: email || null,
         password: password ? await hashPassword(password) : null,
         profileType,
@@ -439,6 +473,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...req.body
       };
       
+      // Limpar nome de possíveis contaminações de CPF
+      if (driverData.name && driverData.cpf) {
+        driverData.name = cleanUserName(driverData.name, driverData.cpf, undefined);
+      }
+      
       const driver = await storage.createDriver(driverData);
       res.status(201).json(driver);
     } catch (error) {
@@ -452,6 +491,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const driverData = req.body;
+      
+      // Limpar nome de possíveis contaminações de CPF se estiver sendo atualizado
+      if (driverData.name && driverData.cpf) {
+        driverData.name = cleanUserName(driverData.name, driverData.cpf, undefined);
+      }
       
       const updatedDriver = await storage.updateDriver(id, driverData);
       

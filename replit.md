@@ -604,6 +604,11 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Bug crítico de nomes contaminados com CPF/CNPJ corrigido no banco de dados
 ✓ 9 usuários tiveram nomes limpos: IDs 546, 531, 505, 426, 387, 485, 484, 475, 472
 ✓ Sistema de exibição de nomes funcionando corretamente na interface administrativa
+✓ Função preventiva cleanUserName() implementada no backend para futuros cadastros
+✓ Validação aplicada em todas as rotas de criação: usuários, motoristas e atualizações
+✓ Sistema agora remove automaticamente CPF/CNPJ contaminados dos nomes antes de salvar
+✓ Proteção implementada contra padrões: "123.456.789-01 NOME" e "12.345.678/0001-01 NOME"
+✓ Garantia de que próximos cadastros terão nomes limpos sem contaminação de documentos
 ```
 
 ## User Preferences
