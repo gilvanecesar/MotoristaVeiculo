@@ -19,8 +19,10 @@ const anttCalculatorSchema = z.object({
   transportCategory: z.string().min(1, "Selecione a categoria do transporte"),
   cargoType: z.string().min(1, "Selecione o tipo de carga"),
   axles: z.string().min(1, "Selecione o número de eixos"),
-  originCity: z.string().min(1, "Selecione a cidade de origem"),
-  destinationCity: z.string().min(1, "Selecione a cidade de destino"),
+  distance: z.string().min(1, "Informe a distância em km").refine((val) => {
+    const num = parseFloat(val);
+    return !isNaN(num) && num > 0;
+  }, "Distância deve ser um número maior que zero"),
 });
 
 type AnttCalculatorForm = z.infer<typeof anttCalculatorSchema>;
@@ -68,12 +70,6 @@ interface IBGECity {
 export default function AnttCalculatorPage() {
   const [calculationResult, setCalculationResult] = useState<CalculationResult | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
-  const [originCities, setOriginCities] = useState<IBGECity[]>([]);
-  const [destinationCities, setDestinationCities] = useState<IBGECity[]>([]);
-  const [originOpen, setOriginOpen] = useState(false);
-  const [destinationOpen, setDestinationOpen] = useState(false);
-  const [originSearch, setOriginSearch] = useState("");
-  const [destinationSearch, setDestinationSearch] = useState("");
   const { toast } = useToast();
 
   const form = useForm<AnttCalculatorForm>({
@@ -83,46 +79,14 @@ export default function AnttCalculatorPage() {
       transportCategory: "CARGA_LOTACAO",
       cargoType: "",
       axles: "",
-      originCity: "",
-      destinationCity: "",
+      distance: "",
     },
   });
 
   const axles = form.watch("axles");
-  const originCity = form.watch("originCity");
-  const destinationCity = form.watch("destinationCity");
+  const distance = form.watch("distance");
 
-  // Função para buscar cidades do IBGE
-  const searchCities = async (query: string): Promise<IBGECity[]> => {
-    if (query.length < 2) return [];
-    
-    try {
-      const response = await fetch(`/api/ibge/cities?search=${encodeURIComponent(query)}&limit=20`);
-      if (!response.ok) throw new Error('Erro ao buscar cidades');
-      return await response.json();
-    } catch (error) {
-      console.error('Erro ao buscar cidades:', error);
-      return [];
-    }
-  };
 
-  // Buscar cidades de origem
-  useEffect(() => {
-    if (originSearch.length >= 2) {
-      searchCities(originSearch).then(setOriginCities);
-    } else {
-      setOriginCities([]);
-    }
-  }, [originSearch]);
-
-  // Buscar cidades de destino
-  useEffect(() => {
-    if (destinationSearch.length >= 2) {
-      searchCities(destinationSearch).then(setDestinationCities);
-    } else {
-      setDestinationCities([]);
-    }
-  }, [destinationSearch]);
 
   const onSubmit = async (data: AnttCalculatorForm) => {
     setIsCalculating(true);
@@ -131,13 +95,12 @@ export default function AnttCalculatorPage() {
       const payload = {
         cargoType: data.cargoType,
         axles: data.axles,
-        originCity: data.originCity,
-        destinationCity: data.destinationCity,
+        distance: parseFloat(data.distance),
         transportCategory: data.transportCategory,
         resolution: data.resolution
       };
 
-      const response = await fetch("/api/antt/calculate", {
+      const response = await fetch("/api/antt/calculate-direct", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -305,137 +268,26 @@ export default function AnttCalculatorPage() {
                     )}
                   />
 
-                  {/* Campo Origem */}
+                  {/* Campo Distância */}
                   <FormField
                     control={form.control}
-                    name="originCity"
+                    name="distance"
                     render={({ field }) => (
-                      <FormItem className="flex flex-col">
+                      <FormItem>
                         <FormLabel className="text-blue-800 font-medium">
                           <MapPin className="h-4 w-4 inline mr-2" />
-                          Cidade de Origem
+                          Distância (km)
                         </FormLabel>
-                        <Popover open={originOpen} onOpenChange={setOriginOpen}>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant="outline"
-                                role="combobox"
-                                className={cn(
-                                  "w-full justify-between",
-                                  !field.value && "text-muted-foreground"
-                                )}
-                              >
-                                {field.value
-                                  ? originCities.find((city) => city.displayName === field.value)?.displayName || field.value
-                                  : "Selecione a cidade de origem"}
-                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-full p-0">
-                            <Command>
-                              <CommandInput
-                                placeholder="Digite o nome da cidade..."
-                                value={originSearch}
-                                onValueChange={setOriginSearch}
-                              />
-                              <CommandList>
-                                <CommandEmpty>Nenhuma cidade encontrada.</CommandEmpty>
-                                <CommandGroup>
-                                  {originCities.map((city) => (
-                                    <CommandItem
-                                      value={city.displayName}
-                                      key={city.id}
-                                      onSelect={() => {
-                                        form.setValue("originCity", city.displayName);
-                                        setOriginOpen(false);
-                                      }}
-                                    >
-                                      <Check
-                                        className={cn(
-                                          "mr-2 h-4 w-4",
-                                          city.displayName === field.value
-                                            ? "opacity-100"
-                                            : "opacity-0"
-                                        )}
-                                      />
-                                      {city.displayName}
-                                    </CommandItem>
-                                  ))}
-                                </CommandGroup>
-                              </CommandList>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* Campo Destino */}
-                  <FormField
-                    control={form.control}
-                    name="destinationCity"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel className="text-blue-800 font-medium">
-                          <MapPin className="h-4 w-4 inline mr-2" />
-                          Cidade de Destino
-                        </FormLabel>
-                        <Popover open={destinationOpen} onOpenChange={setDestinationOpen}>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant="outline"
-                                role="combobox"
-                                className={cn(
-                                  "w-full justify-between",
-                                  !field.value && "text-muted-foreground"
-                                )}
-                              >
-                                {field.value
-                                  ? destinationCities.find((city) => city.displayName === field.value)?.displayName || field.value
-                                  : "Selecione a cidade de destino"}
-                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-full p-0">
-                            <Command>
-                              <CommandInput
-                                placeholder="Digite o nome da cidade..."
-                                value={destinationSearch}
-                                onValueChange={setDestinationSearch}
-                              />
-                              <CommandList>
-                                <CommandEmpty>Nenhuma cidade encontrada.</CommandEmpty>
-                                <CommandGroup>
-                                  {destinationCities.map((city) => (
-                                    <CommandItem
-                                      value={city.displayName}
-                                      key={city.id}
-                                      onSelect={() => {
-                                        form.setValue("destinationCity", city.displayName);
-                                        setDestinationOpen(false);
-                                      }}
-                                    >
-                                      <Check
-                                        className={cn(
-                                          "mr-2 h-4 w-4",
-                                          city.displayName === field.value
-                                            ? "opacity-100"
-                                            : "opacity-0"
-                                        )}
-                                      />
-                                      {city.displayName}
-                                    </CommandItem>
-                                  ))}
-                                </CommandGroup>
-                              </CommandList>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
+                        <FormControl>
+                          <Input
+                            placeholder="Ex: 580"
+                            type="number"
+                            min="1"
+                            step="1"
+                            {...field}
+                            className="text-center text-lg font-medium"
+                          />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
