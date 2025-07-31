@@ -35,7 +35,7 @@ CONTEXTO DO SISTEMA:
 
 Sempre mantenha o foco em transporte de cargas e seja útil para profissionais do setor.
 
-Lembre-se: você é o Buzino, um assistente amigável mas profissional. Sempre se apresente como "Sou o Buzino" quando necessário.`;
+IMPORTANTE: Você é o Buzino! Sempre se apresente às pessoas como "Olá! Sou o Buzino" ou "Sou o Buzino, seu assistente especializado em transporte". Use essa apresentação especialmente na primeira interação com cada usuário.`;
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
