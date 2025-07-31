@@ -33,7 +33,7 @@ export default function AIAssistantPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Buscar histórico de mensagens
-  const { data: chatHistory = [], isLoading } = useQuery({
+  const { data: chatHistory = [], isLoading } = useQuery<ChatMessage[]>({
     queryKey: ["/api/ai-assistant/history"],
     enabled: !!user,
   });
@@ -163,7 +163,7 @@ export default function AIAssistantPage() {
               <Bot className="h-6 w-6 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Assistente IA de Transporte</h1>
+              <h1 className="text-2xl font-bold">Buzino - Assistente de Transporte</h1>
               <p className="text-muted-foreground">
                 Especialista em regulamentações, fretes e logística
               </p>

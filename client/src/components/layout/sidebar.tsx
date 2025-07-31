@@ -77,7 +77,7 @@ const navItems = [
     icon: Calculator
   },
   { 
-    label: "Assistente IA", 
+    label: "Buzino", 
     path: "/ai-assistant",
     icon: Bot
   },

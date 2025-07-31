@@ -623,6 +623,8 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Backend com controle de limites, histórico e processamento de mensagens via OpenAI
 ✓ Sistema de rastreamento de uso diário com reset automático de limites
 ✓ Especialização em CNH, RNTRC, CTe, MDFe, cálculos de frete e legislação trabalhista
+✓ Nome personalizado "Buzino" implementado em menu, interface e prompt do sistema
+✓ Assistente se apresenta como "Buzino" em todas as interações
 ```
 
 ## User Preferences
