@@ -3247,50 +3247,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Termo de busca deve ter pelo menos 2 caracteres' });
       }
 
-      console.log(`🔍 Buscando cidades: "${searchTerm}"`);
+      console.log(`🔍 NOVA BUSCA: "${searchTerm}"`);
 
-      let cities = [];
+      // Buscar todas as cidades do IBGE
+      const response = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/municipios?orderBy=nome');
       
-      // Primeira tentativa: busca exata por nome
-      try {
-        const encodedSearch = encodeURIComponent(searchTerm);
-        const exactResponse = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/municipios?nome=${encodedSearch}`);
-        
-        if (exactResponse.ok) {
-          cities = await exactResponse.json();
-          console.log(`📍 Busca exata retornou ${cities.length} cidades para "${searchTerm}"`);
-        }
-      } catch (error) {
-        console.log(`Busca exata falhou: ${error.message}`);
+      if (!response.ok) {
+        throw new Error('Erro ao conectar com API do IBGE');
       }
       
-      // Se não encontrou nada, fazer busca por todas as cidades e filtrar
-      if (cities.length === 0) {
-        console.log(`🔄 Fazendo busca ampla para "${searchTerm}"`);
-        const allResponse = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/municipios?orderBy=nome');
-        
-        if (!allResponse.ok) {
-          console.error('Erro na API do IBGE:', allResponse.status, allResponse.statusText);
-          throw new Error('Erro ao buscar cidades do IBGE');
+      const allCities = await response.json();
+      console.log(`📊 Total de cidades carregadas: ${allCities.length}`);
+      
+      // Função para remover acentos e normalizar texto
+      const normalizeText = (text: string): string => {
+        return text
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, ''); // Remove acentos
+      };
+      
+      const searchNormalized = normalizeText(searchTerm);
+      
+      // Filtrar cidades que contenham o termo de busca
+      const matchingCities = allCities.filter((city: any) => {
+        if (!city.nome || !city.microrregiao?.mesorregiao?.UF?.sigla) {
+          return false;
         }
         
-        const allCities = await allResponse.json();
-        cities = allCities.filter((city: any) => 
-          city.nome && 
-          city.nome.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-        
-        console.log(`📍 Busca ampla retornou ${cities.length} cidades para "${searchTerm}"`);
-      }
-
-      // Processar e formatar resultados
-      const filteredCities = cities
-        .filter((city: any) => {
-          // Verificar se tem a estrutura necessária
-          return city.nome && 
-                 city.microrregiao?.mesorregiao?.UF?.sigla;
-        })
-        .slice(0, parseInt(limit.toString())) 
+        const cityNameNormalized = normalizeText(city.nome);
+        return cityNameNormalized.includes(searchNormalized);
+      });
+      
+      console.log(`🎯 Cidades encontradas: ${matchingCities.length}`);
+      
+      // Formatar e limitar resultados
+      const results = matchingCities
+        .slice(0, parseInt(limit.toString()))
         .map((city: any) => ({
           id: city.id,
           name: city.nome,
@@ -3299,22 +3292,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }))
         .sort((a: any, b: any) => a.name.localeCompare(b.name));
 
-      console.log(`✅ Retornando ${filteredCities.length} cidades formatadas`);
+      console.log(`✅ Enviando ${results.length} resultados: ${results.map(c => c.name).slice(0, 3).join(', ')}${results.length > 3 ? '...' : ''}`);
       
-      res.json(filteredCities);
+      res.json(results);
     } catch (error) {
-      console.error('Erro ao buscar cidades:', error);
+      console.error('Erro na busca de cidades:', error);
       
-      // Fallback com cidades populares em caso de erro
-      const fallbackCities = [
+      // Fallback para casos de erro
+      const fallbackResults = [
         { id: 3550308, name: "São Paulo", state: "SP", displayName: "São Paulo - SP" },
         { id: 3304557, name: "Rio de Janeiro", state: "RJ", displayName: "Rio de Janeiro - RJ" },
         { id: 3106200, name: "Belo Horizonte", state: "MG", displayName: "Belo Horizonte - MG" },
-        { id: 4106902, name: "Curitiba", state: "PR", displayName: "Curitiba - PR" },
-        { id: 4314902, name: "Porto Alegre", state: "RS", displayName: "Porto Alegre - RS" }
+        { id: 3136702, name: "Contagem", state: "MG", displayName: "Contagem - MG" },
+        { id: 4106902, name: "Curitiba", state: "PR", displayName: "Curitiba - PR" }
       ].filter(city => city.name.toLowerCase().includes(search.toString().toLowerCase()));
       
-      res.json(fallbackCities);
+      res.json(fallbackResults);
     }
   });
 
