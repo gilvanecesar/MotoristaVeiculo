@@ -3281,16 +3281,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`🎯 Cidades encontradas: ${matchingCities.length}`);
       
+      // Ordenar por prioridade: exatos primeiro, depois que começam, depois que contêm
+      const sortedCities = matchingCities.sort((a: any, b: any) => {
+        const aNameNormalized = normalizeText(a.nome);
+        const bNameNormalized = normalizeText(b.nome);
+        
+        // Prioridade 1: Nome exato
+        const aExact = aNameNormalized === searchNormalized;
+        const bExact = bNameNormalized === searchNormalized;
+        if (aExact && !bExact) return -1;
+        if (!aExact && bExact) return 1;
+        
+        // Prioridade 2: Começa com o termo
+        const aStarts = aNameNormalized.startsWith(searchNormalized);
+        const bStarts = bNameNormalized.startsWith(searchNormalized);
+        if (aStarts && !bStarts) return -1;
+        if (!aStarts && bStarts) return 1;
+        
+        // Prioridade 3: Ordem alfabética
+        return a.nome.localeCompare(b.nome);
+      });
+      
       // Formatar e limitar resultados
-      const results = matchingCities
+      const results = sortedCities
         .slice(0, parseInt(limit.toString()))
         .map((city: any) => ({
           id: city.id,
           name: city.nome,
           state: city.microrregiao.mesorregiao.UF.sigla,
           displayName: `${city.nome} - ${city.microrregiao.mesorregiao.UF.sigla}`
-        }))
-        .sort((a: any, b: any) => a.name.localeCompare(b.name));
+        }));
 
       console.log(`✅ Enviando ${results.length} resultados: ${results.map(c => c.name).slice(0, 3).join(', ')}${results.length > 3 ? '...' : ''}`);
       
