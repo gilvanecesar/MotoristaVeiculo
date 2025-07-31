@@ -541,6 +541,30 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 export type UserType = typeof USER_TYPES[keyof typeof USER_TYPES];
 export type AuthProvider = typeof AUTH_PROVIDERS[keyof typeof AUTH_PROVIDERS];
 
+// AI Chat Schema
+export const aiChatMessages = pgTable("ai_chat_messages", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  role: text("role").notNull(), // 'user' or 'assistant'
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const aiChatSessions = pgTable("ai_chat_sessions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  dailyMessageCount: integer("daily_message_count").notNull().default(0),
+  lastResetDate: date("last_reset_date").notNull().defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Chat message types
+export type AIChatMessage = typeof aiChatMessages.$inferSelect;
+export type InsertAIChatMessage = typeof aiChatMessages.$inferInsert;
+export type AIChatSession = typeof aiChatSessions.$inferSelect;
+export type InsertAIChatSession = typeof aiChatSessions.$inferInsert;
+
 // Status das assinaturas
 export const SUBSCRIPTION_STATUS = {
   ACTIVE: "active",

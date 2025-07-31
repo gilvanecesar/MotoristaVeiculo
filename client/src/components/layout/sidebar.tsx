@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Car, BarChart3, Menu, X, Moon, Sun, Truck, 
   Building2, Home, DollarSign, UserCog, Settings, User, CreditCard,
   Receipt, CalendarClock, AlertCircle, Bell, Webhook, Package, LogOut,
-  ChevronLeft, ChevronRight, MessageCircle, FileText, Calculator
+  ChevronLeft, ChevronRight, MessageCircle, FileText, Calculator, Bot
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -75,6 +75,11 @@ const navItems = [
     label: "Calculadora ANTT", 
     path: "/antt-calculator",
     icon: Calculator
+  },
+  { 
+    label: "Assistente IA", 
+    path: "/ai-assistant",
+    icon: Bot
   },
   { 
     label: "Relatórios", 

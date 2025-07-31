@@ -613,6 +613,16 @@ QUERO FRETES is a comprehensive freight management system built as a full-stack 
 ✓ Sistema preventivo testado e funcionando: futuros usuários não terão problemas de nome contaminado
 ✓ Nomes no gerenciamento administrativo de usuários configurados para exibir em maiúsculas
 ✓ Classe CSS "uppercase" aplicada na exibição de nomes nas páginas administrativas
+✓ Sistema de Assistente IA especializado em transporte implementado completamente
+✓ Integração OpenAI GPT-4o configurada para responder dúvidas sobre regulamentações ANTT
+✓ Limites de mensagens por tipo de usuário: motoristas gratuitos (5/dia), usuários pagos (50/dia), admins (ilimitado)
+✓ Interface de chat profissional criada com histórico de mensagens e limpeza
+✓ Esquema de banco de dados para mensagens AI implementado: ai_chat_messages e ai_chat_sessions
+✓ Menu "Assistente IA" adicionado na sidebar com ícone Bot para todos os usuários
+✓ Rota /ai-assistant protegida adicionada no App.tsx
+✓ Backend com controle de limites, histórico e processamento de mensagens via OpenAI
+✓ Sistema de rastreamento de uso diário com reset automático de limites
+✓ Especialização em CNH, RNTRC, CTe, MDFe, cálculos de frete e legislação trabalhista
 ```
 
 ## User Preferences

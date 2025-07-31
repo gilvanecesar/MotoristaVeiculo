@@ -30,11 +30,17 @@ export function formatCurrency(value: number | string | null | undefined): strin
 }
 
 /**
- * Format a date string as DD/MM/YYYY
+ * Format a date string as DD/MM/YYYY HH:mm
  */
-export function formatDate(dateString: string): string {
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat('pt-BR').format(date);
+export function formatDate(dateString: string | Date): string {
+  const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+  return new Intl.DateTimeFormat('pt-BR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(date);
 }
 
 /**

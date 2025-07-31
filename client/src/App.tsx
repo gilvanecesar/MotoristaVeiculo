@@ -76,6 +76,7 @@ import QuotesPage from "@/pages/quotes/index";
 import CreateQuotePage from "@/pages/quotes/create";
 import PublicQuoteRequest from "@/pages/public/quote-request";
 import AnttCalculatorPage from "@/pages/antt-calculator/index";
+import AIAssistantPage from "@/pages/ai-assistant/index";
 
 function Router() {
   // Track page views when routes change
@@ -130,6 +131,7 @@ function Router() {
       <ProtectedRoute path="/quotes" component={QuotesPage} />
       <ProtectedRoute path="/quotes/create" component={CreateQuotePage} />
       <ProtectedRoute path="/antt-calculator" component={AnttCalculatorPage} />
+      <ProtectedRoute path="/ai-assistant" component={AIAssistantPage} />
       <ProtectedRoute path="/reports" component={ReportsPage} />
       <ProtectedRoute path="/admin" component={AdminPage} />
       <ProtectedRoute path="/admin/finance" component={FinanceDashboard} />

@@ -64,6 +64,8 @@ async function sendUserDataToN8N(user: any, profileType: string) {
 }
 
 
+import { AITransportService } from "./ai-service";
+
 import { 
   isAuthenticated, 
   isActive, 
@@ -91,6 +93,7 @@ import { sendSubscriptionEmail, sendPaymentReminderEmail } from "./email-service
 import { format } from "date-fns";
 
 import { setupWebhookRoutes, sendFreightWebhook } from "./webhook-service";
+import { setupAIRoutes } from "./ai-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configurar autenticação
@@ -100,6 +103,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Configurar rotas do webhook
   setupWebhookRoutes(app);
+  
+  // Configurar rotas do assistente IA
+  setupAIRoutes(app);
   
   // Configurar rotas do WhatsApp
   // setupWhatsAppRoutes(app);
