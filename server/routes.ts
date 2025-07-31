@@ -3241,7 +3241,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Parâmetro de busca é obrigatório' });
       }
 
-      const searchTerm = search.trim().toLowerCase();
+      const searchTerm = search.trim();
       
       if (searchTerm.length < 2) {
         return res.status(400).json({ error: 'Termo de busca deve ter pelo menos 2 caracteres' });
@@ -3249,23 +3249,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`🔍 Buscando cidades: "${searchTerm}"`);
 
-      // Buscar todas as cidades na API do IBGE
-      const response = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/municipios?orderBy=nome');
+      let cities = [];
       
-      if (!response.ok) {
-        throw new Error('Erro ao buscar cidades do IBGE');
+      // Primeira tentativa: busca exata por nome
+      try {
+        const encodedSearch = encodeURIComponent(searchTerm);
+        const exactResponse = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/municipios?nome=${encodedSearch}`);
+        
+        if (exactResponse.ok) {
+          cities = await exactResponse.json();
+          console.log(`📍 Busca exata retornou ${cities.length} cidades para "${searchTerm}"`);
+        }
+      } catch (error) {
+        console.log(`Busca exata falhou: ${error.message}`);
       }
       
-      const allCities = await response.json();
-
-      // Filtrar cidades que contenham o termo de busca
-      const filteredCities = allCities
-        .filter((city: any) => 
+      // Se não encontrou nada, fazer busca por todas as cidades e filtrar
+      if (cities.length === 0) {
+        console.log(`🔄 Fazendo busca ampla para "${searchTerm}"`);
+        const allResponse = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/municipios?orderBy=nome');
+        
+        if (!allResponse.ok) {
+          console.error('Erro na API do IBGE:', allResponse.status, allResponse.statusText);
+          throw new Error('Erro ao buscar cidades do IBGE');
+        }
+        
+        const allCities = await allResponse.json();
+        cities = allCities.filter((city: any) => 
           city.nome && 
-          city.microrregiao?.mesorregiao?.UF?.sigla &&
-          city.nome.toLowerCase().includes(searchTerm)
-        )
-        .slice(0, parseInt(limit.toString())) // Limitar resultados
+          city.nome.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        
+        console.log(`📍 Busca ampla retornou ${cities.length} cidades para "${searchTerm}"`);
+      }
+
+      // Processar e formatar resultados
+      const filteredCities = cities
+        .filter((city: any) => {
+          // Verificar se tem a estrutura necessária
+          return city.nome && 
+                 city.microrregiao?.mesorregiao?.UF?.sigla;
+        })
+        .slice(0, parseInt(limit.toString())) 
         .map((city: any) => ({
           id: city.id,
           name: city.nome,
@@ -3274,12 +3299,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }))
         .sort((a: any, b: any) => a.name.localeCompare(b.name));
 
-      console.log(`✅ Encontradas ${filteredCities.length} cidades para "${searchTerm}"`);
+      console.log(`✅ Retornando ${filteredCities.length} cidades formatadas`);
       
       res.json(filteredCities);
     } catch (error) {
       console.error('Erro ao buscar cidades:', error);
-      res.status(500).json({ error: 'Erro ao buscar cidades' });
+      
+      // Fallback com cidades populares em caso de erro
+      const fallbackCities = [
+        { id: 3550308, name: "São Paulo", state: "SP", displayName: "São Paulo - SP" },
+        { id: 3304557, name: "Rio de Janeiro", state: "RJ", displayName: "Rio de Janeiro - RJ" },
+        { id: 3106200, name: "Belo Horizonte", state: "MG", displayName: "Belo Horizonte - MG" },
+        { id: 4106902, name: "Curitiba", state: "PR", displayName: "Curitiba - PR" },
+        { id: 4314902, name: "Porto Alegre", state: "RS", displayName: "Porto Alegre - RS" }
+      ].filter(city => city.name.toLowerCase().includes(search.toString().toLowerCase()));
+      
+      res.json(fallbackCities);
     }
   });
 
