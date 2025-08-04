@@ -174,6 +174,70 @@ chmod +x docker-setup.sh
 ./docker-setup.sh auto
 ```
 
+## 📦 PORTAINER + VERSIONAMENTO + DADOS
+
+### Como Funciona a Persistência
+- **Docker Volumes**: Dados ficam em volumes separados do código
+- **Updates**: Só o código muda, dados permanecem intactos
+- **Rollback**: Código volta, banco continua atual
+
+### Workflow Portainer + Git
+```bash
+# 1. Desenvolvimento local
+git add .
+git commit -m "nova funcionalidade"
+git push origin main
+
+# 2. Deploy via Portainer
+# - Acesse Portainer: http://vps:9000
+# - Stacks > quero-fretes > Pull and Redeploy
+# - Dados permanecem seguros automaticamente
+
+# 3. Verificação
+curl http://seu-dominio/api/health
+```
+
+### Estrutura de Volumes Docker
+```yaml
+# docker-compose.yml (já configurado)
+volumes:
+  postgres_data:     # Banco PostgreSQL persiste aqui
+    driver: local
+  app_uploads:       # Uploads de usuários (se houver)
+    driver: local
+```
+
+### Backup Recomendado (Antes de Updates Grandes)
+```bash
+# Via Portainer Console ou SSH da VPS
+docker exec quero_fretes_db pg_dump -U querofretes querofretes_db > backup_$(date +%Y%m%d).sql
+
+# Backup automático (opcional - cron da VPS)
+0 2 * * * docker exec quero_fretes_db pg_dump -U querofretes querofretes_db > /backups/backup_$(date +\%Y\%m\%d).sql
+```
+
+### Processo de Update via Portainer
+1. **Git Push**: Código para repositório
+2. **Portainer**: Pull and Redeploy na Stack
+3. **Volumes**: Dados PostgreSQL permanecem intactos
+4. **Aplicação**: Nova versão + dados existentes
+5. **Zero Downtime**: Usuários continuam logados
+
+### Troubleshooting Banco + Portainer
+```bash
+# Verificar volumes
+docker volume ls | grep postgres
+
+# Verificar dados do banco
+docker exec -it quero_fretes_db psql -U querofretes -d querofretes_db -c "SELECT COUNT(*) FROM users;"
+
+# Logs do banco
+docker logs quero_fretes_db
+
+# Conexão direta
+docker exec -it quero_fretes_db psql -U querofretes querofretes_db
+```
+
 ### Instalação Manual - Configure .env:
 ```env
 # Database
