@@ -12,11 +12,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     ports:
       - "${DB_PORT:-5432}:5432"
-    networks:
-      - quero_fretes_network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 10s
@@ -65,37 +62,14 @@ services:
       BACKEND_URL: ${BACKEND_URL}
     depends_on:
       - postgres
-    networks:
-      - quero_fretes_network
-    volumes:
-      # Para logs (opcional)
-      - ./logs:/app/logs
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:5000/api/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
 
-  # Nginx (Proxy Reverso - Opcional)
-  nginx:
-    image: nginx:alpine
-    container_name: quero_fretes_nginx
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
-      - ./ssl:/etc/nginx/ssl  # Para certificados SSL
-    depends_on:
-      - app
-    networks:
-      - quero_fretes_network
+
 
 volumes:
   postgres_data:
     driver: local
-
-networks:
-  quero_fretes_network:
-    driver: bridge
