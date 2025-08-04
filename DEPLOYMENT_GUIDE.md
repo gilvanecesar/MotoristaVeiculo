@@ -15,6 +15,7 @@
 - **API IBGE**: 5.571 cidades brasileiras com busca inteligente
 - **ReceitaWS**: Validação automática de CNPJ
 - **Tema Dark/Light**: Sistema condicional baseado na preferência do usuário
+- **Sistema de Limpeza de Nomes**: Remove automaticamente CPF/CNPJ dos nomes durante cadastro
 
 ### 🎯 Deploy Recomendado
 
@@ -280,6 +281,26 @@ IBGE_API_URL=https://servicodados.ibge.gov.br/api/v1
 # Production URLs
 FRONTEND_URL=https://seu-dominio.com
 BACKEND_URL=https://seu-dominio.com
+
+# JWT/Session (gere chaves aleatórias seguras)
+JWT_SECRET=sua_chave_jwt_muito_longa_e_aleatoria
+SESSION_SECRET=sua_chave_session_muito_longa_e_aleatoria
+```
+
+### ⚠️ IMPORTANTE - Secrets Obrigatórias
+```env
+# OBRIGATÓRIAS para funcionamento completo:
+OPENAI_API_KEY=sk-proj-xxxx        # AI Assistant
+DATABASE_URL=postgresql://...       # Banco de dados
+SESSION_SECRET=xxxxxxxx             # Autenticação
+
+# RECOMENDADAS:
+OPENPIX_APP_ID=xxxx                 # Pagamentos PIX
+SMTP_HOST=smtp.gmail.com            # Email
+VITE_GA_MEASUREMENT_ID=G-XXXX       # Analytics
+
+# OPCIONAIS:
+N8N_WEBHOOK_URL=https://...         # Automação
 ```
 
 ## Passo 7: Configurar o Banco de Dados
@@ -289,7 +310,21 @@ BACKEND_URL=https://seu-dominio.com
 npm run db:push
 ```
 
-### 7.2 Crie o usuário administrador
+### 7.2 Migração dos Dados Existentes
+
+#### Se você JÁ TEM dados no Replit:
+```bash
+# 1. Fazer backup dos dados atuais
+pg_dump $DATABASE_URL > dados_replit_backup.sql
+
+# 2. Na VPS, importar dados
+psql -h localhost -U querofretes -d querofretes_db < dados_replit_backup.sql
+
+# 3. Aplicar correções de nomes (script já implementado)
+node fix-existing-names.js
+```
+
+#### Se é instalação NOVA:
 ```bash
 # Use o script já preparado
 node create-admin.js
