@@ -1,0 +1,128 @@
+# Arquivos e pastas a serem ignorados pelo Docker
+
+# Dependências
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build artifacts
+dist/
+client/dist/
+.vite/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Dependency directories
+jspm_packages/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env.test
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Gatsby files
+.cache/
+public
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# Temporary folders
+tmp/
+temp/
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Replit specific
+.replit
+replit.nix
+.upm/
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile
+.docker*
+
+# Arquivos de desenvolvimento específicos
+attached_assets/
+cookies.txt
+create-admin.js
+deploy.sh
+migrate-to-vps.sh
+production-config.js
+transfer-files.sh
+vps-setup-complete.sh
+check-deployment.sh
+DEPLOYMENT_*.md
+QUICK_DEPLOY_SUMMARY.md
+*.txt
+vehicle-types-component.txt
+temp-snippet.tsx

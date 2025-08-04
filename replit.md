@@ -47,10 +47,20 @@ Preferred communication style: Simple, everyday language.
 
 - **Payment Gateway**: OpenPix (primary and sole payment processor for PIX).
 - **Email Services**: Nodemailer (SMTP), Ethereal Email (development).
-- **Database Hosting**: Neon Database (for PostgreSQL).
-- **Development & Deployment**: Replit (primary platform), Vite, TypeScript.
+- **Database Hosting**: Neon Database (for PostgreSQL), supports Docker deployment with local PostgreSQL.
+- **Development & Deployment**: Replit (primary platform), Docker containerization available, Vite, TypeScript.
 - **AI Integration**: OpenAI (GPT-4o).
 - **Automation**: N8N (for webhooks).
 - **Analytics**: Google Analytics.
 - **Validation**: ReceitaWS API (for CNPJ validation).
 - **Mapping/Geocoding**: IBGE API (previously used for ANTT calculator for city data, now manual distance input is preferred).
+
+## Docker Deployment
+
+The system is fully containerized and includes:
+- **Dockerfile**: Multi-stage build with Node.js 20 Alpine
+- **docker-compose.yml**: Complete stack with PostgreSQL, Nginx proxy, and application
+- **Automated Setup**: `docker-setup.sh` script for easy installation
+- **Production Ready**: Includes SSL configuration, health checks, and monitoring
+- **Database**: PostgreSQL 15 with automated initialization and optimization
+- **Reverse Proxy**: Nginx with rate limiting, gzip compression, and security headers
