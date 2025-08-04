@@ -229,14 +229,15 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   return (
     <div
       className={cn(
-        "flex flex-col backdrop-blur-sm border-r border-gray-700/50 h-screen transition-all duration-300 shadow-lg",
+        "flex flex-col backdrop-blur-sm border-r h-screen transition-all duration-300 shadow-lg",
+        "bg-[#00222d] dark:bg-[hsl(225,20%,12%)]",
+        "border-gray-300/20 dark:border-gray-700/50",
         collapsed ? "w-16" : "w-64",
         isMobile && "fixed inset-y-0 left-0 z-50 transform",
       )}
-      style={{ backgroundColor: 'hsl(225, 20%, 12%)' }}
     >
       {/* Header da Sidebar */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-600/30 backdrop-blur-sm" style={{ backgroundColor: 'hsl(225, 20%, 12%)' }}>
+      <div className="flex items-center justify-between p-4 border-b backdrop-blur-sm bg-[#00222d] dark:bg-[hsl(225,20%,12%)] border-gray-300/20 dark:border-gray-600/30">
         {!collapsed && (
           <div className="flex items-center space-x-2">
             <img 
@@ -440,7 +441,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
 
 
       {/* Footer da Sidebar - Usuário */}
-      <div className="p-3 border-t border-gray-600/30 backdrop-blur-sm" style={{ backgroundColor: 'hsl(225, 20%, 12%)' }}>
+      <div className="p-3 border-t backdrop-blur-sm bg-[#00222d] dark:bg-[hsl(225,20%,12%)] border-gray-300/20 dark:border-gray-600/30">
         {collapsed ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
