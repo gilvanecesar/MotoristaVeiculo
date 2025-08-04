@@ -233,10 +233,10 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
         collapsed ? "w-16" : "w-64",
         isMobile && "fixed inset-y-0 left-0 z-50 transform",
       )}
-      style={{ backgroundColor: '#00222d' }}
+      style={{ backgroundColor: 'hsl(225, 20%, 12%)' }}
     >
       {/* Header da Sidebar */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-600/30 backdrop-blur-sm" style={{ backgroundColor: '#00222d' }}>
+      <div className="flex items-center justify-between p-4 border-b border-gray-600/30 backdrop-blur-sm" style={{ backgroundColor: 'hsl(225, 20%, 12%)' }}>
         {!collapsed && (
           <div className="flex items-center space-x-2">
             <img 
@@ -440,7 +440,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
 
 
       {/* Footer da Sidebar - Usuário */}
-      <div className="p-3 border-t border-gray-600/30 backdrop-blur-sm" style={{ backgroundColor: '#00222d' }}>
+      <div className="p-3 border-t border-gray-600/30 backdrop-blur-sm" style={{ backgroundColor: 'hsl(225, 20%, 12%)' }}>
         {collapsed ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
