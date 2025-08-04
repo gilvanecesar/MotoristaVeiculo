@@ -42,6 +42,7 @@ Preferred communication style: Simple, everyday language.
 - **N8N Integration**: Automated user data forwarding to N8N webhooks for workflow automation.
 - **Analytics**: Google Analytics integration for tracking user behavior and conversions.
 - **Admin Features**: Robust administrative interfaces for user management (including subscription activation/deactivation), financial oversight (OpenPix data integration), webhook configuration, and user search by various criteria (ID, email, CPF, CNPJ).
+- **Name Validation System**: Automatic cleaning of user names during registration to remove CPF/CNPJ prefixes (e.g., "60.915.611 LUCIEN PEREIRA BRITO" becomes "Lucien Pereira Brito"), with batch correction script for existing users.
 
 ## External Dependencies
 
