@@ -37,8 +37,7 @@ services:
       PORT: ${PORT:-5000}
       # Todas as outras variáveis vêm do arquivo .env
     depends_on:
-      postgres:
-        condition: service_healthy
+      - postgres
     networks:
       - quero_fretes_network
     volumes:
