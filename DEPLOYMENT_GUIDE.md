@@ -1,17 +1,74 @@
-# Guia de Implantação - QUERO FRETES na VPS
+# 🚀 Guia de Deploy - QUERO FRETES (Janeiro 2025)
 
-## Pré-requisitos da VPS
+## 📋 Status Atual do Sistema
 
-### Sistema Operacional
-- Ubuntu 20.04 LTS ou superior
-- Debian 11 ou superior
-- CentOS 8 ou superior
+### ✅ Funcionalidades Implementadas
+- **Sistema de Fretes**: Gestão completa de fretes e cotações
+- **Usuários Multi-perfil**: Administrador, Motorista, Embarcador, Agente, Transportador
+- **Pagamentos PIX**: Integração completa OpenPix (único gateway ativo)
+- **AI Assistant "Buzino"**: GPT-4o para consultas de transporte
+- **Calculadora ANTT**: Cálculo de fretes conforme PORTARIA SUROC Nº 23/2025
+- **Sistema de Cotações**: Público e autenticado com PDF e WhatsApp
+- **Google Analytics**: Rastreamento completo integrado
+- **Email System**: Nodemailer com múltiplos provedores
+- **Webhooks N8N**: Automação de dados de usuários
+- **API IBGE**: 5.571 cidades brasileiras com busca inteligente
+- **ReceitaWS**: Validação automática de CNPJ
+- **Tema Dark/Light**: Sistema condicional baseado na preferência do usuário
 
-### Especificações Mínimas
-- **CPU**: 2 vCPUs
-- **RAM**: 4GB
-- **Storage**: 40GB SSD
-- **Largura de Banda**: 100Mbps
+### 🎯 Deploy Recomendado
+
+**REPLIT DEPLOY DIRETO** (Recomendado para produção)
+- Deploy em 1 clique
+- SSL automático (.replit.app)
+- PostgreSQL Neon integrado
+- Monitoramento built-in
+- Custo: ~$20-40/mês
+
+## 🚀 OPÇÃO 1: Deploy Replit (Recomendado)
+
+### Pré-requisitos
+- Conta Replit Core ($20/mês)
+- Chaves API configuradas nos Secrets
+
+### Configuração de Secrets
+Configure no painel Replit > Secrets:
+
+```env
+# OpenAI (Obrigatório - AI Assistant)
+OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxx
+
+# Google Analytics (Recomendado)
+VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
+
+# Email (Configure um provedor)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=seu.email@gmail.com
+SMTP_PASS=sua_senha_de_app
+
+# OpenPix (Pagamentos PIX)
+OPENPIX_APP_ID=sua_chave_openpix
+
+# N8N Automation (Opcional)
+N8N_WEBHOOK_URL=https://sua-instancia.n8n.cloud/webhook/usuario
+```
+
+### Deploy
+1. **Push para main**: `git push origin main`
+2. **Clique em Deploy** no painel Replit
+3. **Configure domínio personalizado** (opcional)
+4. **Teste funcionalidades** principais
+
+---
+
+## 🐳 OPÇÃO 2: Deploy Docker/VPS
+
+### Especificações VPS Recomendadas
+- **CPU**: 2+ vCPUs
+- **RAM**: 4GB+
+- **Storage**: 40GB+ SSD
+- **OS**: Ubuntu 22.04 LTS
 
 ## Passo 1: Configuração Inicial da VPS
 
@@ -110,7 +167,14 @@ npm install
 nano .env
 ```
 
-### 6.2 Configure as variáveis (substitua pelos seus valores):
+### Instalação Docker (Recomendada)
+```bash
+# Usar arquivos Docker já preparados
+chmod +x docker-setup.sh
+./docker-setup.sh auto
+```
+
+### Instalação Manual - Configure .env:
 ```env
 # Database
 DATABASE_URL="postgresql://querofretes:sua_senha_segura_aqui@localhost:5432/querofretes_db"
@@ -124,11 +188,16 @@ PGDATABASE=querofretes_db
 NODE_ENV=production
 PORT=5000
 
-# OpenPix (suas credenciais reais)
-OPENPIX_APP_ID=sua_app_id_openpix
-OPENPIX_API_KEY=sua_chave_api_openpix
+# OpenAI (Obrigatório - AI Assistant "Buzino")
+OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxx
 
-# Email Service (configure com seu provedor)
+# Google Analytics (Recomendado)
+VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
+
+# OpenPix (Obrigatório - Pagamentos PIX)
+OPENPIX_APP_ID=sua_app_id_openpix
+
+# Email Service (Configure um provedor)
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=seu_email@gmail.com
@@ -137,8 +206,12 @@ SMTP_PASS=sua_senha_app_gmail
 # Session Secret (gere uma chave aleatória)
 SESSION_SECRET=sua_chave_secreta_muito_longa_e_aleatoria
 
-# WhatsApp/N8N Integration
-N8N_WEBHOOK_URL=https://hooks.n8n.cloud/webhook/seu_webhook_id
+# N8N Webhooks (Opcional - Automação)
+N8N_WEBHOOK_URL=https://sua-instancia.n8n.cloud/webhook/usuario
+
+# APIs Brasileiras (Já configuradas)
+RECEITA_WS_API_URL=https://www.receitaws.com.br/v1
+IBGE_API_URL=https://servicodados.ibge.gov.br/api/v1
 
 # Production URLs
 FRONTEND_URL=https://seu-dominio.com
@@ -154,29 +227,29 @@ npm run db:push
 
 ### 7.2 Crie o usuário administrador
 ```bash
-node -e "
-const { Pool } = require('pg');
-const bcrypt = require('bcrypt');
+# Use o script já preparado
+node create-admin.js
+```
 
-async function createAdmin() {
-  const pool = new Pool({
-    connectionString: process.env.DATABASE_URL
-  });
-  
-  const hashedPassword = await bcrypt.hash('admin123', 10);
-  
-  await pool.query(\`
-    INSERT INTO users (email, password, name, profile_type, is_verified, is_active, subscription_active, subscription_type, subscription_expires_at)
-    VALUES ('admin@querofretes.com', $1, 'Administrador', 'administrador', true, true, true, 'unlimited', '2030-12-31T23:59:59Z')
-    ON CONFLICT (email) DO NOTHING
-  \`, [hashedPassword]);
-  
-  console.log('Usuário administrador criado!');
-  await pool.end();
-}
+**Ou manual via SQL:**
+```sql
+# Conectar ao banco
+psql -h localhost -U querofretes -d querofretes_db
 
-createAdmin();
-"
+# Criar usuário admin (ajuste a senha hash conforme necessário)
+INSERT INTO users (
+  email, password, name, profile_type, 
+  is_verified, is_active, subscription_active, 
+  subscription_type, subscription_expires_at
+) VALUES (
+  'admin@querofretes.com', 
+  '$2b$10$exemplo_hash_bcrypt_da_senha', 
+  'Administrador', 
+  'administrador', 
+  true, true, true, 
+  'unlimited', 
+  '2030-12-31T23:59:59Z'
+) ON CONFLICT (email) DO NOTHING;
 ```
 
 ## Passo 8: Configurar SSL (Opcional mas Recomendado)
@@ -419,5 +492,191 @@ Se encontrar algum problema:
 1. Verifique os logs: `pm2 logs`
 2. Verifique status dos serviços: `sudo systemctl status postgresql nginx`
 3. Verifique conectividade: `curl http://localhost:5000`
+
+---
+
+## ✅ CHECKLIST DE FUNCIONALIDADES - TESTE PÓS-DEPLOY
+
+### 🔐 Autenticação e Usuários
+- [ ] Login/logout funcionando
+- [ ] Criação de conta (diferentes perfis)
+- [ ] Recuperação de senha por email
+- [ ] Painel administrativo acessível
+
+### 💰 Sistema de Pagamentos (OpenPix)
+- [ ] Geração de cobrança PIX
+- [ ] Webhook de confirmação funcionando
+- [ ] Ativação automática de assinatura
+- [ ] Dashboard financeiro administrativo
+
+### 🤖 AI Assistant "Buzino"
+- [ ] Chat funcional na página /ai-assistant
+- [ ] Respostas do GPT-4o
+- [ ] Limite de mensagens por perfil
+- [ ] Histórico de conversas
+
+### 📊 Calculadora ANTT
+- [ ] Cálculo de frete por distância manual
+- [ ] Diferentes tipos de veículo
+- [ ] Geração de PDF da cotação
+- [ ] Conformidade PORTARIA SUROC Nº 23/2025
+
+### 🚚 Sistema de Fretes
+- [ ] Criação de novos fretes
+- [ ] Gestão de motoristas e veículos
+- [ ] Sistema de cotações (público e autenticado)
+- [ ] Compartilhamento via WhatsApp
+
+### 🌎 APIs Brasileiras
+- [ ] Busca de cidades IBGE (5.571 cidades)
+- [ ] Validação CNPJ via ReceitaWS
+- [ ] Autocomplete inteligente de localidades
+
+### 📧 Sistema de Email
+- [ ] Emails transacionais funcionando
+- [ ] Confirmação de cadastro
+- [ ] Notificações de pagamento
+- [ ] Recuperação de senha
+
+### 📈 Analytics e Integração
+- [ ] Google Analytics rastreando
+- [ ] Webhooks N8N enviando dados
+- [ ] Tema dark/light funcional
+- [ ] Responsividade mobile
+
+## 🧪 COMANDOS DE TESTE
+
+### Verificar Status da Aplicação
+```bash
+# Status geral
+curl http://localhost:5000/api/health
+
+# Testar banco de dados
+curl http://localhost:5000/api/public/stats
+
+# Verificar cidades IBGE
+curl "http://localhost:5000/api/ibge/cities?search=São Paulo"
+```
+
+### Testar Funcionalidades Principais
+```bash
+# 1. Criar usuário teste via API
+curl -X POST http://localhost:5000/api/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"teste@exemplo.com","password":"123456","name":"Teste","profileType":"embarcador"}'
+
+# 2. Fazer login
+curl -X POST http://localhost:5000/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"teste@exemplo.com","password":"123456"}'
+
+# 3. Testar IA (substitua SESSION_ID)
+curl -X POST http://localhost:5000/api/ai-assistant/chat \
+  -H "Content-Type: application/json" \
+  -H "Cookie: connect.sid=SESSION_ID" \
+  -d '{"message":"Como calcular frete de carga seca?"}'
+```
+
+### Monitoramento Contínuo
+```bash
+# Logs da aplicação
+pm2 logs querofretes --lines 50
+
+# Status dos processos
+pm2 status
+
+# Uso de recursos
+pm2 monit
+
+# Verificar conexões de banco
+sudo -u postgres psql -c "SELECT * FROM pg_stat_activity WHERE state = 'active';"
+```
+
+## 🚨 TROUBLESHOOTING COMUM
+
+### AI Assistant Não Responde
+```bash
+# Verificar se OPENAI_API_KEY está configurada
+echo $OPENAI_API_KEY
+
+# Testar conexão OpenAI
+curl -H "Authorization: Bearer $OPENAI_API_KEY" \
+     -H "Content-Type: application/json" \
+     https://api.openai.com/v1/models
+```
+
+### Pagamentos PIX Não Funcionam
+```bash
+# Verificar webhook OpenPix
+curl -X POST http://localhost:5000/api/openpix/webhook \
+  -H "Content-Type: application/json" \
+  -d '{"event":"OPENPIX_CHARGE_COMPLETED","charge":{"correlationID":"test"}}'
+```
+
+### Emails Não Enviam
+```bash
+# Testar configuração SMTP
+node -e "
+const nodemailer = require('nodemailer');
+const transporter = nodemailer.createTransporter({
+  host: process.env.SMTP_HOST,
+  port: process.env.SMTP_PORT,
+  auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+});
+transporter.verify((err, success) => {
+  console.log(err ? 'ERRO SMTP: ' + err : 'SMTP OK: ' + success);
+});
+"
+```
+
+### Busca de Cidades Lenta
+```bash
+# Verificar carregamento das cidades IBGE
+curl -w "@curl-format.txt" -s "http://localhost:5000/api/ibge/cities?search=São"
+
+# curl-format.txt:
+# time_total: %{time_total}
+# time_connect: %{time_connect}
+# time_namelookup: %{time_namelookup}
+```
+
+## 📞 SUPORTE E MANUTENÇÃO
+
+### Backup Diário Recomendado
+```bash
+# Backup do banco
+pg_dump -h localhost -U querofretes querofretes_db > backup_$(date +%Y%m%d).sql
+
+# Backup dos arquivos
+tar -czf backup_files_$(date +%Y%m%d).tar.gz /var/www/querofretes
+
+# Backup das configurações
+cp .env .env.backup.$(date +%Y%m%d)
+```
+
+### Updates de Segurança
+```bash
+# Sistema
+sudo apt update && sudo apt upgrade -y
+
+# Node.js dependencies
+npm audit fix
+
+# PostgreSQL
+sudo apt update postgresql
+```
+
+## 🎯 MÉTRICAS DE SUCESSO
+
+Após deploy, monitore:
+- **Response Time**: < 500ms páginas principais
+- **Uptime**: > 99.5%
+- **Database Connections**: < 80% do limite
+- **Memory Usage**: < 70% da RAM disponível
+- **Disk Space**: < 80% utilizado
+
+---
+
+**✅ Deploy Concluído!** O QUERO FRETES está pronto para produção com todas as funcionalidades operacionais.
 
 **Importante**: Substitua todos os valores de exemplo (senhas, domínios, chaves API) pelos seus valores reais antes de usar em produção.
