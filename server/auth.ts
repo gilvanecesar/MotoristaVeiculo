@@ -167,6 +167,10 @@ export function setupAuth(app: Express) {
         return res.status(400).json({ message: "E-mail já cadastrado" });
       }
 
+      // Limpa o nome de CPF/CNPJ se necessário
+      const { cleanNameFromDocument } = await import("./utils/nameUtils");
+      const cleanedName = cleanNameFromDocument(name);
+
       // Cria novo usuário
       const hashedPassword = await hashPassword(password);
       
@@ -194,7 +198,7 @@ export function setupAuth(app: Express) {
       
       const newUser = await storage.createUser({
         email,
-        name,
+        name: cleanedName,
         password: hashedPassword,
         profileType,
         authProvider: "local",
