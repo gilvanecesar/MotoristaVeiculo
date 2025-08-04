@@ -186,37 +186,44 @@ Compose path: docker-compose.yml
 ```
 
 ### 5.4 Configurar Environment Variables
-Na seção "Environment variables", adicione:
+Na seção "Environment variables", adicione as OBRIGATÓRIAS primeiro:
 
+#### **MÍNIMO OBRIGATÓRIO (para funcionar):**
 ```env
-# Database
 DATABASE_URL=postgresql://querofretes:SUA_SENHA@postgres:5432/querofretes_db
-PGHOST=postgres
-PGPORT=5432
 PGUSER=querofretes
 PGPASSWORD=SUA_SENHA
 PGDATABASE=querofretes_db
+SESSION_SECRET=chave_muito_longa_e_aleatoria_aqui
+```
 
-# OpenAI (OBRIGATÓRIO)
+#### **RECOMENDADAS (para recursos completos):**
+```env
+# OpenAI (AI Assistant)
 OPENAI_API_KEY=sk-proj-xxxxxxxxx
 
-# OpenPix (Pagamentos)
+# OpenPix (Pagamentos PIX)
 OPENPIX_APP_ID=sua_app_id
+OPENPIX_AUTHORIZATION=sua_authorization_key
 
-# Email
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=seu.email@gmail.com
-SMTP_PASS=sua_senha_app
+# Email (Notificações)
+EMAIL_HOST=smtp.hostinger.com
+EMAIL_PORT=587
+EMAIL_USER=seu.email@querofretes.com.br
+EMAIL_PASS=sua_senha
 
-# Session
-SESSION_SECRET=chave_muito_longa_e_aleatoria
-
-# Google Analytics (Opcional)
+# Google Analytics
 VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
+```
 
-# N8N (Opcional)
+#### **OPCIONAIS (podem adicionar depois):**
+```env
+# N8N Automação
 N8N_WEBHOOK_URL=https://sua-instancia.n8n.cloud/webhook/usuario
+
+# URLs personalizadas
+FRONTEND_URL=https://seu-dominio.com
+BACKEND_URL=https://seu-dominio.com
 ```
 
 ### 5.5 Deploy da Stack
