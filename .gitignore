@@ -69,9 +69,18 @@ backup_*.sql
 ehthumbs.db
 Thumbs.db
 
-# Sensitive data
+# Sensitive data - NUNCA COMMITAR!
 cookies.txt
 temp-snippet.tsx
+.env*
+!.env.example
+secrets/
+*.key
+*.pem
+*.p12
+*.pfx
+ssl/
+*.env.backup.*
 
 # Attached assets (usually large files)
 attached_assets/

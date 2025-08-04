@@ -49,36 +49,33 @@ fi
 # Criar arquivo .env se não existir
 if [ ! -f .env ]; then
     echo "📝 Criando arquivo .env..."
-    cat > .env << EOF
-# Configurações do Banco de Dados
-DATABASE_URL=postgresql://postgres:sua_senha_aqui@localhost:5432/quero_fretes
-POSTGRES_PASSWORD=sua_senha_aqui
+    
+    # Copiar do template se existir
+    if [ -f .env.example ]; then
+        cp .env.example .env
+        echo "✅ Arquivo .env criado a partir do template .env.example"
+    else
+        echo "❌ Arquivo .env.example não encontrado. Criando .env básico..."
+        cat > .env << EOF
+# QUERO FRETES - Configurações Docker
+# Configure com suas credenciais reais antes de usar!
 
-# Configurações da Aplicação
-NODE_ENV=production
-PORT=5000
-
-# Chaves da API (Configure com suas chaves reais)
-OPENAI_API_KEY=sua_chave_openai_aqui
-VITE_GA_MEASUREMENT_ID=sua_chave_ga_aqui
-
-# Configurações de Email
+DATABASE_URL=postgresql://postgres:CONFIGURE_SENHA_AQUI@postgres:5432/quero_fretes
+POSTGRES_PASSWORD=CONFIGURE_SENHA_AQUI
+OPENAI_API_KEY=CONFIGURE_CHAVE_OPENAI_AQUI
+VITE_GA_MEASUREMENT_ID=CONFIGURE_GA_AQUI
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
-SMTP_USER=seu_email@gmail.com
-SMTP_PASS=sua_senha_app_gmail
-
-# OpenPix (Pagamentos)
-OPENPIX_APP_ID=sua_chave_openpix_aqui
-
-# N8N Webhooks (Opcional)
-N8N_WEBHOOK_URL=sua_url_n8n_aqui
-
-# Outros serviços
-RECEITA_WS_API_URL=https://www.receitaws.com.br/v1
-IBGE_API_URL=https://servicodados.ibge.gov.br/api/v1
+SMTP_USER=CONFIGURE_EMAIL_AQUI
+SMTP_PASS=CONFIGURE_SENHA_EMAIL_AQUI
+OPENPIX_APP_ID=CONFIGURE_OPENPIX_AQUI
 EOF
-    echo "✅ Arquivo .env criado. IMPORTANTE: Edite o arquivo .env com suas configurações reais!"
+    fi
+    
+    # Definir permissões seguras
+    chmod 600 .env
+    echo "🔒 Permissões seguras aplicadas ao .env (600)"
+    echo "⚠️  IMPORTANTE: Configure suas credenciais REAIS no arquivo .env antes de continuar!"
 fi
 
 # Criar diretórios necessários
