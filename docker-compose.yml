@@ -5,13 +5,18 @@ services:
     image: postgres:15-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-quero_fretes}
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   app:
     build: .
@@ -28,16 +33,22 @@ services:
       PGPASSWORD: ${PGPASSWORD}
       PGDATABASE: ${PGDATABASE}
       SESSION_SECRET: ${SESSION_SECRET}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      OPENPIX_APP_ID: ${OPENPIX_APP_ID:-}
-      EMAIL_HOST: ${EMAIL_HOST:-}
-      EMAIL_USER: ${EMAIL_USER:-}
-      EMAIL_PASS: ${EMAIL_PASS:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENPIX_APP_ID: ${OPENPIX_APP_ID}
+      OPENPIX_AUTHORIZATION: ${OPENPIX_AUTHORIZATION}
+      EMAIL_HOST: ${EMAIL_HOST}
+      EMAIL_PORT: ${EMAIL_PORT}
+      EMAIL_USER: ${EMAIL_USER}
+      EMAIL_PASS: ${EMAIL_PASS}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      VITE_GA_MEASUREMENT_ID: ${VITE_GA_MEASUREMENT_ID}
+      N8N_WEBHOOK_URL: ${N8N_WEBHOOK_URL}
     depends_on:
-      - postgres
-
-
+      postgres:
+        condition: service_healthy
 
 volumes:
   postgres_data:
-    driver: local
