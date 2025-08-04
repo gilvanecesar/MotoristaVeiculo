@@ -132,33 +132,102 @@ GRANT ALL PRIVILEGES ON DATABASE querofretes_db TO querofretes;
 \q
 ```
 
-## Passo 4: Instalar PM2 (Gerenciador de Processos)
+## Passo 4: Instalar Portainer (Gerenciador Visual Docker)
 
+### 4.1 Criar volume para dados do Portainer
 ```bash
-sudo npm install -g pm2
+docker volume create portainer_data
 ```
 
-## Passo 5: Clonar e Configurar o Projeto
-
-### 5.1 Crie o diretório do projeto
+### 4.2 Instalar Portainer
 ```bash
-cd /var/www
-sudo mkdir querofretes
-sudo chown $USER:$USER querofretes
-cd querofretes
+docker run -d -p 8000:8000 -p 9000:9000 \
+  --name=portainer --restart=always \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v portainer_data:/data \
+  portainer/portainer-ce:latest
 ```
 
-### 5.2 Transfira os arquivos do projeto
-Você pode usar SCP, SFTP ou Git. Exemplo com SCP:
+### 4.3 Configurar Portainer (Primeira vez)
+1. Acesse: `http://SEU_IP_VPS:9000`
+2. Crie usuário admin + senha
+3. Selecione "Docker" como ambiente
+4. Clique "Connect"
+
+### 4.4 Configurar Firewall (se necessário)
 ```bash
-# No seu computador local (dentro da pasta do projeto)
-scp -r . usuario@ip_da_vps:/var/www/querofretes/
+# Ubuntu/Debian
+sudo ufw allow 9000/tcp
+sudo ufw allow 8000/tcp
+
+# CentOS/RHEL
+sudo firewall-cmd --permanent --add-port=9000/tcp
+sudo firewall-cmd --permanent --add-port=8000/tcp
+sudo firewall-cmd --reload
 ```
 
-### 5.3 Instale as dependências
+## Passo 5: Deploy via Portainer (Método Recomendado)
+
+### 5.1 Acesse o Portainer
+- URL: `http://SEU_IP_VPS:9000`
+- Faça login com suas credenciais admin
+
+### 5.2 Criar Nova Stack
+1. **Menu lateral**: Clique em "Stacks"
+2. **Botão**: "+ Add stack"
+3. **Nome**: `quero-fretes`
+4. **Build method**: Selecione "Repository"
+
+### 5.3 Configurar Repository
+```
+Repository URL: https://github.com/SEU_USUARIO/quero-fretes.git
+Reference: refs/heads/main
+Compose path: docker-compose.yml
+```
+
+### 5.4 Configurar Environment Variables
+Na seção "Environment variables", adicione:
+
+```env
+# Database
+DATABASE_URL=postgresql://querofretes:SUA_SENHA@postgres:5432/querofretes_db
+PGHOST=postgres
+PGPORT=5432
+PGUSER=querofretes
+PGPASSWORD=SUA_SENHA
+PGDATABASE=querofretes_db
+
+# OpenAI (OBRIGATÓRIO)
+OPENAI_API_KEY=sk-proj-xxxxxxxxx
+
+# OpenPix (Pagamentos)
+OPENPIX_APP_ID=sua_app_id
+
+# Email
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=seu.email@gmail.com
+SMTP_PASS=sua_senha_app
+
+# Session
+SESSION_SECRET=chave_muito_longa_e_aleatoria
+
+# Google Analytics (Opcional)
+VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
+
+# N8N (Opcional)
+N8N_WEBHOOK_URL=https://sua-instancia.n8n.cloud/webhook/usuario
+```
+
+### 5.5 Deploy da Stack
+1. **Auto-pull**: Marque "Enable auto-updates" (opcional)
+2. **Clique**: "Deploy the stack"
+3. **Aguarde**: Build e inicialização (~5-10 minutos)
+
+### 5.6 Verificar Deploy
 ```bash
-cd /var/www/querofretes
-npm install
+# Via Portainer Logs ou SSH
+curl http://localhost:5000/api/health
 ```
 
 ## Passo 6: Configurar Variáveis de Ambiente
