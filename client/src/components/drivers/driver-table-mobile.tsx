@@ -214,7 +214,7 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
                                 </AvatarFallback>
                               </Avatar>
                               <div className="ml-4">
-                                <div className="text-sm font-medium text-slate-900">{driver.name}</div>
+                                <div className="text-sm font-medium text-[#c1cae0]">{driver.name}</div>
                                 <div className="text-xs text-slate-500">{driver.email}</div>
                               </div>
                             </div>
