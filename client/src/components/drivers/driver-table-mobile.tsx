@@ -246,7 +246,7 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div className="text-sm text-[#ffffff]">
+                            <div className="text-sm text-[#0ccc61]">
                               {format(createdDate, "dd/MM/yyyy")}
                             </div>
                           </TableCell>
