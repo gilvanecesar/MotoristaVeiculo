@@ -246,7 +246,7 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div className="text-sm text-slate-900">
+                            <div className="text-sm text-[#ffffff]">
                               {format(createdDate, "dd/MM/yyyy")}
                             </div>
                           </TableCell>
@@ -284,7 +284,6 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
                             </div>
                           </TableCell>
                         </TableRow>
-                        
                         {/* Linha expandida com veículos */}
                         {isExpanded && (
                           <TableRow>
@@ -356,7 +355,6 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
           </CardContent>
         </Card>
       </div>
-
       {/* Layout Mobile - Cards */}
       <div className="lg:hidden space-y-4">
         {paginatedDrivers.map((driver) => {
