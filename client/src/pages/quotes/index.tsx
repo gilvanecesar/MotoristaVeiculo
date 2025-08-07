@@ -162,7 +162,6 @@ export default function QuotesPage() {
           </p>
         </div>
       </div>
-
       {/* Estatísticas */}
       <div className={`grid gap-4 mb-8 ${isMobile ? 'grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-6'}`}>
         <Card>
@@ -231,7 +230,6 @@ export default function QuotesPage() {
           </CardHeader>
         </Card>
       </div>
-
       {/* Lista de Cotações */}
       <div className={isMobile ? "grid grid-cols-1 gap-4" : "space-y-4"}>
         {quotes?.length === 0 ? (
@@ -254,7 +252,7 @@ export default function QuotesPage() {
                 <CardContent className={isMobile ? "p-4" : "p-6"}>
                   {isMobile ? (
                     /* Layout Mobile - Card Compacto */
-                    <div className="space-y-3">
+                    (<div className="space-y-3">
                       {/* Header do Card Mobile */}
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
@@ -280,7 +278,6 @@ export default function QuotesPage() {
                           </Badge>
                         </div>
                       </div>
-                      
                       {/* Rota */}
                       <div className="flex items-center text-sm text-gray-600">
                         <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />
@@ -288,7 +285,6 @@ export default function QuotesPage() {
                           {quote.origin}/{quote.originState} → {quote.destination}/{quote.destinationState}
                         </span>
                       </div>
-                      
                       {/* Informações da Carga */}
                       <div className="bg-gray-50 p-3 rounded-md">
                         <div className="grid grid-cols-2 gap-2 text-sm">
@@ -308,7 +304,6 @@ export default function QuotesPage() {
                           </div>
                         </div>
                       </div>
-                      
                       {/* Footer do Card Mobile */}
                       <div className="flex items-center justify-between pt-2">
                         <div className="flex items-center space-x-2">
@@ -337,7 +332,6 @@ export default function QuotesPage() {
                           </div>
                         </div>
                       </div>
-                      
                       {/* Expiração */}
                       {quote.expiresAt && (
                         <div className={`text-xs text-center p-2 rounded ${isExpired ? 'bg-red-50 text-red-600' : 'bg-orange-50 text-orange-600'}`}>
@@ -345,14 +339,14 @@ export default function QuotesPage() {
                           {format(new Date(quote.expiresAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                         </div>
                       )}
-                    </div>
+                    </div>)
                   ) : (
                     /* Layout Desktop - Card Expandido */
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+                    (<div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
                       {/* Informações do Cliente */}
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-3">
-                          <h3 className="text-lg font-semibold text-gray-900">
+                          <h3 className="text-lg font-semibold text-[#ffffff]">
                             {quote.clientName}
                           </h3>
                           <Badge 
@@ -414,27 +408,26 @@ export default function QuotesPage() {
                         </div>
                       </div>
                     </div>
-                    
-                    {/* Preço e Data */}
-                    <div className="flex flex-col items-end text-right">
-                      <div className="text-lg font-bold text-green-600 mb-2">
-                        <span className="text-sm text-gray-600 font-normal">Valor de NF:</span><br />
-                        R$ {quote.price.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        Cotação #{quote.id}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {format(new Date(quote.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                      </div>
-                      {quote.expiresAt && (
-                        <div className={`text-xs mt-1 ${isExpired ? 'text-red-500 font-semibold' : 'text-orange-500'}`}>
-                          {isExpired ? 'Expirou em: ' : 'Expira em: '}
-                          {format(new Date(quote.expiresAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                      {/* Preço e Data */}
+                      <div className="flex flex-col items-end text-right">
+                        <div className="text-lg font-bold text-green-600 mb-2">
+                          <span className="text-sm text-gray-600 font-normal">Valor de NF:</span><br />
+                          R$ {quote.price.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                         </div>
-                      )}
-                    </div>
-                  </div>
+                        <div className="text-xs text-gray-500">
+                          Cotação #{quote.id}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {format(new Date(quote.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                        </div>
+                        {quote.expiresAt && (
+                          <div className={`text-xs mt-1 ${isExpired ? 'text-red-500 font-semibold' : 'text-orange-500'}`}>
+                            {isExpired ? 'Expirou em: ' : 'Expira em: '}
+                            {format(new Date(quote.expiresAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                          </div>
+                        )}
+                      </div>
+                    </div>)
                   )}
                 </CardContent>
               </Card>
