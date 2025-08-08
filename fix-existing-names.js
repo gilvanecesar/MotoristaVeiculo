@@ -5,7 +5,8 @@
  * Uso: node fix-existing-names.js
  */
 
-const { Pool } = require('pg');
+import pkg from 'pg';
+const { Pool } = pkg;
 
 // Função para limpar nome (mesma lógica do nameUtils.ts)
 function cleanNameFromDocument(name) {
@@ -16,11 +17,14 @@ function cleanNameFromDocument(name) {
   // Remove espaços extras no início/fim
   let cleanName = name.trim();
 
-  // Padrão para CPF: 000.000.000-00 ou 00000000000
-  const cpfPattern = /^(\d{3}\.?\d{3}\.?\d{3}-?\d{2})\s+(.+)$/;
+  // Padrão para CPF: 000.000.000-00 ou 00000000000 ou apenas números
+  const cpfPattern = /^(\d{2,3}[\.\-\/\s]*\d{3}[\.\-\/\s]*\d{3}[\.\-\/\s]*\d{2})\s+(.+)$/;
   
-  // Padrão para CNPJ: 00.000.000/0000-00 ou 00000000000000
-  const cnpjPattern = /^(\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2})\s+(.+)$/;
+  // Padrão para CNPJ: 00.000.000/0000-00 ou 00000000000000 ou apenas números
+  const cnpjPattern = /^(\d{2}[\.\-\/\s]*\d{3}[\.\-\/\s]*\d{3}[\.\-\/\s]*\d{4}[\.\-\/\s]*\d{2})\s+(.+)$/;
+  
+  // Padrão mais simples para números no início
+  const numberPattern = /^(\d{8,})\s+(.+)$/;
 
   // Verificar se começa com CPF
   const cpfMatch = cleanName.match(cpfPattern);
@@ -32,6 +36,12 @@ function cleanNameFromDocument(name) {
   const cnpjMatch = cleanName.match(cnpjPattern);
   if (cnpjMatch) {
     cleanName = cnpjMatch[2]; // Pega só o nome após o CNPJ
+  }
+
+  // Verificar padrão de números simples (como backup)
+  const numberMatch = cleanName.match(numberPattern);
+  if (numberMatch) {
+    cleanName = numberMatch[2]; // Pega só o nome após os números
   }
 
   // Capitalizar nome corretamente
