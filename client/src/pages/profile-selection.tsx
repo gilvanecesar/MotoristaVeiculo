@@ -17,9 +17,30 @@ import { FaWhatsapp } from "react-icons/fa";
 const processApiError = async (response: Response): Promise<string> => {
   try {
     const errorData = await response.json();
-    return errorData.message || "Erro no cadastro";
+    
+    // Mensagens específicas para erros comuns
+    if (errorData.message) {
+      // CNPJ já existe
+      if (errorData.message.includes("CNPJ_ALREADY_EXISTS") || errorData.message.includes("CNPJ já está cadastrado")) {
+        return "Este CNPJ já está cadastrado no sistema. Tente fazer login ou use a opção 'Esqueci minha senha'.";
+      }
+      
+      // CPF já existe
+      if (errorData.message.includes("CPF_ALREADY_EXISTS") || errorData.message.includes("CPF já está cadastrado")) {
+        return "Este CPF já está cadastrado no sistema. Tente fazer login ou use a opção 'Esqueci minha senha'.";
+      }
+      
+      // Email já existe
+      if (errorData.message.includes("email já está cadastrado")) {
+        return "Este email já está cadastrado no sistema. Tente fazer login ou use a opção 'Esqueci minha senha'.";
+      }
+      
+      return errorData.message;
+    }
+    
+    return "Erro no cadastro. Tente novamente.";
   } catch {
-    return "Erro no cadastro";
+    return "Erro de comunicação com o servidor. Verifique sua conexão e tente novamente.";
   }
 };
 
@@ -204,20 +225,38 @@ export default function ProfileSelection() {
   // Função para buscar dados da empresa pelo CNPJ
   const fetchCompanyData = async (cnpj: string) => {
     try {
+      console.log(`Consultando CNPJ: ${cnpj}`);
+      
+      // Timeout de 15 segundos para evitar travamento
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      
       // Integração com ReceitaWS via backend para evitar CORS
-      const response = await fetch(`/api/validate/cnpj/${cnpj.replace(/\D/g, '')}`);
+      const response = await fetch(`/api/validate/cnpj/${cnpj.replace(/\D/g, '')}`, {
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log(`Dados encontrados para CNPJ ${cnpj}:`, data.name);
         return {
           name: data.name,
           fantasia: data.fantasia,
           situacao: data.situacao
         };
+      } else {
+        console.warn(`CNPJ ${cnpj} não encontrado - Status: ${response.status}`);
+        return null;
       }
-      return null;
     } catch (error) {
+      if (error.name === 'AbortError') {
+        console.error(`Timeout ao consultar CNPJ ${cnpj}`);
+        throw new Error("Consulta do CNPJ demorou muito. Verifique o número e tente novamente.");
+      }
       console.error("Erro ao buscar dados da empresa:", error);
-      return null;
+      throw new Error("Erro ao consultar CNPJ. Verifique o número e tente novamente.");
     }
   };
 
@@ -411,18 +450,31 @@ export default function ProfileSelection() {
     }
 
     setIsLoading(true);
+    
     try {
+      console.log(`Iniciando cadastro de transportador para CNPJ: ${data.cnpj}`);
+      
       // Buscar dados da empresa
       toast({
-        title: "Buscando dados da empresa...",
-        description: "Consultando informações no CNPJ..."
+        title: "Validando CNPJ...",
+        description: "Consultando informações da empresa..."
       });
 
       const companyData = await fetchCompanyData(data.cnpj);
       
       if (!companyData) {
-        throw new Error("CNPJ não encontrado ou inválido");
+        throw new Error("CNPJ não encontrado nos órgãos oficiais. Verifique se o número está correto e se a empresa está ativa.");
       }
+
+      // Verificar se a empresa está ativa
+      if (companyData.situacao && companyData.situacao !== "ATIVA") {
+        throw new Error(`Empresa com situação '${companyData.situacao}'. Apenas empresas ativas podem se cadastrar.`);
+      }
+
+      toast({
+        title: "CNPJ validado!",
+        description: `Finalizando cadastro para ${companyData.name}...`
+      });
 
       const userData = {
         ...data,
@@ -432,35 +484,63 @@ export default function ProfileSelection() {
         companyData
       };
 
+      console.log(`Enviando dados de cadastro:`, {
+        profileType: userData.profileType,
+        cnpj: data.cnpj,
+        email: data.email,
+        companyName: companyData.name
+      });
+
       const response = await apiRequest("POST", "/api/auth/register-profile", userData);
       
       if (response.ok) {
         const result = await response.json();
+        console.log(`Cadastro bem-sucedido:`, result);
         
         // Verificar se precisa de assinatura
         if (result.needsSubscription) {
           toast({
-            title: "Cadastro realizado!",
-            description: "Redirecionando para o checkout..."
+            title: "Cadastro realizado com sucesso!",
+            description: "Redirecionando para escolher seu plano..."
           });
           setLocation("/checkout");
         } else {
           toast({
-            title: "Bem-vindo!",
+            title: "Bem-vindo à plataforma!",
             description: "Redirecionando para o painel principal..."
           });
           setLocation("/home");
         }
       } else {
+        console.error(`Erro no cadastro - Status: ${response.status}`);
         const errorMessage = await processApiError(response);
         throw new Error(errorMessage);
       }
     } catch (error) {
+      console.error("Erro detalhado no cadastro:", error);
+      
+      let errorMessage = "Erro inesperado. Tente novamente.";
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
       toast({
-        title: "Erro no cadastro",
-        description: error instanceof Error ? error.message : "Tente novamente.",
+        title: "Não foi possível completar o cadastro",
+        description: errorMessage,
         variant: "destructive"
       });
+      
+      // Se o erro for de CNPJ já cadastrado, sugerir login
+      if (errorMessage.includes("já está cadastrado")) {
+        setTimeout(() => {
+          toast({
+            title: "💡 Dica",
+            description: "Clique em 'Fazer Login' no topo da página se você já tem uma conta.",
+            variant: "default"
+          });
+        }, 3000);
+      }
     } finally {
       setIsLoading(false);
     }
