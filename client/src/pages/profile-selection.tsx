@@ -35,6 +35,11 @@ const processApiError = async (response: Response): Promise<string> => {
         return "Este email já está cadastrado no sistema. Tente fazer login ou use a opção 'Esqueci minha senha'.";
       }
       
+      // Documento (CPF/CNPJ) já existe - mensagem genérica mais específica
+      if (errorData.message.includes("Documento já cadastrado") || errorData.message.includes("já cadastrado no sistema")) {
+        return "Este documento (CPF/CNPJ) já está cadastrado no sistema. Você já possui uma conta! Tente fazer login na página inicial ou use a opção 'Esqueci minha senha' se não lembrar da senha.";
+      }
+      
       return errorData.message;
     }
     
@@ -1094,16 +1099,33 @@ export default function ProfileSelection() {
           </div>
         )}
         
-        {/* Botão Falar com Suporte - SEMPRE VISÍVEL */}
-        <div className="mt-6 text-center">
-          <Button
-            variant="outline"
-            className="w-full max-w-sm mx-auto bg-green-50 border-green-200 text-green-700 hover:bg-green-100 hover:border-green-300"
-            onClick={() => window.open("https://wa.me/5531971559484", "_blank")}
-          >
-            <FaWhatsapp className="mr-2 h-4 w-4" />
-            Falar com Suporte
-          </Button>
+        {/* Links de navegação - SEMPRE VISÍVEIS */}
+        <div className="mt-6 space-y-4 text-center">
+          {/* Botão para página de login */}
+          <div>
+            <p className="text-sm text-gray-600 mb-2">
+              Já possui uma conta?
+            </p>
+            <Button
+              variant="outline"
+              className="w-full max-w-sm mx-auto bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300"
+              onClick={() => setLocation("/")}
+            >
+              Fazer Login
+            </Button>
+          </div>
+          
+          {/* Botão Falar com Suporte */}
+          <div>
+            <Button
+              variant="outline"
+              className="w-full max-w-sm mx-auto bg-green-50 border-green-200 text-green-700 hover:bg-green-100 hover:border-green-300"
+              onClick={() => window.open("https://wa.me/5531971559484", "_blank")}
+            >
+              <FaWhatsapp className="mr-2 h-4 w-4" />
+              Falar com Suporte
+            </Button>
+          </div>
         </div>
       </div>
     </div>

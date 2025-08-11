@@ -252,6 +252,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.getUserByCnpj(documento) : 
           await storage.getUserByCpf(documento);
         if (existingUser) {
+          console.log(`[REGISTRO] Tentativa de cadastro duplicado - Documento: ${documento} já pertence ao usuário ID: ${existingUser.id} (${existingUser.name} - ${existingUser.email})`);
           return res.status(400).json({ message: "Documento já cadastrado no sistema" });
         }
       }
