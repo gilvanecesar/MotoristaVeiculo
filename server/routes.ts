@@ -4008,3 +4008,29 @@ async function calculateDistanceBetweenCities(originCity: string, destinationCit
     return 500; // Distância padrão em caso de erro
   }
 }
+
+// Rota para download da apresentação para investidores
+app.get("/api/download/investor-presentation", async (req: Request, res: Response) => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const filePath = path.join(process.cwd(), 'QUERO_FRETES_Apresentacao_Investidores.pdf');
+    
+    // Verificar se o arquivo existe
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: "Apresentação não encontrada" });
+    }
+    
+    // Definir headers para download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="QUERO_FRETES_Apresentacao_Investidores.pdf"');
+    
+    // Enviar o arquivo
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
+    
+  } catch (error) {
+    console.error("Erro ao fazer download da apresentação:", error);
+    res.status(500).json({ error: "Erro interno do servidor" });
+  }
+});
