@@ -37,6 +37,11 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
       return true;
     }
     
+    // Transportadores podem editar/adicionar veículos aos motoristas
+    if (user?.profileType?.toLowerCase() === "transportador") {
+      return true;
+    }
+    
     // Usuários que são donos do motorista (através de userId no driver)
     if (driver.userId === user?.id) {
       return true;
