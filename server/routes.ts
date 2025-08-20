@@ -3351,7 +3351,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         { id: 3106200, name: "Belo Horizonte", state: "MG", displayName: "Belo Horizonte - MG" },
         { id: 3136702, name: "Contagem", state: "MG", displayName: "Contagem - MG" },
         { id: 4106902, name: "Curitiba", state: "PR", displayName: "Curitiba - PR" }
-      ].filter(city => city.name.toLowerCase().includes(search.toString().toLowerCase()));
+      ].filter(city => {
+        const searchParam = req.query.search;
+        if (!searchParam || typeof searchParam !== 'string') return true;
+        return city.name.toLowerCase().includes(searchParam.toLowerCase());
+      });
       
       res.json(fallbackResults);
     }
