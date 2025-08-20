@@ -143,8 +143,7 @@ export default function ClientForm() {
   console.log("Valores iniciais do formulário:", defaultValues);
 
   const form = useForm({
-    // Removendo o validador para permitir o envio do formulário mesmo com dados incompletos
-    // resolver: zodResolver(clientValidator),
+    resolver: zodResolver(clientValidator),
     defaultValues,
   });
 
@@ -186,23 +185,23 @@ export default function ClientForm() {
       
       // Garantir que todos os campos esperados existam com valores padrão
       const safeClient = {
-        name: client.name || "",
-        email: client.email || "",
-        phone: client.phone || "",
-        whatsapp: client.whatsapp || "",
-        street: client.street || "",
-        number: client.number || "",
-        complement: client.complement || "",
-        neighborhood: client.neighborhood || "",
-        city: client.city || "",
-        state: client.state || "",
-        zipcode: client.zipcode || "",
-        contactName: client.contactName || "",
-        contactPhone: client.contactPhone || "",
-        notes: client.notes || "",
-        cnpj: client.cnpj || "",
-        clientType: client.clientType || CLIENT_TYPES.SHIPPER,
-        logoUrl: client.logoUrl || ""
+        name: client?.name || "",
+        email: client?.email || "",
+        phone: client?.phone || "",
+        whatsapp: client?.whatsapp || "",
+        street: client?.street || "",
+        number: client?.number || "",
+        complement: client?.complement || "",
+        neighborhood: client?.neighborhood || "",
+        city: client?.city || "",
+        state: client?.state || "",
+        zipcode: client?.zipcode || "",
+        contactName: client?.contactName || "",
+        contactPhone: client?.contactPhone || "",
+        notes: client?.notes || "",
+        cnpj: client?.cnpj || "",
+        clientType: client?.clientType || CLIENT_TYPES.SHIPPER,
+        logoUrl: client?.logoUrl || ""
       };
       
       console.log("Dados normalizados para edição:", safeClient);
@@ -227,29 +226,29 @@ export default function ClientForm() {
       
       // Garantir que todos os campos esperados existam com valores padrão
       const safeUserClient = {
-        name: userClient.name || "",
-        email: userClient.email || "",
-        phone: userClient.phone || "",
-        whatsapp: userClient.whatsapp || "",
-        street: userClient.street || "",
-        number: userClient.number || "",
-        complement: userClient.complement || "",
-        neighborhood: userClient.neighborhood || "",
-        city: userClient.city || "",
-        state: userClient.state || "",
-        zipcode: userClient.zipcode || "",
-        contactName: userClient.contactName || "",
-        contactPhone: userClient.contactPhone || "",
-        notes: userClient.notes || "",
-        cnpj: userClient.cnpj || "",
-        clientType: userClient.clientType || CLIENT_TYPES.SHIPPER,
-        logoUrl: userClient.logoUrl || ""
+        name: userClient?.name || "",
+        email: userClient?.email || "",
+        phone: userClient?.phone || "",
+        whatsapp: userClient?.whatsapp || "",
+        street: userClient?.street || "",
+        number: userClient?.number || "",
+        complement: userClient?.complement || "",
+        neighborhood: userClient?.neighborhood || "",
+        city: userClient?.city || "",
+        state: userClient?.state || "",
+        zipcode: userClient?.zipcode || "",
+        contactName: userClient?.contactName || "",
+        contactPhone: userClient?.contactPhone || "",
+        notes: userClient?.notes || "",
+        cnpj: userClient?.cnpj || "",
+        clientType: userClient?.clientType || CLIENT_TYPES.SHIPPER,
+        logoUrl: userClient?.logoUrl || ""
       };
       
       console.log("Dados normalizados para novo cliente:", safeUserClient);
       form.reset(safeUserClient);
       
-      const userClientLogoUrl = userClient.logoUrl as string | undefined;
+      const userClientLogoUrl = userClient?.logoUrl as string | undefined;
       if (userClientLogoUrl) {
         setLogoPreview(userClientLogoUrl);
       }
