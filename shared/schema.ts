@@ -422,7 +422,7 @@ export const freightDestinationValidator = insertFreightDestinationSchema.extend
 });
 
 export const complementValidator = insertComplementSchema.extend({
-  clientId: z.coerce.number().positive(),
+  clientId: z.coerce.number().min(1, "Cliente deve ser selecionado"),
   origin: z.string().min(3, "Cidade de origem é obrigatória"),
   originState: z.string().min(2, "Estado de origem é obrigatório"),
   destination: z.string().min(3, "Cidade de destino é obrigatória"),

@@ -32,7 +32,7 @@ export default function CreateComplementPage() {
   const form = useForm({
     resolver: zodResolver(complementValidator),
     defaultValues: {
-      clientId: "",
+      clientId: 0,
       origin: "",
       originState: "",
       destination: "",
@@ -58,7 +58,7 @@ export default function CreateComplementPage() {
       const userClient = clients.find(client => client.id === user.clientId);
       
       if (userClient) {
-        form.setValue("clientId", userClient.id.toString());
+        form.setValue("clientId", userClient.id);
       } else {
         // Se o cliente não foi encontrado, pode ser um problema de timing ou filtragem
         console.warn("Cliente não encontrado na lista:", {
