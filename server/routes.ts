@@ -670,7 +670,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Criar novo cliente
-  app.post("/api/clients", isAuthenticated, async (req: Request, res: Response) => {
+  app.post("/api/clients", isAuthenticated, hasActiveSubscription, async (req: Request, res: Response) => {
     try {
       const clientData = req.body;
       
@@ -731,7 +731,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(client);
     } catch (error) {
       console.error("Error creating client:", error);
-      res.status(500).json({ message: "Falha ao criar cliente. Verifique os dados e tente novamente." });
+      
+      // Verificar se é erro de constraint de CNPJ duplicado
+      if (error.code === '23505' && error.constraint === 'clients_cnpj_unique') {
+        return res.status(400).json({ 
+          message: "Este CNPJ já está cadastrado no sistema. Verifique se você já tem um cliente cadastrado ou use um CNPJ diferente." 
+        });
+      }
+      
+      // Verificar se é erro de constraint de nome duplicado  
+      if (error.code === '23505' && error.constraint === 'clients_name_unique') {
+        return res.status(400).json({ 
+          message: "Este nome já está cadastrado no sistema. Use um nome diferente para o cliente." 
+        });
+      }
+      
+      // Erro genérico com detalhes para debug
+      console.error("Detalhes do erro:", {
+        code: error.code,
+        constraint: error.constraint,
+        detail: error.detail,
+        message: error.message
+      });
+      
+      res.status(500).json({ 
+        message: "Falha ao criar cliente. Verifique os dados e tente novamente." 
+      });
     }
   });
 
