@@ -46,6 +46,7 @@ Preferred communication style: Simple, everyday language.
 - **Registration Error Handling**: Enhanced error messages for duplicate registration attempts, with clear guidance to existing users to use login instead of creating new accounts. Includes detailed logging for troubleshooting duplicate registration attempts.
 - **Subscription Enforcement**: Removed 7-day free trial period - all profiles (except motoristas and admins) now require active subscription immediately. Users without subscription are redirected to checkout page upon login.
 - **Transportador Permissions**: Updated permission system to allow transportador users full access to driver and vehicle management features, including "Add Vehicle" and "Create Driver" buttons.
+- **Complement Form Validation**: Fixed "Number must be greater than 0" error in freight complement creation by correcting clientId validation and improving user experience for users without associated clients.
 
 ## External Dependencies
 
