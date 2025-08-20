@@ -105,6 +105,16 @@ export default function CreateComplementPage() {
   };
 
   const onSubmit = (data: any) => {
+    // Verificar se há um cliente selecionado
+    if (!data.clientId || data.clientId === 0) {
+      toast({
+        title: "Erro",
+        description: "Você precisa ter um cliente associado ao seu perfil para criar complementos.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     createMutation.mutate(data);
   };
 
@@ -116,6 +126,9 @@ export default function CreateComplementPage() {
     calculateCubicMeters();
   });
 
+  // Verificar se o usuário tem cliente associado
+  const userHasClient = user?.clientId && user.clientId > 0;
+  
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center gap-4 mb-8">
@@ -135,6 +148,30 @@ export default function CreateComplementPage() {
         </div>
       </div>
 
+      {/* Aviso se não tiver cliente associado */}
+      {!userHasClient && (
+        <div className="max-w-4xl mx-auto mb-6">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <Package className="h-5 w-5 text-yellow-400" />
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-yellow-800">
+                  Cliente não associado
+                </h3>
+                <div className="mt-2 text-sm text-yellow-700">
+                  <p>
+                    Para criar complementos de frete, você precisa ter um cliente associado ao seu perfil. 
+                    Entre em contato com o administrador para associar um cliente ao seu usuário.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Card className="max-w-4xl mx-auto">
         <CardHeader>
           <CardTitle>Informações do Complemento</CardTitle>
@@ -147,19 +184,24 @@ export default function CreateComplementPage() {
                 control={form.control}
                 name="clientId"
                 render={({ field }) => {
-                  const selectedClient = clients.find(client => client.id.toString() === field.value);
+                  const selectedClient = clients.find(client => client.id === field.value);
+                  const userHasClient = user?.clientId && user.clientId > 0;
+                  
                   return (
                     <FormItem>
                       <FormLabel>Cliente</FormLabel>
                       <FormControl>
                         <Input
-                          value={selectedClient ? selectedClient.name : "Cliente não encontrado"}
+                          value={selectedClient ? selectedClient.name : (userHasClient ? "Carregando cliente..." : "Nenhum cliente associado ao seu usuário")}
                           disabled
                           className="bg-muted"
                         />
                       </FormControl>
                       <p className="text-sm text-muted-foreground">
-                        Cliente selecionado automaticamente baseado no seu usuário
+                        {userHasClient 
+                          ? "Cliente selecionado automaticamente baseado no seu usuário"
+                          : "Para criar complementos, você precisa ter um cliente associado ao seu perfil"
+                        }
                       </p>
                       <FormMessage />
                     </FormItem>
