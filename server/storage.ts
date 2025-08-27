@@ -1143,11 +1143,11 @@ export class DatabaseStorage implements IStorage {
 
   // Fretes
   async getFreights(): Promise<FreightWithDestinations[]> {
-    // Buscar fretes ordenados por valor do frete (maior para menor)
+    // Buscar fretes ordenados por data de criação (mais novo para mais velho)
     const freightsData = await db
       .select()
       .from(freights)
-      .orderBy(desc(freights.freightValue));
+      .orderBy(desc(freights.createdAt));
 
     // Buscar destinos para cada frete e montar objeto FreightWithDestinations
     const freightsWithDestinations: FreightWithDestinations[] = [];
@@ -1227,7 +1227,7 @@ export class DatabaseStorage implements IStorage {
           sql`lower(${freights.contactPhone}) like ${searchQuery}`,
         ),
       )
-      .orderBy(desc(freights.freightValue));
+      .orderBy(desc(freights.createdAt));
 
     // Buscar destinos para cada frete e montar objeto FreightWithDestinations
     const freightsWithDestinations: FreightWithDestinations[] = [];
