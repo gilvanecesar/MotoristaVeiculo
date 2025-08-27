@@ -102,7 +102,7 @@ export default function FreightsPage() {
   const [, navigate] = useLocation();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedFreight, setSelectedFreight] = useState<FreightWithDestinations | null>(null);
-  const [filterStatus, setFilterStatus] = useState<string>("ativo");
+  const [filterStatus, setFilterStatus] = useState<string>("todos");
   const [expandedFreight, setExpandedFreight] = useState<number | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
