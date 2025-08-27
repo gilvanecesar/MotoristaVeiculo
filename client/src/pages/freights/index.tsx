@@ -127,17 +127,12 @@ export default function FreightsPage() {
     return data.filter(freight => {
       // Filtro por status
       if (filterStatus !== "todos") {
-        const today = new Date();
-        const expirationDate = freight.expirationDate ? new Date(freight.expirationDate) : null;
+        if (filterStatus === "ativo" && freight.status !== "active") {
+          return false;
+        }
         
-        if (expirationDate) {
-          if (filterStatus === "ativo" && expirationDate < today) {
-            return false;
-          }
-          
-          if (filterStatus === "expirado" && expirationDate >= today) {
-            return false;
-          }
+        if (filterStatus === "expirado" && freight.status === "active") {
+          return false;
         }
       }
       
