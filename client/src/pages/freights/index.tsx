@@ -425,6 +425,13 @@ ${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : '
     
     let filtered = filterFreights(freights);
     
+    // Ordenar por data de criação (mais novo para mais velho)
+    filtered = filtered.sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return dateB - dateA; // Ordem decrescente (mais novo primeiro)
+    });
+    
     // Se for admin, mostrar todos
     if (user?.profileType === 'admin' || user?.profileType === 'administrador') {
       return filtered;
