@@ -482,9 +482,50 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
   const handleCargoWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     
-    // Validação simples para evitar problemas em mobile
-    if (value === "" || /^\d+$/.test(value)) {
-      form.setValue("cargoWeight", value);
+    // Permitir campo vazio
+    if (value === "") {
+      form.setValue("cargoWeight", "");
+      return;
+    }
+    
+    // Remover caracteres não numéricos exceto vírgula e ponto
+    let cleanValue = value.replace(/[^\d.,]/g, '');
+    
+    // Permitir apenas um separador decimal (vírgula ou ponto)
+    const hasComma = cleanValue.includes(',');
+    const hasDot = cleanValue.includes('.');
+    
+    if (hasComma && hasDot) {
+      // Se tem ambos, manter apenas o último inserido
+      const lastCommaIndex = cleanValue.lastIndexOf(',');
+      const lastDotIndex = cleanValue.lastIndexOf('.');
+      
+      if (lastCommaIndex > lastDotIndex) {
+        // Última vírgula, remover pontos
+        cleanValue = cleanValue.replace(/\./g, '');
+      } else {
+        // Último ponto, remover vírgulas
+        cleanValue = cleanValue.replace(/,/g, '');
+      }
+    }
+    
+    // Garantir apenas um separador decimal
+    if (hasComma) {
+      const parts = cleanValue.split(',');
+      if (parts.length > 2) {
+        cleanValue = parts[0] + ',' + parts.slice(1).join('');
+      }
+    } else if (hasDot) {
+      const parts = cleanValue.split('.');
+      if (parts.length > 2) {
+        cleanValue = parts[0] + '.' + parts.slice(1).join('');
+      }
+    }
+    
+    // Validar se é um número válido
+    const testValue = cleanValue.replace(',', '.');
+    if (testValue === '' || !isNaN(parseFloat(testValue))) {
+      form.setValue("cargoWeight", cleanValue);
     }
   };
 
