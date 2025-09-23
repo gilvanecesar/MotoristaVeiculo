@@ -102,7 +102,7 @@ export default function FreightsPage() {
   const [, navigate] = useLocation();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedFreight, setSelectedFreight] = useState<FreightWithDestinations | null>(null);
-  const [filterStatus, setFilterStatus] = useState<string>("todos");
+  const [filterStatus, setFilterStatus] = useState<string>("ativo");
   const [expandedFreight, setExpandedFreight] = useState<number | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
@@ -125,13 +125,15 @@ export default function FreightsPage() {
     if (!data) return [];
     
     return data.filter(freight => {
-      // Filtro por status
+      // Filtro por status (baseado na data de expiração)
       if (filterStatus !== "todos") {
-        if (filterStatus === "ativo" && freight.status !== "active") {
+        const expired = freight.expirationDate ? isExpired(freight.expirationDate) : false;
+        
+        if (filterStatus === "ativo" && expired) {
           return false;
         }
         
-        if (filterStatus === "expirado" && freight.status === "active") {
+        if (filterStatus === "expirado" && !expired) {
           return false;
         }
       }
