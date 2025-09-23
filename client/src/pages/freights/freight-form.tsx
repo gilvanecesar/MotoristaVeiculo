@@ -870,23 +870,43 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                 <FormField
                   control={form.control}
                   name="productType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tipo de Produto</FormLabel>
-                      <FormControl>
-                        <Input
-                          readOnly={isViewingInReadOnlyMode}
-                          placeholder="Ex: Grãos, Bebidas, Eletrônicos..."
-                          value={field.value || ""}
-                          onChange={field.onChange}
-                          onBlur={field.onBlur}
-                          name={field.name}
-                          ref={field.ref}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  render={({ field }) => {
+                    // Versão simplificada para evitar crashes mobile
+                    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                      try {
+                        field.onChange(e.target.value);
+                      } catch (error) {
+                        console.warn('Erro no productType onChange:', error);
+                      }
+                    };
+                    
+                    const handleBlur = () => {
+                      try {
+                        if (field.onBlur) {
+                          field.onBlur();
+                        }
+                      } catch (error) {
+                        console.warn('Erro no productType onBlur:', error);
+                      }
+                    };
+                    
+                    return (
+                      <FormItem>
+                        <FormLabel>Tipo de Produto</FormLabel>
+                        <FormControl>
+                          <Input
+                            readOnly={isViewingInReadOnlyMode}
+                            placeholder="Ex: Grãos, Bebidas, Eletrônicos..."
+                            value={field.value || ""}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                            data-testid="input-product-type"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
 
                 <FormField
