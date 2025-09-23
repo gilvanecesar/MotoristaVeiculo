@@ -291,6 +291,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
   }, [isEditing, freightId]);
 
   // Atualiza o cliente atual quando muda o clientId no formulário
+  // FIXO: Remover dependência 'form' que causava loop infinito e crash mobile
   useEffect(() => {
     const clientId = form.getValues("clientId");
     if (clientId) {
@@ -299,7 +300,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
         setCurrentClient(selectedClient);
       }
     }
-  }, [clients, form]);
+  }, [clients]); // Removida dependência 'form' que causava crash mobile
 
   const onSubmit = async (data: FreightFormValues) => {
     // Log para depuração
@@ -867,39 +868,24 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="productType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tipo de Produto</FormLabel>
-                      <Select
-                        disabled={isViewingInReadOnlyMode}
-                        value={field.value || ""}
-                        onValueChange={field.onChange}
-                      >
-                        <FormControl>
-                          <SelectTrigger data-testid="select-product-type">
-                            <SelectValue placeholder="Selecione o tipo de produto" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="graos">Grãos</SelectItem>
-                          <SelectItem value="bebidas">Bebidas</SelectItem>
-                          <SelectItem value="eletronicos">Eletrônicos</SelectItem>
-                          <SelectItem value="alimentos">Alimentos</SelectItem>
-                          <SelectItem value="materiais_construcao">Materiais de Construção</SelectItem>
-                          <SelectItem value="texteis">Têxteis</SelectItem>
-                          <SelectItem value="produtos_quimicos">Produtos Químicos</SelectItem>
-                          <SelectItem value="combustiveis">Combustíveis</SelectItem>
-                          <SelectItem value="maquinas">Máquinas e Equipamentos</SelectItem>
-                          <SelectItem value="outros">Outros</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {/* Campo de texto simples - versão mobile segura */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">
+                    Tipo de Produto
+                  </label>
+                  <input
+                    type="text"
+                    readOnly={isViewingInReadOnlyMode}
+                    placeholder="Ex: Grãos, Bebidas, Eletrônicos..."
+                    defaultValue={form.getValues('productType') || ""}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    onInput={(e) => {
+                      const target = e.target as HTMLInputElement;
+                      form.setValue('productType', target.value);
+                    }}
+                    data-testid="input-product-type-simple"
+                  />
+                </div>
 
                 <FormField
                   control={form.control}
