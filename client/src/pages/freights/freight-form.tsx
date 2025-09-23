@@ -660,7 +660,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                           <FormControl>
                             <LocationInput
                               readOnly={isViewingInReadOnlyMode}
-                              value={field.value}
+                              value={field.value || ""}
                               onChange={field.onChange}
                               stateField="originState"
                               stateValue={form.watch("originState")}
@@ -1045,11 +1045,8 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                           <ToggleGroupItem value={TOLL_OPTIONS.INCLUSO}>
                             Incluso
                           </ToggleGroupItem>
-                          <ToggleGroupItem value={TOLL_OPTIONS.EMBARCADOR}>
-                            Pago pelo Embarcador
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value={TOLL_OPTIONS.TRANSPORTADOR}>
-                            Pago pelo Transportador
+                          <ToggleGroupItem value={TOLL_OPTIONS.A_PARTE}>
+                            À parte
                           </ToggleGroupItem>
                         </ToggleGroup>
                       </FormControl>
@@ -1182,19 +1179,8 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                       }
                       
                       // Preparar dados com userId e corrigir datas
-                      // Convertendo strings de data para objetos Date ou null para envio ao servidor
-                      const expirationDate = formData.expirationDate ? 
-                        (typeof formData.expirationDate === 'string' ? 
-                          new Date(formData.expirationDate) : formData.expirationDate) : null;
-                      
-                      const createdAt = formData.createdAt ? 
-                        (typeof formData.createdAt === 'string' ? 
-                          new Date(formData.createdAt) : formData.createdAt) : null;
-                          
                       const submitData = {
                         ...formData,
-                        expirationDate,
-                        createdAt,
                         freightValue,
                         userId: user?.id
                       };
