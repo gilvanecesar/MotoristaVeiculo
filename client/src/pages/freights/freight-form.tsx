@@ -664,7 +664,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                               value={field.value || ""}
                               onChange={field.onChange}
                               stateField="originState"
-                              stateValue={form.watch("originState")}
+                              stateValue={form.getValues("originState")}
                               onStateChange={(state) =>
                                 form.setValue("originState", state)
                               }
@@ -693,7 +693,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                               value={field.value || ""}
                               onChange={field.onChange}
                               stateField="destinationState"
-                              stateValue={form.watch("destinationState")}
+                              stateValue={form.getValues("destinationState")}
                               onStateChange={(state) =>
                                 form.setValue("destinationState", state)
                               }
@@ -719,7 +719,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                                   value={field.value || ""}
                                   onChange={field.onChange}
                                   stateField="destinationState1"
-                                  stateValue={form.watch("destinationState1") || ""}
+                                  stateValue={form.getValues("destinationState1") || ""}
                                   onStateChange={(state) => form.setValue("destinationState1", state)}
                                 />
                               </FormControl>
@@ -740,7 +740,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                                   value={field.value || ""}
                                   onChange={field.onChange}
                                   stateField="destinationState2"
-                                  stateValue={form.watch("destinationState2") || ""}
+                                  stateValue={form.getValues("destinationState2") || ""}
                                   onStateChange={(state) => form.setValue("destinationState2", state)}
                                 />
                               </FormControl>
