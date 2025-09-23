@@ -867,27 +867,39 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                   )}
                 />
 
-                {/* Campo simplificado para evitar crash mobile - Tipo de Produto */}
-                <div className="space-y-2">
-                  <label htmlFor="productType-simple" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Tipo de Produto
-                  </label>
-                  <Input
-                    id="productType-simple"
-                    readOnly={isViewingInReadOnlyMode}
-                    placeholder="Ex: Grãos, Bebidas, Eletrônicos..."
-                    defaultValue={form.getValues('productType') || ""}
-                    onChange={(e) => {
-                      try {
-                        // Atualizar o form manualmente para manter sincronização
-                        form.setValue('productType', e.target.value, { shouldDirty: true });
-                      } catch (error) {
-                        console.warn('Erro ao atualizar productType:', error);
-                      }
-                    }}
-                    data-testid="input-product-type"
-                  />
-                </div>
+                <FormField
+                  control={form.control}
+                  name="productType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tipo de Produto</FormLabel>
+                      <Select
+                        disabled={isViewingInReadOnlyMode}
+                        value={field.value || ""}
+                        onValueChange={field.onChange}
+                      >
+                        <FormControl>
+                          <SelectTrigger data-testid="select-product-type">
+                            <SelectValue placeholder="Selecione o tipo de produto" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="graos">Grãos</SelectItem>
+                          <SelectItem value="bebidas">Bebidas</SelectItem>
+                          <SelectItem value="eletronicos">Eletrônicos</SelectItem>
+                          <SelectItem value="alimentos">Alimentos</SelectItem>
+                          <SelectItem value="materiais_construcao">Materiais de Construção</SelectItem>
+                          <SelectItem value="texteis">Têxteis</SelectItem>
+                          <SelectItem value="produtos_quimicos">Produtos Químicos</SelectItem>
+                          <SelectItem value="combustiveis">Combustíveis</SelectItem>
+                          <SelectItem value="maquinas">Máquinas e Equipamentos</SelectItem>
+                          <SelectItem value="outros">Outros</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <FormField
                   control={form.control}
