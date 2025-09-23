@@ -867,47 +867,27 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="productType"
-                  render={({ field }) => {
-                    // Versão simplificada para evitar crashes mobile
-                    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                {/* Campo simplificado para evitar crash mobile - Tipo de Produto */}
+                <div className="space-y-2">
+                  <label htmlFor="productType-simple" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Tipo de Produto
+                  </label>
+                  <Input
+                    id="productType-simple"
+                    readOnly={isViewingInReadOnlyMode}
+                    placeholder="Ex: Grãos, Bebidas, Eletrônicos..."
+                    defaultValue={form.getValues('productType') || ""}
+                    onChange={(e) => {
                       try {
-                        field.onChange(e.target.value);
+                        // Atualizar o form manualmente para manter sincronização
+                        form.setValue('productType', e.target.value, { shouldDirty: true });
                       } catch (error) {
-                        console.warn('Erro no productType onChange:', error);
+                        console.warn('Erro ao atualizar productType:', error);
                       }
-                    };
-                    
-                    const handleBlur = () => {
-                      try {
-                        if (field.onBlur) {
-                          field.onBlur();
-                        }
-                      } catch (error) {
-                        console.warn('Erro no productType onBlur:', error);
-                      }
-                    };
-                    
-                    return (
-                      <FormItem>
-                        <FormLabel>Tipo de Produto</FormLabel>
-                        <FormControl>
-                          <Input
-                            readOnly={isViewingInReadOnlyMode}
-                            placeholder="Ex: Grãos, Bebidas, Eletrônicos..."
-                            value={field.value || ""}
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            data-testid="input-product-type"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    );
-                  }}
-                />
+                    }}
+                    data-testid="input-product-type"
+                  />
+                </div>
 
                 <FormField
                   control={form.control}
