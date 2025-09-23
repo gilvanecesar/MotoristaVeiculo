@@ -48,6 +48,7 @@ Preferred communication style: Simple, everyday language.
 - **Transportador Permissions**: Updated permission system to allow transportador users full access to driver and vehicle management features, including "Add Vehicle" and "Create Driver" buttons.
 - **Complement Form Validation**: Fixed "Number must be greater than 0" error in freight complement creation by correcting clientId validation and improving user experience for users without associated clients.
 - **Client Registration Issues**: Resolved registration problems for user ID 614 (TR CAPELETTI TRANSPORTES LTDA) by fixing form validation errors and creating client manually. Added subscription validation to client creation endpoint and improved error handling.
+- **Mobile Form Crash Fix**: Critical resolution of black screen crashes affecting mobile users during freight creation. Fixed infinite re-render loop caused by useEffect dependency `[clients, form]` and optimized form.watch() calls by replacing with form.getValues() for better mobile performance. This specifically resolved crashes at the "productType" field stage during form interaction.
 
 ## External Dependencies
 
