@@ -162,12 +162,23 @@ export default function ClientForm() {
   const { data: userClient, isLoading: isUserClientLoading } = useQuery({
     queryKey: ['/api/clients', user?.clientId],
     enabled: !isEditing && !!user?.clientId,
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/clients/${user?.clientId}`);
+      if (!res.ok) {
+        throw new Error("Falha ao carregar dados do cliente do usuário");
+      }
+      return await res.json();
+    }
   });
+
+  // Estados para controlar se já atualizamos os campos
+  const [hasInitializedClient, setHasInitializedClient] = useState(false);
+  const [hasInitializedUserClient, setHasInitializedUserClient] = useState(false);
+  const [hasInitializedUser, setHasInitializedUser] = useState(false);
 
   useEffect(() => {
     // Se estiver editando um cliente existente
-    if (client && !isClientLoading) {
-      // Garantir que todos os campos esperados existam com valores padrão
+    if (client && !isClientLoading && !hasInitializedClient) {
       const safeClient = {
         name: client?.name || "",
         email: client?.email || "",
@@ -188,25 +199,19 @@ export default function ClientForm() {
         logoUrl: client?.logoUrl || ""
       };
       
-      // Usar getValues() para comparar e evitar re-renders desnecessários
-      const currentValues = form.getValues();
-      const hasChanges = Object.keys(safeClient).some(key => 
-        currentValues[key as keyof typeof currentValues] !== safeClient[key as keyof typeof safeClient]
-      );
+      form.reset(safeClient);
       
-      if (hasChanges) {
-        form.reset(safeClient);
+      if (client.logoUrl) {
+        setLogoPreview(client.logoUrl as string);
       }
       
-      const clientLogoUrl = client.logoUrl as string | undefined;
-      if (clientLogoUrl) {
-        setLogoPreview(clientLogoUrl);
-      }
-    } 
+      setHasInitializedClient(true);
+    }
+  }, [client, isClientLoading, hasInitializedClient, form]);
+
+  useEffect(() => {
     // Se estiver criando um novo cliente e o usuário já tiver um cliente
-    else if (userClient && !isUserClientLoading) {
-      // Garantir que todos os campos esperados existam com valores padrão
-      // @ts-ignore - userClient vem da API e tem a estrutura correta
+    if (userClient && !isUserClientLoading && !isEditing && !hasInitializedUserClient) {
       const safeUserClient = {
         name: userClient?.name || "",
         email: userClient?.email || "",
@@ -227,47 +232,39 @@ export default function ClientForm() {
         logoUrl: userClient?.logoUrl || ""
       };
       
-      const currentValues = form.getValues();
-      const hasChanges = Object.keys(safeUserClient).some(key => 
-        currentValues[key as keyof typeof currentValues] !== safeUserClient[key as keyof typeof safeUserClient]
-      );
+      form.reset(safeUserClient);
       
-      if (hasChanges) {
-        form.reset(safeUserClient);
+      if (userClient.logoUrl) {
+        setLogoPreview(userClient.logoUrl as string);
       }
       
-      // @ts-ignore - userClient vem da API e tem a estrutura correta
-      const userClientLogoUrl = userClient?.logoUrl as string | undefined;
-      if (userClientLogoUrl) {
-        setLogoPreview(userClientLogoUrl);
-      }
-      
-      // Exibe notificação para o usuário
       toast({
         title: "Dados pré-preenchidos",
         description: "Os dados do seu cliente já registrado foram carregados para edição.",
       });
-    }
-    // Se os dados do usuário estiverem disponíveis, mas não houver cliente ainda
-    else if (user && !isEditing) {
-      // Preenche os campos com dados do usuário usando getValues() para evitar loops
-      const currentValues = form.getValues();
       
-      if (user.name && currentValues.name !== user.name) {
+      setHasInitializedUserClient(true);
+    }
+  }, [userClient, isUserClientLoading, isEditing, hasInitializedUserClient, form, toast]);
+
+  useEffect(() => {
+    // Se os dados do usuário estiverem disponíveis, mas não houver cliente ainda
+    if (user && !isEditing && !hasInitializedUser) {
+      if (user.name) {
         form.setValue("name", user.name);
-      }
-      if (user.email && currentValues.email !== user.email) {
-        form.setValue("email", user.email);
-      }
-      if (user.name && currentValues.contactName !== user.name) {
         form.setValue("contactName", user.name);
       }
-      if (user.avatarUrl && currentValues.logoUrl !== user.avatarUrl) {
+      if (user.email) {
+        form.setValue("email", user.email);
+      }
+      if (user.avatarUrl) {
         form.setValue("logoUrl", user.avatarUrl);
         setLogoPreview(user.avatarUrl);
       }
+      
+      setHasInitializedUser(true);
     }
-  }, [client, isClientLoading, userClient, isUserClientLoading, user, isEditing, toast]);
+  }, [user, isEditing, hasInitializedUser, form]);
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
