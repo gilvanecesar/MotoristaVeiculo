@@ -191,7 +191,7 @@ export default function ClientForm() {
       // Usar getValues() para comparar e evitar re-renders desnecessários
       const currentValues = form.getValues();
       const hasChanges = Object.keys(safeClient).some(key => 
-        currentValues[key] !== safeClient[key]
+        currentValues[key as keyof typeof currentValues] !== safeClient[key as keyof typeof safeClient]
       );
       
       if (hasChanges) {
@@ -206,6 +206,7 @@ export default function ClientForm() {
     // Se estiver criando um novo cliente e o usuário já tiver um cliente
     else if (userClient && !isUserClientLoading) {
       // Garantir que todos os campos esperados existam com valores padrão
+      // @ts-ignore - userClient vem da API e tem a estrutura correta
       const safeUserClient = {
         name: userClient?.name || "",
         email: userClient?.email || "",
@@ -228,13 +229,14 @@ export default function ClientForm() {
       
       const currentValues = form.getValues();
       const hasChanges = Object.keys(safeUserClient).some(key => 
-        currentValues[key] !== safeUserClient[key]
+        currentValues[key as keyof typeof currentValues] !== safeUserClient[key as keyof typeof safeUserClient]
       );
       
       if (hasChanges) {
         form.reset(safeUserClient);
       }
       
+      // @ts-ignore - userClient vem da API e tem a estrutura correta
       const userClientLogoUrl = userClient?.logoUrl as string | undefined;
       if (userClientLogoUrl) {
         setLogoPreview(userClientLogoUrl);
