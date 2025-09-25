@@ -139,8 +139,6 @@ export default function ClientForm() {
     clientType: user?.profileType === "agenciador" ? CLIENT_TYPES.AGENT : CLIENT_TYPES.SHIPPER,
   };
 
-  // Registra os valores iniciais no console para debug
-  console.log("Valores iniciais do formulário:", defaultValues);
 
   const form = useForm({
     resolver: zodResolver(clientValidator),
@@ -152,20 +150,11 @@ export default function ClientForm() {
     queryKey: ['/api/clients', clientId],
     enabled: isEditing,
     queryFn: async () => {
-      console.log("Buscando dados do cliente para edição:", clientId);
-      try {
-        const res = await apiRequest("GET", `/api/clients/${clientId}`);
-        if (!res.ok) {
-          console.error("Erro ao buscar cliente:", await res.text());
-          throw new Error("Falha ao carregar dados do cliente");
-        }
-        const data = await res.json();
-        console.log("Dados do cliente recebidos:", data);
-        return data;
-      } catch (error) {
-        console.error("Exceção ao buscar cliente:", error);
-        throw error;
+      const res = await apiRequest("GET", `/api/clients/${clientId}`);
+      if (!res.ok) {
+        throw new Error("Falha ao carregar dados do cliente");
       }
+      return await res.json();
     }
   });
 
@@ -176,13 +165,8 @@ export default function ClientForm() {
   });
 
   useEffect(() => {
-    // Log dos valores iniciais do formulário para debug
-    console.log("Valores iniciais do formulário antes do reset:", form.getValues());
-    
     // Se estiver editando um cliente existente
     if (client && !isClientLoading) {
-      console.log("Dados recebidos para edição:", client);
-      
       // Garantir que todos os campos esperados existam com valores padrão
       const safeClient = {
         name: client?.name || "",
@@ -204,16 +188,15 @@ export default function ClientForm() {
         logoUrl: client?.logoUrl || ""
       };
       
-      console.log("Dados normalizados para edição:", safeClient);
+      // Usar getValues() para comparar e evitar re-renders desnecessários
+      const currentValues = form.getValues();
+      const hasChanges = Object.keys(safeClient).some(key => 
+        currentValues[key] !== safeClient[key]
+      );
       
-      // Em vez de usar form.reset, vamos definir cada campo individualmente
-      // isso pode resolver problemas de sincronização dos dados
-      Object.entries(safeClient).forEach(([field, value]) => {
-        form.setValue(field as any, value);
-      });
-      
-      // Ainda mantemos o reset, mas ele vem depois da definição manual dos campos
-      form.reset(safeClient, { keepValues: true });
+      if (hasChanges) {
+        form.reset(safeClient);
+      }
       
       const clientLogoUrl = client.logoUrl as string | undefined;
       if (clientLogoUrl) {
@@ -222,8 +205,6 @@ export default function ClientForm() {
     } 
     // Se estiver criando um novo cliente e o usuário já tiver um cliente
     else if (userClient && !isUserClientLoading) {
-      console.log("Dados de cliente existente para novo registro:", userClient);
-      
       // Garantir que todos os campos esperados existam com valores padrão
       const safeUserClient = {
         name: userClient?.name || "",
@@ -245,8 +226,14 @@ export default function ClientForm() {
         logoUrl: userClient?.logoUrl || ""
       };
       
-      console.log("Dados normalizados para novo cliente:", safeUserClient);
-      form.reset(safeUserClient);
+      const currentValues = form.getValues();
+      const hasChanges = Object.keys(safeUserClient).some(key => 
+        currentValues[key] !== safeUserClient[key]
+      );
+      
+      if (hasChanges) {
+        form.reset(safeUserClient);
+      }
       
       const userClientLogoUrl = userClient?.logoUrl as string | undefined;
       if (userClientLogoUrl) {
@@ -261,20 +248,24 @@ export default function ClientForm() {
     }
     // Se os dados do usuário estiverem disponíveis, mas não houver cliente ainda
     else if (user && !isEditing) {
-      console.log("Preenchendo com dados do usuário:", user);
+      // Preenche os campos com dados do usuário usando getValues() para evitar loops
+      const currentValues = form.getValues();
       
-      // Preenche os campos com dados do usuário
-      setTimeout(() => {
-        form.setValue("name", user.name || "");
-        form.setValue("email", user.email || "");
-        form.setValue("contactName", user.name || "");
-        if (user.avatarUrl) {
-          form.setValue("logoUrl", user.avatarUrl);
-          setLogoPreview(user.avatarUrl);
-        }
-      }, 0);
+      if (user.name && currentValues.name !== user.name) {
+        form.setValue("name", user.name);
+      }
+      if (user.email && currentValues.email !== user.email) {
+        form.setValue("email", user.email);
+      }
+      if (user.name && currentValues.contactName !== user.name) {
+        form.setValue("contactName", user.name);
+      }
+      if (user.avatarUrl && currentValues.logoUrl !== user.avatarUrl) {
+        form.setValue("logoUrl", user.avatarUrl);
+        setLogoPreview(user.avatarUrl);
+      }
     }
-  }, [client, isClientLoading, userClient, isUserClientLoading, user, form, isEditing, toast]);
+  }, [client, isClientLoading, userClient, isUserClientLoading, user, isEditing, toast]);
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -318,8 +309,6 @@ export default function ClientForm() {
 
   const onSubmit = async (data: any) => {
     try {
-      // Log para depuração
-      console.log("Enviando dados do cliente:", data);
       
       // Lista de campos obrigatórios
       const requiredFields = [
@@ -365,9 +354,6 @@ export default function ClientForm() {
       let clientResponse;
       
       if (isEditing) {
-        console.log(`Editando cliente ID: ${clientId}`, clientDataToSend);
-        
-        // Usando fetch diretamente para maior controle e debug
         const response = await fetch(`/api/clients/${clientId}`, {
           method: 'PUT',
           headers: {
@@ -378,15 +364,11 @@ export default function ClientForm() {
         
         if (!response.ok) {
           const errorData = await response.json();
-          console.error("Erro na resposta:", errorData);
           throw new Error(errorData.message || "Erro ao salvar os dados");
         }
         
         clientResponse = await response.json();
-        console.log("Resposta da edição:", clientResponse);
       } else {
-        // Quando estamos criando um novo cliente
-        console.log("Criando novo cliente:", clientDataToSend);
         const response = await apiRequest(
           'POST',
           '/api/clients',
@@ -399,7 +381,6 @@ export default function ClientForm() {
         }
         
         clientResponse = await response.json();
-        console.log("Resposta da criação:", clientResponse);
         
         // A associação automática ao usuário já é feita no backend
         // O objeto req.user é atualizado automaticamente no servidor
@@ -429,10 +410,8 @@ export default function ClientForm() {
         if (userResponse.ok) {
           const updatedUser = await userResponse.json();
           queryClient.setQueryData(['/api/user'], updatedUser);
-          console.log("Dados do usuário atualizados:", updatedUser);
         }
       } catch (error) {
-        console.error("Erro ao buscar dados atualizados do usuário:", error);
         // Continua mesmo se houver erro ao buscar os dados do usuário
       }
       
@@ -492,15 +471,8 @@ export default function ClientForm() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={(e) => {
-              e.preventDefault(); // Evita o comportamento padrão de submissão
-              console.log("Formulário submetido manualmente");
-              
-              // Obtém todos os valores atuais do formulário
-              const data = form.getValues();
-              console.log("Dados do formulário para envio:", data);
-              
-              // Chama a função onSubmit manualmente com os dados
-              onSubmit(data);
+              e.preventDefault();
+              onSubmit(form.getValues());
             }} className="space-y-6">
               <h3 className="text-lg font-medium">Dados Básicos</h3>
               <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
