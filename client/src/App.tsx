@@ -79,6 +79,11 @@ import PublicQuoteRequest from "@/pages/public/quote-request";
 import AnttCalculatorPage from "@/pages/antt-calculator/index";
 import AIAssistantPage from "@/pages/ai-assistant/index";
 
+// New auth pages
+import UserTypeSelection from "@/pages/auth/user-type-selection";
+import MultiStepRegister from "@/pages/auth/multi-step-register";
+import SimpleLogin from "@/pages/auth/simple-login";
+
 function Router() {
   // Track page views when routes change
   useAnalytics();
@@ -90,6 +95,13 @@ function Router() {
       <Route path="/public/complements/:id" component={PublicComplement} />
       <Route path="/public/quote-request" component={PublicQuoteRequest} />
       <ProtectedRoute path="/home" component={Home} />
+      
+      {/* New auth flow */}
+      <Route path="/auth/user-type" component={UserTypeSelection} />
+      <Route path="/auth/register" component={MultiStepRegister} />
+      <Route path="/auth/login" component={SimpleLogin} />
+      
+      {/* Old auth routes (kept for backward compatibility) */}
       <Route path="/auth" component={ProfileSelection} />
       <Route path="/login" component={LoginPage} />
       <Route path="/profile-selection" component={ProfileSelection} />
