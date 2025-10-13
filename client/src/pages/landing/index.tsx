@@ -27,12 +27,12 @@ export default function LandingPage() {
 
   const goToLogin = () => {
     trackEvent('navigation', 'landing_page', 'click_login');
-    setLocation("/login");
+    setLocation("/auth/login");
   };
 
   const goToRegister = () => {
     trackEvent('navigation', 'landing_page', 'click_register');
-    setLocation("/auth");
+    setLocation("/auth/user-type");
   };
 
   const goToQuoteRequest = () => {
