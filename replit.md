@@ -1,193 +1,48 @@
 # QUERO FRETES - Sistema de Gestão de Fretes
 
 ## Overview
-QUERO FRETES is a comprehensive freight management system designed as a full-stack web application. Its primary purpose is to streamline freight operations, including the management of drivers, vehicles, clients, and freight requests. The system operates on a subscription-based model and incorporates robust user role management. The business vision is to provide a central platform for all stakeholders in the freight logistics chain, enhancing efficiency and connectivity within the Brazilian market.
+QUERO FRETES is a comprehensive, subscription-based, full-stack web application for freight management. It streamlines operations related to drivers, vehicles, clients, and freight requests. The platform aims to be a central hub for all logistics stakeholders in Brazil, enhancing efficiency and connectivity.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
 ## System Architecture
 
-### Frontend
-- **Framework**: React with TypeScript, using Vite for building.
-- **Routing**: Wouter for client-side navigation.
-- **State Management**: TanStack React Query for server-side state.
-- **UI/UX**: Radix UI components styled with Tailwind CSS, ensuring a professional and responsive interface. The design prioritizes a clean, functional layout with a custom sidebar color (`#00222d`) and white fonts.
-- **Form Handling**: React Hook Form with Zod for validation.
-- **Authentication**: Context-based authentication, integrating with Passport.js.
-- **Mobile Optimization**: Implemented `use-mobile.ts` hook for responsive layouts, optimizing padding, spacing, and form interactions for smartphones.
+### UI/UX Decisions
+The frontend utilizes React with TypeScript, Vite, Wouter for routing, and TanStack React Query for state management. UI components are built with Radix UI and styled using Tailwind CSS, prioritizing a clean, functional design with a custom sidebar color (`#00222d`) and white fonts. Mobile optimization is achieved with a `use-mobile.ts` hook for responsive layouts.
 
-### Backend
-- **Runtime**: Node.js with TypeScript.
-- **Framework**: Express.js, designed with a RESTful API architecture.
-- **Authentication**: Passport.js with local strategy and Express session middleware.
-- **Middleware**: Custom middleware for authentication, authorization, and subscription validation, including role-based access control (administrators, drivers, shippers, agents, carriers).
-- **Data Validation**: Zod schemas used for robust data validation.
+### Technical Implementations
+- **Frontend**: React with TypeScript, Vite, Wouter, TanStack React Query, Radix UI, Tailwind CSS, React Hook Form, Zod, Context-based authentication.
+- **Backend**: Node.js with TypeScript, Express.js (RESTful API), Passport.js (local strategy, Express session), custom middleware for authentication, authorization, and subscription validation (role-based access control), Zod for validation.
+- **Database**: PostgreSQL (Neon Database), Drizzle ORM for type-safe queries and migrations.
 
-### Database
-- **Primary Database**: PostgreSQL, hosted on Neon Database (serverless).
-- **ORM**: Drizzle ORM for type-safe queries and schema migrations (Drizzle Kit).
-- **Connection**: `pg` connection pool for efficient database connections.
-
-### Key Features & Design Patterns
-- **User Management**: Multi-role system with email/password authentication (scrypt hashing) and profile management.
-- **Subscription Management**: Integrates primarily with OpenPix for PIX payments, supporting trial periods and automatic subscription status handling via webhooks. Old payment gateways (Mercado Pago, PayPal, Stripe) have been removed to streamline the payment process.
-- **Freight Management**: Comprehensive system for creating, tracking, and managing freight requests with multi-destination support.
+### Feature Specifications
+- **User Management**: Multi-role system (administrators, drivers, shippers, agents, carriers) with email/password authentication (scrypt hashing) and profile management.
+- **Subscription Management**: Integrates with OpenPix for PIX payments, supporting trial periods and webhook-based status updates. All non-driver/admin users require an active subscription immediately.
+- **Freight Management**: Creation, tracking, and management of freight requests, including multi-destination support.
 - **Vehicle & Driver Management**: Registration and association of drivers (with CNH validation) and vehicles.
-- **Email Service**: Nodemailer for transactional emails, with Ethereal Email for development.
-- **Real-time Data**: React Query for automatic data updates, OpenPix integration for real-time financial data in administrative dashboards.
-- **Quotation System**: Full quotation system for registered and public users, with detailed forms, status tracking, and PDF report generation.
-- **ANTT Calculator**: Rebuilt ANTT freight calculator adhering to official ANTT regulations (PORTARIA SUROC Nº 23/2025), with direct distance input.
-- **AI Assistant**: Integration with OpenAI GPT-4o ("Buzino") for answering transport-related queries, with usage limits based on user subscription status.
-- **N8N Integration**: Automated user data forwarding to N8N webhooks for workflow automation.
-- **Analytics**: Google Analytics integration for tracking user behavior and conversions.
-- **Admin Features**: Robust administrative interfaces for user management (including subscription activation/deactivation), financial oversight (OpenPix data integration), webhook configuration, and user search by various criteria (ID, email, CPF, CNPJ).
-- **Name Validation System**: Automatic cleaning of user names during registration to remove CPF/CNPJ prefixes (e.g., "60.915.611 LUCIEN PEREIRA BRITO" becomes "Lucien Pereira Brito"), with batch correction script for existing users.
-- **Registration Error Handling**: Enhanced error messages for duplicate registration attempts, with clear guidance to existing users to use login instead of creating new accounts. Includes detailed logging for troubleshooting duplicate registration attempts.
-- **Subscription Enforcement**: Removed 7-day free trial period - all profiles (except motoristas and admins) now require active subscription immediately. Users without subscription are redirected to checkout page upon login.
-- **Transportador Permissions**: Updated permission system to allow transportador users full access to driver and vehicle management features, including "Add Vehicle" and "Create Driver" buttons.
-- **Complement Form Validation**: Fixed "Number must be greater than 0" error in freight complement creation by correcting clientId validation and improving user experience for users without associated clients.
-- **Client Registration Issues**: Resolved registration problems for user ID 614 (TR CAPELETTI TRANSPORTES LTDA) by fixing form validation errors and creating client manually. Added subscription validation to client creation endpoint and improved error handling.
-- **Mobile Form Crash Fix**: Critical resolution of black screen crashes affecting mobile users during freight creation. Fixed infinite re-render loop caused by useEffect dependency `[clients, form]` and optimized form.watch() calls by replacing with form.getValues() for better mobile performance. This specifically resolved crashes at the "productType" field stage during form interaction.
-- **New Authentication System**: Complete redesign of registration and login flow (October 2025):
-  - User type selection page (Driver/Company) at `/auth/user-type` (also accessible via `/auth` for backward compatibility)
-  - Multi-step registration form with 3 steps: Personal Data → Company Data → Access credentials at `/auth/register`
-  - Simplified login page at `/login` (consolidated from previous `/auth/login` and old `/login`)
-  - Phone verification infrastructure prepared (table `phone_verification_codes` created) but not activated - ready for future Twilio/WhatsApp integration
-  - All internal navigation updated to use `/login` for consistency
-  - Fixed ProtectedRoute to redirect to `/login` instead of `/auth` when user is not authenticated
+- **Email Service**: Nodemailer for transactional emails.
+- **Real-time Data**: React Query for automatic updates; OpenPix integration for real-time financial data.
+- **Quotation System**: Detailed forms, status tracking, and PDF report generation for registered and public users.
+- **ANTT Calculator**: Rebuilt adhering to PORTARIA SUROC Nº 23/2025, with direct distance input.
+- **AI Assistant**: OpenAI GPT-4o ("Buzino") for transport-related queries with subscription-based usage limits.
+- **Admin Features**: Comprehensive interface for user management, financial oversight, webhook configuration, and advanced user search.
+- **Name Validation System**: Automatic cleaning of user names during registration.
+- **Registration/Login Flow**: Redesigned multi-step registration (Personal Data → Company Data → Access credentials) and simplified login, with infrastructure for phone verification.
+- **User Dashboard**: Displays key metrics, recent freights, subscription status, and quick access links.
+- **Performance & Stability**: Implemented idempotent initialization pattern to prevent infinite re-renders in forms, optimized freights page filters with IBGE API integration for city search, redesigned freight cards for responsive display, and fixed login redirection issues.
+
+### System Design Choices
+The application is fully containerized using Docker, with a multi-stage Node.js 20 Alpine Dockerfile and a `docker-compose.yml` for the complete stack (PostgreSQL, Nginx, application). It includes SSL configuration, health checks, and a production-ready setup.
 
 ## External Dependencies
 
-- **Payment Gateway**: OpenPix (primary and sole payment processor for PIX).
-- **Email Services**: Nodemailer (SMTP), Ethereal Email (development).
-- **Database Hosting**: Neon Database (for PostgreSQL), supports Docker deployment with local PostgreSQL.
-- **Development & Deployment**: Replit (primary platform), Docker containerization available, Vite, TypeScript.
-- **AI Integration**: OpenAI (GPT-4o).
-- **Automation**: N8N (for webhooks).
-- **Analytics**: Google Analytics.
-- **Validation**: ReceitaWS API (for CNPJ validation).
-- **Mapping/Geocoding**: IBGE API (previously used for ANTT calculator for city data, now manual distance input is preferred).
-
-## Docker Deployment
-
-The system is fully containerized and includes:
-- **Dockerfile**: Multi-stage build with Node.js 20 Alpine
-- **docker-compose.yml**: Complete stack with PostgreSQL, Nginx proxy, and application
-- **Automated Setup**: `docker-setup.sh` script for easy installation
-- **Production Ready**: Includes SSL configuration, health checks, and monitoring
-- **Database**: PostgreSQL 15 with automated initialization and optimization
-- **Reverse Proxy**: Nginx with rate limiting, gzip compression, and security headers
-
-## Technical Debt Resolution (October 2025)
-
-### Infinite Re-render Loop Prevention Pattern
-**Date**: October 13, 2025  
-**Issue**: Multiple forms across the application were causing black screen crashes on mobile due to infinite re-render loops in useEffect hooks with problematic dependencies.
-
-**Root Cause**: Forms using react-hook-form with useEffect depending on the `form` object cause infinite re-renders because:
-1. `form` object reference changes on every render
-2. `form.reset()` triggers a re-render
-3. useEffect runs again, calls `form.reset()`, creating an infinite loop
-
-**Solution Pattern Applied**: 
-All form components now implement idempotent initialization using the following pattern:
-
-```typescript
-// 1. Add initialization control state
-const [hasInitializedData, setHasInitializedData] = useState(false);
-
-// 2. Remove 'form' from useEffect dependencies
-useEffect(() => {
-  if (data && !isLoading && !hasInitializedData) {
-    // Format and prepare data
-    const formattedData = { /* ... */ };
-    
-    // Reset form only once
-    form.reset(formattedData);
-    setHasInitializedData(true);
-  }
-}, [data, isLoading, hasInitializedData]); // NO 'form' dependency!
-
-// 3. Use form.getValues() for comparisons, not form.watch()
-useEffect(() => {
-  const value = form.getValues("field");
-  // ... logic
-}, [dependencies]); // NO 'form' dependency!
-```
-
-**Files Fixed**:
-- `client/src/pages/freights/freight-form.tsx` (original fix)
-- `client/src/pages/clients/client-form.tsx` (original fix)
-- `client/src/pages/drivers/driver-form.tsx`
-- `client/src/pages/vehicles/vehicle-form.tsx`
-- `client/src/pages/freights/freight-form-new.tsx`
-- `client/src/pages/freights/simple-edit.tsx`
-
-**Global Error Handling**: Added ErrorBoundary component to catch rendering errors and prevent complete app crashes.
-
-**Performance Improvements**: PageLoader component added for consistent loading states across all forms.
-
-### Freights Page Filter Optimization
-**Date**: October 13, 2025  
-**Issue**: Filter sidebar causing re-rendering on every keystroke in origin/destination inputs, with cursor jumping out of the field. Missing IBGE API integration for city autocomplete.
-
-**Root Cause**: 
-1. FilterSidebar component defined inside parent component, recreated on every render
-2. Simple text inputs instead of city search with IBGE autocomplete
-3. No memoization of filter component
-
-**Solution Applied**:
-1. **Filter Component Isolation**: Extracted FilterSidebar outside of parent component with React.memo() to prevent unnecessary re-renders
-2. **IBGE Integration**: Replaced plain Input components with CitySearch component that includes:
-   - Autocomplete with IBGE API city database
-   - Debounced search (300ms) to minimize API calls
-   - Proper value extraction (City - State format)
-   - Fixed CitySearch reset behavior when filters are cleared
-3. **Always-Visible Checkboxes Design**: Removed accordion, made all vehicle and body type checkboxes always visible, organized by categories:
-   - Vehicles: Pesados (Carreta, Carreta LS, Vanderléia, Bitrem, Rodotrem), Médios (Truck, Bitruck), Leves (Fiorino, VLC, Toco)
-   - Body Types: Abertas (Aberta, Graneleiro, Grade Baixa, Prancha, Caçamba), Fechadas (Fechada, Sider, Baú, Baú Frigorífico), Especiais (Tanque, Porta Container)
-   - Created VEHICLE_LABELS and BODY_LABELS objects to map database values to display-friendly names
-   - No scrollbar required, cleaner and more accessible layout
-4. **Filter Logic Update**: Modified filter matching to extract city name from "City - State" format returned by CitySearch
-
-**Files Updated**:
-- `client/src/pages/freights/index.tsx` - Complete filter sidebar redesign with IBGE integration
-- `client/src/components/ui/city-search.tsx` - Fixed reset behavior
-
-### Freight Card Layout Redesign
-**Date**: October 13, 2025  
-**Change**: Redesigned freight cards with horizontal layout for desktop, maintaining vertical layout for mobile.
-
-**Desktop Layout Features**:
-- Compact horizontal card design with all info in one line
-- Logo/icon on the left (16x16)
-- Route information (Origin → Destination) prominently displayed
-- Freight details in a single line separated by bullets (cargo type, distance, vehicle, body type)
-- Price highlighted on the right side with payment method below
-- Action buttons aligned to the right (view, edit, delete, share, contact)
-- Status badge for expired freights at the top
-
-**Mobile Layout**: Maintains original vertical card design for better mobile UX
-
-**Files Updated**:
-- `client/src/pages/freights/index.tsx` - Implemented responsive card layout with separate desktop/mobile designs
-
-### Login Redirect Fix
-**Date**: October 13, 2025  
-**Issue**: Login page was not redirecting users after successful authentication. The login was succeeding on the backend but the user remained on the login screen.
-
-**Root Cause**: The login form was using `apiRequest` directly instead of the `loginMutation` from the `useAuth` hook. This caused:
-1. User data not being properly saved in React Query cache
-2. Navigation logic in `use-auth.tsx` not being executed
-3. User session not being properly established in the frontend
-
-**Solution Applied**:
-1. Refactored `simple-login.tsx` to use `loginMutation` from `useAuth` hook
-2. Updated `use-auth.tsx` to include admin redirection logic (admin/administrador → /admin)
-3. Removed redundant navigation code from login component
-4. Cleaned up unused imports (useState, toast, apiRequest)
-
-**Files Updated**:
-- `client/src/pages/auth/simple-login.tsx` - Simplified to use loginMutation hook
-- `client/src/hooks/use-auth.tsx` - Added admin redirection logic
+- **Payment Gateway**: OpenPix
+- **Email Services**: Nodemailer, Ethereal Email (development)
+- **Database Hosting**: Neon Database (PostgreSQL)
+- **Development & Deployment**: Replit, Docker, Vite, TypeScript
+- **AI Integration**: OpenAI (GPT-4o)
+- **Automation**: N8N
+- **Analytics**: Google Analytics
+- **Validation**: ReceitaWS API (CNPJ validation)
+- **Mapping/Geocoding**: IBGE API (for city search/autocomplete)

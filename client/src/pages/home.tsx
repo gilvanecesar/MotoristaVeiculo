@@ -1,249 +1,341 @@
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CarFront, Users, BarChart3, ClipboardList, Truck, Building2, AlertTriangle, X, AlertCircle } from "lucide-react";
+import { 
+  Truck, 
+  Eye, 
+  Users, 
+  AlertTriangle, 
+  CheckCircle, 
+  XCircle,
+  CreditCard,
+  User,
+  Mail,
+  Phone,
+  Calendar,
+  TrendingUp,
+  Package
+} from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { useAgentClientCheck } from "@/hooks/use-agent-client-check";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useQuery } from "@tanstack/react-query";
+import { FreightWithDestinations } from "@shared/schema";
+import { formatCurrency } from "@/lib/utils/format";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function Home() {
   const { user } = useAuth();
-  const { needsClientRegistration } = useAgentClientCheck();
   const [_, setLocation] = useLocation();
+
+  // Buscar fretes do usuário
+  const { data: freights = [] } = useQuery<FreightWithDestinations[]>({
+    queryKey: ["/api/freights"],
+    enabled: !!user,
+  });
+
+  // Filtrar apenas os fretes do usuário atual
+  const userFreights = freights.filter(f => f.userId === user?.id);
   
-  // Verifica se o usuário tem uma assinatura expirada
-  const hasExpiredSubscription = user && !user.subscriptionActive && user.paymentRequired;
-  // Calcula se está em período de teste
-  const isInTrial = user?.subscriptionType === "trial" && user?.subscriptionActive === true;
-  // Calcula dias restantes do período de teste
-  const calculateRemainingDays = () => {
-    if (!user?.subscriptionExpiresAt) return null;
-    const expirationDate = new Date(user.subscriptionExpiresAt);
-    const currentDate = new Date();
-    const timeDiff = expirationDate.getTime() - currentDate.getTime();
-    const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
-    return daysDiff > 0 ? daysDiff : 0;
-  };
+  // Calcular métricas
+  const activeFreights = userFreights.filter(f => {
+    if (!f.expirationDate) return true;
+    return new Date(f.expirationDate) > new Date();
+  }).length;
   
-  const remainingDays = calculateRemainingDays();
-  
+  const expiredFreights = userFreights.filter(f => {
+    if (!f.expirationDate) return false;
+    return new Date(f.expirationDate) <= new Date();
+  }).length;
+
+  // Status da assinatura
+  const hasActiveSubscription = user?.subscriptionActive;
+  const subscriptionExpiry = user?.subscriptionExpiresAt 
+    ? new Date(user.subscriptionExpiresAt)
+    : null;
+
+  const daysUntilExpiry = subscriptionExpiry 
+    ? Math.ceil((subscriptionExpiry.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+    : null;
+
   return (
-    <div className="space-y-6">
-      {/* Alerta para agenciadores que precisam cadastrar cliente */}
-      {needsClientRegistration && (
-        <Alert className="mb-4 border-orange-200 bg-orange-50 text-orange-800">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Cadastro de cliente necessário</AlertTitle>
-          <AlertDescription>
-            Para acessar todas as funcionalidades do sistema, você precisa primeiro cadastrar um cliente.
-            <Link href="/clients/new">
+    <div className="space-y-6 p-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold">Painel de Controle</h1>
+        <p className="text-slate-500 mt-1">Acompanhe a performance dos seus fretes</p>
+      </div>
+
+      {/* Métricas em Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Fretes Postados */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-slate-500">
+                Fretes postados
+              </CardTitle>
+              <Package className="h-4 w-4 text-slate-400" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{userFreights.length}</div>
+            <p className="text-xs text-slate-500 mt-1">
+              {activeFreights > 0 && (
+                <span className="text-green-600">
+                  {activeFreights} {activeFreights === 1 ? 'ativo' : 'ativos'}
+                </span>
+              )}
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Visualizações de Frete */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-slate-500">
+                Visualização de frete
+              </CardTitle>
+              <Eye className="h-4 w-4 text-slate-400" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">-</div>
+            <p className="text-xs text-slate-500 mt-1">Em breve</p>
+          </CardContent>
+        </Card>
+
+        {/* Motoristas Interessados */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-slate-500">
+                Motoristas interessados
+              </CardTitle>
+              <Users className="h-4 w-4 text-slate-400" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">-</div>
+            <p className="text-xs text-slate-500 mt-1">Em breve</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Fretes Ativos */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Truck className="h-5 w-5" />
+              Seus Fretes
+            </CardTitle>
+            <CardDescription>
+              {activeFreights > 0 
+                ? `${activeFreights} ${activeFreights === 1 ? 'frete ativo' : 'fretes ativos'}` 
+                : 'Nenhum frete ativo'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {userFreights.length === 0 ? (
+              <div className="text-center py-8">
+                <Truck className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+                <p className="text-slate-500 mb-4">Nenhum frete postado ainda</p>
+                <Button onClick={() => setLocation("/freights/new")}>
+                  Criar frete
+                </Button>
+              </div>
+            ) : (
+              <>
+                {userFreights.slice(0, 5).map((freight) => (
+                  <div 
+                    key={freight.id} 
+                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                    onClick={() => setLocation(`/freights/${freight.id}`)}
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 text-sm font-medium">
+                        <span>{freight.origin}</span>
+                        <span className="text-slate-400">→</span>
+                        <span>{freight.destination}</span>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-1">
+                        {freight.cargoType === 'completa' ? 'Carga Completa' : 'Complemento'}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-primary">{formatCurrency(freight.freightValue)}</p>
+                      {freight.expirationDate && new Date(freight.expirationDate) <= new Date() ? (
+                        <span className="text-xs text-red-500">Expirado</span>
+                      ) : (
+                        <span className="text-xs text-green-500">Ativo</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {userFreights.length > 5 && (
+                  <Button 
+                    variant="outline" 
+                    className="w-full mt-2"
+                    onClick={() => setLocation("/freights")}
+                  >
+                    Ver todos os fretes ({userFreights.length})
+                  </Button>
+                )}
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Status da Assinatura */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5" />
+              Status da Assinatura
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
+              <div>
+                <p className="text-sm text-slate-500">Status</p>
+                <p className="text-lg font-semibold flex items-center gap-2 mt-1">
+                  {hasActiveSubscription ? (
+                    <>
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                      Ativa
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="h-5 w-5 text-red-500" />
+                      Inativa
+                    </>
+                  )}
+                </p>
+              </div>
+              {subscriptionExpiry && (
+                <div className="text-right">
+                  <p className="text-sm text-slate-500">Válida até</p>
+                  <p className="text-lg font-semibold mt-1">
+                    {format(subscriptionExpiry, "dd/MM/yyyy", { locale: ptBR })}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {daysUntilExpiry !== null && daysUntilExpiry <= 7 && daysUntilExpiry > 0 && (
+              <div className="flex items-start gap-3 p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+                <AlertTriangle className="h-5 w-5 text-orange-500 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-orange-800 dark:text-orange-200">
+                    Assinatura expira em breve
+                  </p>
+                  <p className="text-xs text-orange-600 dark:text-orange-300 mt-1">
+                    Sua assinatura expira em {daysUntilExpiry} {daysUntilExpiry === 1 ? 'dia' : 'dias'}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {!hasActiveSubscription && (
               <Button 
-                variant="default" 
-                size="sm" 
-                className="mt-2 bg-orange-600 hover:bg-orange-700"
-              >
-                Cadastrar cliente agora
-              </Button>
-            </Link>
-          </AlertDescription>
-        </Alert>
-      )}
-      
-      {/* Alerta de assinatura expirada */}
-      {hasExpiredSubscription && (
-        <Alert variant="destructive" className="mb-4">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Assinatura expirada</AlertTitle>
-          <AlertDescription>
-            Sua assinatura expirou. Para continuar usando o sistema completo, é necessário renovar sua assinatura.
-            <Button 
-              variant="destructive" 
-              size="sm" 
-              className="mt-2"
-              onClick={() => setLocation("/checkout")}
-            >
-              Renovar agora
-            </Button>
-          </AlertDescription>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="absolute right-2 top-2" 
-            onClick={(e) => {
-              e.currentTarget.parentElement?.classList.add('hidden');
-            }}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </Alert>
-      )}
-      
-      {/* Alerta de período de teste */}
-      {isInTrial && remainingDays !== null && (
-        <Alert variant={remainingDays <= 2 ? "destructive" : "default"} className="mb-4">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Período de teste</AlertTitle>
-          <AlertDescription>
-            Você está usando o período de teste gratuito. 
-            Restam <strong>{remainingDays}</strong> dia{remainingDays !== 1 ? 's' : ''}.
-            {remainingDays <= 2 && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="mt-2"
+                className="w-full" 
                 onClick={() => setLocation("/checkout")}
               >
-                Assinar agora
+                Renovar Assinatura
               </Button>
             )}
-          </AlertDescription>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="absolute right-2 top-2" 
-            onClick={(e) => {
-              e.currentTarget.parentElement?.classList.add('hidden');
-            }}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </Alert>
-      )}
-      
-      <div className="text-center max-w-3xl mx-auto py-6">
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-3">
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600 dark:from-primary dark:to-blue-400">
-            Sistema de Gestão de Fretes
-          </span>
-        </h1>
-        <p className="text-slate-600 dark:text-slate-400">
-          Gerencie de forma eficiente motoristas, veículos, fretes e clientes com nosso sistema completo.
-        </p>
+          </CardContent>
+        </Card>
+
+        {/* Dados do Usuário */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Seus Dados
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                <User className="h-5 w-5 text-slate-400" />
+                <div>
+                  <p className="text-xs text-slate-500">Nome</p>
+                  <p className="font-medium">{user?.name || '-'}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                <Mail className="h-5 w-5 text-slate-400" />
+                <div>
+                  <p className="text-xs text-slate-500">Email</p>
+                  <p className="font-medium">{user?.email || '-'}</p>
+                </div>
+              </div>
+
+              {user?.whatsapp && (
+                <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                  <Phone className="h-5 w-5 text-slate-400" />
+                  <div>
+                    <p className="text-xs text-slate-500">WhatsApp</p>
+                    <p className="font-medium">{user.whatsapp}</p>
+                  </div>
+                </div>
+              )}
+
+              {user?.createdAt && (
+                <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                  <Calendar className="h-5 w-5 text-slate-400" />
+                  <div>
+                    <p className="text-xs text-slate-500">Membro desde</p>
+                    <p className="font-medium">
+                      {format(new Date(user.createdAt), "dd/MM/yyyy", { locale: ptBR })}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        <Card className="hover:shadow-lg transition-shadow duration-300">
-          <CardHeader className="pb-2 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-t-lg">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary" />
+      {/* Outros Acessos */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Acesso Rápido</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <Button 
+              variant="outline" 
+              className="justify-start h-auto py-3"
+              onClick={() => setLocation("/freights")}
+            >
+              <Truck className="h-4 w-4 mr-2" />
+              Todos os Fretes
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className="justify-start h-auto py-3"
+              onClick={() => setLocation("/drivers")}
+            >
+              <Users className="h-4 w-4 mr-2" />
               Motoristas
-            </CardTitle>
-            <CardDescription>
-              Gerenciar motoristas
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-              Cadastre, edite e gerencie motoristas e seus documentos.
-            </p>
-            <Link href="/drivers">
-              <Button className="w-full">Acessar</Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow duration-300">
-          <CardHeader className="pb-2 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-t-lg">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <CarFront className="h-5 w-5 text-primary" />
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className="justify-start h-auto py-3"
+              onClick={() => setLocation("/vehicles")}
+            >
+              <Truck className="h-4 w-4 mr-2" />
               Veículos
-            </CardTitle>
-            <CardDescription>
-              Gerenciar veículos
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-              Cadastre e gerencie os veículos para fretes.
-            </p>
-            <Link href="/vehicles">
-              <Button className="w-full">Acessar</Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow duration-300">
-          <CardHeader className="pb-2 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 rounded-t-lg">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Truck className="h-5 w-5 text-primary" />
-              Fretes
-            </CardTitle>
-            <CardDescription>
-              Gerenciar fretes
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-              Cadastre e acompanhe fretes e suas cargas.
-            </p>
-            <Link href="/freights">
-              <Button className="w-full">Acessar</Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow duration-300">
-          <CardHeader className="pb-2 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-t-lg">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-primary" />
-              Clientes
-            </CardTitle>
-            <CardDescription>
-              Gerenciar clientes
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-              Cadastre e gerencie seus clientes e parceiros.
-            </p>
-            <Link href="/clients">
-              <Button className="w-full">Acessar</Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow duration-300">
-          <CardHeader className="pb-2 bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-800/20 rounded-t-lg">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-primary" />
-              Dashboard
-            </CardTitle>
-            <CardDescription>
-              Dados e estatísticas
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-              Visualize métricas e indicadores de desempenho.
-            </p>
-            <Link href="/dashboard">
-              <Button className="w-full">Acessar</Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow duration-300">
-          <CardHeader className="pb-2 bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-900/20 dark:to-rose-800/20 rounded-t-lg">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <ClipboardList className="h-5 w-5 text-primary" />
-              Relatórios
-            </CardTitle>
-            <CardDescription>
-              Gerar relatórios
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-              Gere relatórios personalizados para análise.
-            </p>
-            <Link href="/reports">
-              <Button className="w-full">Acessar</Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
