@@ -727,21 +727,21 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div>
-                  <FormLabel className="text-base">Tipo de Veículo</FormLabel>
+                  <FormLabel className="text-base">Qual o perfil veicular para transportar sua carga?</FormLabel>
                   <FormDescription className="mb-4">
-                    Selecione o(s) tipo(s) de veículo adequado(s) para o frete
+                    Escolha aquela(s) que considera(m) necessária(s) para o transporte.
                   </FormDescription>
 
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     {Object.entries(VEHICLE_CATEGORIES).map(([categoryKey, categoryValue]) => {
                       const vehicleTypes = VEHICLE_TYPES_BY_CATEGORY[categoryValue];
                       
                       return (
-                        <div key={categoryKey} className="mb-4">
-                          <h4 className="text-sm font-semibold mb-2">
+                        <div key={categoryKey} className="border rounded-lg p-4 bg-muted/30">
+                          <h4 className="text-sm font-semibold mb-3 text-foreground">
                             {getVehicleCategoryDisplay(categoryValue)}
                           </h4>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                             {vehicleTypes.map((type) => (
                               <div key={type} className="flex items-center space-x-2">
                                 <Checkbox 
@@ -894,47 +894,136 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                 />
 
                 <div>
-                  <FormLabel>Tipos de Carroceria</FormLabel>
-                  <div className="w-full border rounded-md p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-                    {Object.entries(BODY_TYPES).map(([key, value]) => (
-                      <div key={key} className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={`body-type-${key}`}
-                          disabled={isViewingInReadOnlyMode}
-                          checked={selectedBodyTypes.includes(value)}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              // Adicionar tipo à lista
-                              const newList = [...selectedBodyTypes, value];
-                              setSelectedBodyTypes(newList);
-                              form.setValue("bodyTypesSelected", newList.join(","));
-                              
-                              // Atualizar o tipo principal para o primeiro da lista
-                              form.setValue("bodyType", newList[0]);
-                            } else {
-                              // Remover tipo da lista
-                              const newList = selectedBodyTypes.filter(t => t !== value);
-                              setSelectedBodyTypes(newList);
-                              form.setValue("bodyTypesSelected", newList.join(","));
-                              
-                              // Atualizar o tipo principal
-                              if (newList.length > 0) {
-                                form.setValue("bodyType", newList[0]);
-                              } else {
-                                form.setValue("bodyType", "");
-                              }
-                            }
-                          }}
-                        />
-                        <label 
-                          htmlFor={`body-type-${key}`} 
-                          className="text-sm font-medium leading-none cursor-pointer"
-                        >
-                          {getBodyTypeDisplay(value)}
-                        </label>
+                  <FormLabel className="text-base">Qual o perfil da carroceria para transportar sua carga?</FormLabel>
+                  <FormDescription className="mb-4">
+                    Escolha aquela(s) que considera(m) necessária(s) para o transporte.
+                  </FormDescription>
+                  
+                  <div className="space-y-4">
+                    {/* Carrocerias Abertas */}
+                    <div className="border rounded-lg p-4 bg-muted/30">
+                      <h4 className="text-sm font-semibold mb-3 text-foreground">Abertas</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {Object.entries(BODY_TYPES)
+                          .filter(([_, value]) => ['truck', 'gaiola', 'grade_baixa', 'prancha'].includes(value))
+                          .map(([key, value]) => (
+                            <div key={key} className="flex items-center space-x-2">
+                              <Checkbox 
+                                id={`body-type-${key}`}
+                                disabled={isViewingInReadOnlyMode}
+                                checked={selectedBodyTypes.includes(value)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    const newList = [...selectedBodyTypes, value];
+                                    setSelectedBodyTypes(newList);
+                                    form.setValue("bodyTypesSelected", newList.join(","));
+                                    form.setValue("bodyType", newList[0]);
+                                  } else {
+                                    const newList = selectedBodyTypes.filter(t => t !== value);
+                                    setSelectedBodyTypes(newList);
+                                    form.setValue("bodyTypesSelected", newList.join(","));
+                                    if (newList.length > 0) {
+                                      form.setValue("bodyType", newList[0]);
+                                    } else {
+                                      form.setValue("bodyType", "");
+                                    }
+                                  }
+                                }}
+                              />
+                              <label 
+                                htmlFor={`body-type-${key}`} 
+                                className="text-sm font-medium leading-none cursor-pointer"
+                              >
+                                {getBodyTypeDisplay(value)}
+                              </label>
+                            </div>
+                          ))}
                       </div>
-                    ))}
+                    </div>
+
+                    {/* Carrocerias Fechadas */}
+                    <div className="border rounded-lg p-4 bg-muted/30">
+                      <h4 className="text-sm font-semibold mb-3 text-foreground">Fechadas</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {Object.entries(BODY_TYPES)
+                          .filter(([_, value]) => ['bau', 'sider', 'graneleiro'].includes(value))
+                          .map(([key, value]) => (
+                            <div key={key} className="flex items-center space-x-2">
+                              <Checkbox 
+                                id={`body-type-${key}`}
+                                disabled={isViewingInReadOnlyMode}
+                                checked={selectedBodyTypes.includes(value)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    const newList = [...selectedBodyTypes, value];
+                                    setSelectedBodyTypes(newList);
+                                    form.setValue("bodyTypesSelected", newList.join(","));
+                                    form.setValue("bodyType", newList[0]);
+                                  } else {
+                                    const newList = selectedBodyTypes.filter(t => t !== value);
+                                    setSelectedBodyTypes(newList);
+                                    form.setValue("bodyTypesSelected", newList.join(","));
+                                    if (newList.length > 0) {
+                                      form.setValue("bodyType", newList[0]);
+                                    } else {
+                                      form.setValue("bodyType", "");
+                                    }
+                                  }
+                                }}
+                              />
+                              <label 
+                                htmlFor={`body-type-${key}`} 
+                                className="text-sm font-medium leading-none cursor-pointer"
+                              >
+                                {getBodyTypeDisplay(value)}
+                              </label>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+
+                    {/* Carrocerias Especiais */}
+                    <div className="border rounded-lg p-4 bg-muted/30">
+                      <h4 className="text-sm font-semibold mb-3 text-foreground">Especiais</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {Object.entries(BODY_TYPES)
+                          .filter(([_, value]) => !['truck', 'gaiola', 'grade_baixa', 'prancha', 'bau', 'sider', 'graneleiro'].includes(value))
+                          .map(([key, value]) => (
+                            <div key={key} className="flex items-center space-x-2">
+                              <Checkbox 
+                                id={`body-type-${key}`}
+                                disabled={isViewingInReadOnlyMode}
+                                checked={selectedBodyTypes.includes(value)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    const newList = [...selectedBodyTypes, value];
+                                    setSelectedBodyTypes(newList);
+                                    form.setValue("bodyTypesSelected", newList.join(","));
+                                    form.setValue("bodyType", newList[0]);
+                                  } else {
+                                    const newList = selectedBodyTypes.filter(t => t !== value);
+                                    setSelectedBodyTypes(newList);
+                                    form.setValue("bodyTypesSelected", newList.join(","));
+                                    if (newList.length > 0) {
+                                      form.setValue("bodyType", newList[0]);
+                                    } else {
+                                      form.setValue("bodyType", "");
+                                    }
+                                  }
+                                }}
+                              />
+                              <label 
+                                htmlFor={`body-type-${key}`} 
+                                className="text-sm font-medium leading-none cursor-pointer"
+                              >
+                                {getBodyTypeDisplay(value)}
+                              </label>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
                   </div>
+                  
                   {form.formState.errors.bodyType && (
                     <p className="text-sm font-medium text-destructive mt-2">
                       {form.formState.errors.bodyType.message}
