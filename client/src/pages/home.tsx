@@ -17,7 +17,6 @@ import {
   Pencil,
   Trash2,
   Power,
-  MoreHorizontal,
   X
 } from "lucide-react";
 import {
@@ -30,12 +29,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -380,44 +373,6 @@ export default function Home() {
                           <p className="text-lg font-bold text-primary">{formatCurrency(freight.freightValue)}</p>
                           <p className="text-xs text-slate-500">{freight.paymentMethod}</p>
                         </div>
-
-                        {/* Menu de Ações */}
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => setLocation(`/freights/${freight.id}`)}>
-                              <Eye className="h-4 w-4 mr-2" />
-                              Visualizar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setLocation(`/freights/${freight.id}/edit`)}>
-                              <Pencil className="h-4 w-4 mr-2" />
-                              Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onClick={() => toggleMultipleMutation.mutate({ 
-                                freightIds: [freight.id], 
-                                activate: expired 
-                              })}
-                            >
-                              <Power className="h-4 w-4 mr-2" />
-                              {expired ? 'Ativar' : 'Desativar'}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onClick={() => {
-                                setSelectedFreights([freight.id]);
-                                setDeleteDialogOpen(true);
-                              }}
-                              className="text-red-600 dark:text-red-400"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Apagar
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
                       </div>
                     );
                   })}
