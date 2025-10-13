@@ -16,7 +16,8 @@ import {
   Package,
   Pencil,
   Trash2,
-  Power
+  Power,
+  MoreHorizontal
 } from "lucide-react";
 import {
   AlertDialog,
@@ -28,6 +29,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { FreightWithDestinations } from "@shared/schema";
@@ -44,6 +52,7 @@ export default function Home() {
   const { toast } = useToast();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedFreight, setSelectedFreight] = useState<FreightWithDestinations | null>(null);
+  const [selectedFreights, setSelectedFreights] = useState<number[]>([]);
 
   // Buscar fretes do usuário
   const { data: freights = [] } = useQuery<FreightWithDestinations[]>({
@@ -126,6 +135,22 @@ export default function Home() {
     return new Date(freight.expirationDate) <= new Date();
   };
 
+  const toggleSelectFreight = (freightId: number) => {
+    setSelectedFreights(prev => 
+      prev.includes(freightId) 
+        ? prev.filter(id => id !== freightId)
+        : [...prev, freightId]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedFreights.length === userFreights.length) {
+      setSelectedFreights([]);
+    } else {
+      setSelectedFreights(userFreights.map(f => f.id));
+    }
+  };
+
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
@@ -192,20 +217,33 @@ export default function Home() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Fretes Ativos */}
-        <Card>
+        {/* Fretes Ativos - Layout de Tabela */}
+        <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Truck className="h-5 w-5" />
-              Seus Fretes
-            </CardTitle>
-            <CardDescription>
-              {activeFreights > 0 
-                ? `${activeFreights} ${activeFreights === 1 ? 'frete ativo' : 'fretes ativos'}` 
-                : 'Nenhum frete ativo'}
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Truck className="h-5 w-5" />
+                  Seus Fretes
+                </CardTitle>
+                <CardDescription>
+                  {activeFreights > 0 
+                    ? `${activeFreights} ${activeFreights === 1 ? 'frete ativo' : 'fretes ativos'}` 
+                    : 'Nenhum frete ativo'}
+                </CardDescription>
+              </div>
+              {userFreights.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    checked={selectedFreights.length === userFreights.length && userFreights.length > 0}
+                    onCheckedChange={toggleSelectAll}
+                  />
+                  <span className="text-sm text-slate-500">Selecionar todos</span>
+                </div>
+              )}
+            </div>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent>
             {userFreights.length === 0 ? (
               <div className="text-center py-8">
                 <Truck className="h-12 w-12 text-slate-300 mx-auto mb-3" />
@@ -215,92 +253,116 @@ export default function Home() {
                 </Button>
               </div>
             ) : (
-              <>
+              <div className="space-y-2">
                 {userFreights.slice(0, 5).map((freight) => {
                   const expired = isFreightExpired(freight);
+                  const isSelected = selectedFreights.includes(freight.id);
+                  
                   return (
                     <div 
                       key={freight.id} 
-                      className="border rounded-lg overflow-hidden"
+                      className={`
+                        flex items-center gap-4 p-3 border rounded-lg transition-colors
+                        ${isSelected ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}
+                      `}
                     >
-                      <div 
-                        className="p-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                        onClick={() => setLocation(`/freights/${freight.id}`)}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 text-sm font-medium">
-                              <span>{freight.origin}</span>
-                              <span className="text-slate-400">→</span>
-                              <span>{freight.destination}</span>
-                            </div>
-                            <p className="text-xs text-slate-500 mt-1">
-                              {freight.cargoType === 'completa' ? 'Carga Completa' : 'Complemento'}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-bold text-primary">{formatCurrency(freight.freightValue)}</p>
-                            {expired ? (
-                              <span className="text-xs text-red-500">Expirado</span>
-                            ) : (
-                              <span className="text-xs text-green-500">Ativo</span>
-                            )}
-                          </div>
+                      {/* Checkbox */}
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={() => toggleSelectFreight(freight.id)}
+                      />
+
+                      {/* Informações do Frete */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-medium text-sm">Frete Prev</p>
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${
+                            expired 
+                              ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' 
+                              : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                          }`}>
+                            {expired ? 'Expirado' : 'Alta negociação'}
+                          </span>
                         </div>
                       </div>
-                      
-                      {/* Ações */}
-                      <div className="flex items-center gap-2 p-2 border-t bg-slate-50 dark:bg-slate-800">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => setLocation(`/freights/${freight.id}/edit`)}
-                        >
-                          <Pencil className="h-3 w-3 mr-1" />
-                          Editar
-                        </Button>
-                        
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => toggleActiveMutation.mutate({ 
-                            freightId: freight.id, 
-                            activate: expired 
-                          })}
-                          disabled={toggleActiveMutation.isPending}
-                        >
-                          <Power className="h-3 w-3 mr-1" />
-                          {expired ? 'Ativar' : 'Desativar'}
-                        </Button>
-                        
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1 text-red-500 hover:text-red-600 hover:bg-red-50"
-                          onClick={() => {
-                            setSelectedFreight(freight);
-                            setDeleteDialogOpen(true);
-                          }}
-                        >
-                          <Trash2 className="h-3 w-3 mr-1" />
-                          Apagar
-                        </Button>
+
+                      {/* Origem */}
+                      <div className="hidden md:block min-w-[140px]">
+                        <p className="text-xs text-slate-500">Origem</p>
+                        <p className="text-sm font-medium">{freight.origin}, {freight.originState}</p>
                       </div>
+
+                      {/* Destino */}
+                      <div className="hidden md:block min-w-[140px]">
+                        <p className="text-xs text-slate-500">Destino</p>
+                        <p className="text-sm font-medium">{freight.destination}, {freight.destinationState}</p>
+                      </div>
+
+                      {/* Tipo de Carga */}
+                      <div className="hidden lg:block min-w-[100px]">
+                        <p className="text-xs text-slate-500">Tipo</p>
+                        <p className="text-sm font-medium">
+                          {freight.cargoType === 'completa' ? 'Completa' : 'Complemento'}
+                        </p>
+                      </div>
+
+                      {/* Valor */}
+                      <div className="text-right min-w-[100px]">
+                        <p className="text-lg font-bold text-primary">{formatCurrency(freight.freightValue)}</p>
+                        <p className="text-xs text-slate-500">Por {freight.paymentMethod}</p>
+                      </div>
+
+                      {/* Menu de Ações */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setLocation(`/freights/${freight.id}`)}>
+                            <Eye className="h-4 w-4 mr-2" />
+                            Visualizar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setLocation(`/freights/${freight.id}/edit`)}>
+                            <Pencil className="h-4 w-4 mr-2" />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => toggleActiveMutation.mutate({ 
+                              freightId: freight.id, 
+                              activate: expired 
+                            })}
+                          >
+                            <Power className="h-4 w-4 mr-2" />
+                            {expired ? 'Ativar' : 'Desativar'}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => {
+                              setSelectedFreight(freight);
+                              setDeleteDialogOpen(true);
+                            }}
+                            className="text-red-600 dark:text-red-400"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Apagar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   );
                 })}
+                
                 {userFreights.length > 5 && (
                   <Button 
                     variant="outline" 
-                    className="w-full mt-2"
+                    className="w-full mt-4"
                     onClick={() => setLocation("/freights")}
                   >
                     Ver todos os fretes ({userFreights.length})
                   </Button>
                 )}
-              </>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -367,7 +429,7 @@ export default function Home() {
         </Card>
 
         {/* Dados do Usuário */}
-        <Card className="lg:col-span-2">
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5" />
@@ -375,7 +437,7 @@ export default function Home() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-3">
               <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
                 <User className="h-5 w-5 text-slate-400" />
                 <div>
