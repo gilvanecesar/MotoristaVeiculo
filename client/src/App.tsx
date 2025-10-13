@@ -18,8 +18,6 @@ import AppLayout from "@/components/layout/app-layout";
 import Footer from "@/components/layout/footer";
 import Home from "@/pages/home";
 import Dashboard from "@/pages/dashboard";
-import AuthPage from "@/pages/auth-page";
-import LoginPage from "@/pages/login-page";
 import ProfileSelection from "@/pages/profile-selection";
 import LandingPage from "@/pages/landing/index";
 import DriversPage from "@/pages/drivers/index";
