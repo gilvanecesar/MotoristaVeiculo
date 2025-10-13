@@ -89,7 +89,7 @@ import {
   CLIENT_TYPES
 } from "@shared/schema";
 import { eq } from "drizzle-orm";
-import { sendSubscriptionEmail, sendPaymentReminderEmail } from "./email-service";
+import { sendSubscriptionEmail, sendPaymentReminderEmail, sendNewQuoteNotificationToClients } from "./email-service";
 import { format } from "date-fns";
 
 import { setupWebhookRoutes, sendFreightWebhook } from "./webhook-service";
@@ -3045,6 +3045,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       const quote = await storage.createQuote(quoteData);
+      
+      // Enviar email para todos os clientes cadastrados (assíncrono, não bloqueia a resposta)
+      (async () => {
+        try {
+          const allClients = await storage.getClients();
+          const activeClients = allClients
+            .filter(client => client.email && client.email.trim() !== '')
+            .map(client => ({ 
+              email: client.email!, 
+              name: client.name 
+            }));
+          
+          if (activeClients.length > 0) {
+            await sendNewQuoteNotificationToClients(activeClients, {
+              clientName: quote.clientName || 'Cliente',
+              origin: quote.origin,
+              destination: quote.destination,
+              cargoType: quote.cargoType || 'completa',
+              weight: parseFloat(quote.weight || '0')
+            });
+          }
+        } catch (emailError) {
+          console.error('Erro ao enviar notificações de email:', emailError);
+        }
+      })();
+      
       res.status(201).json(quote);
     } catch (error) {
       console.error("Erro ao criar cotação:", error);
@@ -3142,6 +3168,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Log da cotação pública criada
       console.log(`✅ Cotação pública criada: ${clientName} (${clientEmail}) - ${originParsed.city}/${originParsed.state} → ${destinationParsed.city}/${destinationParsed.state}`);
+      
+      // Enviar email para todos os clientes cadastrados (assíncrono, não bloqueia a resposta)
+      (async () => {
+        try {
+          const allClients = await storage.getClients();
+          const activeClients = allClients
+            .filter(client => client.email && client.email.trim() !== '')
+            .map(client => ({ 
+              email: client.email!, 
+              name: client.name 
+            }));
+          
+          if (activeClients.length > 0) {
+            await sendNewQuoteNotificationToClients(activeClients, {
+              clientName: quote.clientName || 'Cliente',
+              origin: `${originParsed.city}${originParsed.state ? ' - ' + originParsed.state : ''}`,
+              destination: `${destinationParsed.city}${destinationParsed.state ? ' - ' + destinationParsed.state : ''}`,
+              cargoType: quote.cargoType || 'completa',
+              weight: parseFloat(quote.weight || '0')
+            });
+          }
+        } catch (emailError) {
+          console.error('Erro ao enviar notificações de email:', emailError);
+        }
+      })();
       
       res.status(201).json({
         message: "Cotação enviada com sucesso",

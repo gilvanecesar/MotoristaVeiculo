@@ -762,3 +762,89 @@ export async function sendSubscriptionCancellationEmail(
     return false;
   }
 }
+
+// Função para enviar notificação de nova cotação para todos os clientes
+export async function sendNewQuoteNotificationToClients(
+  clients: Array<{ email: string; name: string }>,
+  quoteDetails: {
+    clientName: string;
+    origin: string;
+    destination: string;
+    cargoType: string;
+    weight: number;
+  }
+) {
+  try {
+    if (!transporter) {
+      console.warn('Serviço de email não inicializado. Notificações não serão enviadas.');
+      return { sent: 0, failed: 0 };
+    }
+
+    let sentCount = 0;
+    let failedCount = 0;
+
+    // Enviar email para cada cliente
+    for (const client of clients) {
+      try {
+        const mailOptions = {
+          from: `"QUERO FRETES" <${process.env.EMAIL_USER}>`,
+          to: client.email,
+          subject: '🚛 Nova Cotação Disponível - QUERO FRETES',
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
+              <div style="background-color: #00222d; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+                <h1 style="color: white; margin: 0;">QUERO FRETES</h1>
+              </div>
+              
+              <div style="background-color: white; padding: 30px; border-radius: 0 0 8px 8px;">
+                <h2 style="color: #00222d; margin: 0 0 20px 0;">Olá, ${client.name}!</h2>
+                
+                <p style="color: #333; line-height: 1.6; margin: 0 0 20px 0;">
+                  Uma nova cotação de frete foi cadastrada em nossa plataforma e pode ser do seu interesse:
+                </p>
+                
+                <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                  <h3 style="color: #00222d; margin: 0 0 15px 0;">📦 Detalhes da Cotação</h3>
+                  <p><strong>Cliente:</strong> ${quoteDetails.clientName}</p>
+                  <p><strong>Origem:</strong> ${quoteDetails.origin}</p>
+                  <p><strong>Destino:</strong> ${quoteDetails.destination}</p>
+                  <p><strong>Tipo de Carga:</strong> ${quoteDetails.cargoType === 'completa' ? 'Carga Completa' : 'Complemento'}</p>
+                  <p><strong>Peso:</strong> ${quoteDetails.weight} Kg</p>
+                </div>
+                
+                <div style="text-align: center; margin: 30px 0;">
+                  <a href="${process.env.FRONTEND_URL || 'https://querofretes.com.br'}/quotes" 
+                     style="background-color: #0066cc; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+                    Ver Cotação Completa
+                  </a>
+                </div>
+                
+                <p style="color: #666; margin: 30px 0; font-size: 14px;">
+                  Acesse agora mesmo nossa plataforma para enviar sua proposta e ganhar este frete!
+                </p>
+                
+                <p style="margin-top: 30px; font-size: 12px; color: #666; text-align: center;">
+                  Este é um email automático, por favor não responda.<br>
+                  QUERO FRETES © ${new Date().getFullYear()}
+                </p>
+              </div>
+            </div>
+          `,
+        };
+
+        await transporter.sendMail(mailOptions);
+        sentCount++;
+        console.log(`✅ Email de nova cotação enviado para ${client.email}`);
+      } catch (error) {
+        failedCount++;
+        console.error(`❌ Erro ao enviar email para ${client.email}:`, error);
+      }
+    }
+
+    console.log(`📧 Notificações enviadas: ${sentCount} sucesso, ${failedCount} falhas`);
+    return { sent: sentCount, failed: failedCount };
+  } catch (error) {
+    console.error('Erro geral ao enviar notificações:', error);
+    return { sent: 0, failed: clients.length };
+  }
+}

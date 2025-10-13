@@ -97,3 +97,13 @@ Implemented client logo display system for freight listings:
 - Initials logic: first and last name initials, or first 2 characters if single word
 - Maintains efficient query performance with batch operations (only 3 queries: freights + users + clients)
 - Fully integrated with existing client upload functionality at `/clients`
+
+### Email Notifications for New Quotes (October 13, 2025)
+Implemented automatic email notification system for new quotes:
+- Created `sendNewQuoteNotificationToClients()` function in email service
+- Sends professional HTML emails to all registered clients when new quote is created
+- Email includes quote details (client name, origin, destination, cargo type, weight)
+- Link to view full quote details on platform
+- Integrated into both authenticated and public quote creation endpoints
+- Asynchronous email sending (non-blocking) to maintain API performance
+- Error handling ensures quote creation succeeds even if emails fail
