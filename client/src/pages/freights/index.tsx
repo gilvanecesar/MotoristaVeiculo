@@ -758,15 +758,15 @@ ${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : '
             </div>
           </div>
 
-          {/* Freights Grid */}
+          {/* Freights List */}
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="space-y-3">
               {[...Array(6)].map((_, i) => (
-                <Skeleton key={i} className="h-64 w-full" />
+                <Skeleton key={i} className="h-20 w-full" />
               ))}
             </div>
           ) : filteredFreights.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="space-y-3">
               {filteredFreights.map((freight) => (
                 <FreightCard key={freight.id} freight={freight} />
               ))}
