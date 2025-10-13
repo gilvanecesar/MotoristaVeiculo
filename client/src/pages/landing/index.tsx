@@ -27,7 +27,7 @@ export default function LandingPage() {
 
   const goToLogin = () => {
     trackEvent('navigation', 'landing_page', 'click_login');
-    setLocation("/auth/login");
+    setLocation("/login");
   };
 
   const goToRegister = () => {

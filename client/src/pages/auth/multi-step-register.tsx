@@ -139,7 +139,7 @@ export default function MultiStepRegister() {
         // navigate(`/auth/verify-phone?phone=${step1Data.phone}`);
         
         setTimeout(() => {
-          navigate("/auth/login");
+          navigate("/login");
         }, 2000);
       } else {
         const error = await response.json();
@@ -469,7 +469,7 @@ export default function MultiStepRegister() {
             Já tem uma conta?
           </p>
           <button
-            onClick={() => navigate("/auth/login")}
+            onClick={() => navigate("/login")}
             className="text-primary hover:underline font-medium"
             data-testid="link-login"
           >

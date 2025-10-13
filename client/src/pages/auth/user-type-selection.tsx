@@ -95,7 +95,7 @@ export default function UserTypeSelection() {
             Já tem uma conta?
           </p>
           <button
-            onClick={() => navigate("/auth/login")}
+            onClick={() => navigate("/login")}
             className="text-primary hover:underline font-medium"
             data-testid="link-login"
           >

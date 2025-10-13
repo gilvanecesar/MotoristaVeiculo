@@ -96,14 +96,13 @@ function Router() {
       <Route path="/public/quote-request" component={PublicQuoteRequest} />
       <ProtectedRoute path="/home" component={Home} />
       
-      {/* New auth flow */}
+      {/* Auth routes */}
+      <Route path="/login" component={SimpleLogin} />
       <Route path="/auth/user-type" component={UserTypeSelection} />
       <Route path="/auth/register" component={MultiStepRegister} />
-      <Route path="/auth/login" component={SimpleLogin} />
       
       {/* Old auth routes (kept for backward compatibility) */}
-      <Route path="/auth" component={ProfileSelection} />
-      <Route path="/login" component={LoginPage} />
+      <Route path="/auth" component={UserTypeSelection} />
       <Route path="/profile-selection" component={ProfileSelection} />
       <Route path="/reset-password" component={ResetPasswordPage} />
       <Route path="/payment-success" component={PaymentSuccessPage} />
