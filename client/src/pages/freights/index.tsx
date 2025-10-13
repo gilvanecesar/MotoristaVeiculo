@@ -483,107 +483,103 @@ ${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : '
     return (
       <div className="border border-slate-200 dark:border-slate-700 rounded-lg hover:shadow-md transition-shadow bg-white dark:bg-slate-900 overflow-hidden">
         {/* Desktop Layout - Horizontal */}
-        <div className="hidden md:block">
-          {/* Status Badge */}
-          {expired && (
-            <div className="bg-red-50 dark:bg-red-900/20 px-4 py-1 border-b border-slate-200 dark:border-slate-700">
-              <span className="text-xs text-red-600 dark:text-red-400">Expirado</span>
-            </div>
-          )}
-          
-          <div className="flex items-center gap-4 p-4">
-            {/* Logo/Icon */}
-            <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Truck className="w-8 h-8 text-primary" />
-            </div>
+        <div className="hidden md:flex items-center gap-3 p-3">
+          {/* Logo/Icon */}
+          <div className="w-14 h-14 bg-slate-100 dark:bg-slate-800 rounded flex items-center justify-center flex-shrink-0">
+            <Truck className="w-6 h-6 text-primary" />
+          </div>
 
-            {/* Route Info */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-sm font-medium truncate">{freight.origin}, {freight.originState}</span>
-                <ArrowRight className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                <span className="text-sm font-medium truncate">{freight.destination}, {freight.destinationState}</span>
-              </div>
-              <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-400">
-                <span>{freight.cargoType === 'completa' ? 'Carga Completa' : 'Complemento'}</span>
-                <span>•</span>
-                <span>{freight.distance ? `${freight.distance} km` : 'Distância não informada'}</span>
-                <span>•</span>
-                <span>{formatMultipleVehicleTypes(freight)}</span>
-                <span>•</span>
-                <span>{formatMultipleBodyTypes(freight)}</span>
-              </div>
+          {/* Route Info */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 text-sm font-medium mb-1">
+              <span className="truncate">{freight.origin}, {freight.originState}</span>
+              <ArrowRight className="w-3 h-3 text-slate-400 flex-shrink-0" />
+              <span className="truncate">{freight.destination}, {freight.destinationState}</span>
             </div>
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <span className="truncate">{freight.cargoType === 'completa' ? 'Carga' : 'Compl.'}</span>
+              <span>•</span>
+              <span className="truncate">{freight.distance ? `${freight.distance}km` : 'N/I'}</span>
+              <span>•</span>
+              <span className="truncate">{formatMultipleVehicleTypes(freight)}</span>
+              <span>•</span>
+              <span className="truncate">{formatMultipleBodyTypes(freight)}</span>
+            </div>
+          </div>
 
-            {/* Price */}
-            <div className="text-right flex-shrink-0">
-              <p className="text-2xl font-bold text-primary">{formatCurrency(freight.freightValue)}</p>
-              <p className="text-xs text-slate-500">Por {freight.paymentMethod}</p>
-            </div>
+          {/* Price */}
+          <div className="text-right flex-shrink-0 mr-2">
+            <p className="text-lg font-bold text-primary whitespace-nowrap">{formatCurrency(freight.freightValue)}</p>
+            <p className="text-xs text-slate-500">Por {freight.paymentMethod}</p>
+          </div>
 
-            {/* Actions */}
-            <div className="flex gap-1 flex-shrink-0">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate(`/freights/${freight.id}`)}
-                title="Visualizar"
-                data-testid={`button-view-${freight.id}`}
-              >
-                <Eye className="h-4 w-4" />
-              </Button>
-              
-              {canEdit && (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => navigate(`/freights/${freight.id}/edit`)}
-                    title="Editar"
-                    data-testid={`button-edit-${freight.id}`}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      setSelectedFreight(freight);
-                      setDeleteDialogOpen(true);
-                    }}
-                    title="Excluir"
-                    data-testid={`button-delete-${freight.id}`}
-                  >
-                    <Trash2 className="h-4 w-4 text-red-500" />
-                  </Button>
-                </>
-              )}
-              
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => shareViaWhatsApp(freight)}
-                title="Compartilhar via WhatsApp"
-                data-testid={`button-share-${freight.id}`}
-              >
-                <FaWhatsapp className="h-4 w-4 text-green-500" />
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  if (freight.contactPhone) {
-                    window.open(`https://wa.me/55${freight.contactPhone.replace(/\D/g, '')}`, '_blank');
-                  }
-                }}
-                title="Contatar via WhatsApp"
-                disabled={!freight.contactPhone}
-                data-testid={`button-contact-${freight.id}`}
-              >
-                <PhoneCall className="h-4 w-4 text-green-500" />
-              </Button>
-            </div>
+          {/* Actions */}
+          <div className="flex gap-0.5 flex-shrink-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => navigate(`/freights/${freight.id}`)}
+              title="Visualizar"
+              data-testid={`button-view-${freight.id}`}
+            >
+              <Eye className="h-3.5 w-3.5" />
+            </Button>
+            
+            {canEdit && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => navigate(`/freights/${freight.id}/edit`)}
+                  title="Editar"
+                  data-testid={`button-edit-${freight.id}`}
+                >
+                  <Edit className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => {
+                    setSelectedFreight(freight);
+                    setDeleteDialogOpen(true);
+                  }}
+                  title="Excluir"
+                  data-testid={`button-delete-${freight.id}`}
+                >
+                  <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                </Button>
+              </>
+            )}
+            
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => shareViaWhatsApp(freight)}
+              title="Compartilhar via WhatsApp"
+              data-testid={`button-share-${freight.id}`}
+            >
+              <FaWhatsapp className="h-3.5 w-3.5 text-green-500" />
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => {
+                if (freight.contactPhone) {
+                  window.open(`https://wa.me/55${freight.contactPhone.replace(/\D/g, '')}`, '_blank');
+                }
+              }}
+              title="Contatar via WhatsApp"
+              disabled={!freight.contactPhone}
+              data-testid={`button-contact-${freight.id}`}
+            >
+              <PhoneCall className="h-3.5 w-3.5 text-green-500" />
+            </Button>
           </div>
         </div>
 
