@@ -161,14 +161,14 @@ export const clients = pgTable("clients", {
   // Tipo de cliente
   clientType: text("client_type").notNull(),
   
-  // Address information
-  street: text("street").notNull(),
-  number: text("number").notNull(),
+  // Address information (opcional)
+  street: text("street"),
+  number: text("number"),
   complement: text("complement"),
-  neighborhood: text("neighborhood").notNull(),
-  city: text("city").notNull(),
-  state: text("state").notNull(),
-  zipcode: text("zipcode").notNull(),
+  neighborhood: text("neighborhood"),
+  city: text("city"),
+  state: text("state"),
+  zipcode: text("zipcode"),
   
   // Informações de contato adicional
   contactName: text("contact_name"),
