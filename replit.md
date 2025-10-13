@@ -172,3 +172,22 @@ useEffect(() => {
 
 **Files Updated**:
 - `client/src/pages/freights/index.tsx` - Implemented responsive card layout with separate desktop/mobile designs
+
+### Login Redirect Fix
+**Date**: October 13, 2025  
+**Issue**: Login page was not redirecting users after successful authentication. The login was succeeding on the backend but the user remained on the login screen.
+
+**Root Cause**: The login form was using `apiRequest` directly instead of the `loginMutation` from the `useAuth` hook. This caused:
+1. User data not being properly saved in React Query cache
+2. Navigation logic in `use-auth.tsx` not being executed
+3. User session not being properly established in the frontend
+
+**Solution Applied**:
+1. Refactored `simple-login.tsx` to use `loginMutation` from `useAuth` hook
+2. Updated `use-auth.tsx` to include admin redirection logic (admin/administrador → /admin)
+3. Removed redundant navigation code from login component
+4. Cleaned up unused imports (useState, toast, apiRequest)
+
+**Files Updated**:
+- `client/src/pages/auth/simple-login.tsx` - Simplified to use loginMutation hook
+- `client/src/hooks/use-auth.tsx` - Added admin redirection logic
