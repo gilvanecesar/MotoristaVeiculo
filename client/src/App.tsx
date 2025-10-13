@@ -11,6 +11,7 @@ import { SubscriptionStatusBanner } from "@/components/ui/subscription-status-ba
 import { useEffect } from "react";
 import { initGA } from "@/lib/analytics";
 import { useAnalytics } from "@/hooks/use-analytics";
+import { ErrorBoundary } from "@/components/error-boundary";
 
 import NotFound from "@/pages/not-found";
 import AppLayout from "@/components/layout/app-layout";
@@ -171,29 +172,31 @@ function App() {
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <UserAuthProvider>
-          <ClientAuthProvider>
-            {/* Páginas públicas sem layout */}
-            {isPublicPage ? (
-              <div className="min-h-screen bg-background">
-                <Router />
-                <Toaster />
-              </div>
-            ) : (
-              /* Páginas protegidas com layout sidebar */
-              <AppLayout>
-                <ClientRegistrationCheck />
-                <Router />
-                <Toaster />
-              </AppLayout>
-            )}
-            
-          </ClientAuthProvider>
-        </UserAuthProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <UserAuthProvider>
+            <ClientAuthProvider>
+              {/* Páginas públicas sem layout */}
+              {isPublicPage ? (
+                <div className="min-h-screen bg-background">
+                  <Router />
+                  <Toaster />
+                </div>
+              ) : (
+                /* Páginas protegidas com layout sidebar */
+                <AppLayout>
+                  <ClientRegistrationCheck />
+                  <Router />
+                  <Toaster />
+                </AppLayout>
+              )}
+              
+            </ClientAuthProvider>
+          </UserAuthProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 
