@@ -279,6 +279,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const newUser = await storage.createUser(userData);
 
+      // Se usuário tem CNPJ, criar automaticamente registro em clients ou reutilizar existente
+      let clientId = null;
+      const userCnpj = cnpj || (documento?.length >= 14 ? documento : null);
+      if (userCnpj) {
+        try {
+          // Verificar se já existe um cliente com este CNPJ
+          const existingClients = await storage.getClients();
+          const existingClient = existingClients.find(c => c.cnpj === userCnpj);
+          
+          if (existingClient) {
+            // Reutilizar cliente existente
+            clientId = existingClient.id;
+            console.log(`[REGISTRO] Reutilizando cliente existente - ID: ${clientId} para usuário ${newUser.id} (${cleanedName})`);
+          } else {
+            // Criar novo cliente
+            // Determinar o tipo de cliente baseado no perfil
+            let clientType = "embarcador"; // default
+            if (profileType === "transportador") {
+              clientType = "transportador";
+            } else if (profileType === "agenciador") {
+              clientType = "agente";
+            }
+
+            const clientData = {
+              name: cleanedName,
+              cnpj: userCnpj,
+              email: email || "",
+              phone: whatsapp || "",
+              whatsapp: whatsapp || null,
+              clientType,
+              contactName: req.body.contactName || null,
+            };
+
+            const newClient = await storage.createClient(clientData);
+            clientId = newClient.id;
+            console.log(`[REGISTRO] Cliente criado automaticamente - ID: ${clientId} para usuário ${newUser.id} (${cleanedName})`);
+          }
+
+          // Atualizar o usuário com o clientId
+          await storage.updateUser(newUser.id, { clientId });
+          
+          // Buscar usuário atualizado para incluir o clientId na sessão
+          const updatedUser = await storage.getUserById(newUser.id);
+          if (updatedUser) {
+            Object.assign(newUser, updatedUser);
+          }
+        } catch (error) {
+          console.error('Erro ao criar/vincular cliente automaticamente:', error);
+          // Não bloquear o registro se falhar a criação do cliente
+        }
+      }
+
       // Enviar dados para N8N quando usuário se cadastra
       try {
         await sendUserDataToN8N(newUser, profileType);
