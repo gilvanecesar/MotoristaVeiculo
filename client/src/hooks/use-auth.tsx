@@ -67,10 +67,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       
       const isDriver = user.profileType === 'motorista' || user.profileType === 'driver';
+      const isAdmin = user.profileType === 'admin' || user.profileType === 'administrador';
       const isTransportador = user.profileType === 'transportador';
       const isAgenciador = user.profileType === 'agenciador';
       
-      if (isDriver) {
+      if (isAdmin) {
+        // Se for admin, redireciona para a página admin
+        setTimeout(() => setLocation("/admin"), 1000);
+      } else if (isDriver) {
         // Se for motorista, redireciona para a página de fretes
         setTimeout(() => setLocation("/freights"), 1000);
       } else if (user.subscriptionActive) {

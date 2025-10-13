@@ -1,15 +1,12 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useLocation } from "wouter";
-import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { toast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
+import { useLocation } from "wouter";
 
 const loginSchema = z.object({
   email: z.string().email("Email inválido"),
@@ -19,8 +16,8 @@ const loginSchema = z.object({
 type LoginData = z.infer<typeof loginSchema>;
 
 export default function SimpleLogin() {
+  const { loginMutation } = useAuth();
   const [, navigate] = useLocation();
-  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
@@ -31,42 +28,7 @@ export default function SimpleLogin() {
   });
 
   const onSubmit = async (data: LoginData) => {
-    setIsLoading(true);
-
-    try {
-      const response = await apiRequest("POST", "/api/login", data);
-      const userData = await response.json();
-      
-      console.log("UserData recebido:", userData);
-      console.log("ProfileType:", userData.profileType);
-      
-      toast({
-        title: "Login realizado com sucesso!",
-        description: `Bem-vindo de volta, ${userData.name || ""}`,
-      });
-
-      // Pequeno delay para garantir que o toast seja exibido
-      setTimeout(() => {
-        // Redirecionar baseado no tipo de perfil
-        console.log("Redirecionando para:", userData.profileType);
-        if (userData.profileType === "motorista") {
-          navigate("/dashboard-driver");
-        } else if (userData.profileType === "admin" || userData.profileType === "administrador") {
-          navigate("/admin");
-        } else {
-          navigate("/dashboard");
-        }
-      }, 100);
-    } catch (error: any) {
-      console.error("Erro no login:", error);
-      toast({
-        title: "Erro ao fazer login",
-        description: error?.message || "Email ou senha incorretos",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    loginMutation.mutate(data);
   };
 
   return (
@@ -124,10 +86,10 @@ export default function SimpleLogin() {
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={isLoading}
+                  disabled={loginMutation.isPending}
                   data-testid="button-login"
                 >
-                  {isLoading ? "Entrando..." : "Entrar"}
+                  {loginMutation.isPending ? "Entrando..." : "Entrar"}
                 </Button>
               </form>
             </Form>
