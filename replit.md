@@ -77,3 +77,12 @@ Implemented comprehensive tracking system for freight views and interested drive
   - Total interested drivers (WhatsApp clicks)
   - Average metrics per freight
 - Tracking works on both public freight pages and freight listing pages
+
+### Automatic Client Creation on Registration (October 13, 2025)
+Implemented automatic client record creation for companies during user registration:
+- Made address fields optional in clients table (street, number, neighborhood, city, state, zipcode)
+- Automatic client creation for all users with CNPJ (embarcador, transportador, agenciador)
+- Smart CNPJ handling: reuses existing client if CNPJ already registered, creates new otherwise
+- Proper clientId linking to user record with session propagation
+- Client type automatically determined based on user profile type
+- Logs all client creation/linking activities for monitoring
