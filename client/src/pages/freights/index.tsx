@@ -223,7 +223,7 @@ export default function FreightsPageNew() {
   const shareViaWhatsApp = (freight: FreightWithDestinations) => {
     const clientFound = clients.find((client: Client) => client.id === freight.clientId);
     const clientName = clientFound ? clientFound.name : "Cliente não encontrado";
-    const freightUrl = `${window.location.origin}/freight/${freight.id}`;
+    const freightUrl = `${window.location.origin}/freights/${freight.id}`;
     
     let destinosText = `🏁 *Destino:* ${freight.destination}, ${freight.destinationState}`;
     if (freight.destination1) {
@@ -301,7 +301,7 @@ ${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : '
       <div className="space-y-3">
         <h3 className="font-semibold text-sm">Veículo</h3>
         <div className="space-y-2 max-h-48 overflow-y-auto">
-          {Object.entries(VEHICLE_TYPES).slice(0, 15).map(([key, value]) => (
+          {Object.entries(VEHICLE_TYPES).map(([key, value]) => (
             <div key={key} className="flex items-center space-x-2">
               <Checkbox
                 id={`vehicle-${key}`}
