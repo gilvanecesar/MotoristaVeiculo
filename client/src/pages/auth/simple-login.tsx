@@ -37,19 +37,26 @@ export default function SimpleLogin() {
       const response = await apiRequest("POST", "/api/login", data);
       const userData = await response.json();
       
+      console.log("UserData recebido:", userData);
+      console.log("ProfileType:", userData.profileType);
+      
       toast({
         title: "Login realizado com sucesso!",
         description: `Bem-vindo de volta, ${userData.name || ""}`,
       });
 
-      // Redirecionar baseado no tipo de perfil
-      if (userData.profileType === "motorista") {
-        navigate("/dashboard-driver");
-      } else if (userData.profileType === "admin" || userData.profileType === "administrador") {
-        navigate("/admin");
-      } else {
-        navigate("/dashboard");
-      }
+      // Pequeno delay para garantir que o toast seja exibido
+      setTimeout(() => {
+        // Redirecionar baseado no tipo de perfil
+        console.log("Redirecionando para:", userData.profileType);
+        if (userData.profileType === "motorista") {
+          navigate("/dashboard-driver");
+        } else if (userData.profileType === "admin" || userData.profileType === "administrador") {
+          navigate("/admin");
+        } else {
+          navigate("/dashboard");
+        }
+      }, 100);
     } catch (error: any) {
       console.error("Erro no login:", error);
       toast({
