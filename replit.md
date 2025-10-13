@@ -55,6 +55,7 @@ Preferred communication style: Simple, everyday language.
   - Simplified login page at `/login` (consolidated from previous `/auth/login` and old `/login`)
   - Phone verification infrastructure prepared (table `phone_verification_codes` created) but not activated - ready for future Twilio/WhatsApp integration
   - All internal navigation updated to use `/login` for consistency
+  - Fixed ProtectedRoute to redirect to `/login` instead of `/auth` when user is not authenticated
 
 ## External Dependencies
 

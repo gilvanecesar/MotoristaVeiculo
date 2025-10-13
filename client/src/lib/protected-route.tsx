@@ -36,11 +36,11 @@ export function ProtectedRoute({
     );
   }
 
-  // Se não houver usuário, redireciona para a página de auth
+  // Se não houver usuário, redireciona para a página de login
   if (!user) {
     return (
       <Route path={path}>
-        <Redirect to="/auth" />
+        <Redirect to="/login" />
       </Route>
     );
   }
