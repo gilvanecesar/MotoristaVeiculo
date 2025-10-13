@@ -67,6 +67,8 @@ const freightSchema = insertFreightSchema.extend({
   vehicleCategory: z.string().optional(),
   vehicleTypesSelected: z.string().optional(),
   bodyTypesSelected: z.string().optional(),
+  // Campo de rastreamento
+  isTracked: z.boolean().optional().default(false),
   // Novos campos de pagamento
   valueType: z.enum(["known", "to_combine"]).optional(),
   valueCalculation: z.string().optional(),
@@ -151,6 +153,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
     vehicleCategory: "", // Iniciando vazio - nenhuma categoria selecionada por padrão
     vehicleType: "", // Iniciando vazio - nenhum tipo selecionado por padrão
     bodyType: "", // Iniciando vazio - nenhum tipo de carroceria selecionado por padrão
+    isTracked: false, // Padrão: carga não rastreada
     valueType: "known", // Padrão: "Já sei o valor"
     freightValue: "", // Iniciando vazio para forçar o usuário a preencher
     valueCalculation: "",
@@ -896,6 +899,30 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                         Informe o peso em quilogramas (kg)
                       </FormDescription>
                       <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="isTracked"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          disabled={isViewingInReadOnlyMode}
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>
+                          A carga é rastreada
+                        </FormLabel>
+                        <FormDescription>
+                          Marque se a carga possui sistema de rastreamento
+                        </FormDescription>
+                      </div>
                     </FormItem>
                   )}
                 />

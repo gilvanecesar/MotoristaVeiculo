@@ -203,6 +203,7 @@ export const freights = pgTable("freights", {
   vehicleTypesSelected: text("vehicle_types_selected"), // Lista de tipos de veículos selecionados (separados por vírgula)
   bodyType: text("body_type").notNull(),
   bodyTypesSelected: text("body_types_selected"), // Lista de tipos de carrocerias selecionados (separados por vírgula)
+  isTracked: boolean("is_tracked").default(false), // Se a carga é rastreada
   valueType: text("value_type"), // "known" (já sei o valor) ou "to_combine" (a combinar)
   freightValue: decimal("freight_value", { precision: 10, scale: 2 }).default('0').notNull(),
   valueCalculation: text("value_calculation"), // Como o valor foi calculado (opcional)
