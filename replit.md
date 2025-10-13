@@ -145,8 +145,9 @@ useEffect(() => {
    - Proper value extraction (City - State format)
    - Fixed CitySearch reset behavior when filters are cleared
 3. **Always-Visible Checkboxes Design**: Removed accordion, made all vehicle and body type checkboxes always visible, organized by categories:
-   - Vehicles: Pesados (Carreta, Carreta LS, Vanderléia, Bitrem, Rodotrem), Médios (Truck, Bitruck), Leves (Fiorino, VLC, 3/4, Toco)
-   - Body Types: Abertas (Graneleiro, Grade Baixa, Prancha, Caçamba, Plataforma), Fechadas (Sider, Baú, Baú Frigorífico, Baú Refrigerado), Especiais (Silo, Cegonheiro, Gaiola, Tanque, Bug Porta Container, Munk, Apenas Cavalo, Cavaqueira, Hopper)
+   - Vehicles: Pesados (Carreta, Carreta LS, Vanderléia, Bitrem, Rodotrem), Médios (Truck, Bitruck), Leves (Fiorino, VLC, Toco)
+   - Body Types: Abertas (Aberta, Graneleiro, Grade Baixa, Prancha, Caçamba), Fechadas (Fechada, Sider, Baú, Baú Frigorífico), Especiais (Tanque, Porta Container)
+   - Created VEHICLE_LABELS and BODY_LABELS objects to map database values to display-friendly names
    - No scrollbar required, cleaner and more accessible layout
 4. **Filter Logic Update**: Modified filter matching to extract city name from "City - State" format returned by CitySearch
 

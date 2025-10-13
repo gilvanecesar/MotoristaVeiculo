@@ -56,16 +56,43 @@ const isExpired = (expirationDate: string | Date | null | undefined): boolean =>
   return today > expDate;
 };
 
+const VEHICLE_LABELS: Record<string, string> = {
+  'pesado_carreta': 'Carreta',
+  'pesado_carreta_ls': 'Carreta LS',
+  'pesado_vanderleia': 'Vanderléia',
+  'pesado_bitrem': 'Bitrem',
+  'pesado_rodotrem': 'Rodotrem',
+  'medio_truck': 'Truck',
+  'medio_bitruck': 'Bitruck',
+  'leve_fiorino': 'Fiorino',
+  'leve_vlc': 'VLC',
+  'leve_toco': 'Toco'
+};
+
+const BODY_LABELS: Record<string, string> = {
+  'aberta': 'Aberta',
+  'graneleira': 'Graneleiro',
+  'basculante': 'Grade Baixa',
+  'plataforma': 'Prancha',
+  'cacamba': 'Caçamba',
+  'fechada': 'Fechada',
+  'sider': 'Sider',
+  'bau': 'Baú',
+  'frigorifica': 'Baú Frigorífico',
+  'tanque': 'Tanque',
+  'porta_conteiner': 'Porta Container'
+};
+
 const VEHICLE_CATEGORIES = {
-  'Pesados': ['carreta', 'carreta_ls', 'vanderleia', 'bitrem', 'rodotrem'],
-  'Médios': ['truck', 'bitruck'],
-  'Leves': ['fiorino', 'vlc', 'tres_quartos', 'toco']
+  'Pesados': ['pesado_carreta', 'pesado_carreta_ls', 'pesado_vanderleia', 'pesado_bitrem', 'pesado_rodotrem'],
+  'Médios': ['medio_truck', 'medio_bitruck'],
+  'Leves': ['leve_fiorino', 'leve_vlc', 'leve_toco']
 };
 
 const BODY_CATEGORIES = {
-  'Abertas': ['graneleiro', 'grade_baixa', 'prancha', 'cacamba', 'plataforma'],
-  'Fechadas': ['sider', 'bau', 'bau_frigorifico', 'bau_refrigerado'],
-  'Especiais': ['silo', 'cegonheiro', 'gaiola', 'tanque', 'bug_porta_container', 'munk', 'apenas_cavalo', 'cavaqueira', 'hopper']
+  'Abertas': ['aberta', 'graneleira', 'basculante', 'plataforma', 'cacamba'],
+  'Fechadas': ['fechada', 'sider', 'bau', 'frigorifica'],
+  'Especiais': ['tanque', 'porta_conteiner']
 };
 
 interface FilterSidebarProps {
@@ -158,7 +185,7 @@ const FilterSidebar = React.memo(({ filters, setFilters, resetFilters }: FilterS
                     }}
                   />
                   <Label htmlFor={`vehicle-${key}`} className="text-sm font-normal cursor-pointer">
-                    {VEHICLE_TYPES[key as keyof typeof VEHICLE_TYPES]}
+                    {VEHICLE_LABELS[key]}
                   </Label>
                 </div>
               ))}
@@ -190,7 +217,7 @@ const FilterSidebar = React.memo(({ filters, setFilters, resetFilters }: FilterS
                     }}
                   />
                   <Label htmlFor={`body-${key}`} className="text-sm font-normal cursor-pointer">
-                    {BODY_TYPES[key as keyof typeof BODY_TYPES]}
+                    {BODY_LABELS[key]}
                   </Label>
                 </div>
               ))}
