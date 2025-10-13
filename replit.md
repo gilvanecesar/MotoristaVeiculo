@@ -143,11 +143,13 @@ useEffect(() => {
    - Autocomplete with IBGE API city database
    - Debounced search (300ms) to minimize API calls
    - Proper value extraction (City - State format)
-3. **Compact Design**: Reorganized filter sidebar with collapsible accordion categories:
-   - Vehicles: Pesados, Médios, Leves
-   - Body Types: Abertas, Fechadas, Especiais
-   - No scrollbar required, more compact spacing
+   - Fixed CitySearch reset behavior when filters are cleared
+3. **Always-Visible Checkboxes Design**: Removed accordion, made all vehicle and body type checkboxes always visible, organized by categories:
+   - Vehicles: Pesados (Carreta, Carreta LS, Vanderléia, Bitrem, Rodotrem), Médios (Truck, Bitruck), Leves (Fiorino, VLC, 3/4, Toco)
+   - Body Types: Abertas (Graneleiro, Grade Baixa, Prancha, Caçamba, Plataforma), Fechadas (Sider, Baú, Baú Frigorífico, Baú Refrigerado), Especiais (Silo, Cegonheiro, Gaiola, Tanque, Bug Porta Container, Munk, Apenas Cavalo, Cavaqueira, Hopper)
+   - No scrollbar required, cleaner and more accessible layout
 4. **Filter Logic Update**: Modified filter matching to extract city name from "City - State" format returned by CitySearch
 
 **Files Updated**:
 - `client/src/pages/freights/index.tsx` - Complete filter sidebar redesign with IBGE integration
+- `client/src/components/ui/city-search.tsx` - Fixed reset behavior

@@ -37,12 +37,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import {
   FreightWithDestinations,
   Client,
   VEHICLE_TYPES,
@@ -144,74 +138,66 @@ const FilterSidebar = React.memo(({ filters, setFilters, resetFilters }: FilterS
 
     {/* Tipo de Veículo - Categorizado */}
     <div>
-      <h3 className="font-semibold text-sm mb-2">Veículo</h3>
-      <Accordion type="multiple" className="space-y-1">
+      <h3 className="font-semibold text-sm mb-3">Veículo</h3>
+      <div className="space-y-3">
         {Object.entries(VEHICLE_CATEGORIES).map(([category, types]) => (
-          <AccordionItem key={category} value={category} className="border-b-0">
-            <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">
-              {category}
-            </AccordionTrigger>
-            <AccordionContent className="pb-2">
-              <div className="space-y-1.5 pl-2">
-                {types.map((key) => (
-                  <div key={key} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`vehicle-${key}`}
-                      checked={filters.vehicleTypes.includes(key)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setFilters({...filters, vehicleTypes: [...filters.vehicleTypes, key]});
-                        } else {
-                          setFilters({...filters, vehicleTypes: filters.vehicleTypes.filter(t => t !== key)});
-                        }
-                      }}
-                    />
-                    <Label htmlFor={`vehicle-${key}`} className="text-xs font-normal cursor-pointer">
-                      {VEHICLE_TYPES[key as keyof typeof VEHICLE_TYPES]}
-                    </Label>
-                  </div>
-                ))}
-              </div>
-            </AccordionContent>
-          </AccordionItem>
+          <div key={category}>
+            <h4 className="text-sm font-medium mb-2">{category}</h4>
+            <div className="space-y-2 pl-1">
+              {types.map((key) => (
+                <div key={key} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`vehicle-${key}`}
+                    checked={filters.vehicleTypes.includes(key)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setFilters({...filters, vehicleTypes: [...filters.vehicleTypes, key]});
+                      } else {
+                        setFilters({...filters, vehicleTypes: filters.vehicleTypes.filter(t => t !== key)});
+                      }
+                    }}
+                  />
+                  <Label htmlFor={`vehicle-${key}`} className="text-sm font-normal cursor-pointer">
+                    {VEHICLE_TYPES[key as keyof typeof VEHICLE_TYPES]}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </div>
         ))}
-      </Accordion>
+      </div>
     </div>
 
     {/* Tipo de Carroceria - Categorizado */}
     <div>
-      <h3 className="font-semibold text-sm mb-2">Carroceria</h3>
-      <Accordion type="multiple" className="space-y-1">
+      <h3 className="font-semibold text-sm mb-3">Carroceria</h3>
+      <div className="space-y-3">
         {Object.entries(BODY_CATEGORIES).map(([category, types]) => (
-          <AccordionItem key={category} value={category} className="border-b-0">
-            <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">
-              {category}
-            </AccordionTrigger>
-            <AccordionContent className="pb-2">
-              <div className="space-y-1.5 pl-2">
-                {types.map((key) => (
-                  <div key={key} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`body-${key}`}
-                      checked={filters.bodyTypes.includes(key)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setFilters({...filters, bodyTypes: [...filters.bodyTypes, key]});
-                        } else {
-                          setFilters({...filters, bodyTypes: filters.bodyTypes.filter(t => t !== key)});
-                        }
-                      }}
-                    />
-                    <Label htmlFor={`body-${key}`} className="text-xs font-normal cursor-pointer">
-                      {BODY_TYPES[key as keyof typeof BODY_TYPES]}
-                    </Label>
-                  </div>
-                ))}
-              </div>
-            </AccordionContent>
-          </AccordionItem>
+          <div key={category}>
+            <h4 className="text-sm font-medium mb-2">{category}</h4>
+            <div className="space-y-2 pl-1">
+              {types.map((key) => (
+                <div key={key} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`body-${key}`}
+                    checked={filters.bodyTypes.includes(key)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setFilters({...filters, bodyTypes: [...filters.bodyTypes, key]});
+                      } else {
+                        setFilters({...filters, bodyTypes: filters.bodyTypes.filter(t => t !== key)});
+                      }
+                    }}
+                  />
+                  <Label htmlFor={`body-${key}`} className="text-sm font-normal cursor-pointer">
+                    {BODY_TYPES[key as keyof typeof BODY_TYPES]}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </div>
         ))}
-      </Accordion>
+      </div>
     </div>
 
     {/* Complemento */}
