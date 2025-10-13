@@ -41,13 +41,13 @@ export default function SimpleLogin() {
         
         toast({
           title: "Login realizado com sucesso!",
-          description: `Bem-vindo de volta, ${userData.user?.name || ""}`,
+          description: `Bem-vindo de volta, ${userData.name || ""}`,
         });
 
         // Redirecionar baseado no tipo de perfil
-        if (userData.user?.profileType === "motorista") {
+        if (userData.profileType === "motorista") {
           navigate("/dashboard-driver");
-        } else if (userData.user?.profileType === "admin" || userData.user?.profileType === "administrador") {
+        } else if (userData.profileType === "admin" || userData.profileType === "administrador") {
           navigate("/admin");
         } else {
           navigate("/dashboard");
