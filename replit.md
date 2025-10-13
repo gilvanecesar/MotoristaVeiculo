@@ -71,3 +71,52 @@ The system is fully containerized and includes:
 - **Production Ready**: Includes SSL configuration, health checks, and monitoring
 - **Database**: PostgreSQL 15 with automated initialization and optimization
 - **Reverse Proxy**: Nginx with rate limiting, gzip compression, and security headers
+
+## Technical Debt Resolution (October 2025)
+
+### Infinite Re-render Loop Prevention Pattern
+**Date**: October 13, 2025  
+**Issue**: Multiple forms across the application were causing black screen crashes on mobile due to infinite re-render loops in useEffect hooks with problematic dependencies.
+
+**Root Cause**: Forms using react-hook-form with useEffect depending on the `form` object cause infinite re-renders because:
+1. `form` object reference changes on every render
+2. `form.reset()` triggers a re-render
+3. useEffect runs again, calls `form.reset()`, creating an infinite loop
+
+**Solution Pattern Applied**: 
+All form components now implement idempotent initialization using the following pattern:
+
+```typescript
+// 1. Add initialization control state
+const [hasInitializedData, setHasInitializedData] = useState(false);
+
+// 2. Remove 'form' from useEffect dependencies
+useEffect(() => {
+  if (data && !isLoading && !hasInitializedData) {
+    // Format and prepare data
+    const formattedData = { /* ... */ };
+    
+    // Reset form only once
+    form.reset(formattedData);
+    setHasInitializedData(true);
+  }
+}, [data, isLoading, hasInitializedData]); // NO 'form' dependency!
+
+// 3. Use form.getValues() for comparisons, not form.watch()
+useEffect(() => {
+  const value = form.getValues("field");
+  // ... logic
+}, [dependencies]); // NO 'form' dependency!
+```
+
+**Files Fixed**:
+- `client/src/pages/freights/freight-form.tsx` (original fix)
+- `client/src/pages/clients/client-form.tsx` (original fix)
+- `client/src/pages/drivers/driver-form.tsx`
+- `client/src/pages/vehicles/vehicle-form.tsx`
+- `client/src/pages/freights/freight-form-new.tsx`
+- `client/src/pages/freights/simple-edit.tsx`
+
+**Global Error Handling**: Added ErrorBoundary component to catch rendering errors and prevent complete app crashes.
+
+**Performance Improvements**: PageLoader component added for consistent loading states across all forms.
