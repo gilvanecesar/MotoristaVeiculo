@@ -126,3 +126,27 @@ useEffect(() => {
 **Global Error Handling**: Added ErrorBoundary component to catch rendering errors and prevent complete app crashes.
 
 **Performance Improvements**: PageLoader component added for consistent loading states across all forms.
+
+### Freights Page Filter Optimization
+**Date**: October 13, 2025  
+**Issue**: Filter sidebar causing re-rendering on every keystroke in origin/destination inputs, with cursor jumping out of the field. Missing IBGE API integration for city autocomplete.
+
+**Root Cause**: 
+1. FilterSidebar component defined inside parent component, recreated on every render
+2. Simple text inputs instead of city search with IBGE autocomplete
+3. No memoization of filter component
+
+**Solution Applied**:
+1. **Filter Component Isolation**: Extracted FilterSidebar outside of parent component with React.memo() to prevent unnecessary re-renders
+2. **IBGE Integration**: Replaced plain Input components with CitySearch component that includes:
+   - Autocomplete with IBGE API city database
+   - Debounced search (300ms) to minimize API calls
+   - Proper value extraction (City - State format)
+3. **Compact Design**: Reorganized filter sidebar with collapsible accordion categories:
+   - Vehicles: Pesados, Médios, Leves
+   - Body Types: Abertas, Fechadas, Especiais
+   - No scrollbar required, more compact spacing
+4. **Filter Logic Update**: Modified filter matching to extract city name from "City - State" format returned by CitySearch
+
+**Files Updated**:
+- `client/src/pages/freights/index.tsx` - Complete filter sidebar redesign with IBGE integration

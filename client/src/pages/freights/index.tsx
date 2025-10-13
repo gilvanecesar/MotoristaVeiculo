@@ -53,6 +53,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/utils/format";
 import { FaWhatsapp } from "react-icons/fa";
 import { cn } from "@/lib/utils";
+import { CitySearch } from "@/components/ui/city-search";
 
 const isExpired = (expirationDate: string | Date | null | undefined): boolean => {
   if (!expirationDate) return false;
@@ -60,6 +61,205 @@ const isExpired = (expirationDate: string | Date | null | undefined): boolean =>
   const expDate = new Date(expirationDate);
   return today > expDate;
 };
+
+const VEHICLE_CATEGORIES = {
+  'Pesados': ['carreta', 'carreta_ls', 'vanderleia', 'bitrem', 'rodotrem'],
+  'Médios': ['truck', 'bitruck'],
+  'Leves': ['fiorino', 'vlc', 'tres_quartos', 'toco']
+};
+
+const BODY_CATEGORIES = {
+  'Abertas': ['graneleiro', 'grade_baixa', 'prancha', 'cacamba', 'plataforma'],
+  'Fechadas': ['sider', 'bau', 'bau_frigorifico', 'bau_refrigerado'],
+  'Especiais': ['silo', 'cegonheiro', 'gaiola', 'tanque', 'bug_porta_container', 'munk', 'apenas_cavalo', 'cavaqueira', 'hopper']
+};
+
+interface FilterSidebarProps {
+  filters: {
+    search: string;
+    origin: string;
+    destination: string;
+    dateFrom: string;
+    dateTo: string;
+    distanceRange: string;
+    vehicleTypes: string[];
+    bodyTypes: string[];
+    isComplement: string;
+    priceSort: string;
+    status: string;
+  };
+  setFilters: React.Dispatch<React.SetStateAction<{
+    search: string;
+    origin: string;
+    destination: string;
+    dateFrom: string;
+    dateTo: string;
+    distanceRange: string;
+    vehicleTypes: string[];
+    bodyTypes: string[];
+    isComplement: string;
+    priceSort: string;
+    status: string;
+  }>>;
+  resetFilters: () => void;
+}
+
+const FilterSidebar = React.memo(({ filters, setFilters, resetFilters }: FilterSidebarProps) => (
+  <div className="space-y-4">
+    {/* Origem e Destino */}
+    <div className="space-y-2">
+      <h3 className="font-semibold text-sm">Origem e Destino</h3>
+      <div className="space-y-1.5">
+        <CitySearch
+          value={filters.origin}
+          onSelect={(city) => setFilters({...filters, origin: city})}
+          placeholder="Cidade de origem"
+        />
+        <CitySearch
+          value={filters.destination}
+          onSelect={(city) => setFilters({...filters, destination: city})}
+          placeholder="Cidade de destino"
+        />
+      </div>
+    </div>
+
+    {/* Status */}
+    <div className="space-y-2">
+      <h3 className="font-semibold text-sm">Status</h3>
+      <RadioGroup value={filters.status} onValueChange={(value) => setFilters({...filters, status: value})}>
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="ativo" id="status-ativo" />
+          <Label htmlFor="status-ativo" className="text-sm">Ativos</Label>
+        </div>
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="expirado" id="status-expirado" />
+          <Label htmlFor="status-expirado" className="text-sm">Expirados</Label>
+        </div>
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="todos" id="status-todos" />
+          <Label htmlFor="status-todos" className="text-sm">Todos</Label>
+        </div>
+      </RadioGroup>
+    </div>
+
+    {/* Tipo de Veículo - Categorizado */}
+    <div>
+      <h3 className="font-semibold text-sm mb-2">Veículo</h3>
+      <Accordion type="multiple" className="space-y-1">
+        {Object.entries(VEHICLE_CATEGORIES).map(([category, types]) => (
+          <AccordionItem key={category} value={category} className="border-b-0">
+            <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">
+              {category}
+            </AccordionTrigger>
+            <AccordionContent className="pb-2">
+              <div className="space-y-1.5 pl-2">
+                {types.map((key) => (
+                  <div key={key} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`vehicle-${key}`}
+                      checked={filters.vehicleTypes.includes(key)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setFilters({...filters, vehicleTypes: [...filters.vehicleTypes, key]});
+                        } else {
+                          setFilters({...filters, vehicleTypes: filters.vehicleTypes.filter(t => t !== key)});
+                        }
+                      }}
+                    />
+                    <Label htmlFor={`vehicle-${key}`} className="text-xs font-normal cursor-pointer">
+                      {VEHICLE_TYPES[key as keyof typeof VEHICLE_TYPES]}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
+    </div>
+
+    {/* Tipo de Carroceria - Categorizado */}
+    <div>
+      <h3 className="font-semibold text-sm mb-2">Carroceria</h3>
+      <Accordion type="multiple" className="space-y-1">
+        {Object.entries(BODY_CATEGORIES).map(([category, types]) => (
+          <AccordionItem key={category} value={category} className="border-b-0">
+            <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">
+              {category}
+            </AccordionTrigger>
+            <AccordionContent className="pb-2">
+              <div className="space-y-1.5 pl-2">
+                {types.map((key) => (
+                  <div key={key} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`body-${key}`}
+                      checked={filters.bodyTypes.includes(key)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setFilters({...filters, bodyTypes: [...filters.bodyTypes, key]});
+                        } else {
+                          setFilters({...filters, bodyTypes: filters.bodyTypes.filter(t => t !== key)});
+                        }
+                      }}
+                    />
+                    <Label htmlFor={`body-${key}`} className="text-xs font-normal cursor-pointer">
+                      {BODY_TYPES[key as keyof typeof BODY_TYPES]}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
+    </div>
+
+    {/* Complemento */}
+    <div className="space-y-2">
+      <h3 className="font-semibold text-sm">Complemento</h3>
+      <RadioGroup value={filters.isComplement} onValueChange={(value) => setFilters({...filters, isComplement: value})}>
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="sim" id="complement-sim" />
+          <Label htmlFor="complement-sim" className="text-sm">Sim</Label>
+        </div>
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="nao" id="complement-nao" />
+          <Label htmlFor="complement-nao" className="text-sm">Não</Label>
+        </div>
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="todos" id="complement-todos" />
+          <Label htmlFor="complement-todos" className="text-sm">Ambos</Label>
+        </div>
+      </RadioGroup>
+    </div>
+
+    {/* Ordenação por Preço */}
+    <div className="space-y-2">
+      <h3 className="font-semibold text-sm">Preço</h3>
+      <RadioGroup value={filters.priceSort} onValueChange={(value) => setFilters({...filters, priceSort: value})}>
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="menor" id="price-menor" />
+          <Label htmlFor="price-menor" className="text-sm">Menor</Label>
+        </div>
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="maior" id="price-maior" />
+          <Label htmlFor="price-maior" className="text-sm">Maior</Label>
+        </div>
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="todos" id="price-todos" />
+          <Label htmlFor="price-todos" className="text-sm">Padrão</Label>
+        </div>
+      </RadioGroup>
+    </div>
+
+    {/* Botão Limpar Filtros */}
+    <Button variant="outline" className="w-full h-9" onClick={resetFilters} data-testid="button-clear-filters">
+      Limpar Filtros
+    </Button>
+  </div>
+));
+
+FilterSidebar.displayName = 'FilterSidebar';
 
 export default function FreightsPageNew() {
   const [, navigate] = useLocation();
@@ -132,14 +332,20 @@ export default function FreightsPageNew() {
         if (!matchesSearch) return false;
       }
 
-      // Filtro de origem
-      if (filters.origin && !freight.origin?.toLowerCase().includes(filters.origin.toLowerCase())) {
-        return false;
+      // Filtro de origem (extrai apenas a cidade do formato "Cidade - Estado")
+      if (filters.origin) {
+        const originCity = filters.origin.split(' - ')[0].toLowerCase();
+        if (!freight.origin?.toLowerCase().includes(originCity)) {
+          return false;
+        }
       }
 
-      // Filtro de destino
-      if (filters.destination && !freight.destination?.toLowerCase().includes(filters.destination.toLowerCase())) {
-        return false;
+      // Filtro de destino (extrai apenas a cidade do formato "Cidade - Estado")
+      if (filters.destination) {
+        const destinationCity = filters.destination.split(' - ')[0].toLowerCase();
+        if (!freight.destination?.toLowerCase().includes(destinationCity)) {
+          return false;
+        }
       }
 
       // Filtro de tipos de veículo
@@ -255,177 +461,6 @@ ${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : '
     
     window.open(`https://wa.me/?text=${message}`, '_blank');
   };
-
-  const VEHICLE_CATEGORIES = {
-    'Pesados': ['carreta', 'carreta_ls', 'vanderleia', 'bitrem', 'rodotrem'],
-    'Médios': ['truck', 'bitruck'],
-    'Leves': ['fiorino', 'vlc', 'tres_quartos', 'toco']
-  };
-
-  const BODY_CATEGORIES = {
-    'Abertas': ['graneleiro', 'grade_baixa', 'prancha', 'cacamba', 'plataforma'],
-    'Fechadas': ['sider', 'bau', 'bau_frigorifico', 'bau_refrigerado'],
-    'Especiais': ['silo', 'cegonheiro', 'gaiola', 'tanque', 'bug_porta_container', 'munk', 'apenas_cavalo', 'cavaqueira', 'hopper']
-  };
-
-  const FilterSidebar = () => (
-    <div className="space-y-4">
-      {/* Origem e Destino */}
-      <div className="space-y-2">
-        <h3 className="font-semibold text-sm">Origem e Destino</h3>
-        <div className="space-y-1.5">
-          <Input
-            placeholder="Cidade de origem"
-            value={filters.origin}
-            onChange={(e) => setFilters({...filters, origin: e.target.value})}
-            data-testid="input-filter-origin"
-            className="h-9"
-          />
-          <Input
-            placeholder="Cidade de destino"
-            value={filters.destination}
-            onChange={(e) => setFilters({...filters, destination: e.target.value})}
-            data-testid="input-filter-destination"
-            className="h-9"
-          />
-        </div>
-      </div>
-
-      {/* Status */}
-      <div className="space-y-2">
-        <h3 className="font-semibold text-sm">Status</h3>
-        <RadioGroup value={filters.status} onValueChange={(value) => setFilters({...filters, status: value})}>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="ativo" id="status-ativo" />
-            <Label htmlFor="status-ativo" className="text-sm">Ativos</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="expirado" id="status-expirado" />
-            <Label htmlFor="status-expirado" className="text-sm">Expirados</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="todos" id="status-todos" />
-            <Label htmlFor="status-todos" className="text-sm">Todos</Label>
-          </div>
-        </RadioGroup>
-      </div>
-
-      {/* Tipo de Veículo - Categorizado */}
-      <div>
-        <h3 className="font-semibold text-sm mb-2">Veículo</h3>
-        <Accordion type="multiple" className="space-y-1">
-          {Object.entries(VEHICLE_CATEGORIES).map(([category, types]) => (
-            <AccordionItem key={category} value={category} className="border-b-0">
-              <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">
-                {category}
-              </AccordionTrigger>
-              <AccordionContent className="pb-2">
-                <div className="space-y-1.5 pl-2">
-                  {types.map((key) => (
-                    <div key={key} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`vehicle-${key}`}
-                        checked={filters.vehicleTypes.includes(key)}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setFilters({...filters, vehicleTypes: [...filters.vehicleTypes, key]});
-                          } else {
-                            setFilters({...filters, vehicleTypes: filters.vehicleTypes.filter(t => t !== key)});
-                          }
-                        }}
-                      />
-                      <Label htmlFor={`vehicle-${key}`} className="text-xs font-normal cursor-pointer">
-                        {VEHICLE_TYPES[key as keyof typeof VEHICLE_TYPES]}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
-      </div>
-
-      {/* Tipo de Carroceria - Categorizado */}
-      <div>
-        <h3 className="font-semibold text-sm mb-2">Carroceria</h3>
-        <Accordion type="multiple" className="space-y-1">
-          {Object.entries(BODY_CATEGORIES).map(([category, types]) => (
-            <AccordionItem key={category} value={category} className="border-b-0">
-              <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">
-                {category}
-              </AccordionTrigger>
-              <AccordionContent className="pb-2">
-                <div className="space-y-1.5 pl-2">
-                  {types.map((key) => (
-                    <div key={key} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`body-${key}`}
-                        checked={filters.bodyTypes.includes(key)}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setFilters({...filters, bodyTypes: [...filters.bodyTypes, key]});
-                          } else {
-                            setFilters({...filters, bodyTypes: filters.bodyTypes.filter(t => t !== key)});
-                          }
-                        }}
-                      />
-                      <Label htmlFor={`body-${key}`} className="text-xs font-normal cursor-pointer">
-                        {BODY_TYPES[key as keyof typeof BODY_TYPES]}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
-      </div>
-
-      {/* Complemento */}
-      <div className="space-y-2">
-        <h3 className="font-semibold text-sm">Complemento</h3>
-        <RadioGroup value={filters.isComplement} onValueChange={(value) => setFilters({...filters, isComplement: value})}>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="sim" id="complement-sim" />
-            <Label htmlFor="complement-sim" className="text-sm">Sim</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="nao" id="complement-nao" />
-            <Label htmlFor="complement-nao" className="text-sm">Não</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="todos" id="complement-todos" />
-            <Label htmlFor="complement-todos" className="text-sm">Ambos</Label>
-          </div>
-        </RadioGroup>
-      </div>
-
-      {/* Ordenação por Preço */}
-      <div className="space-y-2">
-        <h3 className="font-semibold text-sm">Preço</h3>
-        <RadioGroup value={filters.priceSort} onValueChange={(value) => setFilters({...filters, priceSort: value})}>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="menor" id="price-menor" />
-            <Label htmlFor="price-menor" className="text-sm">Menor</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="maior" id="price-maior" />
-            <Label htmlFor="price-maior" className="text-sm">Maior</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="todos" id="price-todos" />
-            <Label htmlFor="price-todos" className="text-sm">Padrão</Label>
-          </div>
-        </RadioGroup>
-      </div>
-
-      {/* Botão Limpar Filtros */}
-      <Button variant="outline" className="w-full h-9" onClick={resetFilters} data-testid="button-clear-filters">
-        Limpar Filtros
-      </Button>
-    </div>
-  );
 
   const FreightCard = ({ freight }: { freight: FreightWithDestinations }) => {
     const clientFound = clients.find((client: Client) => client.id === freight.clientId);
@@ -561,7 +596,7 @@ ${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : '
           <h2 className="text-lg font-semibold">Filtros</h2>
           <Filter className="w-5 h-5 text-slate-500" />
         </div>
-        <FilterSidebar />
+        <FilterSidebar filters={filters} setFilters={setFilters} resetFilters={resetFilters} />
       </div>
 
       {/* Main Content */}
@@ -649,7 +684,7 @@ ${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : '
                 <X className="h-5 w-5" />
               </Button>
             </div>
-            <FilterSidebar />
+            <FilterSidebar filters={filters} setFilters={setFilters} resetFilters={resetFilters} />
           </div>
         </div>
       )}

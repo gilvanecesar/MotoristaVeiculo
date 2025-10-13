@@ -38,7 +38,10 @@ export function CitySearch({
 
   // Atualizar cidade selecionada quando o value mudar
   useEffect(() => {
-    if (value && !selectedCity) {
+    if (!value) {
+      // Limpar seleção quando o value for vazio (reset de filtros)
+      setSelectedCity(null);
+    } else if (value && !selectedCity) {
       // Se o valor já tem o formato "Cidade - Estado", usar diretamente
       if (value.includes(' - ')) {
         const [cityName, state] = value.split(' - ');
