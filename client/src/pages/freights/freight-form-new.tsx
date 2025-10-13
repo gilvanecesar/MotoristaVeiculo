@@ -88,8 +88,8 @@ interface FreightFormProps {
 export default function FreightForm({ isEditMode }: FreightFormProps) {
   const params = useParams();
   const [, navigate] = useLocation();
-  const [search] = useSearch();
-  const searchParams = new URLSearchParams(search);
+  const search = useSearch();
+  const searchParams = new URLSearchParams(search as string);
   const isEditing = Boolean(params.id);
   const freightId = params.id;
 
@@ -154,6 +154,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
     status: "",
     contactName: "",
     contactPhone: "",
+    hasMultipleDestinations: false,
   };
 
   const form = useForm<FreightFormValues>({
@@ -372,7 +373,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
     
     try {
       let response;
-      let freightResponse;
+      let freightResponse: any;
       
       if (isEditing) {
         // Atualiza um frete existente
@@ -414,7 +415,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
           );
         }
 
-        queryClient.invalidateQueries(["/api/freights"]);
+        queryClient.invalidateQueries({ queryKey: ["/api/freights"] });
 
         toast({
           title: isEditing ? "Frete atualizado" : "Frete criado",
@@ -993,11 +994,8 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                           <ToggleGroupItem value={TOLL_OPTIONS.INCLUSO}>
                             Incluso
                           </ToggleGroupItem>
-                          <ToggleGroupItem value={TOLL_OPTIONS.EMBARCADOR}>
-                            Pago pelo Embarcador
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value={TOLL_OPTIONS.TRANSPORTADOR}>
-                            Pago pelo Transportador
+                          <ToggleGroupItem value={TOLL_OPTIONS.A_PARTE}>
+                            À Parte
                           </ToggleGroupItem>
                         </ToggleGroup>
                       </FormControl>
@@ -1093,6 +1091,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                           placeholder="Observações adicionais sobre o frete..."
                           className="min-h-32"
                           {...field}
+                          value={field.value || ""}
                         />
                       </FormControl>
                       <FormMessage />
