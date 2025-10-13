@@ -91,7 +91,9 @@ Implemented automatic client record creation for companies during user registrat
 Implemented client logo display system for freight listings:
 - Created `getClientsByIds()` method for batch client lookups (optimized with SQL IN clause)
 - Modified freight listing API to fetch associated client logos when users have `clientId`
-- Logo resolution hierarchy: client logoUrl → user avatarUrl → truck icon fallback
+- Logo resolution hierarchy: client logoUrl → user avatarUrl → user initials → truck icon fallback
 - Frontend displays company logos from client records instead of generic truck icons
+- User initials displayed in colorful circles when no logo available (color generated from name hash for consistency)
+- Initials logic: first and last name initials, or first 2 characters if single word
 - Maintains efficient query performance with batch operations (only 3 queries: freights + users + clients)
 - Fully integrated with existing client upload functionality at `/clients`

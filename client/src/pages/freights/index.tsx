@@ -57,6 +57,37 @@ const isExpired = (expirationDate: string | Date | null | undefined): boolean =>
   return today > expDate;
 };
 
+// Função para obter as iniciais do nome
+const getInitials = (name: string): string => {
+  if (!name) return '?';
+  const words = name.trim().split(/\s+/);
+  if (words.length === 1) {
+    return words[0].substring(0, 2).toUpperCase();
+  }
+  return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+};
+
+// Função para gerar cor baseada no nome
+const getColorFromName = (name: string): string => {
+  const colors = [
+    'bg-blue-500',
+    'bg-green-500',
+    'bg-purple-500',
+    'bg-pink-500',
+    'bg-indigo-500',
+    'bg-orange-500',
+    'bg-teal-500',
+    'bg-cyan-500',
+  ];
+  
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  
+  return colors[Math.abs(hash) % colors.length];
+};
+
 const VEHICLE_LABELS: Record<string, string> = {
   'pesado_carreta': 'Carreta',
   'pesado_carreta_ls': 'Carreta LS',
@@ -499,7 +530,7 @@ ${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : '
           className="hidden md:flex items-center gap-4 p-4 cursor-pointer" 
           onClick={() => navigate(`/freights/${freight.id}`)}
         >
-          {/* Logo/Avatar do usuário ou ícone padrão */}
+          {/* Logo/Avatar do usuário ou iniciais */}
           <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded flex items-center justify-center flex-shrink-0 overflow-hidden">
             {freight.user?.avatarUrl ? (
               <img 
@@ -507,6 +538,13 @@ ${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : '
                 alt={freight.user.name}
                 className="w-full h-full object-cover"
               />
+            ) : freight.user?.name ? (
+              <div className={cn(
+                "w-full h-full flex items-center justify-center text-white font-semibold",
+                getColorFromName(freight.user.name)
+              )}>
+                {getInitials(freight.user.name)}
+              </div>
             ) : (
               <Truck className="w-6 h-6 text-primary" />
             )}
@@ -583,6 +621,13 @@ ${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : '
                     alt={freight.user.name}
                     className="w-full h-full object-cover"
                   />
+                ) : freight.user?.name ? (
+                  <div className={cn(
+                    "w-full h-full flex items-center justify-center text-white font-semibold",
+                    getColorFromName(freight.user.name)
+                  )}>
+                    {getInitials(freight.user.name)}
+                  </div>
                 ) : (
                   <Truck className="w-6 h-6 text-primary" />
                 )}
