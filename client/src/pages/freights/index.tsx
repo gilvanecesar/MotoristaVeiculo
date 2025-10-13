@@ -483,7 +483,10 @@ ${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : '
     return (
       <div className="border border-slate-200 dark:border-slate-700 rounded-lg hover:shadow-md transition-shadow bg-white dark:bg-slate-900 overflow-hidden">
         {/* Desktop Layout - Horizontal */}
-        <div className="hidden md:flex items-center gap-4 p-4">
+        <div 
+          className="hidden md:flex items-center gap-4 p-4 cursor-pointer" 
+          onClick={() => navigate(`/freights/${freight.id}`)}
+        >
           {/* Logo/Icon */}
           <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded flex items-center justify-center flex-shrink-0">
             <Truck className="w-6 h-6 text-primary" />
@@ -498,9 +501,8 @@ ${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : '
             </div>
             <div className="flex items-center gap-3 text-xs text-slate-500">
               <span>{freight.cargoType === 'completa' ? 'Carga Completa' : 'Complemento'}</span>
-              <span>{freight.distance ? `${freight.distance} km` : '0 km'}</span>
               <span>{formatMultipleVehicleTypes(freight)}</span>
-              <span>+ 1</span>
+              <span>{formatMultipleBodyTypes(freight)}</span>
             </div>
           </div>
 
@@ -510,52 +512,16 @@ ${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : '
             <p className="text-xs text-slate-500">Por {freight.paymentMethod}</p>
           </div>
 
-          {/* Actions */}
+          {/* Actions - WhatsApp apenas */}
           <div className="flex items-center gap-1 flex-shrink-0">
             <Button
               variant="ghost"
               size="icon"
               className="h-8 w-8"
-              onClick={() => navigate(`/freights/${freight.id}`)}
-              title="Visualizar"
-              data-testid={`button-view-${freight.id}`}
-            >
-              <Eye className="h-4 w-4" />
-            </Button>
-            
-            {canEdit && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => navigate(`/freights/${freight.id}/edit`)}
-                  title="Editar"
-                  data-testid={`button-edit-${freight.id}`}
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => {
-                    setSelectedFreight(freight);
-                    setDeleteDialogOpen(true);
-                  }}
-                  title="Excluir"
-                  data-testid={`button-delete-${freight.id}`}
-                >
-                  <Trash2 className="h-4 w-4 text-red-500" />
-                </Button>
-              </>
-            )}
-            
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => shareViaWhatsApp(freight)}
+              onClick={(e) => {
+                e.stopPropagation();
+                shareViaWhatsApp(freight);
+              }}
               title="Compartilhar via WhatsApp"
               data-testid={`button-share-${freight.id}`}
             >
@@ -566,7 +532,8 @@ ${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : '
               variant="ghost"
               size="icon"
               className="h-8 w-8"
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 if (freight.contactPhone) {
                   window.open(`https://wa.me/55${freight.contactPhone.replace(/\D/g, '')}`, '_blank');
                 }
@@ -581,7 +548,10 @@ ${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : '
         </div>
 
         {/* Mobile Layout - Vertical (mantém o design original) */}
-        <div className="block md:hidden p-4">
+        <div 
+          className="block md:hidden p-4 cursor-pointer"
+          onClick={() => navigate(`/freights/${freight.id}`)}
+        >
           {/* Header */}
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-3">
@@ -630,72 +600,36 @@ ${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : '
             </div>
           </div>
 
-          {/* Ações */}
-          <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-slate-700">
-            <div className="flex gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate(`/freights/${freight.id}`)}
-                title="Visualizar"
-                data-testid={`button-view-${freight.id}`}
-              >
-                <Eye className="h-4 w-4" />
-              </Button>
-              
-              {canEdit && (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => navigate(`/freights/${freight.id}/edit`)}
-                    title="Editar"
-                    data-testid={`button-edit-${freight.id}`}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      setSelectedFreight(freight);
-                      setDeleteDialogOpen(true);
-                    }}
-                    title="Excluir"
-                    data-testid={`button-delete-${freight.id}`}
-                  >
-                    <Trash2 className="h-4 w-4 text-red-500" />
-                  </Button>
-                </>
-              )}
-            </div>
+          {/* Ações - WhatsApp apenas */}
+          <div className="flex items-center justify-end gap-1 pt-3 border-t border-slate-200 dark:border-slate-700">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                shareViaWhatsApp(freight);
+              }}
+              title="Compartilhar via WhatsApp"
+              data-testid={`button-share-${freight.id}`}
+            >
+              <FaWhatsapp className="h-4 w-4 text-green-500" />
+            </Button>
             
-            <div className="flex gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => shareViaWhatsApp(freight)}
-                title="Compartilhar via WhatsApp"
-                data-testid={`button-share-${freight.id}`}
-              >
-                <FaWhatsapp className="h-4 w-4 text-green-500" />
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  if (freight.contactPhone) {
-                    window.open(`https://wa.me/55${freight.contactPhone.replace(/\D/g, '')}`, '_blank');
-                  }
-                }}
-                title="Contatar via WhatsApp"
-                disabled={!freight.contactPhone}
-                data-testid={`button-contact-${freight.id}`}
-              >
-                <PhoneCall className="h-4 w-4 text-green-500" />
-              </Button>
-            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (freight.contactPhone) {
+                  window.open(`https://wa.me/55${freight.contactPhone.replace(/\D/g, '')}`, '_blank');
+                }
+              }}
+              title="Contatar via WhatsApp"
+              disabled={!freight.contactPhone}
+              data-testid={`button-contact-${freight.id}`}
+            >
+              <PhoneCall className="h-4 w-4 text-green-500" />
+            </Button>
           </div>
         </div>
       </div>

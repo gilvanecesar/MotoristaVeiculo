@@ -13,19 +13,37 @@ import {
   Mail,
   Phone,
   Calendar,
-  TrendingUp,
-  Package
+  Package,
+  Pencil,
+  Trash2,
+  Power
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/use-auth";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { FreightWithDestinations } from "@shared/schema";
 import { formatCurrency } from "@/lib/utils/format";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useState } from "react";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Home() {
   const { user } = useAuth();
   const [_, setLocation] = useLocation();
+  const { toast } = useToast();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedFreight, setSelectedFreight] = useState<FreightWithDestinations | null>(null);
 
   // Buscar fretes do usuário
   const { data: freights = [] } = useQuery<FreightWithDestinations[]>({
@@ -41,11 +59,57 @@ export default function Home() {
     if (!f.expirationDate) return true;
     return new Date(f.expirationDate) > new Date();
   }).length;
-  
-  const expiredFreights = userFreights.filter(f => {
-    if (!f.expirationDate) return false;
-    return new Date(f.expirationDate) <= new Date();
-  }).length;
+
+  // Mutation para deletar frete
+  const deleteMutation = useMutation({
+    mutationFn: async (freightId: number) => {
+      return apiRequest('DELETE', `/api/freights/${freightId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/freights"] });
+      toast({
+        title: "Frete excluído",
+        description: "O frete foi excluído com sucesso.",
+      });
+      setDeleteDialogOpen(false);
+      setSelectedFreight(null);
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir o frete.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation para ativar/desativar frete (atualizar data de expiração)
+  const toggleActiveMutation = useMutation({
+    mutationFn: async ({ freightId, activate }: { freightId: number; activate: boolean }) => {
+      // Se ativar, adiciona 30 dias à data atual
+      const expirationDate = activate 
+        ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        : new Date().toISOString(); // Se desativar, define data como hoje (expirado)
+      
+      return apiRequest('PATCH', `/api/freights/${freightId}`, { expirationDate });
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/freights"] });
+      toast({
+        title: variables.activate ? "Frete ativado" : "Frete desativado",
+        description: variables.activate 
+          ? "O frete foi ativado por 30 dias." 
+          : "O frete foi desativado.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o frete.",
+        variant: "destructive",
+      });
+    },
+  });
 
   // Status da assinatura
   const hasActiveSubscription = user?.subscriptionActive;
@@ -56,6 +120,11 @@ export default function Home() {
   const daysUntilExpiry = subscriptionExpiry 
     ? Math.ceil((subscriptionExpiry.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
     : null;
+
+  const isFreightExpired = (freight: FreightWithDestinations) => {
+    if (!freight.expirationDate) return false;
+    return new Date(freight.expirationDate) <= new Date();
+  };
 
   return (
     <div className="space-y-6 p-6">
@@ -147,32 +216,81 @@ export default function Home() {
               </div>
             ) : (
               <>
-                {userFreights.slice(0, 5).map((freight) => (
-                  <div 
-                    key={freight.id} 
-                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                    onClick={() => setLocation(`/freights/${freight.id}`)}
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 text-sm font-medium">
-                        <span>{freight.origin}</span>
-                        <span className="text-slate-400">→</span>
-                        <span>{freight.destination}</span>
+                {userFreights.slice(0, 5).map((freight) => {
+                  const expired = isFreightExpired(freight);
+                  return (
+                    <div 
+                      key={freight.id} 
+                      className="border rounded-lg overflow-hidden"
+                    >
+                      <div 
+                        className="p-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                        onClick={() => setLocation(`/freights/${freight.id}`)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 text-sm font-medium">
+                              <span>{freight.origin}</span>
+                              <span className="text-slate-400">→</span>
+                              <span>{freight.destination}</span>
+                            </div>
+                            <p className="text-xs text-slate-500 mt-1">
+                              {freight.cargoType === 'completa' ? 'Carga Completa' : 'Complemento'}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold text-primary">{formatCurrency(freight.freightValue)}</p>
+                            {expired ? (
+                              <span className="text-xs text-red-500">Expirado</span>
+                            ) : (
+                              <span className="text-xs text-green-500">Ativo</span>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <p className="text-xs text-slate-500 mt-1">
-                        {freight.cargoType === 'completa' ? 'Carga Completa' : 'Complemento'}
-                      </p>
+                      
+                      {/* Ações */}
+                      <div className="flex items-center gap-2 p-2 border-t bg-slate-50 dark:bg-slate-800">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => setLocation(`/freights/${freight.id}/edit`)}
+                        >
+                          <Pencil className="h-3 w-3 mr-1" />
+                          Editar
+                        </Button>
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => toggleActiveMutation.mutate({ 
+                            freightId: freight.id, 
+                            activate: expired 
+                          })}
+                          disabled={toggleActiveMutation.isPending}
+                        >
+                          <Power className="h-3 w-3 mr-1" />
+                          {expired ? 'Ativar' : 'Desativar'}
+                        </Button>
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 text-red-500 hover:text-red-600 hover:bg-red-50"
+                          onClick={() => {
+                            setSelectedFreight(freight);
+                            setDeleteDialogOpen(true);
+                          }}
+                        >
+                          <Trash2 className="h-3 w-3 mr-1" />
+                          Apagar
+                        </Button>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-bold text-primary">{formatCurrency(freight.freightValue)}</p>
-                      {freight.expirationDate && new Date(freight.expirationDate) <= new Date() ? (
-                        <span className="text-xs text-red-500">Expirado</span>
-                      ) : (
-                        <span className="text-xs text-green-500">Ativo</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {userFreights.length > 5 && (
                   <Button 
                     variant="outline" 
@@ -336,6 +454,27 @@ export default function Home() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Dialog de Confirmação de Exclusão */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir este frete? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => selectedFreight && deleteMutation.mutate(selectedFreight.id)}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

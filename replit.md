@@ -46,3 +46,22 @@ The application is fully containerized using Docker, with a multi-stage Node.js 
 - **Analytics**: Google Analytics
 - **Validation**: ReceitaWS API (CNPJ validation)
 - **Mapping/Geocoding**: IBGE API (for city search/autocomplete)
+
+## Recent Updates
+
+### User Dashboard Panel (October 13, 2025)
+Created comprehensive user dashboard panel showing key metrics and information:
+- Performance metrics cards (total freights, views, interested drivers)
+- User freights section with last 5 posted freights
+- Subscription status display with expiration alerts
+- User data display (name, email, WhatsApp, account creation date)
+- Quick access links to main features
+
+### Freight Management Actions (October 13, 2025)
+Added action buttons in dashboard and made freight cards clickable:
+- Dashboard actions: Edit, Activate/Deactivate, and Delete buttons for each freight
+- Delete confirmation dialog
+- Toggle activation (adds/removes 30 days to expiration date)
+- Removed Edit, View, and Delete icon buttons from freight list
+- Made entire freight card clickable to view details
+- Kept only WhatsApp share and contact buttons in freight list
