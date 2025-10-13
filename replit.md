@@ -154,3 +154,21 @@ useEffect(() => {
 **Files Updated**:
 - `client/src/pages/freights/index.tsx` - Complete filter sidebar redesign with IBGE integration
 - `client/src/components/ui/city-search.tsx` - Fixed reset behavior
+
+### Freight Card Layout Redesign
+**Date**: October 13, 2025  
+**Change**: Redesigned freight cards with horizontal layout for desktop, maintaining vertical layout for mobile.
+
+**Desktop Layout Features**:
+- Compact horizontal card design with all info in one line
+- Logo/icon on the left (16x16)
+- Route information (Origin → Destination) prominently displayed
+- Freight details in a single line separated by bullets (cargo type, distance, vehicle, body type)
+- Price highlighted on the right side with payment method below
+- Action buttons aligned to the right (view, edit, delete, share, contact)
+- Status badge for expired freights at the top
+
+**Mobile Layout**: Maintains original vertical card design for better mobile UX
+
+**Files Updated**:
+- `client/src/pages/freights/index.tsx` - Implemented responsive card layout with separate desktop/mobile designs
