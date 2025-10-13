@@ -35,36 +35,26 @@ export default function SimpleLogin() {
 
     try {
       const response = await apiRequest("POST", "/api/login", data);
+      const userData = await response.json();
+      
+      toast({
+        title: "Login realizado com sucesso!",
+        description: `Bem-vindo de volta, ${userData.name || ""}`,
+      });
 
-      if (response.ok) {
-        const userData = await response.json();
-        
-        toast({
-          title: "Login realizado com sucesso!",
-          description: `Bem-vindo de volta, ${userData.name || ""}`,
-        });
-
-        // Redirecionar baseado no tipo de perfil
-        if (userData.profileType === "motorista") {
-          navigate("/dashboard-driver");
-        } else if (userData.profileType === "admin" || userData.profileType === "administrador") {
-          navigate("/admin");
-        } else {
-          navigate("/dashboard");
-        }
+      // Redirecionar baseado no tipo de perfil
+      if (userData.profileType === "motorista") {
+        navigate("/dashboard-driver");
+      } else if (userData.profileType === "admin" || userData.profileType === "administrador") {
+        navigate("/admin");
       } else {
-        const error = await response.json();
-        toast({
-          title: "Erro ao fazer login",
-          description: error.message || "Email ou senha incorretos",
-          variant: "destructive",
-        });
+        navigate("/dashboard");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro no login:", error);
       toast({
-        title: "Erro",
-        description: "Ocorreu um erro ao processar seu login",
+        title: "Erro ao fazer login",
+        description: error?.message || "Email ou senha incorretos",
         variant: "destructive",
       });
     } finally {
