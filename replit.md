@@ -65,3 +65,15 @@ Added action buttons in dashboard and made freight cards clickable:
 - Removed Edit, View, and Delete icon buttons from freight list
 - Made entire freight card clickable to view details
 - Kept only WhatsApp share and contact buttons in freight list
+
+### Freight Analytics & Tracking (October 13, 2025)
+Implemented comprehensive tracking system for freight views and interested drivers:
+- Added `views` and `interestedDrivers` columns to freights table
+- Created API endpoints to track freight views and driver interest
+- Automatic view tracking when users open freight details page
+- Interest tracking when users click WhatsApp contact buttons
+- Real-time metrics display in dashboard showing:
+  - Total views across all user freights
+  - Total interested drivers (WhatsApp clicks)
+  - Average metrics per freight
+- Tracking works on both public freight pages and freight listing pages

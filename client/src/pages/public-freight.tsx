@@ -39,8 +39,31 @@ export default function PublicFreight() {
   useEffect(() => {
     if (id) {
       fetchFreight(parseInt(id));
+      trackView(parseInt(id));
     }
   }, [id]);
+
+  const trackView = async (freightId: number) => {
+    try {
+      await fetch(`/api/freights/${freightId}/track-view`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch (err) {
+      console.error('Erro ao rastrear visualização:', err);
+    }
+  };
+
+  const trackInterest = async (freightId: number) => {
+    try {
+      await fetch(`/api/freights/${freightId}/track-interest`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch (err) {
+      console.error('Erro ao rastrear interesse:', err);
+    }
+  };
 
   const fetchFreight = async (freightId: number) => {
     try {
@@ -301,7 +324,10 @@ export default function PublicFreight() {
                 <Button 
                   size="lg"
                   className="bg-green-600 hover:bg-green-700 text-white"
-                  onClick={() => window.open(`https://wa.me/55${freight.contactPhone.replace(/\D/g, '')}`, '_blank')}
+                  onClick={() => {
+                    trackInterest(freight.id);
+                    window.open(`https://wa.me/55${freight.contactPhone.replace(/\D/g, '')}`, '_blank');
+                  }}
                 >
                   <FaWhatsapp className="h-5 w-5 mr-2" />
                   Entrar em Contato via WhatsApp

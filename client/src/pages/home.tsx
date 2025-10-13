@@ -68,6 +68,10 @@ export default function Home() {
     if (!f.expirationDate) return true;
     return new Date(f.expirationDate) > new Date();
   }).length;
+  
+  // Calcular totais de visualizações e motoristas interessados
+  const totalViews = userFreights.reduce((sum, f) => sum + (f.views || 0), 0);
+  const totalInterestedDrivers = userFreights.reduce((sum, f) => sum + (f.interestedDrivers || 0), 0);
 
   // Mutation para deletar múltiplos fretes
   const deleteMultipleMutation = useMutation({
@@ -208,14 +212,16 @@ export default function Home() {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-medium text-slate-500">
-                Visualização de frete
+                Visualizações
               </CardTitle>
               <Eye className="h-4 w-4 text-slate-400" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">-</div>
-            <p className="text-xs text-slate-500 mt-1">Em breve</p>
+            <div className="text-3xl font-bold">{totalViews}</div>
+            <p className="text-xs text-slate-500 mt-1">
+              {userFreights.length > 0 ? `Média de ${Math.round(totalViews / userFreights.length)} por frete` : 'Nenhum frete'}
+            </p>
           </CardContent>
         </Card>
 
@@ -230,8 +236,10 @@ export default function Home() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">-</div>
-            <p className="text-xs text-slate-500 mt-1">Em breve</p>
+            <div className="text-3xl font-bold">{totalInterestedDrivers}</div>
+            <p className="text-xs text-slate-500 mt-1">
+              {userFreights.length > 0 ? `Média de ${Math.round(totalInterestedDrivers / userFreights.length)} por frete` : 'Nenhum frete'}
+            </p>
           </CardContent>
         </Card>
       </div>

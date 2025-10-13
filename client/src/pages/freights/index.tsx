@@ -438,6 +438,17 @@ export default function FreightsPageNew() {
     }
   };
 
+  const trackInterest = async (freightId: number) => {
+    try {
+      await fetch(`/api/freights/${freightId}/track-interest`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch (err) {
+      console.error('Erro ao rastrear interesse:', err);
+    }
+  };
+
   const shareViaWhatsApp = (freight: FreightWithDestinations) => {
     const clientFound = clients.find((client: Client) => client.id === freight.clientId);
     const clientName = clientFound ? clientFound.name : "Cliente não encontrado";
@@ -535,6 +546,7 @@ ${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : '
               onClick={(e) => {
                 e.stopPropagation();
                 if (freight.contactPhone) {
+                  trackInterest(freight.id);
                   window.open(`https://wa.me/55${freight.contactPhone.replace(/\D/g, '')}`, '_blank');
                 }
               }}
@@ -621,6 +633,7 @@ ${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : '
               onClick={(e) => {
                 e.stopPropagation();
                 if (freight.contactPhone) {
+                  trackInterest(freight.id);
                   window.open(`https://wa.me/55${freight.contactPhone.replace(/\D/g, '')}`, '_blank');
                 }
               }}

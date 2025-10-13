@@ -1173,6 +1173,20 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
+  async incrementFreightViews(id: number): Promise<void> {
+    await db
+      .update(freights)
+      .set({ views: sql`${freights.views} + 1` })
+      .where(eq(freights.id, id));
+  }
+
+  async incrementInterestedDrivers(id: number): Promise<void> {
+    await db
+      .update(freights)
+      .set({ interestedDrivers: sql`${freights.interestedDrivers} + 1` })
+      .where(eq(freights.id, id));
+  }
+
   async getFreightsByUserId(userId: number): Promise<FreightWithDestinations[]> {
     const freightsData = await db.select().from(freights).where(eq(freights.userId, userId));
     

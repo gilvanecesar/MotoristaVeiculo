@@ -897,6 +897,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Rastrear visualização de frete
+  app.post("/api/freights/:id/track-view", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.incrementFreightViews(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error tracking freight view:", error);
+      res.status(500).json({ message: "Failed to track view" });
+    }
+  });
+
+  // Rastrear interesse de motorista (clique no WhatsApp)
+  app.post("/api/freights/:id/track-interest", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.incrementInterestedDrivers(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error tracking driver interest:", error);
+      res.status(500).json({ message: "Failed to track interest" });
+    }
+  });
+
   // Criar novo frete (rota principal com verificação de assinatura)
   app.post("/api/freights", isAuthenticated, canCreateFreight, async (req: Request, res: Response) => {
     try {

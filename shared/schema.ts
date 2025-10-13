@@ -219,6 +219,10 @@ export const freights = pgTable("freights", {
   // Data de expiração do frete (30 dias a partir da criação por padrão)
   expirationDate: timestamp("expiration_date"),
   
+  // Tracking de engajamento
+  views: integer("views").default(0).notNull(), // Contagem de visualizações
+  interestedDrivers: integer("interested_drivers").default(0).notNull(), // Contagem de cliques no WhatsApp
+  
   // Metadata
   createdAt: timestamp("created_at").defaultNow(),
 });
