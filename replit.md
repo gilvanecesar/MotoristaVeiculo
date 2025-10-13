@@ -86,3 +86,12 @@ Implemented automatic client record creation for companies during user registrat
 - Proper clientId linking to user record with session propagation
 - Client type automatically determined based on user profile type
 - Logs all client creation/linking activities for monitoring
+
+### Client Logo Display in Freight Listings (October 13, 2025)
+Implemented client logo display system for freight listings:
+- Created `getClientsByIds()` method for batch client lookups (optimized with SQL IN clause)
+- Modified freight listing API to fetch associated client logos when users have `clientId`
+- Logo resolution hierarchy: client logoUrl → user avatarUrl → truck icon fallback
+- Frontend displays company logos from client records instead of generic truck icons
+- Maintains efficient query performance with batch operations (only 3 queries: freights + users + clients)
+- Fully integrated with existing client upload functionality at `/clients`

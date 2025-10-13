@@ -903,15 +903,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const users = await storage.getUsersByIds(userIds);
       const userMap = new Map(users.map(u => [u.id, u]));
       
+      // Buscar clientes dos usuários que têm clientId (otimizado - uma única query)
+      const clientIds = [...new Set(users.map(u => u.clientId).filter(Boolean))] as number[];
+      const clients = clientIds.length > 0 ? await storage.getClientsByIds(clientIds) : [];
+      const clientMap = new Map(clients.map(c => [c.id, c]));
+      
       const freightsWithUser = freights.map(freight => {
         if (freight.userId && userMap.has(freight.userId)) {
           const user = userMap.get(freight.userId)!;
+          // Se o usuário tem cliente associado, buscar a logo do cliente
+          let logoUrl = user.avatarUrl;
+          if (user.clientId && clientMap.has(user.clientId)) {
+            const client = clientMap.get(user.clientId)!;
+            logoUrl = client.logoUrl || logoUrl;
+          }
           return {
             ...freight,
             user: {
               id: user.id,
               name: user.name,
-              avatarUrl: user.avatarUrl
+              avatarUrl: logoUrl // Usa logoUrl do cliente se disponível, senão avatarUrl do usuário
             }
           };
         }

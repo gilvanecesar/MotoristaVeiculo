@@ -134,6 +134,7 @@ export interface IStorage {
   // Client operations
   getClients(): Promise<Client[]>;
   getClient(id: number): Promise<Client | undefined>;
+  getClientsByIds(ids: number[]): Promise<Client[]>;
   createClient(client: InsertClient): Promise<Client>;
   updateClient(
     id: number,
@@ -780,6 +781,41 @@ export class MemStorage implements IStorage {
     return { id: Date.now(), ...ticket };
   }
 
+  // Client operations stubs (MemStorage não usa clientes, apenas DatabaseStorage)
+  async getClients(): Promise<Client[]> {
+    return Array.from(this.clientsData.values());
+  }
+
+  async getClient(id: number): Promise<Client | undefined> {
+    return this.clientsData.get(id);
+  }
+
+  async getClientsByIds(ids: number[]): Promise<Client[]> {
+    return ids.map(id => this.clientsData.get(id)).filter(Boolean) as Client[];
+  }
+
+  async createClient(client: InsertClient): Promise<Client> {
+    const newClient: Client = {
+      ...client,
+      id: this.clientCurrentId++,
+      createdAt: new Date(),
+    };
+    this.clientsData.set(newClient.id, newClient);
+    return newClient;
+  }
+
+  async updateClient(id: number, client: Partial<InsertClient>): Promise<Client | undefined> {
+    const existing = this.clientsData.get(id);
+    if (!existing) return undefined;
+    const updated = { ...existing, ...client };
+    this.clientsData.set(id, updated);
+    return updated;
+  }
+
+  async deleteClient(id: number): Promise<boolean> {
+    return this.clientsData.delete(id);
+  }
+
 }
 
 const PostgresSessionStore = connectPg(session);
@@ -1114,6 +1150,12 @@ export class DatabaseStorage implements IStorage {
   async getClient(id: number): Promise<Client | undefined> {
     const results = await db.select().from(clients).where(eq(clients.id, id));
     return results[0];
+  }
+
+  async getClientsByIds(ids: number[]): Promise<Client[]> {
+    if (ids.length === 0) return [];
+    const results = await db.select().from(clients).where(inArray(clients.id, ids));
+    return results;
   }
 
   async createClient(client: InsertClient): Promise<Client> {
