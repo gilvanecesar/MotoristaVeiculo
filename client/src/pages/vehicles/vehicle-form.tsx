@@ -61,6 +61,7 @@ export default function VehicleForm() {
   const [isLoadingVehicle, setIsLoadingVehicle] = useState(isEditing);
   const [drivers, setDrivers] = useState<any[]>([]);
   const [isLoadingDrivers, setIsLoadingDrivers] = useState(true);
+  const [hasInitializedVehicle, setHasInitializedVehicle] = useState(false);
 
   const form = useForm<VehicleFormValues>({
     resolver: zodResolver(vehicleFormSchema),
@@ -109,13 +110,14 @@ export default function VehicleForm() {
 
   // Carregar dados do veículo (se editando)
   const loadVehicle = async () => {
-    if (isEditing && vehicleId) {
+    if (isEditing && vehicleId && !hasInitializedVehicle) {
       setIsLoadingVehicle(true);
       try {
         const response = await apiRequest("GET", `/api/vehicles/${vehicleId}`);
         if (response.ok) {
           const vehicle = await response.json();
           form.reset(vehicle);
+          setHasInitializedVehicle(true);
         } else {
           toast({
             title: "Erro",
@@ -138,10 +140,13 @@ export default function VehicleForm() {
 
   useEffect(() => {
     loadDrivers();
-    if (isEditing) {
+  }, []);
+
+  useEffect(() => {
+    if (isEditing && !hasInitializedVehicle) {
       loadVehicle();
     }
-  }, [isEditing, vehicleId]);
+  }, [isEditing, vehicleId, hasInitializedVehicle]);
 
   const onSubmit = async (data: VehicleFormValues) => {
     try {
