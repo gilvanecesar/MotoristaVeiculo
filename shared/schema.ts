@@ -931,3 +931,21 @@ export const insertWebhookConfigSchema = createInsertSchema(webhookConfigs)
 // Tipos de configuração do webhook
 export type WebhookConfig = typeof webhookConfigs.$inferSelect;
 export type InsertWebhookConfig = z.infer<typeof insertWebhookConfigSchema>;
+
+// Tabela de códigos de verificação de telefone
+export const phoneVerificationCodes = pgTable("phone_verification_codes", {
+  id: serial("id").primaryKey(),
+  phone: text("phone").notNull(),
+  code: text("code").notNull(),
+  verified: boolean("verified").default(false),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Insert schema para códigos de verificação
+export const insertPhoneVerificationCodeSchema = createInsertSchema(phoneVerificationCodes)
+  .omit({ id: true, createdAt: true });
+
+// Tipos de código de verificação
+export type PhoneVerificationCode = typeof phoneVerificationCodes.$inferSelect;
+export type InsertPhoneVerificationCode = z.infer<typeof insertPhoneVerificationCodeSchema>;
