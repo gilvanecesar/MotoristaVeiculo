@@ -326,16 +326,16 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
     }
   }, [isEditing, freightId, hasInitializedFreight]);
 
-  // Atualiza o cliente atual quando muda o clientId no formulário
+  // Atualiza o cliente atual quando muda o clientId no formulário ou a lista de clientes
+  const clientId = form.watch("clientId");
   useEffect(() => {
-    const clientId = form.getValues("clientId");
-    if (clientId) {
+    if (clientId && clients.length > 0) {
       const selectedClient = clients.find(client => client.id === clientId);
       if (selectedClient) {
         setCurrentClient(selectedClient);
       }
     }
-  }, [clients]);
+  }, [clients, clientId]);
 
   const onSubmit = async (data: FreightFormValues) => {
     // Se for multidestinos e não tiver destinos adicionados, adiciona aviso
@@ -361,8 +361,10 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
       }
     }
 
-    // Define status inicial como aberto
-    data.status = "aberto";
+    // Define status inicial como aberto apenas para novos fretes
+    if (!isEditing) {
+      data.status = "aberto";
+    }
     
     // Define o tipo de veículo principal (primeiro da lista)
     if (selectedVehicleTypes.length > 0) {
@@ -527,14 +529,9 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
       ) : (
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Informações do Cliente e Status */}
             <Card>
-              <CardHeader>
-                <CardTitle>Informações Básicas</CardTitle>
-                <CardDescription>
-                  Dados essenciais para o cadastro do frete
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="pt-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -554,42 +551,45 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="status"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Status</FormLabel>
-                        <FormControl>
-                          <Select
-                            disabled={isViewingInReadOnlyMode || !isEditing}
-                            value={field.value || "aberto"}
-                            onValueChange={field.onChange}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione o status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="aberto">Aberto</SelectItem>
-                              <SelectItem value="em_transporte">
-                                Em Transporte
-                              </SelectItem>
-                              <SelectItem value="concluido">
-                                Concluído
-                              </SelectItem>
-                              <SelectItem value="cancelado">
-                                Cancelado
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  {isEditing && (
+                    <FormField
+                      control={form.control}
+                      name="status"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Status</FormLabel>
+                          <FormControl>
+                            <Select
+                              disabled={isViewingInReadOnlyMode}
+                              value={field.value || "aberto"}
+                              onValueChange={field.onChange}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione o status" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="aberto">Aberto</SelectItem>
+                                <SelectItem value="em_transporte">Em Transporte</SelectItem>
+                                <SelectItem value="concluido">Concluído</SelectItem>
+                                <SelectItem value="cancelado">Cancelado</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                 </div>
+              </CardContent>
+            </Card>
 
-                <Separator className="my-4" />
+            {/* Origem e Destino */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Origem e Destino</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
