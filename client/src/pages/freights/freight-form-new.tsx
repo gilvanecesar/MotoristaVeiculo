@@ -67,6 +67,10 @@ const freightSchema = insertFreightSchema.extend({
   vehicleCategory: z.string().optional(),
   vehicleTypesSelected: z.string().optional(),
   bodyTypesSelected: z.string().optional(),
+  // Novos campos de pagamento
+  valueType: z.enum(["known", "to_combine"]).optional(),
+  valueCalculation: z.string().optional(),
+  advancePayment: z.string().optional(),
   // Campo para multidestinos
   hasMultipleDestinations: z.boolean().optional().default(false),
 });
@@ -147,9 +151,12 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
     vehicleCategory: "", // Iniciando vazio - nenhuma categoria selecionada por padrão
     vehicleType: "", // Iniciando vazio - nenhum tipo selecionado por padrão
     bodyType: "", // Iniciando vazio - nenhum tipo de carroceria selecionado por padrão
+    valueType: "known", // Padrão: "Já sei o valor"
     freightValue: "", // Iniciando vazio para forçar o usuário a preencher
+    valueCalculation: "",
     tollOption: "",
     paymentMethod: "",
+    advancePayment: "",
     observations: "",
     status: "",
     contactName: "",
@@ -1035,81 +1042,213 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
 
             <Card>
               <CardHeader>
-                <CardTitle>Informações Financeiras</CardTitle>
-                <CardDescription>
-                  Detalhes sobre valores e formas de pagamento
-                </CardDescription>
+                <CardTitle>Dados de pagamento</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="freightValue"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Valor do Frete (R$)</FormLabel>
-                      <FormControl>
-                        <Input
-                          readOnly={isViewingInReadOnlyMode}
-                          placeholder="0,00"
-                          {...field}
-                          onChange={(e) => {
-                            handleFreightValueChange(e);
-                          }}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Informe o valor em reais (R$)
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <CardContent className="space-y-6">
+                {/* Mensagem informativa */}
+                <Alert className="bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800">
+                  <AlertDescription className="text-green-800 dark:text-green-200">
+                    Faça o pagamento via Conta Freteiras de motorista e garanta uma parceria eficiente e segura!
+                  </AlertDescription>
+                </Alert>
 
-                <FormField
-                  control={form.control}
-                  name="tollOption"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Opção de Pedágio</FormLabel>
-                      <FormControl>
-                        <ToggleGroup
+                {/* Informações de valor */}
+                <div>
+                  <FormLabel className="text-base mb-3 block">Informações de valor</FormLabel>
+                  <div className="flex gap-4">
+                    <FormField
+                      control={form.control}
+                      name="valueType"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center space-x-2">
+                          <FormControl>
+                            <input
+                              type="radio"
+                              id="value-known"
+                              disabled={isViewingInReadOnlyMode}
+                              checked={field.value === "known"}
+                              onChange={() => field.onChange("known")}
+                              className="w-4 h-4"
+                            />
+                          </FormControl>
+                          <label htmlFor="value-known" className="text-sm font-medium cursor-pointer">
+                            Já sei o valor
+                          </label>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="valueType"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center space-x-2">
+                          <FormControl>
+                            <input
+                              type="radio"
+                              id="value-combine"
+                              disabled={isViewingInReadOnlyMode}
+                              checked={field.value === "to_combine"}
+                              onChange={() => field.onChange("to_combine")}
+                              className="w-4 h-4"
+                            />
+                          </FormControl>
+                          <label htmlFor="value-combine" className="text-sm font-medium cursor-pointer">
+                            A combinar
+                          </label>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                {/* Pedágio */}
+                <div>
+                  <FormLabel className="text-base mb-3 block">Pedágio</FormLabel>
+                  <div className="flex gap-4">
+                    <FormField
+                      control={form.control}
+                      name="tollOption"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center space-x-2">
+                          <FormControl>
+                            <input
+                              type="radio"
+                              id="toll-included"
+                              disabled={isViewingInReadOnlyMode}
+                              checked={field.value === TOLL_OPTIONS.INCLUSO}
+                              onChange={() => field.onChange(TOLL_OPTIONS.INCLUSO)}
+                              className="w-4 h-4"
+                            />
+                          </FormControl>
+                          <label htmlFor="toll-included" className="text-sm font-medium cursor-pointer">
+                            Incluso no valor
+                          </label>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="tollOption"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center space-x-2">
+                          <FormControl>
+                            <input
+                              type="radio"
+                              id="toll-separate"
+                              disabled={isViewingInReadOnlyMode}
+                              checked={field.value === TOLL_OPTIONS.A_PARTE}
+                              onChange={() => field.onChange(TOLL_OPTIONS.A_PARTE)}
+                              className="w-4 h-4"
+                            />
+                          </FormControl>
+                          <label htmlFor="toll-separate" className="text-sm font-medium cursor-pointer">
+                            Pago à parte
+                          </label>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                {/* Campos de valores */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="freightValue"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Valor do frete</FormLabel>
+                        <FormControl>
+                          <Input
+                            readOnly={isViewingInReadOnlyMode}
+                            placeholder="R$ 0,00"
+                            {...field}
+                            onChange={(e) => {
+                              handleFreightValueChange(e);
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="valueCalculation"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Cálculo do valor</FormLabel>
+                        <Select 
                           disabled={isViewingInReadOnlyMode}
-                          type="single"
-                          value={field.value}
-                          onValueChange={(value) => {
-                            if (value) field.onChange(value);
-                          }}
+                          value={field.value || ""}
+                          onValueChange={field.onChange}
                         >
-                          <ToggleGroupItem value={TOLL_OPTIONS.INCLUSO}>
-                            Incluso
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value={TOLL_OPTIONS.A_PARTE}>
-                            À Parte
-                          </ToggleGroupItem>
-                        </ToggleGroup>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione..." />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="por_km">Por quilômetro</SelectItem>
+                            <SelectItem value="por_tonelada">Por tonelada</SelectItem>
+                            <SelectItem value="tabela_frete">Tabela de frete</SelectItem>
+                            <SelectItem value="negociado">Negociado</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="paymentMethod"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Forma de Pagamento</FormLabel>
-                      <FormControl>
-                        <Input
-                          readOnly={isViewingInReadOnlyMode}
-                          placeholder="Ex: À vista, 28 dias, 50% adiantado..."
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={form.control}
+                    name="paymentMethod"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Forma de pagamento (opcional)</FormLabel>
+                        <Select 
+                          disabled={isViewingInReadOnlyMode}
+                          value={field.value || ""}
+                          onValueChange={field.onChange}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione..." />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="a_vista">À vista</SelectItem>
+                            <SelectItem value="7_dias">7 dias</SelectItem>
+                            <SelectItem value="14_dias">14 dias</SelectItem>
+                            <SelectItem value="28_dias">28 dias</SelectItem>
+                            <SelectItem value="30_dias">30 dias</SelectItem>
+                            <SelectItem value="pix">PIX</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="advancePayment"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Adiantamento (opcional)</FormLabel>
+                        <FormControl>
+                          <Input
+                            readOnly={isViewingInReadOnlyMode}
+                            placeholder="Ex: 50%"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </CardContent>
             </Card>
 

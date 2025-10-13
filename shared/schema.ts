@@ -203,9 +203,12 @@ export const freights = pgTable("freights", {
   vehicleTypesSelected: text("vehicle_types_selected"), // Lista de tipos de veículos selecionados (separados por vírgula)
   bodyType: text("body_type").notNull(),
   bodyTypesSelected: text("body_types_selected"), // Lista de tipos de carrocerias selecionados (separados por vírgula)
+  valueType: text("value_type"), // "known" (já sei o valor) ou "to_combine" (a combinar)
   freightValue: decimal("freight_value", { precision: 10, scale: 2 }).default('0').notNull(),
+  valueCalculation: text("value_calculation"), // Como o valor foi calculado (opcional)
   tollOption: text("toll_option").notNull(), // incluso ou a parte
-  paymentMethod: text("payment_method").notNull(),
+  paymentMethod: text("payment_method"), // Forma de pagamento (opcional)
+  advancePayment: text("advance_payment"), // Adiantamento (opcional)
   observations: text("observations"),
   status: text("status").default("aberto").notNull(), // aberto, em andamento, concluído, cancelado
   
@@ -378,7 +381,11 @@ export const freightValidator = insertFreightSchema.extend({
   clientId: z.coerce.number().positive().nullable().default(null),
   cargoType: z.enum([CARGO_TYPES.COMPLETA, CARGO_TYPES.COMPLEMENTO]),
   needsTarp: z.enum([TARP_OPTIONS.SIM, TARP_OPTIONS.NAO]),
+  valueType: z.enum(["known", "to_combine"]).optional(),
+  valueCalculation: z.string().optional().or(z.literal('')),
   tollOption: z.enum([TOLL_OPTIONS.INCLUSO, TOLL_OPTIONS.A_PARTE]),
+  paymentMethod: z.string().optional().or(z.literal('')),
+  advancePayment: z.string().optional().or(z.literal('')),
   observations: z.string().max(500).optional().or(z.literal('')),
   cargoWeight: z.string().default("0"),
   freightValue: z.string().default("0"),
