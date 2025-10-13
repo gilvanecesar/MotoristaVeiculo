@@ -90,9 +90,12 @@ export default function DriverForm() {
     enabled: !!isEditing && !!driverId,
   });
 
+  // Estado de controle para evitar loops infinitos
+  const [hasInitializedDriver, setHasInitializedDriver] = useState(false);
+
   // Load driver data into form when available
   useEffect(() => {
-    if (driver && !isLoading) {
+    if (driver && !isLoading && !hasInitializedDriver) {
       // Format dates for form inputs
       const formatDate = (date: string) => {
         return new Date(date).toISOString().split('T')[0];
@@ -126,8 +129,9 @@ export default function DriverForm() {
       
       // Reset form with driver data
       form.reset(formattedDriver);
+      setHasInitializedDriver(true);
     }
-  }, [driver, isLoading, form]);
+  }, [driver, isLoading, hasInitializedDriver]);
 
   // Create driver mutation
   const createDriver = useMutation({
