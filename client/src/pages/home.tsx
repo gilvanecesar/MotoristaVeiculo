@@ -17,7 +17,8 @@ import {
   Pencil,
   Trash2,
   Power,
-  MoreHorizontal
+  MoreHorizontal,
+  X
 } from "lucide-react";
 import {
   AlertDialog,
@@ -51,7 +52,6 @@ export default function Home() {
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedFreight, setSelectedFreight] = useState<FreightWithDestinations | null>(null);
   const [selectedFreights, setSelectedFreights] = useState<number[]>([]);
 
   // Buscar fretes do usuário
@@ -69,52 +69,54 @@ export default function Home() {
     return new Date(f.expirationDate) > new Date();
   }).length;
 
-  // Mutation para deletar frete
-  const deleteMutation = useMutation({
-    mutationFn: async (freightId: number) => {
-      return apiRequest('DELETE', `/api/freights/${freightId}`);
+  // Mutation para deletar múltiplos fretes
+  const deleteMultipleMutation = useMutation({
+    mutationFn: async (freightIds: number[]) => {
+      await Promise.all(
+        freightIds.map(id => apiRequest('DELETE', `/api/freights/${id}`))
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/freights"] });
       toast({
-        title: "Frete excluído",
-        description: "O frete foi excluído com sucesso.",
+        title: "Fretes excluídos",
+        description: `${selectedFreights.length} ${selectedFreights.length === 1 ? 'frete excluído' : 'fretes excluídos'} com sucesso.`,
       });
       setDeleteDialogOpen(false);
-      setSelectedFreight(null);
+      setSelectedFreights([]);
     },
     onError: () => {
       toast({
         title: "Erro",
-        description: "Não foi possível excluir o frete.",
+        description: "Não foi possível excluir os fretes.",
         variant: "destructive",
       });
     },
   });
 
-  // Mutation para ativar/desativar frete (atualizar data de expiração)
-  const toggleActiveMutation = useMutation({
-    mutationFn: async ({ freightId, activate }: { freightId: number; activate: boolean }) => {
-      // Se ativar, adiciona 30 dias à data atual
+  // Mutation para ativar/desativar múltiplos fretes
+  const toggleMultipleMutation = useMutation({
+    mutationFn: async ({ freightIds, activate }: { freightIds: number[]; activate: boolean }) => {
       const expirationDate = activate 
         ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-        : new Date().toISOString(); // Se desativar, define data como hoje (expirado)
+        : new Date().toISOString();
       
-      return apiRequest('PATCH', `/api/freights/${freightId}`, { expirationDate });
+      await Promise.all(
+        freightIds.map(id => apiRequest('PATCH', `/api/freights/${id}`, { expirationDate }))
+      );
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/freights"] });
       toast({
-        title: variables.activate ? "Frete ativado" : "Frete desativado",
-        description: variables.activate 
-          ? "O frete foi ativado por 30 dias." 
-          : "O frete foi desativado.",
+        title: variables.activate ? "Fretes ativados" : "Fretes desativados",
+        description: `${selectedFreights.length} ${selectedFreights.length === 1 ? 'frete' : 'fretes'} ${variables.activate ? 'ativado(s)' : 'desativado(s)'}.`,
       });
+      setSelectedFreights([]);
     },
     onError: () => {
       toast({
         title: "Erro",
-        description: "Não foi possível atualizar o frete.",
+        description: "Não foi possível atualizar os fretes.",
         variant: "destructive",
       });
     },
@@ -148,6 +150,24 @@ export default function Home() {
       setSelectedFreights([]);
     } else {
       setSelectedFreights(userFreights.map(f => f.id));
+    }
+  };
+
+  // Verificar se todos os fretes selecionados estão expirados ou ativos
+  const allSelectedExpired = selectedFreights.every(id => {
+    const freight = userFreights.find(f => f.id === id);
+    return freight && isFreightExpired(freight);
+  });
+
+  const handleBulkEdit = () => {
+    if (selectedFreights.length === 1) {
+      setLocation(`/freights/${selectedFreights[0]}/edit`);
+    } else {
+      toast({
+        title: "Seleção múltipla",
+        description: "Selecione apenas um frete para editar.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -232,15 +252,6 @@ export default function Home() {
                     : 'Nenhum frete ativo'}
                 </CardDescription>
               </div>
-              {userFreights.length > 0 && (
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    checked={selectedFreights.length === userFreights.length && userFreights.length > 0}
-                    onCheckedChange={toggleSelectAll}
-                  />
-                  <span className="text-sm text-slate-500">Selecionar todos</span>
-                </div>
-              )}
             </div>
           </CardHeader>
           <CardContent>
@@ -253,116 +264,167 @@ export default function Home() {
                 </Button>
               </div>
             ) : (
-              <div className="space-y-2">
-                {userFreights.slice(0, 5).map((freight) => {
-                  const expired = isFreightExpired(freight);
-                  const isSelected = selectedFreights.includes(freight.id);
-                  
-                  return (
-                    <div 
-                      key={freight.id} 
-                      className={`
-                        flex items-center gap-4 p-3 border rounded-lg transition-colors
-                        ${isSelected ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}
-                      `}
-                    >
-                      {/* Checkbox */}
-                      <Checkbox
-                        checked={isSelected}
-                        onCheckedChange={() => toggleSelectFreight(freight.id)}
-                      />
+              <>
+                {/* Menu de ações em massa */}
+                {selectedFreights.length > 0 && (
+                  <div className="mb-4 flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <Checkbox
+                      checked={selectedFreights.length === userFreights.length}
+                      onCheckedChange={toggleSelectAll}
+                    />
+                    <span className="text-sm font-medium">
+                      {selectedFreights.length} selecionado{selectedFreights.length > 1 ? 's' : ''}
+                    </span>
+                    <div className="flex items-center gap-1 ml-auto">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleMultipleMutation.mutate({ 
+                          freightIds: selectedFreights, 
+                          activate: allSelectedExpired 
+                        })}
+                        disabled={toggleMultipleMutation.isPending}
+                      >
+                        <Power className="h-4 w-4 mr-1" />
+                        {allSelectedExpired ? 'Ativar' : 'Desativar'}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleBulkEdit}
+                      >
+                        <Pencil className="h-4 w-4 mr-1" />
+                        Editar
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setDeleteDialogOpen(true)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Excluir
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedFreights([])}
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        Limpar seleção
+                      </Button>
+                    </div>
+                  </div>
+                )}
 
-                      {/* Informações do Frete */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="font-medium text-sm">Frete Prev</p>
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${
+                <div className="space-y-2">
+                  {userFreights.slice(0, 5).map((freight) => {
+                    const expired = isFreightExpired(freight);
+                    const isSelected = selectedFreights.includes(freight.id);
+                    
+                    return (
+                      <div 
+                        key={freight.id} 
+                        className={`
+                          flex items-center gap-4 p-3 border rounded-lg transition-colors
+                          ${isSelected ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}
+                        `}
+                      >
+                        {/* Checkbox */}
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={() => toggleSelectFreight(freight.id)}
+                        />
+
+                        {/* Origem */}
+                        <div className="min-w-[140px]">
+                          <p className="text-xs text-slate-500">Origem</p>
+                          <p className="text-sm font-medium">{freight.origin}, {freight.originState}</p>
+                        </div>
+
+                        {/* Destino */}
+                        <div className="flex-1 min-w-[140px]">
+                          <p className="text-xs text-slate-500">Destino</p>
+                          <p className="text-sm font-medium">{freight.destination}, {freight.destinationState}</p>
+                        </div>
+
+                        {/* Tipo de Carga */}
+                        <div className="hidden lg:block min-w-[100px]">
+                          <p className="text-xs text-slate-500">Tipo</p>
+                          <p className="text-sm font-medium">
+                            {freight.cargoType === 'completa' ? 'Completa' : 'Complemento'}
+                          </p>
+                        </div>
+
+                        {/* Status */}
+                        <div className="hidden md:block">
+                          <span className={`text-xs px-2 py-1 rounded-full ${
                             expired 
                               ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' 
                               : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                           }`}>
-                            {expired ? 'Expirado' : 'Alta negociação'}
+                            {expired ? 'Expirado' : 'Ativo'}
                           </span>
                         </div>
-                      </div>
 
-                      {/* Origem */}
-                      <div className="hidden md:block min-w-[140px]">
-                        <p className="text-xs text-slate-500">Origem</p>
-                        <p className="text-sm font-medium">{freight.origin}, {freight.originState}</p>
-                      </div>
+                        {/* Valor */}
+                        <div className="text-right min-w-[110px]">
+                          <p className="text-lg font-bold text-primary">{formatCurrency(freight.freightValue)}</p>
+                          <p className="text-xs text-slate-500">{freight.paymentMethod}</p>
+                        </div>
 
-                      {/* Destino */}
-                      <div className="hidden md:block min-w-[140px]">
-                        <p className="text-xs text-slate-500">Destino</p>
-                        <p className="text-sm font-medium">{freight.destination}, {freight.destinationState}</p>
+                        {/* Menu de Ações */}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => setLocation(`/freights/${freight.id}`)}>
+                              <Eye className="h-4 w-4 mr-2" />
+                              Visualizar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setLocation(`/freights/${freight.id}/edit`)}>
+                              <Pencil className="h-4 w-4 mr-2" />
+                              Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => toggleMultipleMutation.mutate({ 
+                                freightIds: [freight.id], 
+                                activate: expired 
+                              })}
+                            >
+                              <Power className="h-4 w-4 mr-2" />
+                              {expired ? 'Ativar' : 'Desativar'}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => {
+                                setSelectedFreights([freight.id]);
+                                setDeleteDialogOpen(true);
+                              }}
+                              className="text-red-600 dark:text-red-400"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Apagar
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
-
-                      {/* Tipo de Carga */}
-                      <div className="hidden lg:block min-w-[100px]">
-                        <p className="text-xs text-slate-500">Tipo</p>
-                        <p className="text-sm font-medium">
-                          {freight.cargoType === 'completa' ? 'Completa' : 'Complemento'}
-                        </p>
-                      </div>
-
-                      {/* Valor */}
-                      <div className="text-right min-w-[100px]">
-                        <p className="text-lg font-bold text-primary">{formatCurrency(freight.freightValue)}</p>
-                        <p className="text-xs text-slate-500">Por {freight.paymentMethod}</p>
-                      </div>
-
-                      {/* Menu de Ações */}
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setLocation(`/freights/${freight.id}`)}>
-                            <Eye className="h-4 w-4 mr-2" />
-                            Visualizar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setLocation(`/freights/${freight.id}/edit`)}>
-                            <Pencil className="h-4 w-4 mr-2" />
-                            Editar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            onClick={() => toggleActiveMutation.mutate({ 
-                              freightId: freight.id, 
-                              activate: expired 
-                            })}
-                          >
-                            <Power className="h-4 w-4 mr-2" />
-                            {expired ? 'Ativar' : 'Desativar'}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            onClick={() => {
-                              setSelectedFreight(freight);
-                              setDeleteDialogOpen(true);
-                            }}
-                            className="text-red-600 dark:text-red-400"
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Apagar
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  );
-                })}
-                
-                {userFreights.length > 5 && (
-                  <Button 
-                    variant="outline" 
-                    className="w-full mt-4"
-                    onClick={() => setLocation("/freights")}
-                  >
-                    Ver todos os fretes ({userFreights.length})
-                  </Button>
-                )}
-              </div>
+                    );
+                  })}
+                  
+                  {userFreights.length > 5 && (
+                    <Button 
+                      variant="outline" 
+                      className="w-full mt-4"
+                      onClick={() => setLocation("/freights")}
+                    >
+                      Ver todos os fretes ({userFreights.length})
+                    </Button>
+                  )}
+                </div>
+              </>
             )}
           </CardContent>
         </Card>
@@ -523,13 +585,13 @@ export default function Home() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir este frete? Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir {selectedFreights.length === 1 ? 'este frete' : `estes ${selectedFreights.length} fretes`}? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setSelectedFreights([])}>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => selectedFreight && deleteMutation.mutate(selectedFreight.id)}
+              onClick={() => deleteMultipleMutation.mutate(selectedFreights)}
               className="bg-red-500 hover:bg-red-600"
             >
               Excluir
