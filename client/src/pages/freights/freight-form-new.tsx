@@ -132,6 +132,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
   const [destinations, setDestinations] = useState<DestinationFormValues[]>([]);
   const [selectedVehicleTypes, setSelectedVehicleTypes] = useState<string[]>([]);
   const [selectedBodyTypes, setSelectedBodyTypes] = useState<string[]>([]);
+  const [hasInitializedFreight, setHasInitializedFreight] = useState(false);
 
   const defaultValues: FreightFormValues = {
     clientId: user?.clientId || currentClient?.id || undefined, // Usar ID do cliente do usuário ou cliente atual
@@ -187,7 +188,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
 
   // Função para carregar os dados de um frete existente (no modo de edição)
   const loadFreight = async () => {
-    if (isEditing && freightId) {
+    if (isEditing && freightId && !hasInitializedFreight) {
       setIsLoadingFreight(true);
       try {
         const response = await apiRequest("GET", `/api/freights/${freightId}`);
@@ -259,6 +260,8 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
               bodyTypesArray = [freight.bodyType];
             }
             setSelectedBodyTypes(bodyTypesArray);
+            
+            setHasInitializedFreight(true);
         } else {
           toast({
             title: "Erro",
@@ -304,11 +307,13 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
   // Carregar clientes e dados do frete ao montar o componente
   useEffect(() => {
     loadClients();
-    
-    if (isEditing) {
+  }, []);
+
+  useEffect(() => {
+    if (isEditing && !hasInitializedFreight) {
       loadFreight();
     }
-  }, [isEditing, freightId]);
+  }, [isEditing, freightId, hasInitializedFreight]);
 
   // Atualiza o cliente atual quando muda o clientId no formulário
   useEffect(() => {
@@ -319,7 +324,7 @@ export default function FreightForm({ isEditMode }: FreightFormProps) {
         setCurrentClient(selectedClient);
       }
     }
-  }, [clients, form]);
+  }, [clients]);
 
   const onSubmit = async (data: FreightFormValues) => {
     // Se for multidestinos e não tiver destinos adicionados, adiciona aviso

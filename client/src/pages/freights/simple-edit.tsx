@@ -27,6 +27,7 @@ export default function SimpleFreightEdit() {
   const [isLoading, setIsLoading] = useState(true);
   const [hasMultipleDestinations, setHasMultipleDestinations] = useState(false);
   const [destinations, setDestinations] = useState<any[]>([]);
+  const [hasInitializedFreight, setHasInitializedFreight] = useState(false);
 
   // Configurar formulário com Zod
   const form = useForm({
@@ -63,7 +64,7 @@ export default function SimpleFreightEdit() {
   // Carregar dados do frete
   useEffect(() => {
     async function loadFreight() {
-      if (!freightId) return;
+      if (!freightId || hasInitializedFreight) return;
       
       try {
         const response = await apiRequest("GET", `/api/freights/${freightId}`);
@@ -92,6 +93,7 @@ export default function SimpleFreightEdit() {
         }
         
         setIsLoading(false);
+        setHasInitializedFreight(true);
       } catch (error) {
         console.error("Erro ao carregar frete:", error);
         toast({
@@ -104,7 +106,7 @@ export default function SimpleFreightEdit() {
     }
     
     loadFreight();
-  }, [freightId, form, navigate]);
+  }, [freightId, hasInitializedFreight, navigate]);
 
   // Função para adicionar um novo destino
   const addDestination = () => {
