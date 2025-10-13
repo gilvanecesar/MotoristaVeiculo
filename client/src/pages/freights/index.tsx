@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   FreightWithDestinations,
+  FreightWithUser,
   Client,
   VEHICLE_TYPES,
   BODY_TYPES
@@ -295,7 +296,7 @@ export default function FreightsPageNew() {
     status: "ativo"
   });
 
-  const { data: freights = [], isLoading } = useQuery<FreightWithDestinations[]>({
+  const { data: freights = [], isLoading } = useQuery<FreightWithUser[]>({
     queryKey: ["/api/freights"],
     refetchOnWindowFocus: false,
   });
@@ -498,9 +499,17 @@ ${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : '
           className="hidden md:flex items-center gap-4 p-4 cursor-pointer" 
           onClick={() => navigate(`/freights/${freight.id}`)}
         >
-          {/* Logo/Icon */}
-          <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded flex items-center justify-center flex-shrink-0">
-            <Truck className="w-6 h-6 text-primary" />
+          {/* Logo/Avatar do usuário ou ícone padrão */}
+          <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded flex items-center justify-center flex-shrink-0 overflow-hidden">
+            {freight.user?.avatarUrl ? (
+              <img 
+                src={freight.user.avatarUrl} 
+                alt={freight.user.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <Truck className="w-6 h-6 text-primary" />
+            )}
           </div>
 
           {/* Route and Details */}
@@ -567,8 +576,16 @@ ${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : '
           {/* Header */}
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center">
-                <Truck className="w-6 h-6 text-primary" />
+              <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center overflow-hidden">
+                {freight.user?.avatarUrl ? (
+                  <img 
+                    src={freight.user.avatarUrl} 
+                    alt={freight.user.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <Truck className="w-6 h-6 text-primary" />
+                )}
               </div>
               <div>
                 <h3 className="font-semibold text-sm">{clientFound?.name || "Cliente não encontrado"}</h3>

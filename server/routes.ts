@@ -898,7 +898,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
       }
       
-      res.json(freights);
+      // Incluir dados do usuário que criou cada frete (otimizado - uma única query)
+      const userIds = [...new Set(freights.map(f => f.userId).filter(Boolean))] as number[];
+      const users = await storage.getUsersByIds(userIds);
+      const userMap = new Map(users.map(u => [u.id, u]));
+      
+      const freightsWithUser = freights.map(freight => {
+        if (freight.userId && userMap.has(freight.userId)) {
+          const user = userMap.get(freight.userId)!;
+          return {
+            ...freight,
+            user: {
+              id: user.id,
+              name: user.name,
+              avatarUrl: user.avatarUrl
+            }
+          };
+        }
+        return freight;
+      });
+      
+      res.json(freightsWithUser);
     } catch (error) {
       console.error("Error fetching freights:", error);
       res.status(500).json({ message: "Failed to fetch freights" });

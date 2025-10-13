@@ -50,7 +50,7 @@ import {
 } from "@shared/schema";
 
 import { db, pool } from "./db";
-import { and, eq, ilike, or, sql, desc } from "drizzle-orm";
+import { and, eq, ilike, or, sql, desc, inArray } from "drizzle-orm";
 import crypto from "crypto";
 import session from "express-session";
 import { Store as SessionStore } from "express-session";
@@ -86,6 +86,7 @@ export interface IStorage {
   // User operations
   getUsers(): Promise<User[]>;
   getUserById(id: number): Promise<User | undefined>;
+  getUsersByIds(ids: number[]): Promise<User[]>;
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserByCpf(cpf: string): Promise<User | undefined>;
   getUserByCnpj(cnpj: string): Promise<User | undefined>;
@@ -288,6 +289,10 @@ export class MemStorage implements IStorage {
 
   async getUserById(id: number): Promise<User | undefined> {
     return this.usersData.get(id);
+  }
+
+  async getUsersByIds(ids: number[]): Promise<User[]> {
+    return ids.map(id => this.usersData.get(id)).filter(Boolean) as User[];
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
@@ -834,6 +839,12 @@ export class DatabaseStorage implements IStorage {
   async getUserById(id: number): Promise<User | undefined> {
     const results = await db.select().from(users).where(eq(users.id, id));
     return results[0];
+  }
+
+  async getUsersByIds(ids: number[]): Promise<User[]> {
+    if (ids.length === 0) return [];
+    const results = await db.select().from(users).where(inArray(users.id, ids));
+    return results;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
