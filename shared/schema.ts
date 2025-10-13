@@ -734,6 +734,14 @@ export type PlanType = typeof PLAN_TYPES[keyof typeof PLAN_TYPES];
 // Tipos para relacionamentos
 export type DriverWithVehicles = Driver & { vehicles: Vehicle[] };
 export type FreightWithDestinations = Freight & { destinations?: FreightDestination[] };
+export type FreightWithUser = Freight & { 
+  destinations?: FreightDestination[];
+  user?: {
+    id: number;
+    name: string;
+    avatarUrl: string | null;
+  };
+};
 export type ClientWithSubscriptions = Client & { subscriptions?: Subscription[] };
 export type SubscriptionWithInvoices = Subscription & { invoices?: Invoice[] };
 export type InvoiceWithPayments = Invoice & { payments?: Payment[] };
