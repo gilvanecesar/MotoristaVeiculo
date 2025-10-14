@@ -486,34 +486,33 @@ export default function FreightsPageNew() {
     const clientName = clientFound ? clientFound.name : "Cliente não encontrado";
     const freightUrl = `${window.location.origin}/freights/${freight.id}`;
     
-    let destinosText = `🏁 *Destino:* ${freight.destination}, ${freight.destinationState}`;
+    let destinosText = `🏁 Destino: ${freight.destination}, ${freight.destinationState}`;
     if (freight.destination1) {
-      destinosText += `\n🏁 *Destino 2:* ${freight.destination1}, ${freight.destinationState1}`;
+      destinosText += `\n🏁 Destino 2: ${freight.destination1}, ${freight.destinationState1}`;
     }
     if (freight.destination2) {
-      destinosText += `\n🏁 *Destino 3:* ${freight.destination2}, ${freight.destinationState2}`;
+      destinosText += `\n🏁 Destino 3: ${freight.destination2}, ${freight.destinationState2}`;
     }
     
-    const message = encodeURIComponent(`
-🚛 *FRETE DISPONÍVEL* 🚛
+    const message = encodeURIComponent(`🚛 FRETE DISPONÍVEL 🚛
 
-🏢 *${clientName}*
-📍 *Origem:* ${freight.origin}, ${freight.originState}
+🔗 Link do frete: ${freightUrl}
+
+🏢 ${clientName}
+📍 Origem: ${freight.origin}, ${freight.originState}
 ${destinosText}
-🚚 *Categoria:* ${getVehicleCategory(freight.vehicleType)}
-🚚 *Veículo:* ${formatMultipleVehicleTypes(freight)}
-🚐 *Carroceria:* ${formatMultipleBodyTypes(freight)}
-📦 *Tipo de Carga:* ${freight.cargoType === 'completa' ? 'Completa' : 'Complemento'}
-⚖️ *Peso:* ${freight.cargoWeight} Kg
-💰 *Pagamento:* ${freight.paymentMethod}
-💵 *Valor:* ${formatCurrency(freight.freightValue)}
 
-👤 *Contato:* ${freight.contactName}
-📞 *Telefone:* ${freight.contactPhone}
-${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : ''}
-🌐 *Sistema QUERO FRETES:* https://querofretes.com.br
-🔗 *Link do frete:* ${freightUrl}
-`);
+🚚 Veículo: ${formatMultipleVehicleTypes(freight)}
+🚐 Carroceria: ${formatMultipleBodyTypes(freight)}
+
+⚖️ Peso: ${freight.cargoWeight} Kg
+
+💵 Valor: ${formatCurrency(freight.freightValue)}
+
+👤 Contato: ${freight.contactName}
+📞 Telefone: ${freight.contactPhone}
+${freight.observations ? `📝 Observações: ${freight.observations}\n` : ''}
+🌐 Sistema QUERO FRETES: https://querofretes.com.br`);
     
     window.open(`https://wa.me/?text=${message}`, '_blank');
   };
