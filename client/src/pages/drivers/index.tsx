@@ -55,7 +55,7 @@ export default function DriversPage() {
     return false;
   };
 
-  const { data: drivers = [], isLoading } = useQuery<DriverWithVehicles[]>({
+  const { data: driversData = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/drivers", searchQuery],
     queryFn: async () => {
       const url = searchQuery 
@@ -64,6 +64,48 @@ export default function DriversPage() {
       const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to fetch drivers');
       return res.json();
+    }
+  });
+
+  // Transformar dados para o formato que o componente espera
+  const drivers: DriverWithVehicles[] = driversData.map(motorista => {
+    if (motorista.hasCompleteProfile && motorista.driverData) {
+      // Motorista com cadastro completo
+      return {
+        ...motorista.driverData,
+        vehicles: motorista.vehicles || [],
+        hasCompleteProfile: true
+      };
+    } else {
+      // Motorista sem cadastro completo - criar estrutura básica
+      return {
+        id: motorista.userId,
+        userId: motorista.userId,
+        name: motorista.name,
+        email: motorista.email,
+        phone: motorista.phone || '',
+        whatsapp: motorista.whatsapp || '',
+        cpf: '',
+        birthdate: new Date(),
+        cnh: '',
+        cnhCategory: '',
+        cnhExpiration: new Date(),
+        cnhIssueDate: new Date(),
+        street: '',
+        number: '',
+        complement: '',
+        neighborhood: '',
+        city: '',
+        state: '',
+        zipcode: '',
+        createdAt: motorista.createdAt,
+        currentLatitude: null,
+        currentLongitude: null,
+        lastLocationUpdate: null,
+        locationEnabled: false,
+        vehicles: [],
+        hasCompleteProfile: false
+      } as DriverWithVehicles & { hasCompleteProfile: boolean };
     }
   });
 

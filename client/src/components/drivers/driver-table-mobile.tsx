@@ -5,7 +5,7 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Eye, Trash, Users, ChevronDown, ChevronRight, Phone, Car, Plus } from "lucide-react";
+import { Edit, Eye, Trash, Users, ChevronDown, ChevronRight, Phone, Car, Plus, CheckCircle, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
 import { Link } from "wouter";
@@ -13,7 +13,7 @@ import { Pagination } from "@/components/ui/pagination";
 import { useAuth } from "@/hooks/use-auth";
 
 interface DriverTableProps {
-  drivers: DriverWithVehicles[];
+  drivers: (DriverWithVehicles & { hasCompleteProfile?: boolean })[];
   isLoading: boolean;
   onEdit: (driver: DriverWithVehicles) => void;
   onView: (driver: DriverWithVehicles) => void;
@@ -211,14 +211,27 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
                             </Button>
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center">
+                            <div className="flex items-center gap-3">
                               <Avatar className="h-8 w-8">
                                 <AvatarFallback className={`bg-${color}-100 text-${color}-700`}>
                                   {initials}
                                 </AvatarFallback>
                               </Avatar>
-                              <div className="ml-4">
-                                <div className="text-sm font-medium text-[#c1cae0]">{driver.name}</div>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <div className="text-sm font-medium text-[#c1cae0]">{driver.name}</div>
+                                  {driver.hasCompleteProfile ? (
+                                    <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                                      <CheckCircle className="h-3 w-3 mr-1" />
+                                      Completo
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200">
+                                      <AlertCircle className="h-3 w-3 mr-1" />
+                                      Incompleto
+                                    </Badge>
+                                  )}
+                                </div>
                                 <div className="text-xs text-slate-500">{driver.email}</div>
                               </div>
                             </div>
@@ -381,7 +394,20 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
                       </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium text-slate-900 truncate">{driver.name}</div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="text-sm font-medium text-slate-900 truncate">{driver.name}</div>
+                        {driver.hasCompleteProfile ? (
+                          <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200 flex-shrink-0">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Completo
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200 flex-shrink-0">
+                            <AlertCircle className="h-3 w-3 mr-1" />
+                            Incompleto
+                          </Badge>
+                        )}
+                      </div>
                       <div className="text-xs text-slate-500 truncate">{driver.email}</div>
                     </div>
                   </div>
