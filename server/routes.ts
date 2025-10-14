@@ -475,6 +475,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obter todos motoristas com seus veículos
   app.get("/api/drivers", hasActiveSubscription, async (req: Request, res: Response) => {
     try {
+      // Obter todos os usuários motoristas (completos e incompletos)
+      const motoristas = await storage.getAllMotoristas();
+      res.json(motoristas);
+    } catch (error) {
+      console.error("Erro ao buscar motoristas:", error);
+      res.status(500).json({ message: "Erro ao buscar motoristas" });
+    }
+  });
+
+  // Nova rota para buscar apenas motoristas com cadastro completo (tabela drivers)
+  app.get("/api/drivers/complete", hasActiveSubscription, async (req: Request, res: Response) => {
+    try {
       // Obter todos os motoristas
       const drivers = await storage.getDrivers();
       
