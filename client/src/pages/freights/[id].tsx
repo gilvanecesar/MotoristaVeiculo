@@ -126,38 +126,35 @@ export default function FreightDetailPage() {
     const freightUrl = `${window.location.origin}/freight/${freight.id}`;
     
     // Formatação dos destinos
-    let destinosText = `🏁 *Destino:* ${freight.destination}, ${freight.destinationState}`;
+    let destinosText = `🏁 Destino: ${freight.destination}, ${freight.destinationState}`;
     
     if (freight.destination2) {
-      destinosText += `\n🏁 *Destino 2:* ${freight.destination2}, ${freight.destinationState2}`;
+      destinosText += `\n🏁 Destino 2: ${freight.destination2}, ${freight.destinationState2}`;
     }
     
     if (freight.destination3) {
-      destinosText += `\n🏁 *Destino 3:* ${freight.destination3}, ${freight.destinationState3}`;
+      destinosText += `\n🏁 Destino 3: ${freight.destination3}, ${freight.destinationState3}`;
     }
     
-    return encodeURIComponent(`
-🚛 *FRETE DISPONÍVEL* 🚛
+    return encodeURIComponent(`🚛 FRETE DISPONÍVEL 🚛
 
-🏢 *${clientName}*
-📍 *Origem:* ${freight.origin}, ${freight.originState}
+🔗 Link do frete: ${freightUrl}
+
+🏢 ${clientName}
+📍 Origem: ${freight.origin}, ${freight.originState}
 ${destinosText}
-🚚 *Categoria:* ${getVehicleCategory(freight.vehicleType)}
-🚚 *Veículo:* ${formatMultipleVehicleTypes(freight)}
-🚐 *Carroceria:* ${formatMultipleBodyTypes(freight)}
-📦 *Tipo de Carga:* ${CARGO_TYPES[freight.cargoType] || freight.cargoType}
-⚖️ *Peso:* ${freight.cargoWeight} Kg
-💰 *Pagamento:* ${freight.paymentMethod}
-💵 *Valor:* ${formatCurrency(freight.freightValue)}
 
+🚚 Veículo: ${formatMultipleVehicleTypes(freight)}
+🚐 Carroceria: ${formatMultipleBodyTypes(freight)}
 
+⚖️ Peso: ${freight.cargoWeight} Kg
 
-👤 *Contato:* ${freight.contactName}
-📞 *Telefone:* ${freight.contactPhone}
-${freight.observations ? `\n📝 *Observações:* ${freight.observations}\n` : ''}
-🌐 *Sistema QUERO FRETES:* ${baseUrl}
-🔗 *Link do frete:* ${freightUrl}
-`);
+💵 Valor: ${formatCurrency(freight.freightValue)}
+
+👤 Contato: ${freight.contactName}
+📞 Telefone: ${freight.contactPhone}
+${freight.observations ? `📝 Observações: ${freight.observations}\n` : ''}
+🌐 Sistema QUERO FRETES: ${baseUrl}`);
   };
 
   const shareViaWhatsApp = (e: React.MouseEvent) => {
