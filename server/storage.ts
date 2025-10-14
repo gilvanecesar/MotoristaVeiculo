@@ -783,7 +783,9 @@ export class MemStorage implements IStorage {
 
   // Client operations stubs (MemStorage não usa clientes, apenas DatabaseStorage)
   async getClients(): Promise<Client[]> {
-    return Array.from(this.clientsData.values());
+    return Array.from(this.clientsData.values()).sort((a, b) => 
+      b.createdAt.getTime() - a.createdAt.getTime()
+    );
   }
 
   async getClient(id: number): Promise<Client | undefined> {
@@ -1144,7 +1146,7 @@ export class DatabaseStorage implements IStorage {
 
   // Clientes
   async getClients(): Promise<Client[]> {
-    return await db.select().from(clients);
+    return await db.select().from(clients).orderBy(desc(clients.createdAt));
   }
 
   async getClient(id: number): Promise<Client | undefined> {

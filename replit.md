@@ -107,3 +107,9 @@ Implemented automatic email notification system for new quotes:
 - Integrated into both authenticated and public quote creation endpoints
 - Asynchronous email sending (non-blocking) to maintain API performance
 - Error handling ensures quote creation succeeds even if emails fail
+
+### Clients List Sorting (October 14, 2025)
+Updated clients list to display newest clients first:
+- Modified `getClients()` in DbStorage to order by `createdAt DESC`
+- Updated MemStorage implementation for consistency
+- Clients at `/clients` now show most recently created first
