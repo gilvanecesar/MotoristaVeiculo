@@ -113,3 +113,15 @@ Updated clients list to display newest clients first:
 - Modified `getClients()` in DbStorage to order by `createdAt DESC`
 - Updated MemStorage implementation for consistency
 - Clients at `/clients` now show most recently created first
+
+### Drivers List Enhancement - Show All Registered Drivers (October 14, 2025)
+Enhanced drivers list to display all users with "motorista" profile, regardless of complete registration:
+- Created `getAllMotoristas()` method in storage that performs LEFT JOIN between users and drivers tables
+- Modified `/api/drivers` endpoint to show all 322+ motorista users (previously only showed 11 with complete profiles)
+- Added visual indicators (badges) to distinguish complete vs incomplete registrations:
+  - Green "Completo" badge with CheckCircle icon for drivers with full CNH/vehicle data
+  - Amber "Incompleto" badge with AlertCircle icon for drivers who only have basic user registration
+- Created `/api/drivers/complete` endpoint to fetch only drivers with complete profiles (legacy support)
+- Fixed duplicate key warnings by using userId as unique identifier across all driver records
+- Maintained backward compatibility with existing DriverTable component
+- Both desktop table and mobile card views show registration status badges

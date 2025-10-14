@@ -194,7 +194,7 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
                     const whatsappLink = formatWhatsAppLink(driver.whatsapp);
                     
                     return (
-                      <React.Fragment key={`driver-${driver.id}`}>
+                      <React.Fragment key={`driver-${driver.userId || driver.id}`}>
                         <TableRow className="hover:bg-slate-50">
                           <TableCell className="p-2 align-middle text-center">
                             <Button
@@ -383,7 +383,7 @@ export function DriverTable({ drivers, isLoading, onEdit, onView, onDelete }: Dr
           const whatsappLink = formatWhatsAppLink(driver.whatsapp);
           
           return (
-            <Card key={driver.id} className="overflow-hidden">
+            <Card key={`driver-mobile-${driver.userId || driver.id}`} className="overflow-hidden">
               <CardContent className="p-4">
                 {/* Header do Card */}
                 <div className="flex items-center justify-between mb-4">
