@@ -118,6 +118,7 @@ export interface IStorage {
   ): Promise<Driver | undefined>;
   deleteDriver(id: number): Promise<boolean>;
   searchDrivers(query: string): Promise<DriverWithVehicles[]>;
+  getAllMotoristas(): Promise<any[]>;
 
   // Vehicle operations
   getVehicles(): Promise<Vehicle[]>;
@@ -404,7 +405,38 @@ export class MemStorage implements IStorage {
   }
 
   // Driver operations
-  // (código omitido para brevidade)
+  async getDrivers(): Promise<DriverWithVehicles[]> {
+    return [];
+  }
+
+  async getDriver(id: number): Promise<DriverWithVehicles | undefined> {
+    return undefined;
+  }
+
+  async createDriver(driver: InsertDriver): Promise<Driver> {
+    const newDriver: Driver = {
+      ...driver,
+      id: Date.now(),
+      createdAt: new Date(),
+    } as Driver;
+    return newDriver;
+  }
+
+  async updateDriver(id: number, driver: Partial<InsertDriver>): Promise<Driver | undefined> {
+    return undefined;
+  }
+
+  async deleteDriver(id: number): Promise<boolean> {
+    return false;
+  }
+
+  async searchDrivers(query: string): Promise<DriverWithVehicles[]> {
+    return [];
+  }
+
+  async getAllMotoristas(): Promise<any[]> {
+    return [];
+  }
   
   // Outros métodos de operações CRUD
 
@@ -1089,6 +1121,48 @@ export class DatabaseStorage implements IStorage {
     }
 
     return driversWithVehicles;
+  }
+
+  async getAllMotoristas(): Promise<any[]> {
+    // Buscar todos os usuários com perfil motorista
+    const motoristasUsers = await db
+      .select()
+      .from(users)
+      .where(eq(users.profileType, 'motorista'))
+      .orderBy(desc(users.createdAt));
+
+    // Para cada usuário, buscar dados complementares da tabela drivers se existir
+    const motoristasCompletos = await Promise.all(
+      motoristasUsers.map(async (user) => {
+        // Buscar dados do driver (se existir)
+        const driverData = await db
+          .select()
+          .from(drivers)
+          .where(eq(drivers.userId, user.id))
+          .limit(1);
+
+        // Buscar veículos (se tiver dados de driver)
+        let vehicles: Vehicle[] = [];
+        if (driverData.length > 0) {
+          vehicles = await this.getVehiclesByDriver(driverData[0].id);
+        }
+
+        return {
+          userId: user.id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+          whatsapp: user.whatsapp,
+          avatarUrl: user.avatarUrl,
+          createdAt: user.createdAt,
+          hasCompleteProfile: driverData.length > 0,
+          driverData: driverData.length > 0 ? driverData[0] : null,
+          vehicles: vehicles
+        };
+      })
+    );
+
+    return motoristasCompletos;
   }
 
   // Veículos
