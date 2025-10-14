@@ -54,6 +54,7 @@ export default function ClientsPage() {
   // Fetch data
   const { data: clients, isLoading } = useQuery({
     queryKey: ['/api/clients'],
+    staleTime: 0, // Sempre buscar dados frescos
   });
 
   // Filter clients based on user role
