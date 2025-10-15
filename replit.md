@@ -162,3 +162,30 @@ Comprehensive cleanup of debug console statements across the codebase:
   - Cleaner browser console for actual debugging
   - Better user experience (no leaked debug information)
   - Professional production-ready codebase
+
+### VPS Docker Deployment Guide 2025 (October 15, 2025)
+Created comprehensive and updated VPS deployment documentation:
+- **New comprehensive guide** (`VPS_DOCKER_DEPLOY_2025.md`):
+  - Step-by-step instructions for Docker deployment on VPS
+  - Updated with 2025 best practices (Docker Compose v2, modern security)
+  - Complete SSL/TLS setup with Let's Encrypt
+  - Three-container architecture (PostgreSQL, App, Nginx)
+  - Network isolation and security hardening
+  - Automated deployment script included
+- **Updated infrastructure files**:
+  - Enhanced `docker-compose.yml` with network isolation and health checks
+  - Updated `nginx.conf` with modern security headers and HTTP/2
+  - Created `.env.example` with all required variables documented
+  - Created `vps-deploy.sh` automated deployment script
+- **Key improvements**:
+  - Localhost-only database access for security
+  - Nginx reverse proxy with rate limiting
+  - SSL certificate automation with Certbot
+  - Docker Compose v2 syntax (docker compose instead of docker-compose)
+  - Health checks and dependency management
+  - Backup and monitoring guidelines
+- **Deployment options documented**:
+  - Manual deployment process
+  - Automated deployment with script
+  - CI/CD integration with GitHub Actions
+  - Optional monitoring with Portainer
