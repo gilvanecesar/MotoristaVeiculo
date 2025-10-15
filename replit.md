@@ -125,3 +125,22 @@ Enhanced drivers list to display all users with "motorista" profile, regardless 
 - Fixed duplicate key warnings by using userId as unique identifier across all driver records
 - Maintained backward compatibility with existing DriverTable component
 - Both desktop table and mobile card views show registration status badges
+
+### Navigation System Redesign - Sidebar to Top Navbar (October 15, 2025)
+Completely redesigned navigation from sidebar to horizontal navbar at the top:
+- **Created new Navbar component** (`client/src/components/layout/navbar.tsx`):
+  - Horizontal layout with logo, navigation links, admin dropdown, theme toggle, and user menu
+  - Responsive design with mobile menu using Sheet component (side drawer)
+  - Maintained all navigation logic and access control from original sidebar
+  - Admin menu in dropdown for better space efficiency
+  - User menu with subscription and settings submenus
+- **Updated AppLayout** to use Navbar instead of Sidebar
+- **Preserved all security features**:
+  - Client registration guard for agenciadores (desktop and mobile)
+  - Role-based menu visibility
+  - Protected route handling with proper warning toasts
+- **Benefits**:
+  - Cleaner interface with more content space
+  - Sidebar area now free for page-specific filters (e.g., freight filters)
+  - Modern UX pattern familiar to users
+  - Better mobile experience with slide-out menu
