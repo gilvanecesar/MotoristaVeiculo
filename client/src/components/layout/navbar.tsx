@@ -167,20 +167,40 @@ export default function Navbar() {
           <SheetTitle className="text-white text-left">Menu</SheetTitle>
         </SheetHeader>
         <div className="mt-6 space-y-1">
-          {availableNavItems.map((item) => (
-            <Link key={item.path} href={item.path} onClick={() => setMobileMenuOpen(false)}>
-              <Button
-                variant={isActive(item.path) ? "secondary" : "ghost"}
-                className={cn(
-                  "w-full justify-start text-white/80 hover:text-white hover:bg-cyan-500/50",
-                  isActive(item.path) && "bg-cyan-400 text-cyan-900"
-                )}
-              >
-                <item.icon className="h-4 w-4 mr-2" />
-                {item.label}
-              </Button>
-            </Link>
-          ))}
+          {availableNavItems.map((item) => {
+            const Icon = item.icon;
+            const active = isActive(item.path);
+            const shouldBlock = needsClientRegistration && item.path !== "/clients/new" && item.path !== "/clients";
+
+            if (shouldBlock) {
+              return (
+                <Button
+                  key={item.path}
+                  variant="ghost"
+                  className="w-full justify-start text-white/40 cursor-not-allowed opacity-50"
+                  onClick={handleProtectedClick(() => {}, item.label)}
+                >
+                  <Icon className="h-4 w-4 mr-2" />
+                  {item.label}
+                </Button>
+              );
+            }
+
+            return (
+              <Link key={item.path} href={item.path} onClick={() => setMobileMenuOpen(false)}>
+                <Button
+                  variant={active ? "secondary" : "ghost"}
+                  className={cn(
+                    "w-full justify-start text-white/80 hover:text-white hover:bg-cyan-500/50",
+                    active && "bg-cyan-400 text-cyan-900"
+                  )}
+                >
+                  <Icon className="h-4 w-4 mr-2" />
+                  {item.label}
+                </Button>
+              </Link>
+            );
+          })}
           
           {isAdmin && (
             <>
