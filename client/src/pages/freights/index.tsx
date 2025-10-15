@@ -1,26 +1,24 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import {
-  getVehicleCategory,
   formatMultipleVehicleTypes,
   formatMultipleBodyTypes
 } from "@/lib/utils/vehicle-types";
 import {
   Plus,
   Search,
-  Edit,
-  Eye,
-  Trash2,
   Truck,
   Filter,
   PhoneCall,
   MapPin,
   X,
-  ArrowRight,
+  DollarSign,
   Package,
-  Calendar
+  Calendar,
+  MessageCircle,
+  Eye
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,27 +26,20 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   FreightWithDestinations,
   FreightWithUser,
-  Client,
-  VEHICLE_TYPES,
-  BODY_TYPES
+  Client
 } from "@shared/schema";
-import { queryClient } from "@/lib/queryClient";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/utils/format";
 import { FaWhatsapp } from "react-icons/fa";
 import { cn } from "@/lib/utils";
 import { CitySearch } from "@/components/ui/city-search";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 const isExpired = (expirationDate: string | Date | null | undefined): boolean => {
   if (!expirationDate) return false;
@@ -57,7 +48,6 @@ const isExpired = (expirationDate: string | Date | null | undefined): boolean =>
   return today > expDate;
 };
 
-// Função para obter as iniciais do nome
 const getInitials = (name: string): string => {
   if (!name) return '?';
   const words = name.trim().split(/\s+/);
@@ -67,7 +57,6 @@ const getInitials = (name: string): string => {
   return (words[0][0] + words[words.length - 1][0]).toUpperCase();
 };
 
-// Função para gerar cor baseada no nome
 const getColorFromName = (name: string): string => {
   const colors = [
     'bg-blue-500',
@@ -308,8 +297,6 @@ FilterSidebar.displayName = 'FilterSidebar';
 
 export default function FreightsPageNew() {
   const [, navigate] = useLocation();
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedFreight, setSelectedFreight] = useState<FreightWithDestinations | null>(null);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const { user } = useAuth();
 
@@ -336,22 +323,6 @@ export default function FreightsPageNew() {
     queryKey: ["/api/clients"],
     refetchOnWindowFocus: false,
   });
-
-  const isClientAuthorized = (clientId: number | null, freightUserId?: number | null) => {
-    if (user?.profileType === 'motorista' || user?.profileType === 'driver') {
-      return false;
-    }
-    if (user?.profileType === 'admin' || user?.profileType === 'administrador') {
-      return true;
-    }
-    if (freightUserId && user?.id === freightUserId) {
-      return true;
-    }
-    if (!freightUserId && user?.clientId === clientId) {
-      return true;
-    }
-    return false;
-  };
 
   const filteredFreights = useMemo(() => {
     if (!freights || !Array.isArray(freights)) {
@@ -454,22 +425,6 @@ export default function FreightsPageNew() {
     });
   };
 
-  const handleDeleteFreight = async () => {
-    if (!selectedFreight) return;
-    
-    try {
-      await fetch(`/api/freights/${selectedFreight.id}`, {
-        method: 'DELETE',
-      });
-      
-      queryClient.invalidateQueries({ queryKey: ["/api/freights"] });
-      setDeleteDialogOpen(false);
-      setSelectedFreight(null);
-    } catch (error) {
-      console.error("Erro ao excluir frete:", error);
-    }
-  };
-
   const trackInterest = async (freightId: number) => {
     try {
       await fetch(`/api/freights/${freightId}/track-interest`, {
@@ -517,198 +472,20 @@ ${freight.observations ? `📝 Observações: ${freight.observations}\n` : ''}
     window.open(`https://wa.me/?text=${message}`, '_blank');
   };
 
-  const FreightCard = ({ freight }: { freight: FreightWithDestinations }) => {
-    const clientFound = clients.find((client: Client) => client.id === freight.clientId);
-    const expired = freight.expirationDate ? isExpired(freight.expirationDate) : false;
-    const canEdit = isClientAuthorized(freight.clientId, freight.userId);
-
-    return (
-      <div className="border border-slate-200 dark:border-slate-700 rounded-lg hover:shadow-md transition-shadow bg-white dark:bg-slate-900 overflow-hidden">
-        {/* Desktop Layout - Horizontal */}
-        <div 
-          className="hidden md:flex items-center gap-4 p-4 cursor-pointer" 
-          onClick={() => navigate(`/freights/${freight.id}`)}
-        >
-          {/* Logo/Avatar do usuário ou iniciais */}
-          <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded flex items-center justify-center flex-shrink-0 overflow-hidden">
-            {freight.user?.avatarUrl ? (
-              <img 
-                src={freight.user.avatarUrl} 
-                alt={freight.user.name}
-                className="w-full h-full object-cover"
-              />
-            ) : freight.user?.name ? (
-              <div className={cn(
-                "w-full h-full flex items-center justify-center text-white font-semibold",
-                getColorFromName(freight.user.name)
-              )}>
-                {getInitials(freight.user.name)}
-              </div>
-            ) : (
-              <Truck className="w-6 h-6 text-primary" />
-            )}
-          </div>
-
-          {/* Route and Details */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-sm font-medium">{freight.origin}, {freight.originState}</span>
-              <ArrowRight className="w-4 h-4 text-slate-400 flex-shrink-0" />
-              <span className="text-sm font-medium">{freight.destination}, {freight.destinationState}</span>
-            </div>
-            <div className="flex items-center gap-3 text-xs text-slate-500">
-              <span>{freight.cargoType === 'completa' ? 'Carga Completa' : 'Complemento'}</span>
-              <span>{formatMultipleVehicleTypes(freight)}</span>
-              <span>{formatMultipleBodyTypes(freight)}</span>
-            </div>
-          </div>
-
-          {/* Price */}
-          <div className="text-right flex-shrink-0">
-            <p className="text-2xl font-bold">{formatCurrency(freight.freightValue)}</p>
-            <p className="text-xs text-slate-500">Por {freight.paymentMethod}</p>
-          </div>
-
-          {/* Actions - WhatsApp apenas */}
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={(e) => {
-                e.stopPropagation();
-                shareViaWhatsApp(freight);
-              }}
-              title="Compartilhar via WhatsApp"
-              data-testid={`button-share-${freight.id}`}
-            >
-              <FaWhatsapp className="h-4 w-4 text-green-500" />
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (freight.contactPhone) {
-                  trackInterest(freight.id);
-                  window.open(`https://wa.me/55${freight.contactPhone.replace(/\D/g, '')}`, '_blank');
-                }
-              }}
-              title="Contatar via WhatsApp"
-              disabled={!freight.contactPhone}
-              data-testid={`button-contact-${freight.id}`}
-            >
-              <PhoneCall className="h-4 w-4 text-green-500" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Mobile Layout - Vertical (mantém o design original) */}
-        <div 
-          className="block md:hidden p-4 cursor-pointer"
-          onClick={() => navigate(`/freights/${freight.id}`)}
-        >
-          {/* Header */}
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center overflow-hidden">
-                {freight.user?.avatarUrl ? (
-                  <img 
-                    src={freight.user.avatarUrl} 
-                    alt={freight.user.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : freight.user?.name ? (
-                  <div className={cn(
-                    "w-full h-full flex items-center justify-center text-white font-semibold",
-                    getColorFromName(freight.user.name)
-                  )}>
-                    {getInitials(freight.user.name)}
-                  </div>
-                ) : (
-                  <Truck className="w-6 h-6 text-primary" />
-                )}
-              </div>
-              <div>
-                <h3 className="font-semibold text-sm">{clientFound?.name || "Cliente não encontrado"}</h3>
-                <Badge variant={expired ? "destructive" : "default"} className="mt-1">
-                  {expired ? "Expirado" : "Ativo"}
-                </Badge>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-xl font-bold text-primary">{formatCurrency(freight.freightValue)}</p>
-              <p className="text-xs text-slate-500">Pagamento: {freight.paymentMethod}</p>
-            </div>
-          </div>
-
-          {/* Rota */}
-          <div className="flex items-center gap-2 mb-3 bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
-            <div className="flex-1">
-              <p className="text-xs text-slate-500">Origem</p>
-              <p className="font-medium text-sm">{freight.origin}, {freight.originState}</p>
-            </div>
-            <ArrowRight className="w-5 h-5 text-slate-400 flex-shrink-0" />
-            <div className="flex-1 text-right">
-              <p className="text-xs text-slate-500">Destino</p>
-              <p className="font-medium text-sm">{freight.destination}, {freight.destinationState}</p>
-            </div>
-          </div>
-
-          {/* Detalhes */}
-          <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
-            <div>
-              <p className="text-xs text-slate-500">Veículo</p>
-              <p className="font-medium">{formatMultipleVehicleTypes(freight)}</p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-500">Carroceria</p>
-              <p className="font-medium">{formatMultipleBodyTypes(freight)}</p>
-            </div>
-            <div className="col-span-2">
-              <p className="text-xs text-slate-500">Peso</p>
-              <p className="font-medium">{freight.cargoWeight} Kg</p>
-            </div>
-          </div>
-
-          {/* Ações - WhatsApp apenas */}
-          <div className="flex items-center justify-end gap-1 pt-3 border-t border-slate-200 dark:border-slate-700">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={(e) => {
-                e.stopPropagation();
-                shareViaWhatsApp(freight);
-              }}
-              title="Compartilhar via WhatsApp"
-              data-testid={`button-share-${freight.id}`}
-            >
-              <FaWhatsapp className="h-4 w-4 text-green-500" />
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (freight.contactPhone) {
-                  trackInterest(freight.id);
-                  window.open(`https://wa.me/55${freight.contactPhone.replace(/\D/g, '')}`, '_blank');
-                }
-              }}
-              title="Contatar via WhatsApp"
-              disabled={!freight.contactPhone}
-              data-testid={`button-contact-${freight.id}`}
-            >
-              <PhoneCall className="h-4 w-4 text-green-500" />
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  };
+  // Estatísticas
+  const stats = useMemo(() => {
+    const total = freights.length;
+    const active = freights.filter(f => !isExpired(f.expirationDate)).length;
+    const expired = freights.filter(f => isExpired(f.expirationDate)).length;
+    const thisMonth = freights.filter(f => {
+      if (!f.createdAt) return false;
+      const created = new Date(f.createdAt);
+      const now = new Date();
+      return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
+    }).length;
+    
+    return { total, active, expired, thisMonth };
+  }, [freights]);
 
   return (
     <div className="flex h-[calc(100vh-4rem)]">
@@ -723,19 +500,14 @@ ${freight.observations ? `📝 Observações: ${freight.observations}\n` : ''}
 
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto">
-        <div className="p-6">
+        <div className="container mx-auto p-6 space-y-6">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold flex items-center gap-2">
-                <Truck className="h-6 w-6" /> Fretes
-              </h1>
-              <p className="text-sm text-slate-500 mt-1">
-                {filteredFreights.length} {filteredFreights.length === 1 ? 'frete encontrado' : 'fretes encontrados'}
-              </p>
+              <h1 className="text-3xl font-bold">Fretes</h1>
+              <p className="text-gray-600">Visualize e gerencie todos os fretes disponíveis</p>
             </div>
-            
-            <div className="flex gap-2 w-full sm:w-auto">
+            <div className="flex gap-2">
               <Button
                 variant="outline"
                 className="lg:hidden"
@@ -745,51 +517,252 @@ ${freight.observations ? `📝 Observações: ${freight.observations}\n` : ''}
                 <Filter className="h-4 w-4 mr-2" /> Filtros
               </Button>
               {user?.profileType !== 'driver' && user?.profileType !== 'motorista' && (
-                <Button onClick={() => navigate("/freights/new")} className="flex-1 sm:flex-none" data-testid="button-new-freight">
+                <Button onClick={() => navigate("/freights/new")} data-testid="button-new-freight">
                   <Plus className="h-4 w-4 mr-2" /> Novo Frete
                 </Button>
               )}
             </div>
+          </div>
+
+          {/* Estatísticas */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">Total de Fretes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <Truck className="h-4 w-4 text-blue-600" />
+                  <span className="text-2xl font-bold">{stats.total}</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">Fretes Ativos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <Package className="h-4 w-4 text-green-600" />
+                  <span className="text-2xl font-bold">{stats.active}</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">Fretes Expirados</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-red-600" />
+                  <span className="text-2xl font-bold">{stats.expired}</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">Este Mês</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-purple-600" />
+                  <span className="text-2xl font-bold">{stats.thisMonth}</span>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Busca */}
-          <div className="mb-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
-              <Input
-                placeholder="Buscar por origem, destino, tipo de carga..."
-                className="pl-10"
-                value={filters.search}
-                onChange={(e) => setFilters({...filters, search: e.target.value})}
-                data-testid="input-search"
-              />
-            </div>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Buscar Fretes</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Buscar por origem, destino, tipo de carga..."
+                  className="pl-10"
+                  value={filters.search}
+                  onChange={(e) => setFilters({...filters, search: e.target.value})}
+                  data-testid="input-search"
+                />
+              </div>
+            </CardContent>
+          </Card>
 
-          {/* Freights List */}
-          {isLoading ? (
-            <div className="space-y-3">
-              {[...Array(6)].map((_, i) => (
-                <Skeleton key={i} className="h-20 w-full" />
-              ))}
-            </div>
-          ) : filteredFreights.length > 0 ? (
-            <div className="space-y-3">
-              {filteredFreights.map((freight) => (
-                <FreightCard key={freight.id} freight={freight} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <Truck className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-              <p className="text-slate-500 mb-4">Nenhum frete encontrado.</p>
-              {user?.profileType !== 'driver' && user?.profileType !== 'motorista' && (
-                <Button onClick={() => navigate("/freights/new")} data-testid="button-new-freight-empty">
-                  <Plus className="h-4 w-4 mr-2" /> Novo Frete
-                </Button>
+          {/* Lista de fretes em tabela */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Fretes ({filteredFreights.length})</CardTitle>
+              <CardDescription>
+                Todos os fretes disponíveis no sistema
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                  <p className="mt-2 text-gray-600">Carregando fretes...</p>
+                </div>
+              ) : filteredFreights.length === 0 ? (
+                <div className="text-center py-8">
+                  <Truck className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600">Nenhum frete encontrado</p>
+                  {user?.profileType !== 'driver' && user?.profileType !== 'motorista' && (
+                    <Button onClick={() => navigate("/freights/new")} className="mt-4" data-testid="button-new-freight-empty">
+                      <Plus className="h-4 w-4 mr-2" /> Novo Frete
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Cliente</TableHead>
+                        <TableHead>Origem → Destino</TableHead>
+                        <TableHead>Veículo / Carroceria</TableHead>
+                        <TableHead>Carga</TableHead>
+                        <TableHead>Valor do Frete</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Contato</TableHead>
+                        <TableHead>Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredFreights.map((freight: FreightWithUser) => {
+                        const clientFound = clients.find((client: Client) => client.id === freight.clientId);
+                        const expired = freight.expirationDate ? isExpired(freight.expirationDate) : false;
+                        
+                        return (
+                          <TableRow key={freight.id} data-testid={`row-freight-${freight.id}`}>
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                  {clientFound?.logoUrl ? (
+                                    <img 
+                                      src={clientFound.logoUrl} 
+                                      alt={clientFound.name}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : freight.user?.avatarUrl ? (
+                                    <img 
+                                      src={freight.user.avatarUrl} 
+                                      alt={freight.user.name}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : freight.user?.name ? (
+                                    <div className={cn(
+                                      "w-full h-full flex items-center justify-center text-white font-semibold text-xs",
+                                      getColorFromName(freight.user.name)
+                                    )}>
+                                      {getInitials(freight.user.name)}
+                                    </div>
+                                  ) : (
+                                    <Truck className="w-5 h-5 text-primary" />
+                                  )}
+                                </div>
+                                <div>
+                                  <p className="font-medium">{clientFound?.name || freight.user?.name || "Cliente não encontrado"}</p>
+                                  {freight.createdAt && (
+                                    <p className="text-xs text-gray-500">
+                                      {format(new Date(freight.createdAt), 'dd/MM/yyyy', { locale: ptBR })}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <MapPin className="h-4 w-4 text-gray-400" />
+                                  <span className="text-sm">{freight.origin}, {freight.originState}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <MapPin className="h-4 w-4 text-gray-400" />
+                                  <span className="text-sm">{freight.destination}, {freight.destinationState}</span>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="space-y-1">
+                                <p className="text-sm font-medium">{formatMultipleVehicleTypes(freight)}</p>
+                                <p className="text-sm text-gray-600">{formatMultipleBodyTypes(freight)}</p>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="space-y-1">
+                                <p className="text-sm font-medium">{freight.cargoType === 'completa' ? 'Carga Completa' : 'Complemento'}</p>
+                                <p className="text-sm text-gray-600">{freight.cargoWeight} Kg</p>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <DollarSign className="h-4 w-4 text-green-600" />
+                                  <span className="font-medium">{formatCurrency(freight.freightValue)}</span>
+                                </div>
+                                <p className="text-xs text-gray-600">{freight.paymentMethod}</p>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={expired ? "destructive" : "default"}>
+                                {expired ? "Expirado" : "Ativo"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="space-y-1">
+                                <p className="text-sm font-medium">{freight.contactName}</p>
+                                <p className="text-sm text-gray-600">{freight.contactPhone}</p>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => navigate(`/freights/${freight.id}`)}
+                                  data-testid={`button-view-${freight.id}`}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => shareViaWhatsApp(freight)}
+                                  data-testid={`button-share-${freight.id}`}
+                                >
+                                  <FaWhatsapp className="h-4 w-4 text-green-500" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    if (freight.contactPhone) {
+                                      trackInterest(freight.id);
+                                      window.open(`https://wa.me/55${freight.contactPhone.replace(/\D/g, '')}`, '_blank');
+                                    }
+                                  }}
+                                  disabled={!freight.contactPhone}
+                                  data-testid={`button-contact-${freight.id}`}
+                                >
+                                  <PhoneCall className="h-4 w-4 text-green-500" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
               )}
-            </div>
-          )}
+            </CardContent>
+          </Card>
         </div>
       </div>
 
@@ -810,26 +783,6 @@ ${freight.observations ? `📝 Observações: ${freight.observations}\n` : ''}
           </div>
         </div>
       )}
-
-      {/* Delete Dialog */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirmar exclusão</DialogTitle>
-            <DialogDescription>
-              Tem certeza que deseja excluir este frete? Esta ação não pode ser desfeita.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteFreight}>
-              Excluir
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
