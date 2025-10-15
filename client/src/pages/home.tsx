@@ -39,11 +39,13 @@ import { ptBR } from "date-fns/locale";
 import { useState } from "react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function Home() {
   const { user } = useAuth();
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedFreights, setSelectedFreights] = useState<number[]>([]);
 
@@ -328,46 +330,74 @@ export default function Home() {
                     const expired = isFreightExpired(freight);
                     const isSelected = selectedFreights.includes(freight.id);
                     
+                    if (isMobile) {
+                      // Layout Mobile - Card Vertical
+                      return (
+                        <div 
+                          key={freight.id} 
+                          className={`
+                            p-3 border rounded-lg transition-colors
+                            ${isSelected ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}
+                          `}
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <Checkbox
+                                checked={isSelected}
+                                onCheckedChange={() => toggleSelectFreight(freight.id)}
+                              />
+                              <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${
+                                expired 
+                                  ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' 
+                                  : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                              }`}>
+                                {expired ? 'Expirado' : 'Ativo'}
+                              </span>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-base font-bold text-primary">{formatCurrency(freight.freightValue)}</p>
+                              <p className="text-[10px] text-slate-500">{freight.paymentMethod}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-1.5 pl-7">
+                            <div>
+                              <p className="text-[10px] text-slate-500">Origem</p>
+                              <p className="text-sm font-medium">{freight.origin}, {freight.originState}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] text-slate-500">Destino</p>
+                              <p className="text-sm font-medium">{freight.destination}, {freight.destinationState}</p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    // Layout Desktop - Horizontal
                     return (
                       <div 
                         key={freight.id} 
                         className={`
-                          flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-4 p-2 md:p-3 border rounded-lg transition-colors
+                          flex items-center gap-4 p-3 border rounded-lg transition-colors
                           ${isSelected ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}
                         `}
                       >
-                        <div className="flex items-center gap-2 md:gap-4 w-full md:w-auto">
-                          {/* Checkbox */}
-                          <Checkbox
-                            checked={isSelected}
-                            onCheckedChange={() => toggleSelectFreight(freight.id)}
-                          />
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={() => toggleSelectFreight(freight.id)}
+                        />
 
-                          {/* Origem */}
-                          <div className="flex-1 md:min-w-[140px]">
-                            <p className="text-[10px] md:text-xs text-slate-500">Origem</p>
-                            <p className="text-xs md:text-sm font-medium">{freight.origin}, {freight.originState}</p>
-                          </div>
-
-                          {/* Status - Mobile */}
-                          <div className="md:hidden">
-                            <span className={`text-[10px] px-2 py-0.5 rounded-full ${
-                              expired 
-                                ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' 
-                                : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                            }`}>
-                              {expired ? 'Expirado' : 'Ativo'}
-                            </span>
-                          </div>
+                        <div className="min-w-[140px]">
+                          <p className="text-xs text-slate-500">Origem</p>
+                          <p className="text-sm font-medium">{freight.origin}, {freight.originState}</p>
                         </div>
 
-                        {/* Destino */}
-                        <div className="flex-1 md:min-w-[140px] pl-7 md:pl-0">
-                          <p className="text-[10px] md:text-xs text-slate-500">Destino</p>
-                          <p className="text-xs md:text-sm font-medium">{freight.destination}, {freight.destinationState}</p>
+                        <div className="flex-1 min-w-[140px]">
+                          <p className="text-xs text-slate-500">Destino</p>
+                          <p className="text-sm font-medium">{freight.destination}, {freight.destinationState}</p>
                         </div>
 
-                        {/* Tipo de Carga */}
                         <div className="hidden lg:block min-w-[100px]">
                           <p className="text-xs text-slate-500">Tipo</p>
                           <p className="text-sm font-medium">
@@ -375,8 +405,7 @@ export default function Home() {
                           </p>
                         </div>
 
-                        {/* Status - Desktop */}
-                        <div className="hidden md:block">
+                        <div>
                           <span className={`text-xs px-2 py-1 rounded-full ${
                             expired 
                               ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' 
@@ -386,10 +415,9 @@ export default function Home() {
                           </span>
                         </div>
 
-                        {/* Valor */}
-                        <div className="text-left md:text-right w-full md:w-auto md:min-w-[110px] pl-7 md:pl-0">
-                          <p className="text-base md:text-lg font-bold text-primary">{formatCurrency(freight.freightValue)}</p>
-                          <p className="text-[10px] md:text-xs text-slate-500">{freight.paymentMethod}</p>
+                        <div className="text-right min-w-[110px]">
+                          <p className="text-lg font-bold text-primary">{formatCurrency(freight.freightValue)}</p>
+                          <p className="text-xs text-slate-500">{freight.paymentMethod}</p>
                         </div>
                       </div>
                     );
