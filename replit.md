@@ -189,3 +189,24 @@ Created comprehensive and updated VPS deployment documentation:
   - Automated deployment with script
   - CI/CD integration with GitHub Actions
   - Optional monitoring with Portainer
+
+### Quotes Page Redesign - Table Layout (October 15, 2025)
+Updated user quotes listing page to match admin interface:
+- **Changed from card layout to professional table format**:
+  - Implemented same table structure as `/admin/quotes`
+  - Organized columns: Cliente, Origem → Destino, Carga, Valor de NF, Status, Urgência, Tipo, Data, Ações
+  - Maintained color-coded status and urgency badges
+  - Responsive design with horizontal scrolling for mobile
+- **Preserved user-facing features**:
+  - WhatsApp contact button with personalized messages
+  - Search filter by client, email, origin, destination, cargo type
+  - Status filter (Ativa, Fechada, Expirada, Cancelada, Pendente)
+  - Statistics cards showing Total, Ativas, Fechadas, Este Mês
+- **Admin-only features excluded**:
+  - Edit and Delete buttons remain exclusive to `/admin/quotes`
+  - User page focuses on viewing and contacting clients
+- **Benefits**:
+  - Consistent interface across admin and user pages
+  - Better data visualization in tabular format
+  - More professional appearance
+  - Easier to scan and compare multiple quotes
