@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAuth } from "@/hooks/use-auth";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { 
   Search, 
   MessageCircle, 
@@ -93,6 +94,7 @@ Aguardo seu retorno! 🚛`;
 
 export default function QuotesPage() {
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   
@@ -161,61 +163,61 @@ export default function QuotesPage() {
   const isLoading = quotesLoading || statsLoading;
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Cotações</h1>
-          <p className="text-gray-600">Visualize as solicitações de cotação de transporte</p>
+          <h1 className="text-2xl md:text-3xl font-bold">Cotações</h1>
+          <p className="text-sm md:text-base text-gray-600">Visualize as solicitações de cotação de transporte</p>
         </div>
       </div>
 
       {/* Estatísticas */}
       {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Total de Cotações</CardTitle>
+            <CardHeader className="pb-2 md:pb-3">
+              <CardTitle className="text-xs md:text-sm font-medium text-gray-600">Total</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <FileText className="h-4 w-4 text-blue-600" />
-                <span className="text-2xl font-bold">{stats.total}</span>
+            <CardContent className="pb-3 md:pb-4">
+              <div className="flex items-center gap-1.5 md:gap-2">
+                <FileText className="h-3 w-3 md:h-4 md:w-4 text-blue-600" />
+                <span className="text-xl md:text-2xl font-bold">{stats.total}</span>
               </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Cotações Ativas</CardTitle>
+            <CardHeader className="pb-2 md:pb-3">
+              <CardTitle className="text-xs md:text-sm font-medium text-gray-600">Ativas</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-green-600" />
-                <span className="text-2xl font-bold">{stats.active}</span>
+            <CardContent className="pb-3 md:pb-4">
+              <div className="flex items-center gap-1.5 md:gap-2">
+                <TrendingUp className="h-3 w-3 md:h-4 md:w-4 text-green-600" />
+                <span className="text-xl md:text-2xl font-bold">{stats.active}</span>
               </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Cotações Fechadas</CardTitle>
+            <CardHeader className="pb-2 md:pb-3">
+              <CardTitle className="text-xs md:text-sm font-medium text-gray-600">Fechadas</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-blue-600" />
-                <span className="text-2xl font-bold">{stats.closed}</span>
+            <CardContent className="pb-3 md:pb-4">
+              <div className="flex items-center gap-1.5 md:gap-2">
+                <User className="h-3 w-3 md:h-4 md:w-4 text-blue-600" />
+                <span className="text-xl md:text-2xl font-bold">{stats.closed}</span>
               </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Este Mês</CardTitle>
+            <CardHeader className="pb-2 md:pb-3">
+              <CardTitle className="text-xs md:text-sm font-medium text-gray-600">Este Mês</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-purple-600" />
-                <span className="text-2xl font-bold">{stats.thisMonth}</span>
+            <CardContent className="pb-3 md:pb-4">
+              <div className="flex items-center gap-1.5 md:gap-2">
+                <Calendar className="h-3 w-3 md:h-4 md:w-4 text-purple-600" />
+                <span className="text-xl md:text-2xl font-bold">{stats.thisMonth}</span>
               </div>
             </CardContent>
           </Card>
@@ -282,6 +284,101 @@ export default function QuotesPage() {
             <div className="text-center py-8">
               <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600">Nenhuma cotação encontrada</p>
+            </div>
+          ) : isMobile ? (
+            <div className="space-y-4">
+              {filteredQuotes?.map((quote: Quote) => (
+                <Card key={quote.id} data-testid={`card-quote-${quote.id}`} className="overflow-hidden">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold truncate">{quote.clientName}</p>
+                        <p className="text-xs text-gray-500 truncate">{quote.clientEmail}</p>
+                        <p className="text-xs text-gray-500">{quote.clientPhone}</p>
+                      </div>
+                      <div className="flex flex-col gap-1 items-end flex-shrink-0">
+                        <Badge className={statusColors[quote.status as keyof typeof statusColors]}>
+                          {quote.status}
+                        </Badge>
+                        <Badge variant={quote.userId ? "default" : "secondary"} className="text-xs">
+                          {quote.userId ? "Registrado" : "Público"}
+                        </Badge>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="space-y-2">
+                      <div className="flex items-start gap-2">
+                        <MapPin className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-gray-500">Origem</p>
+                          <p className="text-sm font-medium">{quote.origin} - {quote.originState}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <MapPin className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-gray-500">Destino</p>
+                          <p className="text-sm font-medium">{quote.destination} - {quote.destinationState}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 pt-2 border-t">
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Tipo de Carga</p>
+                        <p className="text-sm font-medium">{quote.cargoType}</p>
+                        <p className="text-xs text-gray-600">{quote.weight}kg | {quote.volume}m³</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Valor de NF</p>
+                        <div className="flex items-center gap-1">
+                          <DollarSign className="h-4 w-4 text-green-600" />
+                          <span className="font-semibold text-green-600">{formatCurrency(quote.price)}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 pt-2 border-t">
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Urgência</p>
+                        <Badge className={urgencyColors[quote.urgency as keyof typeof urgencyColors]}>
+                          {quote.urgency}
+                        </Badge>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Data de Entrega</p>
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3 text-gray-400" />
+                          <span className="text-sm">
+                            {format(new Date(quote.deliveryDate), 'dd/MM/yyyy', { locale: ptBR })}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 border-t">
+                      <p className="text-xs text-gray-500 mb-1">Criada em</p>
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-3 w-3 text-gray-400" />
+                        <span className="text-sm">
+                          {format(new Date(quote.createdAt), 'dd/MM/yyyy', { locale: ptBR })}
+                        </span>
+                      </div>
+                    </div>
+
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => openWhatsApp(quote)}
+                      data-testid={`button-whatsapp-${quote.id}`}
+                    >
+                      <MessageCircle className="h-4 w-4 mr-2" /> Contatar Cliente
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           ) : (
             <div className="overflow-x-auto">

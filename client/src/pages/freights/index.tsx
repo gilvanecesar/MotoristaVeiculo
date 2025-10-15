@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   formatMultipleVehicleTypes,
   formatMultipleBodyTypes
@@ -299,6 +300,7 @@ export default function FreightsPageNew() {
   const [, navigate] = useLocation();
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const { user } = useAuth();
+  const isMobile = useIsMobile();
 
   const [filters, setFilters] = useState({
     search: "",
@@ -500,24 +502,24 @@ ${freight.observations ? `📝 Observações: ${freight.observations}\n` : ''}
 
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto">
-        <div className="container mx-auto p-6 space-y-6">
+        <div className="container mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
           {/* Header */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
-              <h1 className="text-3xl font-bold">Fretes</h1>
-              <p className="text-gray-600">Visualize e gerencie todos os fretes disponíveis</p>
+              <h1 className="text-2xl md:text-3xl font-bold">Fretes</h1>
+              <p className="text-sm md:text-base text-gray-600">Visualize e gerencie todos os fretes disponíveis</p>
             </div>
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                className="lg:hidden"
+                className="lg:hidden flex-1 md:flex-initial"
                 onClick={() => setShowMobileFilters(true)}
                 data-testid="button-show-filters"
               >
                 <Filter className="h-4 w-4 mr-2" /> Filtros
               </Button>
               {user?.profileType !== 'driver' && user?.profileType !== 'motorista' && (
-                <Button onClick={() => navigate("/freights/new")} data-testid="button-new-freight">
+                <Button onClick={() => navigate("/freights/new")} className="flex-1 md:flex-initial" data-testid="button-new-freight">
                   <Plus className="h-4 w-4 mr-2" /> Novo Frete
                 </Button>
               )}
@@ -525,51 +527,51 @@ ${freight.observations ? `📝 Observações: ${freight.observations}\n` : ''}
           </div>
 
           {/* Estatísticas */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Total de Fretes</CardTitle>
+              <CardHeader className="pb-2 md:pb-3">
+                <CardTitle className="text-xs md:text-sm font-medium text-gray-600">Total</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-2">
-                  <Truck className="h-4 w-4 text-blue-600" />
-                  <span className="text-2xl font-bold">{stats.total}</span>
+              <CardContent className="pb-3 md:pb-4">
+                <div className="flex items-center gap-1.5 md:gap-2">
+                  <Truck className="h-3 w-3 md:h-4 md:w-4 text-blue-600" />
+                  <span className="text-xl md:text-2xl font-bold">{stats.total}</span>
                 </div>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Fretes Ativos</CardTitle>
+              <CardHeader className="pb-2 md:pb-3">
+                <CardTitle className="text-xs md:text-sm font-medium text-gray-600">Ativos</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-2">
-                  <Package className="h-4 w-4 text-green-600" />
-                  <span className="text-2xl font-bold">{stats.active}</span>
+              <CardContent className="pb-3 md:pb-4">
+                <div className="flex items-center gap-1.5 md:gap-2">
+                  <Package className="h-3 w-3 md:h-4 md:w-4 text-green-600" />
+                  <span className="text-xl md:text-2xl font-bold">{stats.active}</span>
                 </div>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Fretes Expirados</CardTitle>
+              <CardHeader className="pb-2 md:pb-3">
+                <CardTitle className="text-xs md:text-sm font-medium text-gray-600">Expirados</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-red-600" />
-                  <span className="text-2xl font-bold">{stats.expired}</span>
+              <CardContent className="pb-3 md:pb-4">
+                <div className="flex items-center gap-1.5 md:gap-2">
+                  <Calendar className="h-3 w-3 md:h-4 md:w-4 text-red-600" />
+                  <span className="text-xl md:text-2xl font-bold">{stats.expired}</span>
                 </div>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Este Mês</CardTitle>
+              <CardHeader className="pb-2 md:pb-3">
+                <CardTitle className="text-xs md:text-sm font-medium text-gray-600">Este Mês</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-purple-600" />
-                  <span className="text-2xl font-bold">{stats.thisMonth}</span>
+              <CardContent className="pb-3 md:pb-4">
+                <div className="flex items-center gap-1.5 md:gap-2">
+                  <Calendar className="h-3 w-3 md:h-4 md:w-4 text-purple-600" />
+                  <span className="text-xl md:text-2xl font-bold">{stats.thisMonth}</span>
                 </div>
               </CardContent>
             </Card>
@@ -617,6 +619,144 @@ ${freight.observations ? `📝 Observações: ${freight.observations}\n` : ''}
                       <Plus className="h-4 w-4 mr-2" /> Novo Frete
                     </Button>
                   )}
+                </div>
+              ) : isMobile ? (
+                <div className="space-y-4">
+                  {filteredFreights.map((freight: FreightWithUser) => {
+                    const clientFound = clients.find((client: Client) => client.id === freight.clientId);
+                    const expired = freight.expirationDate ? isExpired(freight.expirationDate) : false;
+                    
+                    return (
+                      <Card key={freight.id} data-testid={`card-freight-${freight.id}`} className="overflow-hidden">
+                        <CardHeader className="pb-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                {clientFound?.logoUrl ? (
+                                  <img 
+                                    src={clientFound.logoUrl} 
+                                    alt={clientFound.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : freight.user?.avatarUrl ? (
+                                  <img 
+                                    src={freight.user.avatarUrl} 
+                                    alt={freight.user.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : freight.user?.name ? (
+                                  <div className={cn(
+                                    "w-full h-full flex items-center justify-center text-white font-semibold",
+                                    getColorFromName(freight.user.name)
+                                  )}>
+                                    {getInitials(freight.user.name)}
+                                  </div>
+                                ) : (
+                                  <Truck className="w-6 h-6 text-primary" />
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-semibold truncate">{clientFound?.name || freight.user?.name || "Cliente não encontrado"}</p>
+                                {freight.createdAt && (
+                                  <p className="text-xs text-gray-500">
+                                    {format(new Date(freight.createdAt), 'dd/MM/yyyy', { locale: ptBR })}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            <Badge variant={expired ? "destructive" : "default"} className="flex-shrink-0">
+                              {expired ? "Expirado" : "Ativo"}
+                            </Badge>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          <div className="space-y-2">
+                            <div className="flex items-start gap-2">
+                              <MapPin className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs text-gray-500">Origem</p>
+                                <p className="text-sm font-medium">{freight.origin}, {freight.originState}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-start gap-2">
+                              <MapPin className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs text-gray-500">Destino</p>
+                                <p className="text-sm font-medium">{freight.destination}, {freight.destinationState}</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3 pt-2 border-t">
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">Veículo</p>
+                              <p className="text-sm font-medium">{formatMultipleVehicleTypes(freight)}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">Carroceria</p>
+                              <p className="text-sm font-medium">{formatMultipleBodyTypes(freight)}</p>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3 pt-2 border-t">
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">Tipo de Carga</p>
+                              <p className="text-sm font-medium">{freight.cargoType === 'completa' ? 'Carga Completa' : 'Complemento'}</p>
+                              <p className="text-xs text-gray-600">{freight.cargoWeight} Kg</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">Valor do Frete</p>
+                              <div className="flex items-center gap-1">
+                                <DollarSign className="h-4 w-4 text-green-600" />
+                                <span className="font-semibold text-green-600">{formatCurrency(freight.freightValue)}</span>
+                              </div>
+                              <p className="text-xs text-gray-600">{freight.paymentMethod}</p>
+                            </div>
+                          </div>
+
+                          <div className="pt-2 border-t">
+                            <p className="text-xs text-gray-500 mb-1">Contato</p>
+                            <p className="text-sm font-medium">{freight.contactName}</p>
+                            <p className="text-sm text-gray-600">{freight.contactPhone}</p>
+                          </div>
+
+                          <div className="flex gap-2 pt-3">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1"
+                              onClick={() => navigate(`/freights/${freight.id}`)}
+                              data-testid={`button-view-${freight.id}`}
+                            >
+                              <Eye className="h-4 w-4 mr-2" /> Ver
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => shareViaWhatsApp(freight)}
+                              data-testid={`button-share-${freight.id}`}
+                            >
+                              <FaWhatsapp className="h-4 w-4 text-green-500" />
+                            </Button>
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={() => {
+                                if (freight.contactPhone) {
+                                  trackInterest(freight.id);
+                                  window.open(`https://wa.me/55${freight.contactPhone.replace(/\D/g, '')}`, '_blank');
+                                }
+                              }}
+                              disabled={!freight.contactPhone}
+                              data-testid={`button-contact-${freight.id}`}
+                            >
+                              <PhoneCall className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="overflow-x-auto">
