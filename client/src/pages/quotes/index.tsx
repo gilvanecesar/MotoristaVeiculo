@@ -1,14 +1,26 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Link } from "wouter";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { FileText, MapPin, Calendar, User, Phone, MessageCircle } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useAuth } from "@/hooks/use-auth";
+import { 
+  Search, 
+  MessageCircle, 
+  Calendar,
+  User,
+  MapPin,
+  DollarSign,
+  Clock,
+  TrendingUp,
+  FileText
+} from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useAuth } from "@/hooks/use-auth";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Quote {
   id: number;
@@ -41,32 +53,23 @@ interface QuoteStats {
   lastMonth: number;
 }
 
-const statusConfig = {
-  ativa: { label: "Ativa", color: "bg-green-500" },
-  pendente: { label: "Pendente", color: "bg-yellow-500" },
-  fechada: { label: "Fechada", color: "bg-blue-500" },
-  expirada: { label: "Expirada", color: "bg-red-500" },
-} as const;
-
-const urgencyConfig = {
-  urgent: { label: "Urgente", color: "bg-red-500" },
-  high: { label: "Alta", color: "bg-orange-500" },
-  medium: { label: "Média", color: "bg-yellow-500" },
-  low: { label: "Baixa", color: "bg-green-500" },
-} as const;
-
-// Função para verificar se uma cotação expirou
-const isQuoteExpired = (quote: Quote): boolean => {
-  if (!quote.expiresAt) return false;
-  return new Date(quote.expiresAt) < new Date();
+const statusColors = {
+  "ativa": "bg-green-100 text-green-800",
+  "fechada": "bg-blue-100 text-blue-800",
+  "cancelada": "bg-red-100 text-red-800",
+  "expirada": "bg-gray-100 text-gray-800",
+  "pendente": "bg-yellow-100 text-yellow-800"
 };
 
-// Função para obter o status efetivo da cotação
-const getEffectiveStatus = (quote: Quote): string => {
-  if (isQuoteExpired(quote)) {
-    return 'expirada';
-  }
-  return quote.status;
+const urgencyColors = {
+  "baixa": "bg-green-100 text-green-800",
+  "media": "bg-yellow-100 text-yellow-800",
+  "alta": "bg-orange-100 text-orange-800",
+  "urgente": "bg-red-100 text-red-800",
+  "low": "bg-green-100 text-green-800",
+  "medium": "bg-yellow-100 text-yellow-800",
+  "high": "bg-orange-100 text-orange-800",
+  "urgent": "bg-red-100 text-red-800"
 };
 
 // Função para gerar mensagem personalizada do WhatsApp
@@ -90,7 +93,8 @@ Aguardo seu retorno! 🚛`;
 
 export default function QuotesPage() {
   const { user } = useAuth();
-  const isMobile = useIsMobile();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   
   // Verificar se o usuário é transportador, embarcador, agenciador ou administrador
   if (!user || (
@@ -117,7 +121,7 @@ export default function QuotesPage() {
     );
   }
 
-  const { data: quotes, isLoading: quotesLoading } = useQuery<Quote[]>({
+  const { data: quotes = [], isLoading: quotesLoading } = useQuery<Quote[]>({
     queryKey: ["/api/quotes"],
   });
 
@@ -125,316 +129,260 @@ export default function QuotesPage() {
     queryKey: ["/api/quotes/stats"],
   });
 
-  if (quotesLoading || statsLoading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
-          <div>
-            <Skeleton className="h-8 w-48 mb-2" />
-            <Skeleton className="h-4 w-80" />
-          </div>
-          <Skeleton className="h-10 w-40 mt-4 sm:mt-0" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {[...Array(6)].map((_, i) => (
-            <Skeleton key={i} className="h-24" />
-          ))}
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(9)].map((_, i) => (
-            <Skeleton key={i} className="h-64" />
-          ))}
-        </div>
-      </div>
-    );
-  }
+  // Filtrar cotações
+  const filteredQuotes = quotes?.filter((quote: Quote) => {
+    const matchesSearch = 
+      quote.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      quote.clientEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      quote.origin.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      quote.destination.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      quote.cargoType.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === "all" || quote.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
+
+  const openWhatsApp = (quote: Quote) => {
+    const phone = quote.clientPhone.replace(/\D/g, '');
+    const message = generateWhatsAppMessage(quote);
+    const whatsappUrl = `https://wa.me/55${phone}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
+  const formatCurrency = (value: number | string | null) => {
+    const numValue = value ? Number(value) : 0;
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(numValue);
+  };
+
+  const isLoading = quotesLoading || statsLoading;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Cabeçalho */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+    <div className="container mx-auto p-6 space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold mb-2 text-[#ffffff]">
-            Cotações
-          </h1>
-          <p className="text-gray-600">
-            Visualize as solicitações de cotação de transporte
-          </p>
+          <h1 className="text-3xl font-bold">Cotações</h1>
+          <p className="text-gray-600">Visualize as solicitações de cotação de transporte</p>
         </div>
       </div>
+
       {/* Estatísticas */}
-      <div className={`grid gap-4 mb-8 ${isMobile ? 'grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-6'}`}>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">
-              Total
-            </CardTitle>
-            <div className="text-2xl font-bold">
-              {stats?.total || 0}
-            </div>
-          </CardHeader>
-        </Card>
+      {stats && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Total de Cotações</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-blue-600" />
+                <span className="text-2xl font-bold">{stats.total}</span>
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">
-              Ativas
-            </CardTitle>
-            <div className="text-2xl font-bold text-green-600">
-              {stats?.active || 0}
-            </div>
-          </CardHeader>
-        </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Cotações Ativas</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-green-600" />
+                <span className="text-2xl font-bold">{stats.active}</span>
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">
-              Fechadas
-            </CardTitle>
-            <div className="text-2xl font-bold text-blue-600">
-              {stats?.closed || 0}
-            </div>
-          </CardHeader>
-        </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Cotações Fechadas</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4 text-blue-600" />
+                <span className="text-2xl font-bold">{stats.closed}</span>
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">
-              Expiradas
-            </CardTitle>
-            <div className="text-2xl font-bold text-red-600">
-              {stats?.expired || 0}
-            </div>
-          </CardHeader>
-        </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Este Mês</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-purple-600" />
+                <span className="text-2xl font-bold">{stats.thisMonth}</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">
-              Este Mês
-            </CardTitle>
-            <div className="text-2xl font-bold text-purple-600">
-              {stats?.thisMonth || 0}
+      {/* Filtros */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Filtros</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <Label htmlFor="search">Pesquisar</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  id="search"
+                  placeholder="Pesquisar por cliente, email, origem, destino..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                  data-testid="input-search-quotes"
+                />
+              </div>
             </div>
-          </CardHeader>
-        </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">
-              Mês Passado
-            </CardTitle>
-            <div className="text-2xl font-bold text-gray-600">
-              {stats?.lastMonth || 0}
+            <div className="w-full sm:w-64">
+              <Label htmlFor="status">Status</Label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger data-testid="select-status-filter">
+                  <SelectValue placeholder="Todos os status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os status</SelectItem>
+                  <SelectItem value="ativa">Ativa</SelectItem>
+                  <SelectItem value="fechada">Fechada</SelectItem>
+                  <SelectItem value="cancelada">Cancelada</SelectItem>
+                  <SelectItem value="expirada">Expirada</SelectItem>
+                  <SelectItem value="pendente">Pendente</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          </CardHeader>
-        </Card>
-      </div>
-      {/* Lista de Cotações */}
-      <div className={isMobile ? "grid grid-cols-1 gap-4" : "space-y-4"}>
-        {quotes?.length === 0 ? (
-          <div className="text-center py-12">
-            <FileText className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">
-              Nenhuma cotação encontrada
-            </h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Aguarde novas solicitações de cotação.
-            </p>
           </div>
-        ) : (
-          quotes?.map((quote) => {
-            const effectiveStatus = getEffectiveStatus(quote);
-            const isExpired = isQuoteExpired(quote);
-            
-            return (
-              <Card key={quote.id} className={`hover:shadow-lg transition-shadow ${isMobile ? 'border-l-4 border-l-primary' : ''}`}>
-                <CardContent className={isMobile ? "p-4" : "p-6"}>
-                  {isMobile ? (
-                    /* Layout Mobile - Card Compacto */
-                    (<div className="space-y-3">
-                      {/* Header do Card Mobile */}
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-gray-900 text-base">
-                            {quote.clientName}
-                          </h3>
-                          <p className="text-sm text-gray-600 mt-1">
-                            {quote.clientEmail}
-                          </p>
+        </CardContent>
+      </Card>
+
+      {/* Lista de cotações */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Cotações ({filteredQuotes?.length || 0})</CardTitle>
+          <CardDescription>
+            Todas as cotações disponíveis para você
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-2 text-gray-600">Carregando cotações...</p>
+            </div>
+          ) : filteredQuotes?.length === 0 ? (
+            <div className="text-center py-8">
+              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600">Nenhuma cotação encontrada</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Origem → Destino</TableHead>
+                    <TableHead>Carga</TableHead>
+                    <TableHead>Valor de NF</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Urgência</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredQuotes?.map((quote: Quote) => (
+                    <TableRow key={quote.id} data-testid={`row-quote-${quote.id}`}>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <p className="font-medium">{quote.clientName}</p>
+                          <p className="text-sm text-gray-600">{quote.clientEmail}</p>
+                          <p className="text-sm text-gray-600">{quote.clientPhone}</p>
                         </div>
-                        <div className="flex flex-col items-end gap-1">
-                          <Badge 
-                            variant="secondary" 
-                            className={`${statusConfig[effectiveStatus as keyof typeof statusConfig]?.color} text-white text-xs`}
-                          >
-                            {statusConfig[effectiveStatus as keyof typeof statusConfig]?.label}
-                          </Badge>
-                          <Badge 
-                            variant="outline"
-                            className={`${urgencyConfig[quote.urgency as keyof typeof urgencyConfig]?.color} text-white border-0 text-xs`}
-                          >
-                            {urgencyConfig[quote.urgency as keyof typeof urgencyConfig]?.label}
-                          </Badge>
-                        </div>
-                      </div>
-                      {/* Rota */}
-                      <div className="flex items-center text-sm text-gray-600">
-                        <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />
-                        <span className="truncate">
-                          {quote.origin}/{quote.originState} → {quote.destination}/{quote.destinationState}
-                        </span>
-                      </div>
-                      {/* Informações da Carga */}
-                      <div className="bg-gray-50 p-3 rounded-md">
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                          <div>
-                            <span className="text-gray-500">Carga:</span>
-                            <p className="font-medium text-gray-900 truncate">{quote.cargoType}</p>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-4 w-4 text-gray-400" />
+                            <span className="text-sm">{quote.origin} - {quote.originState}</span>
                           </div>
-                          <div>
-                            <span className="text-gray-500">Peso/Volume:</span>
-                            <p className="font-medium text-gray-900">{quote.weight}kg | {quote.volume}m³</p>
-                          </div>
-                        </div>
-                        <div className="mt-2 pt-2 border-t border-gray-200">
-                          <div className="flex items-center text-sm text-gray-600">
-                            <Calendar className="h-4 w-4 mr-2" />
-                            <span>Entrega: {format(new Date(quote.deliveryDate), "dd/MM/yyyy", { locale: ptBR })}</span>
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-4 w-4 text-gray-400" />
+                            <span className="text-sm">{quote.destination} - {quote.destinationState}</span>
                           </div>
                         </div>
-                      </div>
-                      {/* Footer do Card Mobile */}
-                      <div className="flex items-center justify-between pt-2">
-                        <div className="flex items-center space-x-2">
-                          <a 
-                            href={`https://wa.me/55${quote.clientPhone.replace(/\D/g, '')}?text=${encodeURIComponent(generateWhatsAppMessage(quote))}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center space-x-1 text-green-600 hover:text-green-700 text-sm font-medium"
-                          >
-                            <MessageCircle className="h-4 w-4" />
-                            <span>WhatsApp</span>
-                          </a>
-                          <Badge 
-                            variant="outline"
-                            className={quote.userId === null ? "bg-orange-500 text-white border-0" : "bg-blue-500 text-white border-0"}
-                          >
-                            {quote.userId === null ? "Pública" : "Registrada"}
-                          </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium">{quote.cargoType}</p>
+                          <p className="text-sm text-gray-600">{quote.weight}kg</p>
+                          <p className="text-sm text-gray-600">{quote.volume}m³</p>
                         </div>
-                        <div className="text-right">
-                          <div className="text-lg font-bold text-green-600">
-                            R$ {quote.price.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            #{quote.id} - {format(new Date(quote.createdAt), "dd/MM/yyyy", { locale: ptBR })}
-                          </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="h-4 w-4 text-green-600" />
+                          <span className="font-medium">{formatCurrency(quote.price)}</span>
                         </div>
-                      </div>
-                      {/* Expiração */}
-                      {quote.expiresAt && (
-                        <div className={`text-xs text-center p-2 rounded ${isExpired ? 'bg-red-50 text-red-600' : 'bg-orange-50 text-orange-600'}`}>
-                          {isExpired ? 'Expirou em: ' : 'Expira em: '}
-                          {format(new Date(quote.expiresAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                        </div>
-                      )}
-                    </div>)
-                  ) : (
-                    /* Layout Desktop - Card Expandido */
-                    (<div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-                      {/* Informações do Cliente */}
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-3">
-                          <h3 className="text-lg font-semibold text-[#ffffff]">
-                            {quote.clientName}
-                          </h3>
-                          <Badge 
-                            variant="secondary" 
-                            className={`${statusConfig[effectiveStatus as keyof typeof statusConfig]?.color} text-white`}
-                          >
-                            {statusConfig[effectiveStatus as keyof typeof statusConfig]?.label}
-                          </Badge>
-                          <Badge 
-                            variant="outline"
-                            className={`${urgencyConfig[quote.urgency as keyof typeof urgencyConfig]?.color} text-white border-0`}
-                          >
-                            {urgencyConfig[quote.urgency as keyof typeof urgencyConfig]?.label}
-                          </Badge>
-                          <Badge 
-                            variant="outline"
-                            className={quote.userId === null ? "bg-orange-500 text-white border-0" : "bg-blue-500 text-white border-0"}
-                          >
-                            {quote.userId === null ? "Pública" : "Registrada"}
-                          </Badge>
-                        </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                        <div className="space-y-2">
-                          <div className="flex items-center text-gray-600">
-                            <User className="h-4 w-4 mr-2" />
-                            {quote.clientEmail}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={statusColors[quote.status as keyof typeof statusColors]}>
+                          {quote.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={urgencyColors[quote.urgency as keyof typeof urgencyColors]}>
+                          {quote.urgency}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={quote.userId ? "default" : "secondary"}>
+                          {quote.userId ? "Registrado" : "Público"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4 text-gray-400" />
+                            <span className="text-sm">
+                              {format(new Date(quote.createdAt), 'dd/MM/yyyy', { locale: ptBR })}
+                            </span>
                           </div>
-                          <div className="flex items-center text-gray-600">
-                            <Phone className="h-4 w-4 mr-2" />
-                            <span className="mr-2">{quote.clientPhone}</span>
-                            <a 
-                              href={`https://wa.me/55${quote.clientPhone.replace(/\D/g, '')}?text=${encodeURIComponent(generateWhatsAppMessage(quote))}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-green-600 hover:text-green-700 hover:scale-110 transition-transform"
-                              title="Enviar mensagem no WhatsApp"
-                            >
-                              <MessageCircle className="h-4 w-4" />
-                            </a>
-                          </div>
-                          <div className="flex items-center text-gray-600">
-                            <MapPin className="h-4 w-4 mr-2" />
-                            {quote.origin}/{quote.originState} → {quote.destination}/{quote.destinationState}
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4 text-gray-400" />
+                            <span className="text-sm">
+                              {format(new Date(quote.deliveryDate), 'dd/MM/yyyy', { locale: ptBR })}
+                            </span>
                           </div>
                         </div>
-                        
-                        <div className="space-y-2">
-                          <div className="flex items-center text-gray-600">
-                            <Calendar className="h-4 w-4 mr-2" />
-                            Entrega: {format(new Date(quote.deliveryDate), "dd/MM/yyyy", { locale: ptBR })}
-                          </div>
-                          <div className="text-gray-600">
-                            <strong>Carga:</strong> {quote.cargoType}
-                          </div>
-                          <div className="text-gray-600">
-                            <strong>Peso:</strong> {quote.weight}kg | <strong>Volume:</strong> {quote.volume}m³
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                      {/* Preço e Data */}
-                      <div className="flex flex-col items-end text-right">
-                        <div className="text-lg font-bold text-green-600 mb-2">
-                          <span className="text-sm text-gray-600 font-normal">Valor de NF:</span><br />
-                          R$ {quote.price.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          Cotação #{quote.id}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {format(new Date(quote.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                        </div>
-                        {quote.expiresAt && (
-                          <div className={`text-xs mt-1 ${isExpired ? 'text-red-500 font-semibold' : 'text-orange-500'}`}>
-                            {isExpired ? 'Expirou em: ' : 'Expira em: '}
-                            {format(new Date(quote.expiresAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                          </div>
-                        )}
-                      </div>
-                    </div>)
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })
-        )}
-      </div>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openWhatsApp(quote)}
+                          data-testid={`button-whatsapp-${quote.id}`}
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
