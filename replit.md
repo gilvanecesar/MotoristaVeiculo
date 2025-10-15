@@ -9,7 +9,16 @@ Preferred communication style: Simple, everyday language.
 ## System Architecture
 
 ### UI/UX Decisions
-The frontend uses React with TypeScript, Vite, Wouter for routing, and TanStack React Query. UI components are built with Radix UI and styled using Tailwind CSS, featuring a custom sidebar color (`#00222d`) and white fonts for a clean, functional design. Mobile optimization is achieved through a `use-mobile.ts` hook for responsive layouts. Navigation has been redesigned to a horizontal top navbar with a responsive mobile menu for improved space efficiency and modern UX. Consistent table layouts are used for listings like quotes and freights for better data visualization.
+The frontend uses React with TypeScript, Vite, Wouter for routing, and TanStack React Query. UI components are built with Radix UI and styled using Tailwind CSS, featuring a custom sidebar color (`#00222d`) and white fonts for a clean, functional design. 
+
+**Mobile-First Responsive Design**: Complete mobile optimization achieved through `use-mobile.ts` hook (768px breakpoint):
+- **Freights & Quotes Pages**: Adaptive layouts switching from professional tables (desktop) to clean, organized cards (mobile) displaying all essential information with proper touch targets
+- **Navigation**: Top navbar with Sheet-based mobile menu ensuring discoverable navigation on all screen sizes
+- **Statistics & Headers**: Responsive typography, padding, and grid density (2-column mobile, 4-column desktop) for optimal readability
+- **Forms**: Grid layouts adapt from single-column (mobile) to multi-column (desktop) with proper spacing
+- **Touch-Optimized**: All CTAs (WhatsApp, contact, view) properly sized for mobile interaction
+
+Table layouts are used for desktop listings (quotes/freights) while mobile displays beautiful card interfaces for better data visualization on small screens.
 
 ### Technical Implementations
 - **Frontend**: React, TypeScript, Vite, Wouter, TanStack React Query, Radix UI, Tailwind CSS, React Hook Form, Zod, Context-based authentication.
