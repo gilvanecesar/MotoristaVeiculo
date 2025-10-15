@@ -343,17 +343,17 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="w-full max-w-full overflow-x-hidden p-2 md:p-6 space-y-6">
+    <div className="w-full max-w-full overflow-x-hidden p-3 md:p-6 space-y-4 md:space-y-6">
       {/* Header com filtros */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Dashboard Executiva</h1>
-          <p className="text-sm text-gray-600">Análise completa de performance e indicadores</p>
+          <h1 className="text-xl md:text-3xl font-bold text-gray-900">Dashboard Executiva</h1>
+          <p className="text-xs md:text-sm text-gray-600">Análise completa de performance e indicadores</p>
         </div>
         
         <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
           <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger className="w-full md:w-40">
+            <SelectTrigger className="w-full md:w-40 h-9 text-sm">
               <SelectValue placeholder="Período" />
             </SelectTrigger>
             <SelectContent>
@@ -365,7 +365,7 @@ export default function Dashboard() {
           </Select>
           
           <Select value={selectedMetric} onValueChange={setSelectedMetric}>
-            <SelectTrigger className="w-full md:w-40">
+            <SelectTrigger className="w-full md:w-40 h-9 text-sm">
               <SelectValue placeholder="Métrica" />
             </SelectTrigger>
             <SelectContent>
@@ -376,7 +376,7 @@ export default function Dashboard() {
             </SelectContent>
           </Select>
           
-          <Button variant="outline" onClick={refreshData} className="w-full md:w-auto">
+          <Button variant="outline" onClick={refreshData} className="w-full md:w-auto h-9 text-sm">
             <RefreshCw className="h-4 w-4 mr-2" />
             Atualizar
           </Button>
@@ -384,18 +384,18 @@ export default function Dashboard() {
       </div>
 
       {/* Cards de estatísticas principais */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-blue-700 flex items-center gap-2">
-              <Users className="h-4 w-4" />
+          <CardHeader className="pb-2 p-3 md:p-6 md:pb-2">
+            <CardTitle className="text-xs md:text-sm font-medium text-blue-700 flex items-center gap-1 md:gap-2">
+              <Users className="h-3 w-3 md:h-4 md:w-4" />
               Motoristas
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-900">{dashboardStats.totalDrivers}</div>
-            <div className="flex items-center gap-2 mt-2">
-              <Badge variant="secondary" className="text-xs">
+          <CardContent className="p-3 md:p-6 pt-0">
+            <div className="text-xl md:text-2xl font-bold text-blue-900">{dashboardStats.totalDrivers}</div>
+            <div className="flex items-center gap-1 md:gap-2 mt-2">
+              <Badge variant="secondary" className="text-[10px] md:text-xs">
                 {dashboardStats.driversWithoutVehiclesPercent.toFixed(1)}% sem veículos
               </Badge>
             </div>
@@ -404,16 +404,16 @@ export default function Dashboard() {
         </Card>
 
         <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-green-700 flex items-center gap-2">
-              <Car className="h-4 w-4" />
+          <CardHeader className="pb-2 p-3 md:p-6 md:pb-2">
+            <CardTitle className="text-xs md:text-sm font-medium text-green-700 flex items-center gap-1 md:gap-2">
+              <Car className="h-3 w-3 md:h-4 md:w-4" />
               Veículos
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-900">{dashboardStats.totalVehicles}</div>
-            <div className="flex items-center gap-2 mt-2">
-              <Badge variant="secondary" className="text-xs">
+          <CardContent className="p-3 md:p-6 pt-0">
+            <div className="text-xl md:text-2xl font-bold text-green-900">{dashboardStats.totalVehicles}</div>
+            <div className="flex items-center gap-1 md:gap-2 mt-2">
+              <Badge variant="secondary" className="text-[10px] md:text-xs">
                 {dashboardStats.utilizationRate.toFixed(1)}% em uso
               </Badge>
             </div>
@@ -422,16 +422,16 @@ export default function Dashboard() {
         </Card>
 
         <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-purple-700 flex items-center gap-2">
-              <Truck className="h-4 w-4" />
+          <CardHeader className="pb-2 p-3 md:p-6 md:pb-2">
+            <CardTitle className="text-xs md:text-sm font-medium text-purple-700 flex items-center gap-1 md:gap-2">
+              <Truck className="h-3 w-3 md:h-4 md:w-4" />
               Fretes
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-900">{dashboardStats.totalFreights}</div>
-            <div className="flex items-center gap-2 mt-2">
-              <Badge variant="secondary" className="text-xs">
+          <CardContent className="p-3 md:p-6 pt-0">
+            <div className="text-xl md:text-2xl font-bold text-purple-900">{dashboardStats.totalFreights}</div>
+            <div className="flex items-center gap-1 md:gap-2 mt-2">
+              <Badge variant="secondary" className="text-[10px] md:text-xs">
                 {dashboardStats.activeFreightsPercent.toFixed(1)}% ativos
               </Badge>
             </div>
@@ -440,16 +440,16 @@ export default function Dashboard() {
         </Card>
 
         <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-orange-700 flex items-center gap-2">
-              <MapPin className="h-4 w-4" />
+          <CardHeader className="pb-2 p-3 md:p-6 md:pb-2">
+            <CardTitle className="text-xs md:text-sm font-medium text-orange-700 flex items-center gap-1 md:gap-2">
+              <MapPin className="h-3 w-3 md:h-4 md:w-4" />
               Cotações
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-900">{dashboardStats.totalQuotes}</div>
-            <div className="flex items-center gap-2 mt-2">
-              <Badge variant="secondary" className="text-xs">
+          <CardContent className="p-3 md:p-6 pt-0">
+            <div className="text-xl md:text-2xl font-bold text-orange-900">{dashboardStats.totalQuotes}</div>
+            <div className="flex items-center gap-1 md:gap-2 mt-2">
+              <Badge variant="secondary" className="text-[10px] md:text-xs">
                 {dashboardStats.conversionRate.toFixed(1)}% conversão
               </Badge>
             </div>
@@ -459,21 +459,21 @@ export default function Dashboard() {
       </div>
 
       {/* Gráficos principais */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {/* Gráfico de Performance Mensal */}
         <Card>
-          <CardHeader>
-            <CardTitle>Performance Mensal</CardTitle>
-            <CardDescription>Fretes vs Cotações com taxa de conversão</CardDescription>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base md:text-lg">Performance Mensal</CardTitle>
+            <CardDescription className="text-xs md:text-sm">Fretes vs Cotações com taxa de conversão</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={isMobile ? 250 : 300}>
               <ComposedChart data={monthlyPerformance}>
-                <XAxis dataKey="month" />
-                <YAxis yAxisId="left" />
-                <YAxis yAxisId="right" orientation="right" />
+                <XAxis dataKey="month" tick={{ fontSize: isMobile ? 10 : 12 }} />
+                <YAxis yAxisId="left" tick={{ fontSize: isMobile ? 10 : 12 }} />
+                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: isMobile ? 10 : 12 }} />
                 <Tooltip />
-                <Legend />
+                {!isMobile && <Legend />}
                 <Bar yAxisId="left" dataKey="fretes" fill="#8884d8" name="Fretes" />
                 <Bar yAxisId="left" dataKey="cotacoes" fill="#82ca9d" name="Cotações" />
                 <Line yAxisId="right" type="monotone" dataKey="conversao" stroke="#ff7300" name="Conversão %" />
@@ -484,23 +484,23 @@ export default function Dashboard() {
 
         {/* Gráfico de Fretes por Estado */}
         <Card>
-          <CardHeader>
-            <CardTitle>Top 10 Estados</CardTitle>
-            <CardDescription>Distribuição de fretes por estado</CardDescription>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base md:text-lg">Top 10 Estados</CardTitle>
+            <CardDescription className="text-xs md:text-sm">Distribuição de fretes por estado</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
+            <div className="space-y-1.5 md:space-y-2">
               {freightsByState.map((item, index) => (
-                <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                  <span className="font-medium">{item.state}</span>
-                  <div className="flex items-center gap-2">
-                    <div className="w-20 bg-gray-200 rounded-full h-2">
+                <div key={index} className="flex items-center justify-between p-1.5 md:p-2 bg-gray-50 rounded">
+                  <span className="text-sm md:text-base font-medium">{item.state}</span>
+                  <div className="flex items-center gap-1 md:gap-2">
+                    <div className="w-16 md:w-20 bg-gray-200 rounded-full h-2">
                       <div 
                         className="bg-blue-500 h-2 rounded-full" 
                         style={{ width: `${Math.min(parseFloat(item.percentage), 100)}%` }}
                       ></div>
                     </div>
-                    <span className="text-sm text-gray-600">{item.count} ({item.percentage}%)</span>
+                    <span className="text-xs md:text-sm text-gray-600 whitespace-nowrap">{item.count} ({item.percentage}%)</span>
                   </div>
                 </div>
               ))}
@@ -510,20 +510,20 @@ export default function Dashboard() {
 
         {/* Gráfico de Status de Fretes */}
         <Card>
-          <CardHeader>
-            <CardTitle>Status dos Fretes</CardTitle>
-            <CardDescription>Distribuição por status atual</CardDescription>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base md:text-lg">Status dos Fretes</CardTitle>
+            <CardDescription className="text-xs md:text-sm">Distribuição por status atual</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={isMobile ? 250 : 300}>
               <PieChart>
                 <Pie
                   data={freightStatus}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ status, percentage }) => `${status}: ${percentage}%`}
-                  outerRadius={80}
+                  label={isMobile ? false : ({ status, percentage }) => `${status}: ${percentage}%`}
+                  outerRadius={isMobile ? 60 : 80}
                   fill="#8884d8"
                   dataKey="count"
                 >
@@ -532,6 +532,7 @@ export default function Dashboard() {
                   ))}
                 </Pie>
                 <Tooltip />
+                {isMobile && <Legend wrapperStyle={{ fontSize: '10px' }} />}
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
@@ -539,20 +540,20 @@ export default function Dashboard() {
 
         {/* Gráfico de Tipos de Veículos */}
         <Card>
-          <CardHeader>
-            <CardTitle>Tipos de Veículos</CardTitle>
-            <CardDescription>Distribuição da frota por tipo</CardDescription>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base md:text-lg">Tipos de Veículos</CardTitle>
+            <CardDescription className="text-xs md:text-sm">Distribuição da frota por tipo</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={isMobile ? 250 : 300}>
               <PieChart>
                 <Pie
                   data={vehicleTypes}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ type, percentage }) => `${type}: ${percentage}%`}
-                  outerRadius={80}
+                  label={isMobile ? false : ({ type, percentage }) => `${type}: ${percentage}%`}
+                  outerRadius={isMobile ? 60 : 80}
                   fill="#8884d8"
                   dataKey="count"
                 >
@@ -561,6 +562,7 @@ export default function Dashboard() {
                   ))}
                 </Pie>
                 <Tooltip />
+                {isMobile && <Legend wrapperStyle={{ fontSize: '10px' }} />}
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
@@ -568,75 +570,75 @@ export default function Dashboard() {
       </div>
 
       {/* Métricas de eficiência */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
         <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-emerald-700">Taxa de Utilização</CardTitle>
+          <CardHeader className="pb-2 p-3 md:p-6 md:pb-2">
+            <CardTitle className="text-xs md:text-sm font-medium text-emerald-700">Taxa de Utilização</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-emerald-900">{dashboardStats.utilizationRate.toFixed(1)}%</div>
-            <p className="text-xs text-emerald-600 mt-1">Veículos em uso ativo</p>
+          <CardContent className="p-3 md:p-6 pt-0">
+            <div className="text-xl md:text-2xl font-bold text-emerald-900">{dashboardStats.utilizationRate.toFixed(1)}%</div>
+            <p className="text-[10px] md:text-xs text-emerald-600 mt-1">Veículos em uso ativo</p>
             <Progress value={dashboardStats.utilizationRate} className="mt-2" />
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-to-br from-indigo-50 to-indigo-100 border-indigo-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-indigo-700">Taxa de Conversão</CardTitle>
+          <CardHeader className="pb-2 p-3 md:p-6 md:pb-2">
+            <CardTitle className="text-xs md:text-sm font-medium text-indigo-700">Taxa de Conversão</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-indigo-900">{dashboardStats.conversionRate.toFixed(1)}%</div>
-            <p className="text-xs text-indigo-600 mt-1">Cotações → Fretes</p>
+          <CardContent className="p-3 md:p-6 pt-0">
+            <div className="text-xl md:text-2xl font-bold text-indigo-900">{dashboardStats.conversionRate.toFixed(1)}%</div>
+            <p className="text-[10px] md:text-xs text-indigo-600 mt-1">Cotações → Fretes</p>
             <Progress value={dashboardStats.conversionRate} className="mt-2" />
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-to-br from-rose-50 to-rose-100 border-rose-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-rose-700">Eficiência da Frota</CardTitle>
+          <CardHeader className="pb-2 p-3 md:p-6 md:pb-2">
+            <CardTitle className="text-xs md:text-sm font-medium text-rose-700">Eficiência da Frota</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-rose-900">{dashboardStats.efficiency.toFixed(1)}%</div>
-            <p className="text-xs text-rose-600 mt-1">Veículos por motorista</p>
+          <CardContent className="p-3 md:p-6 pt-0">
+            <div className="text-xl md:text-2xl font-bold text-rose-900">{dashboardStats.efficiency.toFixed(1)}%</div>
+            <p className="text-[10px] md:text-xs text-rose-600 mt-1">Veículos por motorista</p>
             <Progress value={Math.min(dashboardStats.efficiency, 100)} className="mt-2" />
           </CardContent>
         </Card>
       </div>
 
       {/* Links rápidos */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         <Link href="/drivers">
           <Card className="cursor-pointer hover:shadow-md transition-shadow">
-            <CardContent className="p-4 text-center">
-              <Users className="h-8 w-8 mx-auto mb-2 text-blue-600" />
-              <p className="text-sm font-medium">Motoristas</p>
+            <CardContent className="p-3 md:p-4 text-center">
+              <Users className="h-6 w-6 md:h-8 md:w-8 mx-auto mb-1 md:mb-2 text-blue-600" />
+              <p className="text-xs md:text-sm font-medium">Motoristas</p>
             </CardContent>
           </Card>
         </Link>
 
         <Link href="/vehicles">
           <Card className="cursor-pointer hover:shadow-md transition-shadow">
-            <CardContent className="p-4 text-center">
-              <Car className="h-8 w-8 mx-auto mb-2 text-green-600" />
-              <p className="text-sm font-medium">Veículos</p>
+            <CardContent className="p-3 md:p-4 text-center">
+              <Car className="h-6 w-6 md:h-8 md:w-8 mx-auto mb-1 md:mb-2 text-green-600" />
+              <p className="text-xs md:text-sm font-medium">Veículos</p>
             </CardContent>
           </Card>
         </Link>
 
         <Link href="/freights">
           <Card className="cursor-pointer hover:shadow-md transition-shadow">
-            <CardContent className="p-4 text-center">
-              <Truck className="h-8 w-8 mx-auto mb-2 text-purple-600" />
-              <p className="text-sm font-medium">Fretes</p>
+            <CardContent className="p-3 md:p-4 text-center">
+              <Truck className="h-6 w-6 md:h-8 md:w-8 mx-auto mb-1 md:mb-2 text-purple-600" />
+              <p className="text-xs md:text-sm font-medium">Fretes</p>
             </CardContent>
           </Card>
         </Link>
 
         <Link href="/quotes">
           <Card className="cursor-pointer hover:shadow-md transition-shadow">
-            <CardContent className="p-4 text-center">
-              <MapPin className="h-8 w-8 mx-auto mb-2 text-orange-600" />
-              <p className="text-sm font-medium">Cotações</p>
+            <CardContent className="p-3 md:p-4 text-center">
+              <MapPin className="h-6 w-6 md:h-8 md:w-8 mx-auto mb-1 md:mb-2 text-orange-600" />
+              <p className="text-xs md:text-sm font-medium">Cotações</p>
             </CardContent>
           </Card>
         </Link>
