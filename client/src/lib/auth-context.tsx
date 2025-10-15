@@ -32,7 +32,6 @@ export const useAuth = () => {
         }
         return null;
       } catch (error) {
-        console.error("Erro ao carregar usuário:", error);
         return null;
       }
     }
@@ -76,7 +75,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       return await response.json();
     } catch (error) {
-      console.error('Erro ao buscar cliente:', error);
       return null;
     }
   };
@@ -94,7 +92,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       return false;
     } catch (error) {
-      console.error('Erro ao fazer login:', error);
       return false;
     } finally {
       setIsLoading(false);
@@ -111,14 +108,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isClientAuthorized = (clientId: number | null): boolean => {
     // Verifica se o usuário é administrador usando o contexto de autenticação
     if (user && user.profileType && user.profileType.toLowerCase() === 'administrador') {
-      console.log("Usuário é administrador, autorizando acesso");
       return true;
     }
     
     // Permite acesso a motoristas para visualização (mas não para edição/exclusão)
     // Os botões de edição/exclusão são condicionalmente renderizados na UI
     if (user && user.profileType && user.profileType.toLowerCase() === 'motorista') {
-      console.log("Usuário é motorista, permitindo visualização");
       // Motoristas só podem ver, não editar/excluir, então retornamos false
       // mas isso não impede a visualização na lista
       return false;
@@ -126,39 +121,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     // Verifica se o usuário atual tem clientId (está associado a um cliente)
     if (user && user.clientId) {
-      console.log(`Usuário tem clientId: ${user.clientId}`);
-      
       // Se o frete não tem cliente associado ou clientId é zero (padrão), qualquer usuário autenticado pode editar
       if (clientId === null || clientId === 0) {
-        console.log("Frete sem cliente associado, permitindo acesso");
         return true;
       }
       
       // Verifica se o clientId do usuário é o mesmo do frete
       const isAuthorized = user.clientId === clientId;
-      console.log(`Verificando autorização: Cliente do usuário ID ${user.clientId}, ClienteID do frete ${clientId}, Autorizado: ${isAuthorized}`);
       return isAuthorized;
     }
     
     // Para compatibilidade, também verifica o currentClient do localStorage (caso ainda esteja em uso)
     if (currentClient) {
       if (clientId === null || clientId === 0) {
-        console.log("Frete sem cliente associado, permitindo acesso");
         return true;
       }
       
       const isAuthorized = currentClient.id === clientId;
-      console.log(`Verificando autorização via localStorage: Cliente atual ID ${currentClient.id}, ClienteID do frete ${clientId}, Autorizado: ${isAuthorized}`);
       return isAuthorized;
     }
     
     // Se não houver cliente associado ao frete (clientId é null ou 0), qualquer usuário autenticado pode editar
     if (clientId === null || clientId === 0) {
-      console.log("Frete sem cliente associado, permitindo acesso para usuário autenticado");
       return true;
     }
     
-    console.log("Não há cliente associado ao usuário, negando acesso para edição");
     // Retorna false para impedir edição/exclusão, mas isso não impede a visualização na lista
     return false;
   };

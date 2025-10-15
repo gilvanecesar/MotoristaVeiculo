@@ -179,16 +179,6 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   const isTransportador = user?.profileType === "transportador";
   
   // Lógica para mostrar/ocultar menus baseado no perfil
-  const userDataForMenus = {
-    id: user?.id,
-    profileType: user?.profileType,
-    clientId: user?.clientId,
-    subscriptionActive: user?.subscriptionActive,
-    subscriptionType: user?.subscriptionType,
-    subscriptionExpiresAt: user?.subscriptionExpiresAt
-  };
-  
-  console.log("Dados do usuário para menus:", userDataForMenus);
   
   // Determinar quais menus mostrar
   let showAllMenus = false;
@@ -197,13 +187,10 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   if (isAdmin) {
     showAllMenus = true;
   } else if (user?.clientId) {
-    console.log("Usuário com cliente cadastrado - mostrando todos os menus");
     showAllMenus = true;
   } else if (isDriver) {
-    console.log("Usuário motorista sem cliente - mostrando menus limitados");
     showLimitedMenus = true;
   } else {
-    console.log("Outros casos - mostrando todos os menus");
     showAllMenus = true;
   }
   

@@ -51,7 +51,6 @@ export const getQueryFn: <T>(options: {
       
       return null;
     } catch (error) {
-      console.error("Erro ao carregar usuário:", error);
       if (unauthorizedBehavior === "returnNull") {
         return null;
       }

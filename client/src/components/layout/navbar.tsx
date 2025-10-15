@@ -76,13 +76,11 @@ export default function Navbar() {
         onSuccess: () => {
           localStorage.removeItem('currentClientId');
           navigate('/auth');
-        },
-        onError: (error) => {
-          console.error("Erro ao fazer logout:", error);
         }
       });
     } catch (error) {
-      console.error("Erro ao processar logout:", error);
+      // Erro silencioso - apenas redireciona para login
+      navigate('/auth');
     }
   };
   

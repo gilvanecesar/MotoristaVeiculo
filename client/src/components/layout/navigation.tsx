@@ -84,7 +84,6 @@ export default function Navigation() {
     try {
       logoutMutation.mutate(undefined, {
         onSuccess: () => {
-          console.log("Logout efetuado com sucesso");
           // Limpar dados locais que possam interferir
           localStorage.removeItem('currentClientId');
           // Redirecionar para a página de login após o logout
@@ -105,9 +104,6 @@ export default function Navigation() {
   const isShipper = user?.profileType === "embarcador" || user?.profileType === "shipper";
   const isAgent = user?.profileType === "agente" || user?.profileType === "agent" || user?.profileType === "agenciador";
   const isTransportador = user?.profileType === "transportador";
-  
-  // Para depuração
-  console.log("Tipo de perfil do usuário:", user?.profileType);
   
   // Menus administrativos (apenas para administradores)
   const financeMenuItem = {
@@ -135,15 +131,6 @@ export default function Navigation() {
   menuItems.push(navItems[0]); // Home
   
   if (user) {
-    // IMPORTANTE: Debug para diagnosticar problema
-    console.log("Dados do usuário para menus:", {
-      id: user.id,
-      profileType: user.profileType,
-      clientId: user.clientId,
-      subscriptionActive: user.subscriptionActive,
-      subscriptionType: user.subscriptionType,
-      subscriptionExpiresAt: user.subscriptionExpiresAt
-    });
     
     // Verificar se a assinatura está ativa, se o usuário é motorista, ou se tem um clientId associado
     // Adicionamos a verificação de clientId para liberar menus após cadastro de cliente
@@ -162,7 +149,6 @@ export default function Navigation() {
     } 
     // Se tiver um cliente cadastrado, liberar todos os menus (condição nova)
     else if (hasClient) {
-      console.log("Usuário com cliente cadastrado - mostrando todos os menus");
       menuItems = [
         navItems[0],  // Home
         navItems[2],  // Motoristas
@@ -181,7 +167,6 @@ export default function Navigation() {
     // Se não tiver assinatura ativa (exceto motoristas), mostra apenas o menu home
     else if (!hasActiveSubscription) {
       menuItems = [navItems[0]]; // Apenas Home
-      console.log("Usuário sem assinatura ativa - mostrando apenas menu Home");
     }
     // Se for motorista, tem acesso específico
     else if (isDriver) {

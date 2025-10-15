@@ -45,12 +45,8 @@ export function ProtectedRoute({
     );
   }
   
-  // Exibir log de debug para ajudar a identificar problemas de roteamento
-  console.log(`Rota protegida: ${path}, Componente: ${Component.name || 'Unnamed'}, User: ${user.profileType}`);
-  
-  // Se o usuário for admin, permite acesso e informamos no log
+  // Se o usuário for admin, permite acesso
   if (user.profileType === "administrador" || user.profileType === "admin") {
-    console.log("Permitindo acesso ao usuário administrador para a rota", path);
     return <Route path={path} component={Component} />;
   }
 
@@ -60,7 +56,6 @@ export function ProtectedRoute({
   if (user.profileType === "driver" || user.profileType === "motorista") {
     // Motoristas não podem acessar a página "Meus Fretes"
     if (path === "/my-freights") {
-      console.log("Bloqueando acesso do motorista à rota /my-freights");
       return (
         <Route path={path}>
           <Redirect to="/freights" />
@@ -68,18 +63,12 @@ export function ProtectedRoute({
       );
     }
     
-    console.log(`Permitindo acesso ao motorista para a rota ${path}`);
     // Permite acesso à rota para motoristas - com restrições específicas
     return <Route path={path} component={Component} />;
   }
-
-  // Para outros tipos de usuários
-  console.log(`Permitindo acesso ao usuário ${user.profileType} para a rota ${path}`);
   
   // Verifica se o usuário tem uma assinatura ativa
   if (user.subscriptionActive === false) {
-    console.log("Usuário sem assinatura ativa, redirecionando para página interna de assinatura");
-    
     // Lista de páginas que podem ser acessadas sem assinatura ativa
     const allowedPaths = [
       "/auth", 
@@ -92,14 +81,10 @@ export function ProtectedRoute({
     ];
     
     if (allowedPaths.includes(path)) {
-      console.log(`Permitindo acesso à rota permitida: ${path}`);
       return <Route path={path} component={Component} />;
     }
     
     // Redirecionar para a página interna de gerenciamento de assinatura
-    console.log("Redirecionando para página interna de gerenciamento de assinatura");
-    
-    // Usar Redirect para manter a navegação interna
     return (
       <Route path={path}>
         <Redirect to="/subscribe" />
@@ -117,12 +102,8 @@ export function ProtectedRoute({
     const subscriptionEndDate = new Date(userAny.subscriptionExpiresAt);
     const currentDate = new Date();
     
-    console.log(`Verificando expiração: Data atual ${currentDate.toISOString()}, Data fim: ${subscriptionEndDate.toISOString()}`);
-    
     // Se a data de expiração for anterior à data atual, a assinatura expirou
     if (subscriptionEndDate < currentDate) {
-      console.log("Assinatura expirada, verificando status de pagamento OpenPix");
-      
       // Lista de páginas que podem ser acessadas mesmo com assinatura expirada
       const allowedPaths = [
         "/auth", 
@@ -130,19 +111,14 @@ export function ProtectedRoute({
         "/payment-success", 
         "/payment-cancel", 
         "/subscribe", 
-
         "/subscribe/plans"
       ];
       
       if (allowedPaths.includes(path)) {
-        console.log(`Permitindo acesso à rota permitida: ${path}`);
         return <Route path={path} component={Component} />;
       }
       
       // Redirecionar para a página interna de gerenciamento de assinatura
-      console.log("Assinatura expirada, redirecionando para página interna de gerenciamento");
-      
-      // Usar Redirect para manter a navegação interna
       return (
         <Route path={path}>
           <Redirect to="/subscribe" />
