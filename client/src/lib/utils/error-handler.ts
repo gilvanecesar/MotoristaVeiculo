@@ -3,6 +3,8 @@
  * Converte códigos de erro técnicos em mensagens amigáveis para o usuário
  */
 
+import { queryClient } from '@/lib/queryClient';
+
 // Mapeamento de códigos de erro para mensagens amigáveis
 const ERROR_MESSAGES: Record<string, string> = {
   // Erros de autenticação
@@ -135,6 +137,11 @@ export async function handleApiError(response: Response): Promise<never> {
     }
   } catch {
     // Se não conseguir fazer parse do JSON, usa a mensagem do status HTTP
+  }
+
+  // Se for erro 401 (não autenticado), limpa a sessão do usuário
+  if (response.status === 401) {
+    queryClient.setQueryData(['/api/user'], null);
   }
 
   throw new Error(errorMessage);
