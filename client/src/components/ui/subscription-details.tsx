@@ -101,38 +101,7 @@ export default function SubscriptionDetails({
     }
   });
   
-  // Mutation para ativar período de teste
-  const activateTrialMutation = useMutation({
-    mutationFn: async () => {
-      try {
-        // Usar o novo endpoint da API de assinatura via Mercado Pago
-        const res = await apiRequest('POST', '/api/subscription/activate-trial');
-        if (!res.ok) {
-          const errorText = await res.text();
-          throw new Error(`Erro ao ativar período de teste: ${errorText}`);
-        }
-        return await res.json();
-      } catch (err) {
-        console.error("Erro ao ativar período de teste:", err);
-        throw err;
-      }
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/user/subscription-info'] });
-      toast({
-        title: "Período de teste ativado",
-        description: `Seu acesso gratuito de 7 dias foi ativado até ${data.formattedExpirationDate || '7 dias a partir de hoje'}.`,
-        variant: "default"
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Erro ao ativar período de teste",
-        description: error.message || "Ocorreu um erro ao ativar o período de teste. Tente novamente mais tarde.",
-        variant: "destructive"
-      });
-    }
-  });
+  // Trial de 7 dias removido - apenas assinaturas pagas via OpenPix
 
   if (isLoading) {
     return (
@@ -154,8 +123,6 @@ export default function SubscriptionDetails({
   // Constantes para renderização - usando os dados seguros para evitar erros
   const isActive = safeSubscriptionData.active;
   const isExpired = !isActive && safeSubscriptionData.expiresAt && new Date(safeSubscriptionData.expiresAt) < new Date();
-  const isTrial = safeSubscriptionData.isTrial;
-  const isTrialUsed = safeSubscriptionData.trialUsed;
   const needsPayment = safeSubscriptionData.paymentRequired;
   const planType = safeSubscriptionData.planType;
   
@@ -166,27 +133,15 @@ export default function SubscriptionDetails({
   let statusColor = "";
   
   if (isActive) {
-    if (isTrial) {
-      statusTitle = "Período de Teste Ativo";
-      statusDescription = `Você está no período de teste gratuito que expira em ${safeSubscriptionData.formattedExpirationDate || 'data não disponível'}`;
-      statusIcon = <Clock className="h-8 w-8 text-blue-500" />;
-      statusColor = "bg-blue-50 text-blue-700 hover:bg-blue-50";
-    } else {
-      statusTitle = "Assinatura Ativa";
-      statusDescription = `Sua assinatura ${planType === 'monthly' ? 'mensal' : 'anual'} está ativa até ${safeSubscriptionData.formattedExpirationDate || 'data não disponível'}`;
-      statusIcon = <CheckCircle className="h-8 w-8 text-green-500" />;
-      statusColor = "bg-green-50 text-green-700 hover:bg-green-50";
-    }
+    statusTitle = "Assinatura Ativa";
+    statusDescription = `Sua assinatura ${planType === 'monthly' ? 'mensal' : 'anual'} está ativa até ${safeSubscriptionData.formattedExpirationDate || 'data não disponível'}`;
+    statusIcon = <CheckCircle className="h-8 w-8 text-green-500" />;
+    statusColor = "bg-green-50 text-green-700 hover:bg-green-50";
   } else if (isExpired) {
     statusTitle = "Assinatura Expirada";
     statusDescription = "Sua assinatura expirou. Renove para continuar utilizando o sistema.";
     statusIcon = <XCircle className="h-8 w-8 text-red-500" />;
     statusColor = "bg-red-50 text-red-700 hover:bg-red-50";
-  } else if (isTrialUsed) {
-    statusTitle = "Período de Teste Expirado";
-    statusDescription = "Seu período de teste gratuito expirou. Assine para continuar utilizando o sistema.";
-    statusIcon = <AlertTriangle className="h-8 w-8 text-amber-500" />;
-    statusColor = "bg-amber-50 text-amber-700 hover:bg-amber-50";
   } else {
     statusTitle = "Sem Assinatura";
     statusDescription = "Você ainda não possui uma assinatura ativa. Escolha um plano para começar.";
@@ -225,9 +180,8 @@ export default function SubscriptionDetails({
                 <div className="grid grid-cols-2">
                   <div className="text-sm font-medium">Plano:</div>
                   <div className="text-sm">
-                    {planType === 'monthly' ? 'Mensal (R$ 49,90)' : 
+                    {planType === 'monthly' ? 'Mensal (R$ 99,90)' : 
                      planType === 'annual' ? 'Anual (R$ 960,00)' : 
-                     planType === 'trial' ? 'Teste Gratuito (7 dias)' : 
                      planType}
                   </div>
                 </div>
@@ -275,26 +229,15 @@ export default function SubscriptionDetails({
           
           <div className="flex-1 flex flex-col justify-center">
             <div className="space-y-3">
-              {!isActive && !isTrialUsed && (
-                <Button 
-                  variant="outline" 
-                  className="w-full" 
-                  onClick={() => activateTrialMutation.mutate()}
-                  disabled={activateTrialMutation.isPending}
-                >
-                  Ativar Período de Teste Gratuito
-                </Button>
-              )}
-              
               {needsPayment && (
                 <Button asChild className="w-full">
                   <Link href="/subscribe/plans">
-                    {isTrialUsed ? 'Assinar Agora' : 'Renovar Assinatura'}
+                    Assinar Agora
                   </Link>
                 </Button>
               )}
               
-              {isActive && !isTrial && (
+              {isActive && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant="outline" className="w-full">

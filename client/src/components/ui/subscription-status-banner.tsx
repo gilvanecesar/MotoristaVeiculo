@@ -18,7 +18,6 @@ const bannerVariants = cva(
     variants: {
       status: {
         active: "bg-gradient-to-r from-emerald-500 to-green-500 text-white",
-        trial: "bg-gradient-to-r from-blue-500 to-sky-500 text-white", 
         expired: "bg-gradient-to-r from-amber-500 to-orange-500 text-white",
         inactive: "bg-gradient-to-r from-rose-500 to-red-500 text-white",
       },
@@ -60,9 +59,8 @@ export function SubscriptionStatusBanner() {
   const isFreeDriver = user.profileType === "motorista" || user.profileType === "driver" || user.subscriptionType === "driver_free";
   const isSubscriptionActive = user.subscriptionActive === true;
   const isExpired = user.subscriptionExpiresAt && new Date(user.subscriptionExpiresAt) < new Date();
-  const isTrial = user.subscriptionType === "trial";
 
-  let status: "active" | "trial" | "expired" | "inactive" = "inactive";
+  let status: "active" | "expired" | "inactive" = "inactive";
   let icon = <XCircle className="h-6 w-6" />;
   let title = "";
   let description = "";
@@ -78,37 +76,20 @@ export function SubscriptionStatusBanner() {
     title = "Acesso de Motorista";
     description = "Você tem acesso gratuito às funcionalidades de motorista.";
   } else if (isSubscriptionActive && !isExpired) {
-    if (isTrial) {
-      status = "trial";
-      icon = <Calendar className="h-6 w-6" />;
-      
-      // Calcular dias restantes do período de teste
-      let timeLeft = "indefinidamente";
-      
-      // Verificar se existe uma data de expiração válida para o período de teste
-      if (user.subscriptionExpiresAt && isValid(new Date(user.subscriptionExpiresAt))) {
-        const expiresAt = new Date(user.subscriptionExpiresAt);
-        timeLeft = formatDistanceToNow(expiresAt, { locale: ptBR, addSuffix: true });
-      }
-      
-      title = "Período de Teste Ativo";
-      description = `Seu período de teste expira ${timeLeft}.`;
-    } else {
-      status = "active";
-      icon = <CheckCircle className="h-6 w-6" />;
-      
-      // Calcular data de expiração da assinatura ativa
-      let validUntil = "indefinidamente";
-      
-      // Verificar se existe uma data de expiração válida
-      if (user.subscriptionExpiresAt && isValid(new Date(user.subscriptionExpiresAt))) {
-        const expiresAt = new Date(user.subscriptionExpiresAt);
-        validUntil = formatDistanceToNow(expiresAt, { locale: ptBR, addSuffix: true });
-      }
-      
-      title = "Assinatura Ativa";
-      description = `Sua assinatura é válida ${validUntil}.`;
+    status = "active";
+    icon = <CheckCircle className="h-6 w-6" />;
+    
+    // Calcular data de expiração da assinatura ativa
+    let validUntil = "indefinidamente";
+    
+    // Verificar se existe uma data de expiração válida
+    if (user.subscriptionExpiresAt && isValid(new Date(user.subscriptionExpiresAt))) {
+      const expiresAt = new Date(user.subscriptionExpiresAt);
+      validUntil = formatDistanceToNow(expiresAt, { locale: ptBR, addSuffix: true });
     }
+    
+    title = "Assinatura Ativa";
+    description = `Sua assinatura é válida ${validUntil}.`;
   } else if (isExpired || !isSubscriptionActive) {
     status = "expired";
     icon = <AlertCircle className="h-6 w-6" />;
