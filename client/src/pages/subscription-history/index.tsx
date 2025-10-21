@@ -91,9 +91,6 @@ export default function SubscriptionHistoryPage() {
         return <Check className="h-5 w-5 text-green-500" />;
       case 'subscription_cancelled':
         return <X className="h-5 w-5 text-red-500" />;
-      case 'trial_activated':
-      case 'trial_ended':
-        return <Clock className="h-5 w-5 text-blue-500" />;
       default:
         return <Calendar className="h-5 w-5 text-muted-foreground" />;
     }
@@ -101,7 +98,6 @@ export default function SubscriptionHistoryPage() {
   
   // Verificar status atual da assinatura
   const subscriptionActive = user?.subscriptionActive || false;
-  const isTrial = user?.subscriptionType === 'trial';
   const expiresAt = user?.subscriptionExpiresAt ? new Date(user.subscriptionExpiresAt) : null;
   
   return (
@@ -134,15 +130,9 @@ export default function SubscriptionHistoryPage() {
         <CardContent>
           <div className="flex items-center gap-4 mb-4">
             {subscriptionActive ? (
-              isTrial ? (
-                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-50">
-                  Período de Teste
-                </Badge>
-              ) : (
-                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 hover:bg-green-50">
-                  Assinatura Ativa
-                </Badge>
-              )
+              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 hover:bg-green-50">
+                Assinatura Ativa
+              </Badge>
             ) : (
               <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-50">
                 Sem Assinatura Ativa
@@ -155,8 +145,6 @@ export default function SubscriptionHistoryPage() {
                   ? 'Mensal' 
                   : user.subscriptionType === 'annual' || user.subscriptionType === 'anual' 
                   ? 'Anual' 
-                  : user.subscriptionType === 'trial' 
-                  ? 'Teste Gratuito' 
                   : user.subscriptionType}
               </Badge>
             )}
@@ -233,8 +221,6 @@ export default function SubscriptionHistoryPage() {
                                 ? 'Mensal' 
                                 : event.metadata?.planType === 'annual' || event.metadata?.planType === 'anual' 
                                 ? 'Anual' 
-                                : event.metadata?.planType === 'trial' 
-                                ? 'Teste Gratuito' 
                                 : event.metadata?.planType || 'Não especificado'}
                             </span>
                           )}
