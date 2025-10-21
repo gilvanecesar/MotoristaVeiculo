@@ -159,7 +159,7 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
-      const { email, password, name, profileType } = req.body;
+      const { email, password, name, profileType, phone, whatsapp, cpf } = req.body;
       
       // Verifica se o usuário já existe
       const existingUser = await storage.getUserByEmail(email);
@@ -180,7 +180,7 @@ export function setupAuth(app: Express) {
       let subscriptionActive = false;
       
       // Prioridade para motoristas (acesso gratuito permanente)
-      if (profileType === "driver") {
+      if (profileType === "driver" || profileType === "motorista") {
         userSubscriptionType = "driver_free";
         subscriptionActive = true;
         subscriptionExpiresAt = null;
@@ -204,7 +204,9 @@ export function setupAuth(app: Express) {
         providerId: null,
         subscriptionType: userSubscriptionType,
         subscriptionActive,
-        subscriptionExpiresAt
+        subscriptionExpiresAt,
+        whatsapp: whatsapp || phone || null,
+        cpf: cpf || null
       });
 
       // Envia email de boas-vindas
