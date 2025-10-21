@@ -114,20 +114,40 @@ export default function MultiStepRegister() {
 
     try {
       // Preparar dados para o backend
-      const registerData = {
-        email: step1Data.email,
-        phone: step1Data.phone,
-        name: step1Data.name,
-        password: data.password,
-        profileType: userType === "motorista" ? "motorista" : "embarcador",
-        cpf: userType === "motorista" ? step1Data.cpfCnpj : undefined,
-        cnpj: userType === "empresa" ? (step2Data?.cnpj || step1Data.cpfCnpj) : undefined,
-        companyName: step2Data?.companyName,
-        tradeName: step2Data?.tradeName,
-        whatsapp: step1Data.phone,
-      };
+      // Preparar dados com base no tipo de usuário
+      let registerData: any;
+      let registerUrl: string;
+      
+      if (userType === "motorista") {
+        // Motoristas usam a rota antiga /api/register
+        registerData = {
+          email: step1Data.email,
+          phone: step1Data.phone,
+          name: step1Data.name,
+          password: data.password,
+          profileType: "motorista",
+          cpf: step1Data.cpfCnpj,
+        };
+        registerUrl = "/api/register";
+      } else {
+        // Empresas/Embarcadores usam a nova rota que cria cliente automaticamente
+        registerData = {
+          email: step1Data.email,
+          whatsapp: step1Data.phone,
+          phone: step1Data.phone,
+          name: step2Data?.companyName || step1Data.name,
+          password: data.password,
+          profileType: "embarcador",
+          cnpj: step2Data?.cnpj || step1Data.cpfCnpj,
+          companyData: {
+            companyName: step2Data?.companyName,
+            tradeName: step2Data?.tradeName,
+          },
+        };
+        registerUrl = "/api/auth/register-profile";
+      }
 
-      const response = await apiRequest("POST", "/api/register", registerData);
+      const response = await apiRequest("POST", registerUrl, registerData);
 
       if (response.ok) {
         toast({
