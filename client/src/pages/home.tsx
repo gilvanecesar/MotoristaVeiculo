@@ -36,7 +36,7 @@ import { FreightWithDestinations } from "@shared/schema";
 import { formatCurrency } from "@/lib/utils/format";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -55,18 +55,31 @@ export default function Home() {
     enabled: !!user,
   });
 
-  // Filtrar apenas os fretes do usuário atual
-  const userFreights = freights.filter(f => f.userId === user?.id);
+  // Filtrar apenas os fretes do usuário atual (memoizado)
+  const userFreights = useMemo(() => 
+    freights.filter(f => f.userId === user?.id),
+    [freights, user?.id]
+  );
   
-  // Calcular métricas
-  const activeFreights = userFreights.filter(f => {
-    if (!f.expirationDate) return true;
-    return new Date(f.expirationDate) > new Date();
-  }).length;
+  // Calcular métricas (memoizado)
+  const activeFreights = useMemo(() => 
+    userFreights.filter(f => {
+      if (!f.expirationDate) return true;
+      return new Date(f.expirationDate) > new Date();
+    }).length,
+    [userFreights]
+  );
   
-  // Calcular totais de visualizações e motoristas interessados
-  const totalViews = userFreights.reduce((sum, f) => sum + (f.views || 0), 0);
-  const totalInterestedDrivers = userFreights.reduce((sum, f) => sum + (f.interestedDrivers || 0), 0);
+  // Calcular totais de visualizações e motoristas interessados (memoizado)
+  const totalViews = useMemo(() => 
+    userFreights.reduce((sum, f) => sum + (f.views || 0), 0),
+    [userFreights]
+  );
+  
+  const totalInterestedDrivers = useMemo(() => 
+    userFreights.reduce((sum, f) => sum + (f.interestedDrivers || 0), 0),
+    [userFreights]
+  );
 
   // Mutation para deletar múltiplos fretes
   const deleteMultipleMutation = useMutation({
