@@ -96,7 +96,7 @@ export function ProtectedRoute({
   // Usamos "as any" temporariamente para contornar problemas de TypeScript com a definição de usuário
   const userAny = user as any;
   
-  if ((userAny.subscriptionType === "trial" || userAny.subscriptionType === "monthly" || userAny.subscriptionType === "annual") && 
+  if ((userAny.subscriptionType === "monthly" || userAny.subscriptionType === "annual") && 
       userAny.subscriptionExpiresAt) {
     
     const subscriptionEndDate = new Date(userAny.subscriptionExpiresAt);

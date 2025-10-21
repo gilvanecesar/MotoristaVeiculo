@@ -230,11 +230,11 @@ export async function sendSubscriptionEmail(
   const planTypeMap: Record<string, string> = {
     'monthly': 'Mensal',
     'annual': 'Anual',
-    'trial': 'Período de Teste (7 dias)'
+    'trialing': 'Aguardando Pagamento'
   };
 
   const planName = planTypeMap[planType] || planType;
-  const isTrial = planType === 'trial';
+  const isTrial = false; // Sistema não oferece mais trials gratuitos
 
   try {
     const mailOptions = {

@@ -80,8 +80,6 @@ export default function SettingsPage() {
         return "Mensal";
       case "yearly":
         return "Anual";
-      case "trial":
-        return "Período de teste (7 dias)";
       case "driver_free":
         return "Acesso gratuito (Motorista)";
       default:

@@ -825,7 +825,7 @@ export const openPixPaymentValidator = insertOpenPixPaymentSchema.extend({
   ]),
   amount: z.coerce.number().positive(),
   amountCents: z.coerce.number().positive(),
-  planType: z.enum([PLAN_TYPES.MONTHLY, PLAN_TYPES.ANNUAL, PLAN_TYPES.TRIAL]),
+  planType: z.enum([PLAN_TYPES.MONTHLY, PLAN_TYPES.ANNUAL]),
 });
 
 // Tipos OpenPix
