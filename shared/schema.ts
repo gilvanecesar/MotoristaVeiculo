@@ -600,8 +600,7 @@ export const INVOICE_STATUS = {
 // Tipos de planos
 export const PLAN_TYPES = {
   MONTHLY: "monthly",
-  ANNUAL: "annual",
-  TRIAL: "trial"
+  ANNUAL: "annual"
 } as const;
 
 // Tabela de assinaturas
@@ -689,8 +688,7 @@ export const subscriptionValidator = insertSubscriptionSchema.extend({
   ]),
   planType: z.enum([
     PLAN_TYPES.MONTHLY,
-    PLAN_TYPES.ANNUAL,
-    PLAN_TYPES.TRIAL
+    PLAN_TYPES.ANNUAL
   ]),
   currentPeriodStart: z.coerce.date(),
   currentPeriodEnd: z.coerce.date(),

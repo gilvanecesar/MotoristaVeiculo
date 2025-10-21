@@ -1553,15 +1553,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).send("Usuário não encontrado");
       }
       
-      // Determinar se é um período de teste
-      const isTrial = user.subscriptionType === "trial";
-      const trialUsed = user.subscriptionType === "trial" || user.subscriptionExpiresAt != null;
-      
       // Formatar informações para o cliente
       return res.json({
         active: user.subscriptionActive || false,
-        isTrial,
-        trialUsed,
         planType: user.subscriptionType || null,
         expiresAt: user.subscriptionExpiresAt || null,
         paymentMethod: null // Apenas OpenPix agora

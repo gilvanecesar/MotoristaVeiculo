@@ -673,7 +673,7 @@ export class MemStorage implements IStorage {
       
       // Filtrar assinaturas por status
       const activeSubscriptions = subscriptionsDb.filter(sub => sub.status === 'active');
-      const trialSubscriptions = subscriptionsDb.filter(sub => sub.status === 'trialing');
+      const trialingSubscriptions = subscriptionsDb.filter(sub => sub.status === 'trialing');
       const canceledSubscriptions = subscriptionsDb.filter(sub => sub.status === 'canceled');
       const pastDueSubscriptions = subscriptionsDb.filter(sub => sub.status === 'past_due');
       
@@ -715,7 +715,7 @@ export class MemStorage implements IStorage {
         monthlyData,
         subscriptionsByStatus: [
           { status: "Ativas", count: activeSubscriptions.length },
-          { status: "Teste", count: trialSubscriptions.length },
+          { status: "Aguardando Pagamento", count: trialingSubscriptions.length },
           { status: "Canceladas", count: canceledSubscriptions.length },
           { status: "Atrasadas", count: pastDueSubscriptions.length }
         ]
@@ -1653,7 +1653,7 @@ export class DatabaseStorage implements IStorage {
       
       // Contar status diferentes
       let activeCount = 0;
-      let trialCount = 0;
+      let trialingCount = 0; // Status do OpenPix (TRIALING)
       let canceledCount = 0;
       let pastDueCount = 0;
       let totalAmount = 0;
@@ -1662,7 +1662,7 @@ export class DatabaseStorage implements IStorage {
       if (subscriptionsDb && subscriptionsDb.length > 0) {
         // Calcular com base nos dados da tabela de assinaturas
         activeCount += subscriptionsDb.filter(s => s.status === 'active').length;
-        trialCount += subscriptionsDb.filter(s => s.status === 'trialing').length;
+        trialingCount += subscriptionsDb.filter(s => s.status === 'trialing').length;
         canceledCount += subscriptionsDb.filter(s => s.status === 'canceled').length;
         pastDueCount += subscriptionsDb.filter(s => s.status === 'past_due').length;
       }
@@ -1673,9 +1673,7 @@ export class DatabaseStorage implements IStorage {
         usersWithSubs.forEach(user => {
           // Adicionar ao contador apropriado apenas se o usuário não estiver já contado nas assinaturas
           if (!subscriptionsDb.some(s => s.userId === user.id)) {
-            if (user.subscriptionType === 'trial') {
-              trialCount++;
-            } else if (user.subscriptionActive) {
+            if (user.subscriptionActive) {
               activeCount++;
               
               // Estimar receita com base no tipo de assinatura
@@ -1744,7 +1742,7 @@ export class DatabaseStorage implements IStorage {
       const monthlyRevenue = totalAmount > 0 ? totalAmount / 12 : 0;
       
       // Taxa de cancelamento (churn) - usar 5% como padrão se não tiver dados suficientes
-      const totalActive = activeCount + trialCount;
+      const totalActive = activeCount + trialingCount;
       const churnRate = (totalActive + canceledCount) > 0 
         ? (canceledCount / (totalActive + canceledCount)) * 100 
         : 5.0;
@@ -1759,7 +1757,7 @@ export class DatabaseStorage implements IStorage {
         monthlyData,
         subscriptionsByStatus: [
           { status: "Ativas", count: activeCount },
-          { status: "Teste", count: trialCount },
+          { status: "Aguardando Pagamento", count: trialingCount },
           { status: "Canceladas", count: canceledCount },
           { status: "Atrasadas", count: pastDueCount }
         ]
