@@ -123,6 +123,7 @@ export default function MultiStepRegister() {
         registerData = {
           email: step1Data.email,
           phone: step1Data.phone,
+          whatsapp: step1Data.phone,
           name: step1Data.name,
           password: data.password,
           profileType: "motorista",
