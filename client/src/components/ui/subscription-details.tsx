@@ -36,8 +36,6 @@ import { Link } from 'wouter';
 interface SubscriptionDetailsProps {
   subscriptionData: {
     active: boolean;
-    isTrial: boolean;
-    trialUsed: boolean;
     planType: string | null;
     expiresAt: string | null;
     formattedExpirationDate: string | null;
@@ -60,8 +58,6 @@ export default function SubscriptionDetails({
   // Se não houver dados, transformar em um objeto válido mas vazio para evitar erros
   const safeSubscriptionData = subscriptionData || {
     active: false,
-    isTrial: false,
-    trialUsed: false,
     planType: null,
     expiresAt: null,
     formattedExpirationDate: null,
