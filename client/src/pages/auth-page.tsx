@@ -56,7 +56,7 @@ import { RegisterData } from "@/hooks/use-auth";
 export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<string>("login");
   const [selectedRole, setSelectedRole] = useState<string>(USER_TYPES.SHIPPER);
-  const [subscriptionType, setSubscriptionType] = useState<string>("monthly"); // "monthly", "annual" ou "trial"
+  const [subscriptionType, setSubscriptionType] = useState<string>("monthly"); // "monthly" ou "annual"
   const [showPlansOnly, setShowPlansOnly] = useState<boolean>(false);
   const [isLoadingCheckout, setIsLoadingCheckout] = useState<boolean>(false);
   const [subscriptionRequired, setSubscriptionRequired] = useState<boolean>(false);
@@ -148,44 +148,11 @@ export default function AuthPage() {
       const mercadoPagoLinks = {
         monthly: "https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=2c93808496c606170196c6d5ebde0047",
         annual: "https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=2c93808496c606170196c9eaef0c0171",
-        trial: "/api/activate-trial" // Este link ativa diretamente o período de teste
       };
       
-      // Se for plano de teste, primeiro faz uma chamada API para ativar
-      if (type === "trial") {
-        apiRequest("POST", mercadoPagoLinks.trial)
-          .then(response => {
-            if (!response.ok) {
-              throw new Error("Erro ao ativar período de teste");
-            }
-            return response.json();
-          })
-          .then(data => {
-            toast({
-              title: "Período de teste ativado",
-              description: `Seu período de teste foi ativado até ${new Date(data.expiresAt).toLocaleDateString()}`,
-            });
-            // Redireciona para a página inicial após ativar o trial
-            setTimeout(() => {
-              window.location.href = '/home';
-            }, 2000);
-          })
-          .catch(error => {
-            console.error("Erro ao ativar período de teste:", error);
-            toast({
-              title: "Erro ao ativar período de teste",
-              description: "Ocorreu um erro ao ativar seu período de teste. Tente novamente.",
-              variant: "destructive",
-            });
-          })
-          .finally(() => {
-            setIsLoadingCheckout(false);
-          });
-      } else {
-        // Para assinaturas pagas, redireciona diretamente para o Mercado Pago
-        window.location.href = mercadoPagoLinks[type as keyof typeof mercadoPagoLinks] || mercadoPagoLinks.monthly;
-        // O setIsLoadingCheckout(false) não é chamado neste caso porque estamos redirecionando o usuário
-      }
+      // Redireciona diretamente para o Mercado Pago
+      window.location.href = mercadoPagoLinks[type as keyof typeof mercadoPagoLinks] || mercadoPagoLinks.monthly;
+      // O setIsLoadingCheckout(false) não é chamado neste caso porque estamos redirecionando o usuário
     } catch (error) {
       console.error("Erro ao iniciar checkout:", error);
       toast({

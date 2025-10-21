@@ -185,15 +185,11 @@ export function setupAuth(app: Express) {
         subscriptionActive = true;
         subscriptionExpiresAt = null;
       } else {
-        // Para outros perfis, usa o tipo especificado ou padrão trial
-        userSubscriptionType = req.body.subscriptionType || "trial";
-        if (userSubscriptionType === "trial") {
-          // Para teste gratuito, a assinatura expira em 7 dias
-          const expirationDate = new Date();
-          expirationDate.setDate(expirationDate.getDate() + 7);
-          subscriptionExpiresAt = expirationDate;
-          subscriptionActive = true;
-        }
+        // Para outros perfis (embarcadores), não ativa assinatura automaticamente
+        // Eles precisam pagar através do OpenPix para ter acesso
+        userSubscriptionType = "none";
+        subscriptionActive = false;
+        subscriptionExpiresAt = null;
       }
       
       const newUser = await storage.createUser({

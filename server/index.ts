@@ -4,7 +4,6 @@ import { registerUserSubscriptionRoutes } from "./routes/user-subscription";
 import { setupVite, serveStatic, log } from "./vite";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { db } from "./db";
-import { startSubscriptionChecker } from "./subscription-checker";
 import { setupOpenPixRoutes } from "./openpix-routes";
 
 // Servidor Express
@@ -129,8 +128,5 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
-    
-    // Iniciar o verificador de assinaturas expiradas
-    startSubscriptionChecker(true, 6);
   });
 })();

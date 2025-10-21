@@ -398,46 +398,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Ativar período de teste
-  app.post("/api/activate-trial", isAuthenticated, async (req: Request, res: Response) => {
-    try {
-      const userId = req.user?.id;
-      if (!userId) {
-        return res.status(401).json({ message: "Usuário não autenticado" });
-      }
-      
-      const user = await storage.getUserById(userId);
-      if (!user) {
-        return res.status(404).json({ message: "Usuário não encontrado" });
-      }
-      
-      // Verificar se o usuário já utilizou o período de teste
-      if (user.subscriptionType === 'trial' || user.subscriptionExpiresAt) {
-        return res.status(400).json({ message: "Você já utilizou seu período de teste" });
-      }
-      
-      // Calcular data de expiração (7 dias a partir de agora)
-      const now = new Date();
-      const expirationDate = new Date(now);
-      expirationDate.setDate(now.getDate() + 7);
-      
-      // Atualizar usuário com informações de trial
-      await storage.updateUser(userId, {
-        subscriptionActive: true,
-        subscriptionType: 'trial',
-        subscriptionExpiresAt: expirationDate,
-      });
-      
-      res.status(200).json({ 
-        message: "Período de teste ativado com sucesso",
-        expiresAt: expirationDate,
-      });
-    } catch (error) {
-      console.error("Erro ao ativar período de teste:", error);
-      res.status(500).json({ message: "Erro ao ativar período de teste" });
-    }
-  });
-  
   // Ativar acesso de motorista
   app.post("/api/activate-driver-access", isAuthenticated, async (req: Request, res: Response) => {
     try {

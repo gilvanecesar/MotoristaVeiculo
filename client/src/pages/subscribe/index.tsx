@@ -24,8 +24,6 @@ export default function SubscribePage() {
   // Dados da assinatura diretamente do objeto de usuário - Dados reais
   const subscriptionData = {
     active: user?.subscriptionActive || false,
-    isTrial: user?.subscriptionType === 'trial',
-    trialUsed: Boolean(user?.subscriptionExpiresAt),
     planType: user?.subscriptionType || null,
     expiresAt: user?.subscriptionExpiresAt ? String(user.subscriptionExpiresAt) : null,
     formattedExpirationDate: user?.subscriptionExpiresAt ? 
@@ -118,27 +116,15 @@ export default function SubscribePage() {
                 <div className="flex-1">
                   <div className="mb-6 flex items-center gap-4">
                     {subscriptionData.active ? (
-                      subscriptionData.isTrial ? (
-                        <>
-                          <Clock className="h-8 w-8 text-blue-500" />
-                          <div>
-                            <h3 className="text-lg font-medium">Período de Teste Ativo</h3>
-                            <p className="text-sm text-muted-foreground">
-                              Seu período de teste gratuito está ativo até {subscriptionData.formattedExpirationDate || '7 dias a partir da ativação'}.
-                            </p>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle className="h-8 w-8 text-green-500" />
-                          <div>
-                            <h3 className="text-lg font-medium">Assinatura Ativa</h3>
-                            <p className="text-sm text-muted-foreground">
-                              Sua assinatura está ativa até {subscriptionData.formattedExpirationDate || 'data não disponível'}.
-                            </p>
-                          </div>
-                        </>
-                      )
+                      <>
+                        <CheckCircle className="h-8 w-8 text-green-500" />
+                        <div>
+                          <h3 className="text-lg font-medium">Assinatura Ativa</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Sua assinatura está ativa até {subscriptionData.formattedExpirationDate || 'data não disponível'}.
+                          </p>
+                        </div>
+                      </>
                     ) : (
                       <>
                         <AlertTriangle className="h-8 w-8 text-amber-500" />
@@ -160,7 +146,6 @@ export default function SubscribePage() {
                         <div className="text-sm">
                           {subscriptionData.planType === 'monthly' ? 'Mensal (R$ 49,90)' : 
                            subscriptionData.planType === 'annual' ? 'Anual (R$ 49,90)' : 
-                           subscriptionData.planType === 'trial' ? 'Teste Gratuito (7 dias)' : 
                            'Acesso 30 dias (R$ 49,90)'}
                         </div>
                       </div>
