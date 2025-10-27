@@ -36,6 +36,9 @@ import { Link } from 'wouter';
 interface SubscriptionDetailsProps {
   subscriptionData: {
     active: boolean;
+    isTrial: boolean;
+    trialUsed: boolean;
+    daysRemaining: number | null;
     planType: string | null;
     expiresAt: string | null;
     formattedExpirationDate: string | null;
@@ -58,6 +61,9 @@ export default function SubscriptionDetails({
   // Se não houver dados, transformar em um objeto válido mas vazio para evitar erros
   const safeSubscriptionData = subscriptionData || {
     active: false,
+    isTrial: false,
+    trialUsed: false,
+    daysRemaining: null,
     planType: null,
     expiresAt: null,
     formattedExpirationDate: null,
@@ -118,6 +124,8 @@ export default function SubscriptionDetails({
 
   // Constantes para renderização - usando os dados seguros para evitar erros
   const isActive = safeSubscriptionData.active;
+  const isTrial = safeSubscriptionData.isTrial;
+  const daysRemaining = safeSubscriptionData.daysRemaining;
   const isExpired = !isActive && safeSubscriptionData.expiresAt && new Date(safeSubscriptionData.expiresAt) < new Date();
   const needsPayment = safeSubscriptionData.paymentRequired;
   const planType = safeSubscriptionData.planType;
@@ -128,14 +136,22 @@ export default function SubscriptionDetails({
   let statusIcon = null;
   let statusColor = "";
   
-  if (isActive) {
+  if (isTrial && isActive) {
+    statusTitle = "Período de Teste Grátis";
+    const daysText = daysRemaining === 1 ? 'dia' : 'dias';
+    statusDescription = `Você tem ${daysRemaining} ${daysText} restantes no seu período de teste grátis de 7 dias!`;
+    statusIcon = <Clock className="h-8 w-8 text-blue-500" />;
+    statusColor = "bg-blue-50 text-blue-700 hover:bg-blue-50";
+  } else if (isActive) {
     statusTitle = "Assinatura Ativa";
     statusDescription = `Sua assinatura ${planType === 'monthly' ? 'mensal' : 'anual'} está ativa até ${safeSubscriptionData.formattedExpirationDate || 'data não disponível'}`;
     statusIcon = <CheckCircle className="h-8 w-8 text-green-500" />;
     statusColor = "bg-green-50 text-green-700 hover:bg-green-50";
   } else if (isExpired) {
     statusTitle = "Assinatura Expirada";
-    statusDescription = "Sua assinatura expirou. Renove para continuar utilizando o sistema.";
+    statusDescription = safeSubscriptionData.trialUsed 
+      ? "Seu período de teste expirou. Assine agora para continuar usando o sistema."
+      : "Sua assinatura expirou. Renove para continuar utilizando o sistema.";
     statusIcon = <XCircle className="h-8 w-8 text-red-500" />;
     statusColor = "bg-red-50 text-red-700 hover:bg-red-50";
   } else {
@@ -176,7 +192,8 @@ export default function SubscriptionDetails({
                 <div className="grid grid-cols-2">
                   <div className="text-sm font-medium">Plano:</div>
                   <div className="text-sm">
-                    {planType === 'monthly' ? 'Mensal (R$ 99,90)' : 
+                    {planType === 'trial' ? 'Período de Teste (Grátis)' :
+                     planType === 'monthly' ? 'Mensal (R$ 99,90)' : 
                      planType === 'annual' ? 'Anual (R$ 960,00)' : 
                      planType}
                   </div>
