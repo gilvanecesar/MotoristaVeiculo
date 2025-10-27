@@ -37,7 +37,7 @@ Table layouts are used for desktop listings (quotes/freights) while mobile displ
 - **AI Assistant**: "Buzino," an OpenAI GPT-4o powered assistant for transport-related queries, with subscription-based usage limits.
 - **Admin Features**: Comprehensive interface for user management, financial oversight, webhook configuration, and advanced user search.
 - **User Dashboard**: Displays key metrics (total freights, views, interested drivers), recent freights, subscription status, and quick access links. Includes detailed analytics for freight views and driver interest.
-- **Performance & Stability**: Idempotent initialization in forms, optimized freight page filters with IBGE API, redesigned freight cards for responsiveness, and fixed login redirection issues.
+- **Performance & Stability**: Idempotent initialization in forms, optimized freight page filters with IBGE API, redesigned freight cards for responsiveness, and fixed login redirection issues. **Code optimizations**: Eliminated component duplication (consolidated city/state selectors to single CitySearch component), refactored freights page filter management from useState to useReducer pattern for better performance and maintainability.
 
 ### System Design Choices
 The application is fully containerized using Docker, with a multi-stage Node.js 20 Alpine Dockerfile and a `docker-compose.yml` for the complete stack (PostgreSQL, Nginx, application). It includes SSL configuration, health checks, and a production-ready setup with network isolation and security hardening.
