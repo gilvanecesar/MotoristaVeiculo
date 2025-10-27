@@ -508,7 +508,8 @@ export const users = pgTable("users", {
   // Dados específicos por perfil
   cpf: text("cpf").unique(),
   cnpj: text("cnpj").unique(),
-  whatsapp: text("whatsapp"),
+  phone: text("phone"),
+  whatsapp: text("whatsapp").notNull(),
   anttVehicle: text("antt_vehicle"), // ANTT do veículo para motoristas
   vehiclePlate: text("vehicle_plate"), // Placa do veículo para motoristas
   
@@ -537,6 +538,7 @@ export const userValidator = insertUserSchema.extend({
   email: z.string().email("Informe um e-mail válido"),
   password: z.string().min(6, "A senha deve ter pelo menos 6 caracteres").optional(),
   name: z.string().min(3, "O nome deve ter pelo menos 3 caracteres"),
+  whatsapp: z.string().min(10, "WhatsApp deve ter pelo menos 10 dígitos"),
   profileType: z.enum([
     USER_TYPES.DRIVER, 
     USER_TYPES.AGENT, 

@@ -161,6 +161,11 @@ export function setupAuth(app: Express) {
     try {
       const { email, password, name, profileType, phone, whatsapp, cpf } = req.body;
       
+      // Validar campos obrigatórios - WhatsApp agora é obrigatório
+      if (!whatsapp) {
+        return res.status(400).json({ message: "WhatsApp é obrigatório" });
+      }
+      
       // Verifica se o usuário já existe
       const existingUser = await storage.getUserByEmail(email);
       if (existingUser) {
@@ -212,7 +217,8 @@ export function setupAuth(app: Express) {
         subscriptionType: userSubscriptionType,
         subscriptionActive,
         subscriptionExpiresAt,
-        whatsapp: whatsapp || phone || null,
+        phone: phone || null,
+        whatsapp: whatsapp,
         cpf: cpf || null,
         trialStartDate,
         trialEndDate,

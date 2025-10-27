@@ -210,7 +210,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Cadastro por perfil (novo sistema)
   app.post("/api/auth/register-profile", async (req: Request, res: Response) => {
     try {
-      const { profileType, cpf, cnpj, whatsapp, email, anttVehicle, vehiclePlate, documento, name, password, companyData, vehicleData } = req.body;
+      const { profileType, cpf, cnpj, whatsapp, phone, email, anttVehicle, vehiclePlate, documento, name, password, companyData, vehicleData } = req.body;
 
       if (!profileType || !name) {
         return res.status(400).json({ message: "Campos obrigatórios não preenchidos" });
@@ -233,8 +233,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(409).json({ message: "CPF_ALREADY_EXISTS" });
         }
       } else if (profileType === "embarcador") {
-        if (!cnpj || !email) {
-          return res.status(400).json({ message: "CNPJ e email são obrigatórios para embarcadores" });
+        if (!cnpj || !email || !whatsapp) {
+          return res.status(400).json({ message: "CNPJ, email e WhatsApp são obrigatórios para embarcadores" });
         }
         
         // Verificar se CNPJ já existe
@@ -302,7 +302,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         profileType,
         cpf: cpf || (documento?.length < 14 ? documento : null) || null,
         cnpj: cnpj || (documento?.length >= 14 ? documento : null) || null,
-        whatsapp: whatsapp || null,
+        phone: phone || null,
+        whatsapp: whatsapp,
         anttVehicle: anttVehicle || null,
         vehiclePlate: vehiclePlate || null,
         isActive: true,
