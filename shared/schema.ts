@@ -514,10 +514,15 @@ export const users = pgTable("users", {
   
   // Informações de assinatura
   subscriptionActive: boolean("subscription_active").notNull().default(false),
-  subscriptionType: text("subscription_type"),  // "monthly" ou "annual"
+  subscriptionType: text("subscription_type"),  // "trial", "monthly" ou "annual"
   subscriptionExpiresAt: timestamp("subscription_expires_at"),
   // Dados de pagamento removidos - apenas OpenPix agora
   paymentRequired: boolean("payment_required").default(false),
+  
+  // Controle de trial
+  trialStartDate: timestamp("trial_start_date"),
+  trialEndDate: timestamp("trial_end_date"),
+  trialUsed: boolean("trial_used").notNull().default(false),
   
   // Referências opcionais para ligar o usuário aos perfis específicos
   driverId: integer("driver_id").references(() => drivers.id),
