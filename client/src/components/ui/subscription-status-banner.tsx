@@ -5,7 +5,8 @@ import {
   XCircle,
   X,
   Calendar,
-  CreditCard
+  CreditCard,
+  Clock
 } from "lucide-react";
 import { cva } from "class-variance-authority";
 import { useAuth } from "@/hooks/use-auth";
@@ -18,6 +19,7 @@ const bannerVariants = cva(
     variants: {
       status: {
         active: "bg-gradient-to-r from-emerald-500 to-green-500 text-white",
+        trial: "bg-gradient-to-r from-blue-500 to-indigo-500 text-white",
         expired: "bg-gradient-to-r from-amber-500 to-orange-500 text-white",
         inactive: "bg-gradient-to-r from-rose-500 to-red-500 text-white",
       },
@@ -59,8 +61,9 @@ export function SubscriptionStatusBanner() {
   const isFreeDriver = user.profileType === "motorista" || user.profileType === "driver" || user.subscriptionType === "driver_free";
   const isSubscriptionActive = user.subscriptionActive === true;
   const isExpired = user.subscriptionExpiresAt && new Date(user.subscriptionExpiresAt) < new Date();
+  const isTrial = user.subscriptionType === "trial";
 
-  let status: "active" | "expired" | "inactive" = "inactive";
+  let status: "active" | "trial" | "expired" | "inactive" = "inactive";
   let icon = <XCircle className="h-6 w-6" />;
   let title = "";
   let description = "";
@@ -75,6 +78,22 @@ export function SubscriptionStatusBanner() {
     icon = <CheckCircle className="h-6 w-6" />;
     title = "Acesso de Motorista";
     description = "Você tem acesso gratuito às funcionalidades de motorista.";
+  } else if (isTrial && isSubscriptionActive && !isExpired) {
+    status = "trial";
+    icon = <Clock className="h-6 w-6" />;
+    
+    // Calcular dias restantes do trial
+    let daysRemaining = "alguns";
+    if (user.subscriptionExpiresAt && isValid(new Date(user.subscriptionExpiresAt))) {
+      const expiresAt = new Date(user.subscriptionExpiresAt);
+      const now = new Date();
+      const diff = expiresAt.getTime() - now.getTime();
+      const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+      daysRemaining = days.toString();
+    }
+    
+    title = "Período de Teste Grátis";
+    description = `Você tem ${daysRemaining} dias restantes no seu teste grátis de 7 dias!`;
   } else if (isSubscriptionActive && !isExpired) {
     status = "active";
     icon = <CheckCircle className="h-6 w-6" />;
