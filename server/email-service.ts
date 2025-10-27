@@ -155,6 +155,9 @@ export async function sendWelcomeEmail(user: User) {
   }
 
   try {
+    const isTrial = user.subscriptionType === 'trial';
+    const isShipper = user.profileType === 'embarcador';
+    
     const mailOptions = {
       from: `"QUERO FRETES" <${process.env.EMAIL_USER}>`,
       to: user.email,
@@ -172,10 +175,19 @@ export async function sendWelcomeEmail(user: User) {
             <p><strong>Tipo de Perfil:</strong> ${user.profileType}</p>
             <p><strong>Data de Cadastro:</strong> ${new Date(user.createdAt).toLocaleDateString('pt-BR')}</p>
           </div>
+          ${isTrial && isShipper ? `
+          <div style="background-color: #e3f2fd; padding: 15px; border-radius: 5px; margin: 15px 0; border-left: 4px solid #2196f3;">
+            <h3 style="color: #1976d2; margin-top: 0;">🎉 Período de Teste Grátis Ativado!</h3>
+            <p>Você ganhou <strong>7 dias de acesso gratuito</strong> a todas as funcionalidades do sistema!</p>
+            <p><strong>Válido até:</strong> ${user.trialEndDate ? new Date(user.trialEndDate).toLocaleDateString('pt-BR') : '7 dias'}</p>
+            <p style="margin-bottom: 0;">Explore todas as ferramentas e veja como podemos ajudar na gestão dos seus fretes!</p>
+          </div>
+          ` : ''}
           <p>Para aproveitar ao máximo nosso sistema:</p>
           <ol>
             <li>Complete seu cadastro de cliente na aba "Clientes"</li>
             <li>Explore as funcionalidades disponíveis para seu tipo de perfil</li>
+            ${isTrial && isShipper ? '<li>Aproveite o período de teste para conhecer todas as funcionalidades</li>' : ''}
             <li>Contate o suporte caso tenha dúvidas</li>
           </ol>
           <div style="text-align: center; margin-top: 30px;">
@@ -230,11 +242,12 @@ export async function sendSubscriptionEmail(
   const planTypeMap: Record<string, string> = {
     'monthly': 'Mensal',
     'annual': 'Anual',
+    'trial': 'Período de Teste (7 dias)',
     'trialing': 'Aguardando Pagamento'
   };
 
   const planName = planTypeMap[planType] || planType;
-  const isTrial = false; // Sistema não oferece mais trials gratuitos
+  const isTrial = planType === 'trial';
 
   try {
     const mailOptions = {
