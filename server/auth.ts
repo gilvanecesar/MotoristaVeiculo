@@ -179,17 +179,24 @@ export function setupAuth(app: Express) {
       let subscriptionExpiresAt: Date | null = null;
       let subscriptionActive = false;
       
-      // Prioridade para motoristas (acesso gratuito permanente)
+      // Configuração baseada no tipo de perfil
+      let trialStartDate: Date | null = null;
+      let trialEndDate: Date | null = null;
+      let trialUsed = false;
+      
       if (profileType === "driver" || profileType === "motorista") {
+        // Motoristas: acesso gratuito permanente
         userSubscriptionType = "driver_free";
         subscriptionActive = true;
         subscriptionExpiresAt = null;
       } else {
-        // Para outros perfis (embarcadores), não ativa assinatura automaticamente
-        // Eles precisam pagar através do OpenPix para ter acesso
-        userSubscriptionType = "none";
-        subscriptionActive = false;
-        subscriptionExpiresAt = null;
+        // Embarcadores: trial de 7 dias grátis
+        userSubscriptionType = "trial";
+        subscriptionActive = true;
+        trialStartDate = new Date();
+        trialEndDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 dias
+        subscriptionExpiresAt = trialEndDate;
+        trialUsed = true; // Marca que já usou o trial
       }
       
       const newUser = await storage.createUser({
@@ -206,7 +213,10 @@ export function setupAuth(app: Express) {
         subscriptionActive,
         subscriptionExpiresAt,
         whatsapp: whatsapp || phone || null,
-        cpf: cpf || null
+        cpf: cpf || null,
+        trialStartDate,
+        trialEndDate,
+        trialUsed
       });
 
       // Envia email de boas-vindas

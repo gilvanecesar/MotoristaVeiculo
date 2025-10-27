@@ -260,6 +260,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Limpar nome de possíveis contaminações de CPF/CNPJ
       const cleanedName = cleanUserName(name, cpf || (documento?.length < 14 ? documento : null), cnpj || (documento?.length >= 14 ? documento : null));
       
+      // Configurar assinatura baseada no tipo de perfil
+      let subscriptionConfig: any = {
+        subscriptionActive: false,
+        subscriptionType: null,
+        subscriptionExpiresAt: null,
+        trialStartDate: null,
+        trialEndDate: null,
+        trialUsed: false
+      };
+      
+      if (profileType === "motorista") {
+        // Motoristas: acesso gratuito permanente
+        subscriptionConfig = {
+          subscriptionActive: true,
+          subscriptionType: "driver_free",
+          subscriptionExpiresAt: null,
+          trialStartDate: null,
+          trialEndDate: null,
+          trialUsed: false
+        };
+      } else if (profileType === "embarcador" || profileType === "agenciador") {
+        // Embarcadores e Agenciadores: trial de 7 dias grátis
+        const trialStart = new Date();
+        const trialEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 dias
+        subscriptionConfig = {
+          subscriptionActive: true,
+          subscriptionType: "trial",
+          subscriptionExpiresAt: trialEnd,
+          trialStartDate: trialStart,
+          trialEndDate: trialEnd,
+          trialUsed: true
+        };
+      }
+      
       // Criar usuário baseado no perfil
       const userData = {
         name: cleanedName,
@@ -273,8 +307,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         vehiclePlate: vehiclePlate || null,
         isActive: true,
         isVerified: true, // Auto-verificar usuários registrados por perfil
-        subscriptionActive: profileType === "motorista" ? true : false, // Motoristas têm acesso gratuito
-        subscriptionType: profileType === "motorista" ? "free" : null
+        ...subscriptionConfig
       };
 
       const newUser = await storage.createUser(userData);
