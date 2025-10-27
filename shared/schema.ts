@@ -599,6 +599,7 @@ export const INVOICE_STATUS = {
 
 // Tipos de planos
 export const PLAN_TYPES = {
+  TRIAL: "trial",
   MONTHLY: "monthly",
   ANNUAL: "annual"
 } as const;
