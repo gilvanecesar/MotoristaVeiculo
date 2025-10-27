@@ -154,6 +154,11 @@ export async function sendWelcomeEmail(user: User) {
     return;
   }
 
+  if (!user.email) {
+    console.warn('Usuário sem email. Email de boas-vindas não enviado.');
+    return;
+  }
+
   try {
     const isTrial = user.subscriptionType === 'trial';
     const isShipper = user.profileType === 'embarcador';
@@ -462,6 +467,11 @@ export async function sendPaymentReminderEmail(
   if (!transporter) {
     console.warn('Serviço de email não configurado. Email de cobrança não enviado.');
     return { success: false, error: 'Serviço de email não configurado' };
+  }
+
+  if (!user.email) {
+    console.warn('Usuário sem email. Email de cobrança não enviado.');
+    return { success: false, error: 'Usuário sem email' };
   }
 
   try {

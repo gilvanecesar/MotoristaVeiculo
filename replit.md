@@ -27,7 +27,7 @@ Table layouts are used for desktop listings (quotes/freights) while mobile displ
 
 ### Feature Specifications
 - **User Management**: Multi-role system (administrators, drivers, shippers, agents, carriers) with email/password authentication (scrypt hashing) and profile management. Includes automatic name cleaning and multi-step registration.
-- **Subscription Management**: Integration with OpenPix for PIX-only payments with webhook-based status updates. **No trial period** - shippers must pay before accessing the system (monthly or annual plans). Drivers have permanent free access (driver_free). Active subscriptions are required for shippers; administrators and drivers have unrestricted access.
+- **Subscription Management**: Integration with OpenPix for PIX-only payments with webhook-based status updates. **7-day free trial** - new shippers automatically receive a 7-day trial period with full system access upon registration. After trial expiration, they must subscribe (monthly or annual plans) to continue. Drivers have permanent free access (driver_free). Active subscriptions or valid trials are required for shippers; administrators and drivers have unrestricted access. Trial tracking includes trialStartDate, trialEndDate, and trialUsed fields.
 - **Freight Management**: Creation, tracking, and management of freight requests with multi-destination support. Includes robust filtering, detailed cards, and a new table-based display.
 - **Vehicle & Driver Management**: Registration and association of drivers (with CNH validation) and vehicles, with clear indicators for complete vs. incomplete driver profiles.
 - **Email Service**: Nodemailer for transactional emails, including notifications for new quotes.
