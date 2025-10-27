@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useReducer, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
@@ -117,37 +117,59 @@ const BODY_CATEGORIES = {
   'Especiais': ['tanque', 'porta_conteiner']
 };
 
-interface FilterSidebarProps {
-  filters: {
-    search: string;
-    origin: string;
-    destination: string;
-    dateFrom: string;
-    dateTo: string;
-    distanceRange: string;
-    vehicleTypes: string[];
-    bodyTypes: string[];
-    isComplement: string;
-    priceSort: string;
-    status: string;
-  };
-  setFilters: React.Dispatch<React.SetStateAction<{
-    search: string;
-    origin: string;
-    destination: string;
-    dateFrom: string;
-    dateTo: string;
-    distanceRange: string;
-    vehicleTypes: string[];
-    bodyTypes: string[];
-    isComplement: string;
-    priceSort: string;
-    status: string;
-  }>>;
-  resetFilters: () => void;
+// Tipos para o reducer de filtros
+type FilterState = {
+  search: string;
+  origin: string;
+  destination: string;
+  dateFrom: string;
+  dateTo: string;
+  distanceRange: string;
+  vehicleTypes: string[];
+  bodyTypes: string[];
+  isComplement: string;
+  priceSort: string;
+  status: string;
+};
+
+type FilterAction =
+  | { type: 'UPDATE_FIELD'; field: keyof FilterState; value: string }
+  | { type: 'UPDATE_ARRAY'; field: 'vehicleTypes' | 'bodyTypes'; value: string[] }
+  | { type: 'RESET' };
+
+const initialFilterState: FilterState = {
+  search: "",
+  origin: "",
+  destination: "",
+  dateFrom: "",
+  dateTo: "",
+  distanceRange: "todos",
+  vehicleTypes: [],
+  bodyTypes: [],
+  isComplement: "todos",
+  priceSort: "todos",
+  status: "ativo"
+};
+
+function filterReducer(state: FilterState, action: FilterAction): FilterState {
+  switch (action.type) {
+    case 'UPDATE_FIELD':
+      return { ...state, [action.field]: action.value };
+    case 'UPDATE_ARRAY':
+      return { ...state, [action.field]: action.value };
+    case 'RESET':
+      return initialFilterState;
+    default:
+      return state;
+  }
 }
 
-const FilterSidebar = React.memo(({ filters, setFilters, resetFilters }: FilterSidebarProps) => (
+interface FilterSidebarProps {
+  filters: FilterState;
+  dispatch: React.Dispatch<FilterAction>;
+}
+
+const FilterSidebar = React.memo(({ filters, dispatch }: FilterSidebarProps) => (
   <div className="space-y-4">
     {/* Origem e Destino */}
     <div className="space-y-2">
@@ -155,12 +177,12 @@ const FilterSidebar = React.memo(({ filters, setFilters, resetFilters }: FilterS
       <div className="space-y-1.5">
         <CitySearch
           value={filters.origin}
-          onSelect={(city) => setFilters({...filters, origin: city})}
+          onSelect={(city) => dispatch({ type: 'UPDATE_FIELD', field: 'origin', value: city })}
           placeholder="Cidade de origem"
         />
         <CitySearch
           value={filters.destination}
-          onSelect={(city) => setFilters({...filters, destination: city})}
+          onSelect={(city) => dispatch({ type: 'UPDATE_FIELD', field: 'destination', value: city })}
           placeholder="Cidade de destino"
         />
       </div>
@@ -169,7 +191,7 @@ const FilterSidebar = React.memo(({ filters, setFilters, resetFilters }: FilterS
     {/* Status */}
     <div className="space-y-2">
       <h3 className="font-semibold text-sm">Status</h3>
-      <RadioGroup value={filters.status} onValueChange={(value) => setFilters({...filters, status: value})}>
+      <RadioGroup value={filters.status} onValueChange={(value) => dispatch({ type: 'UPDATE_FIELD', field: 'status', value })}>
         <div className="flex items-center space-x-2">
           <RadioGroupItem value="ativo" id="status-ativo" />
           <Label htmlFor="status-ativo" className="text-sm">Ativos</Label>
@@ -199,11 +221,10 @@ const FilterSidebar = React.memo(({ filters, setFilters, resetFilters }: FilterS
                     id={`vehicle-${key}`}
                     checked={filters.vehicleTypes.includes(key)}
                     onCheckedChange={(checked) => {
-                      if (checked) {
-                        setFilters({...filters, vehicleTypes: [...filters.vehicleTypes, key]});
-                      } else {
-                        setFilters({...filters, vehicleTypes: filters.vehicleTypes.filter(t => t !== key)});
-                      }
+                      const newTypes = checked 
+                        ? [...filters.vehicleTypes, key]
+                        : filters.vehicleTypes.filter(t => t !== key);
+                      dispatch({ type: 'UPDATE_ARRAY', field: 'vehicleTypes', value: newTypes });
                     }}
                   />
                   <Label htmlFor={`vehicle-${key}`} className="text-sm font-normal cursor-pointer">
@@ -231,11 +252,10 @@ const FilterSidebar = React.memo(({ filters, setFilters, resetFilters }: FilterS
                     id={`body-${key}`}
                     checked={filters.bodyTypes.includes(key)}
                     onCheckedChange={(checked) => {
-                      if (checked) {
-                        setFilters({...filters, bodyTypes: [...filters.bodyTypes, key]});
-                      } else {
-                        setFilters({...filters, bodyTypes: filters.bodyTypes.filter(t => t !== key)});
-                      }
+                      const newTypes = checked 
+                        ? [...filters.bodyTypes, key]
+                        : filters.bodyTypes.filter(t => t !== key);
+                      dispatch({ type: 'UPDATE_ARRAY', field: 'bodyTypes', value: newTypes });
                     }}
                   />
                   <Label htmlFor={`body-${key}`} className="text-sm font-normal cursor-pointer">
@@ -252,7 +272,7 @@ const FilterSidebar = React.memo(({ filters, setFilters, resetFilters }: FilterS
     {/* Complemento */}
     <div className="space-y-2">
       <h3 className="font-semibold text-sm">Complemento</h3>
-      <RadioGroup value={filters.isComplement} onValueChange={(value) => setFilters({...filters, isComplement: value})}>
+      <RadioGroup value={filters.isComplement} onValueChange={(value) => dispatch({ type: 'UPDATE_FIELD', field: 'isComplement', value })}>
         <div className="flex items-center space-x-2">
           <RadioGroupItem value="sim" id="complement-sim" />
           <Label htmlFor="complement-sim" className="text-sm">Sim</Label>
@@ -271,7 +291,7 @@ const FilterSidebar = React.memo(({ filters, setFilters, resetFilters }: FilterS
     {/* Ordenação por Preço */}
     <div className="space-y-2">
       <h3 className="font-semibold text-sm">Preço</h3>
-      <RadioGroup value={filters.priceSort} onValueChange={(value) => setFilters({...filters, priceSort: value})}>
+      <RadioGroup value={filters.priceSort} onValueChange={(value) => dispatch({ type: 'UPDATE_FIELD', field: 'priceSort', value })}>
         <div className="flex items-center space-x-2">
           <RadioGroupItem value="menor" id="price-menor" />
           <Label htmlFor="price-menor" className="text-sm">Menor</Label>
@@ -288,7 +308,7 @@ const FilterSidebar = React.memo(({ filters, setFilters, resetFilters }: FilterS
     </div>
 
     {/* Botão Limpar Filtros */}
-    <Button variant="outline" className="w-full h-9" onClick={resetFilters} data-testid="button-clear-filters">
+    <Button variant="outline" className="w-full h-9" onClick={() => dispatch({ type: 'RESET' })} data-testid="button-clear-filters">
       Limpar Filtros
     </Button>
   </div>
@@ -302,19 +322,7 @@ export default function FreightsPageNew() {
   const { user } = useAuth();
   const isMobile = useIsMobile();
 
-  const [filters, setFilters] = useState({
-    search: "",
-    origin: "",
-    destination: "",
-    dateFrom: "",
-    dateTo: "",
-    distanceRange: "todos",
-    vehicleTypes: [] as string[],
-    bodyTypes: [] as string[],
-    isComplement: "todos",
-    priceSort: "todos",
-    status: "ativo"
-  });
+  const [filters, dispatch] = useReducer(filterReducer, initialFilterState);
 
   const { data: freights = [], isLoading } = useQuery<FreightWithUser[]>({
     queryKey: ["/api/freights"],
@@ -411,21 +419,6 @@ export default function FreightsPageNew() {
     return filtered;
   }, [freights, filters]);
 
-  const resetFilters = () => {
-    setFilters({
-      search: "",
-      origin: "",
-      destination: "",
-      dateFrom: "",
-      dateTo: "",
-      distanceRange: "todos",
-      vehicleTypes: [],
-      bodyTypes: [],
-      isComplement: "todos",
-      priceSort: "todos",
-      status: "ativo"
-    });
-  };
 
   const trackInterest = async (freightId: number) => {
     try {
@@ -497,7 +490,7 @@ ${freight.observations ? `📝 Observações: ${freight.observations}\n` : ''}
           <h2 className="text-lg font-semibold">Filtros</h2>
           <Filter className="w-5 h-5 text-slate-500" />
         </div>
-        <FilterSidebar filters={filters} setFilters={setFilters} resetFilters={resetFilters} />
+        <FilterSidebar filters={filters} dispatch={dispatch} />
       </div>
 
       {/* Main Content */}
@@ -589,7 +582,7 @@ ${freight.observations ? `📝 Observações: ${freight.observations}\n` : ''}
                   placeholder="Buscar por origem, destino, tipo de carga..."
                   className="pl-10"
                   value={filters.search}
-                  onChange={(e) => setFilters({...filters, search: e.target.value})}
+                  onChange={(e) => dispatch({ type: 'UPDATE_FIELD', field: 'search', value: e.target.value })}
                   data-testid="input-search"
                 />
               </div>
@@ -919,7 +912,7 @@ ${freight.observations ? `📝 Observações: ${freight.observations}\n` : ''}
                 <X className="h-5 w-5" />
               </Button>
             </div>
-            <FilterSidebar filters={filters} setFilters={setFilters} resetFilters={resetFilters} />
+            <FilterSidebar filters={filters} dispatch={dispatch} />
           </div>
         </div>
       )}
