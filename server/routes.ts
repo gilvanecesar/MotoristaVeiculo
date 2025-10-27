@@ -1586,12 +1586,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).send("Usuário não encontrado");
       }
       
+      // Verificar se está em trial
+      const isTrial = user.subscriptionType === "trial";
+      const now = new Date();
+      const expiresAt = user.subscriptionExpiresAt ? new Date(user.subscriptionExpiresAt) : null;
+      
+      // Calcular dias restantes do trial
+      let daysRemaining = null;
+      if (isTrial && expiresAt) {
+        const diff = expiresAt.getTime() - now.getTime();
+        daysRemaining = Math.ceil(diff / (1000 * 60 * 60 * 24));
+      }
+      
       // Formatar informações para o cliente
       return res.json({
         active: user.subscriptionActive || false,
+        isTrial,
+        trialUsed: user.trialUsed || false,
+        trialStartDate: user.trialStartDate || null,
+        trialEndDate: user.trialEndDate || null,
+        daysRemaining,
         planType: user.subscriptionType || null,
         expiresAt: user.subscriptionExpiresAt || null,
-        paymentMethod: null // Apenas OpenPix agora
+        paymentMethod: null, // Apenas OpenPix agora
+        paymentRequired: user.paymentRequired || false
       });
     } catch (error: any) {
       console.error("Erro ao obter informações da assinatura:", error.message);
