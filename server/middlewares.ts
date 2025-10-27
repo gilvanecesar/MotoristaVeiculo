@@ -75,9 +75,14 @@ export function hasActiveSubscription(req: Request, res: Response, next: NextFun
         })
         .catch(err => console.error("Erro ao desativar assinatura expirada:", err));
       
+      // Mensagem específica para trial expirado
+      const message = user.subscriptionType === "trial" 
+        ? "Seu período de teste de 7 dias expirou. Assine agora para continuar usando o sistema."
+        : "Sua assinatura expirou. Por favor, renove seu plano para continuar.";
+      
       return res.status(402).json({ 
         code: "subscription_expired",
-        message: "Sua assinatura expirou. Por favor, renove seu plano para continuar."
+        message
       });
     }
   }
