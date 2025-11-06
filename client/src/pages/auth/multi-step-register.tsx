@@ -274,13 +274,9 @@ export default function MultiStepRegister() {
                             {...field}
                           />
                         </FormControl>
-                        <FormDescription>
-                          <Alert className="mt-2">
-                            <AlertCircle className="h-4 w-4" />
-                            <AlertDescription>
-                              Ao prosseguir, você aceita receber novidades e comunicações via WhatsApp.
-                            </AlertDescription>
-                          </Alert>
+                        <FormDescription className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
+                          <AlertCircle className="h-3 w-3 flex-shrink-0" />
+                          <span>Ao prosseguir, você aceita receber novidades e comunicações via WhatsApp.</span>
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
