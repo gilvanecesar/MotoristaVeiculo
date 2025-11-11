@@ -289,7 +289,7 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 
 ---
 
-## 👨‍💻 Autor
+## 👨‍💻 Autor : GILVANE CÉSAR
 
 Desenvolvido com ❤️ para otimizar o setor de logística brasileiro.
 
@@ -298,8 +298,8 @@ Desenvolvido com ❤️ para otimizar o setor de logística brasileiro.
 ## 📞 Contato & Suporte
 
 Para dúvidas, sugestões ou suporte:
-- 📧 Email: suporte@querofretes.com.br
-- 💬 WhatsApp: Disponível na plataforma
+- 📧 Email: gilvane.cesar@gmail.com
+- 💬 WhatsApp: (31) 97155 9484
 
 ---
 
