@@ -171,6 +171,7 @@ ${destinosText}
 ${freight.observations ? `📝 Observações: ${freight.observations}\n` : ''}
 ━━━━━━━━━━━━━━━━━━━━━━
 
+🛞 #PNEUS GOODYEAR
 🏁 ${promoText}
 
 ━━━━━━━━━━━━━━━━━━━━━━
