@@ -476,7 +476,7 @@ ${freight.observations ? `📝 Observações: ${freight.observations}\n` : ''}
 
 🛞🛞 PNEUS GOODYEAR
 
-${promoText}
+🏁 ${promoText}
 
 ━━━━━━━━━━━━━━━━━━━━━━
 🌐 Sistema QUERO FRETES: https://querofretes.com.br`);
