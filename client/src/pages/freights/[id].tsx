@@ -113,6 +113,18 @@ export default function FreightDetailPage() {
     });
   };
 
+  // Textos promocionais Goodyear/Cooper Tires
+  const getRandomPromoText = () => {
+    const promoTexts = [
+      `Conheça as tecnologias dos pneus Work Series: Smart Traction, com mais tração e menor movimentação dos blocos, no pneu Work Series RHD, e Wear Square, que indica o momento ideal para a troca, no pneu Work Series RHA.
+Cooper tires, o pneu de quem faz o Brasil rodar.`,
+      `A melhor opção para a sua estrada é o Cooper Work Series! Conheça as tecnologias Smart Traction e Wear Square e veja como podemos ser o parceiro certo para o seu dia a dia.`
+    ];
+    
+    const randomIndex = Math.floor(Math.random() * promoTexts.length);
+    return promoTexts[randomIndex];
+  };
+
   // Função para compartilhar via WhatsApp
   const formatWhatsAppMessage = () => {
     if (!freight) return "";
@@ -136,6 +148,9 @@ export default function FreightDetailPage() {
       destinosText += `\n🏁 Destino 3: ${freight.destination2}, ${freight.destinationState2}`;
     }
     
+    // Selecionar texto promocional aleatório
+    const promoText = getRandomPromoText();
+    
     return encodeURIComponent(`🚛 FRETE DISPONÍVEL 🚛
 
 🔗 Link do frete: ${freightUrl}
@@ -154,6 +169,11 @@ ${destinosText}
 👤 Contato: ${freight.contactName}
 📞 Telefone: ${freight.contactPhone}
 ${freight.observations ? `📝 Observações: ${freight.observations}\n` : ''}
+━━━━━━━━━━━━━━━━━━━━━━
+
+🏁 ${promoText}
+
+━━━━━━━━━━━━━━━━━━━━━━
 🌐 Sistema QUERO FRETES: ${baseUrl}`);
   };
 
