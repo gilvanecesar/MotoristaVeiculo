@@ -477,7 +477,7 @@ ${destinosText}
 ${freight.observations ? `📝 Observações: ${freight.observations}\n` : ''}
 ━━━━━━━━━━━━━━━━━━━━━━
 
-🛞🛞 PNEUS GOODYEAR
+🛞🛞 PNEUS COOPER TIRES
 
 🏁 ${promoText}
 
