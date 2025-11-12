@@ -116,9 +116,16 @@ export default function FreightDetailPage() {
   // Textos promocionais Goodyear/Cooper Tires
   const getRandomPromoText = () => {
     const promoTexts = [
-      `Conheça as tecnologias dos pneus Work Series: Smart Traction, com mais tração e menor movimentação dos blocos, no pneu Work Series RHD, e Wear Square, que indica o momento ideal para a troca, no pneu Work Series RHA.
-Cooper tires, o pneu de quem faz o Brasil rodar.`,
-      `A melhor opção para a sua estrada é o Cooper Work Series! Conheça as tecnologias Smart Traction e Wear Square e veja como podemos ser o parceiro certo para o seu dia a dia.`
+      `Os pneus Cooper Work Series possuem tecnologias que oferecem mais desempenho e custo-benefício
+👉 https://bit.ly/cooper-work-series
+
+Work Series RHD: Smart Traction, mais tração e menor movimentação dos blocos
+👉 https://bit.ly/cooper-rhd
+
+Work Series RHA: Wear Square, que indica o momento ideal para troca
+👉 https://bit.ly/cooper-rha`,
+      `A melhor opção para a sua estrada é o Cooper Work Series! Conheça as tecnologias Smart Traction e Wear Square e veja como podemos ser o parceiro certo para o seu dia a dia.
+👉 https://bit.ly/cooper-work-series`
     ];
     
     const randomIndex = Math.floor(Math.random() * promoTexts.length);
