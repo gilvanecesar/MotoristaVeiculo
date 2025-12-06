@@ -53,6 +53,7 @@ import {
   type DriverWithVehicles,
   type FreightWithDestinations,
   type SubscriptionWithInvoices,
+  type FreightEngagementStats,
   type InvoiceWithPayments,
   type ClientWithSubscriptions,
 } from "@shared/schema";
@@ -259,6 +260,11 @@ export interface IStorage {
   updateCampaignMessage(id: number, message: Partial<InsertCampaignMessage>): Promise<CampaignMessage | undefined>;
   deleteCampaignMessage(id: number): Promise<boolean>;
   toggleCampaignMessageStatus(id: number): Promise<CampaignMessage | undefined>;
+
+  // Freight engagement analytics operations
+  recordFreightEngagementEvent(freightId: number, eventType: string, userId?: number, ipAddress?: string, userAgent?: string): Promise<void>;
+  getFreightEngagementStats(freightId: number): Promise<FreightEngagementStats>;
+  getAllFreightsEngagementStats(): Promise<FreightEngagementStats[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -2475,6 +2481,69 @@ export class DatabaseStorage implements IStorage {
       displayOrder: row.display_order,
       createdAt: row.created_at
     };
+  }
+
+  // Freight engagement analytics operations
+  async recordFreightEngagementEvent(
+    freightId: number, 
+    eventType: string, 
+    userId?: number, 
+    ipAddress?: string, 
+    userAgent?: string
+  ): Promise<void> {
+    await pool.query(
+      `INSERT INTO freight_engagement_events (freight_id, user_id, event_type, ip_address, user_agent) 
+       VALUES ($1, $2, $3, $4, $5)`,
+      [freightId, userId || null, eventType, ipAddress || null, userAgent || null]
+    );
+  }
+
+  async getFreightEngagementStats(freightId: number): Promise<FreightEngagementStats> {
+    const result = await pool.query(`
+      SELECT 
+        $1::integer as freight_id,
+        COUNT(*) FILTER (WHERE event_type = 'view') as total_views,
+        COUNT(DISTINCT COALESCE(user_id::text, ip_address)) FILTER (WHERE event_type = 'view') as unique_views,
+        COUNT(*) FILTER (WHERE event_type = 'whatsapp_click') as whatsapp_clicks,
+        COUNT(*) FILTER (WHERE event_type = 'phone_click') as phone_clicks,
+        COUNT(*) FILTER (WHERE event_type = 'share_click') as share_clicks
+      FROM freight_engagement_events
+      WHERE freight_id = $1
+    `, [freightId]);
+
+    const row = result.rows[0];
+    return {
+      freightId: freightId,
+      totalViews: parseInt(row.total_views) || 0,
+      uniqueViews: parseInt(row.unique_views) || 0,
+      whatsappClicks: parseInt(row.whatsapp_clicks) || 0,
+      phoneClicks: parseInt(row.phone_clicks) || 0,
+      shareClicks: parseInt(row.share_clicks) || 0,
+    };
+  }
+
+  async getAllFreightsEngagementStats(): Promise<FreightEngagementStats[]> {
+    const result = await pool.query(`
+      SELECT 
+        freight_id,
+        COUNT(*) FILTER (WHERE event_type = 'view') as total_views,
+        COUNT(DISTINCT COALESCE(user_id::text, ip_address)) FILTER (WHERE event_type = 'view') as unique_views,
+        COUNT(*) FILTER (WHERE event_type = 'whatsapp_click') as whatsapp_clicks,
+        COUNT(*) FILTER (WHERE event_type = 'phone_click') as phone_clicks,
+        COUNT(*) FILTER (WHERE event_type = 'share_click') as share_clicks
+      FROM freight_engagement_events
+      GROUP BY freight_id
+      ORDER BY total_views DESC
+    `);
+
+    return result.rows.map(row => ({
+      freightId: row.freight_id,
+      totalViews: parseInt(row.total_views) || 0,
+      uniqueViews: parseInt(row.unique_views) || 0,
+      whatsappClicks: parseInt(row.whatsapp_clicks) || 0,
+      phoneClicks: parseInt(row.phone_clicks) || 0,
+      shareClicks: parseInt(row.share_clicks) || 0,
+    }));
   }
 }
 
