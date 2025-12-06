@@ -113,19 +113,47 @@ export default function FreightDetailPage() {
     });
   };
 
-  // Textos promocionais Goodyear/Cooper Tires
-  const getRandomPromoText = () => {
-    const promoTexts = [
-      `Os pneus Cooper Work Series possuem tecnologias que oferecem mais desempenho e custo-benefício - https://bit.ly/3XuFpa4
+  // Buscar campanhas ativas para WhatsApp
+  const { data: activeCampaigns = [] } = useQuery<Array<{
+    id: number;
+    name: string;
+    randomize: boolean;
+    messages: Array<{
+      id: number;
+      body: string;
+      isActive: boolean;
+    }>;
+  }>>({
+    queryKey: ["/api/whatsapp-campaigns/active"],
+  });
 
-Work Series RHD: Smart Traction, mais tração e menor movimentação dos blocos - https://bit.ly/3LWHpW8
+  // Função para obter mensagem promocional das campanhas ativas
+  const getPromoTextFromCampaigns = () => {
+    if (!activeCampaigns || activeCampaigns.length === 0) {
+      return null;
+    }
 
-Work Series RHA: Wear Square, que indica o momento ideal para troca - https://bit.ly/4nU2DBA`,
-      `A melhor opção para a sua estrada é o Cooper Work Series! Conheça as tecnologias Smart Traction e Wear Square e veja como podemos ser o parceiro certo para o seu dia a dia. https://bit.ly/4oFM9OD`
-    ];
+    // Coletar todas as mensagens ativas de todas as campanhas
+    const allActiveMessages: Array<{ campaignName: string; body: string; randomize: boolean }> = [];
     
-    const randomIndex = Math.floor(Math.random() * promoTexts.length);
-    return promoTexts[randomIndex];
+    for (const campaign of activeCampaigns) {
+      const activeMessages = campaign.messages?.filter(m => m.isActive) || [];
+      for (const msg of activeMessages) {
+        allActiveMessages.push({
+          campaignName: campaign.name,
+          body: msg.body,
+          randomize: campaign.randomize
+        });
+      }
+    }
+
+    if (allActiveMessages.length === 0) {
+      return null;
+    }
+
+    // Se alguma campanha tem randomize, seleciona aleatoriamente
+    const randomIndex = Math.floor(Math.random() * allActiveMessages.length);
+    return allActiveMessages[randomIndex];
   };
 
   // Função para compartilhar via WhatsApp
@@ -151,8 +179,19 @@ Work Series RHA: Wear Square, que indica o momento ideal para troca - https://bi
       destinosText += `\n🏁 Destino 3: ${freight.destination2}, ${freight.destinationState2}`;
     }
     
-    // Selecionar texto promocional aleatório
-    const promoText = getRandomPromoText();
+    // Obter mensagem promocional das campanhas ativas
+    const promoData = getPromoTextFromCampaigns();
+    
+    // Construir seção promocional apenas se houver campanha ativa
+    let promoSection = "";
+    if (promoData) {
+      promoSection = `
+━━━━━━━━━━━━━━━━━━━━━━
+
+${promoData.body}
+
+━━━━━━━━━━━━━━━━━━━━━━`;
+    }
     
     return encodeURIComponent(`🚛 FRETE DISPONÍVEL 🚛
 
@@ -171,14 +210,7 @@ ${destinosText}
 
 👤 Contato: ${freight.contactName}
 📞 Telefone: ${freight.contactPhone}
-${freight.observations ? `📝 Observações: ${freight.observations}\n` : ''}
-━━━━━━━━━━━━━━━━━━━━━━
-
-🛞🛞 PNEUS COOPER TIRES
-
-🏁 ${promoText}
-
-━━━━━━━━━━━━━━━━━━━━━━
+${freight.observations ? `📝 Observações: ${freight.observations}\n` : ''}${promoSection}
 🌐 Sistema QUERO FRETES: ${baseUrl}`);
   };
 
