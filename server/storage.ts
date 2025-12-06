@@ -11,6 +11,8 @@ import {
   payments,
   quotes,
   webhookConfigs,
+  campaigns,
+  campaignMessages,
   CLIENT_TYPES,
   USER_TYPES,
   AUTH_PROVIDERS,
@@ -18,6 +20,7 @@ import {
   INVOICE_STATUS,
   PLAN_TYPES,
   QUOTE_STATUS,
+  CAMPAIGN_STATUS,
   type Driver,
   type InsertDriver,
   type Vehicle,
@@ -42,6 +45,11 @@ import {
   type InsertQuote,
   type WebhookConfig,
   type InsertWebhookConfig,
+  type Campaign,
+  type InsertCampaign,
+  type CampaignMessage,
+  type InsertCampaignMessage,
+  type CampaignWithMessages,
   type DriverWithVehicles,
   type FreightWithDestinations,
   type SubscriptionWithInvoices,
@@ -235,6 +243,22 @@ export interface IStorage {
   // Webhook config operations
   getWebhookConfig(): Promise<WebhookConfig | undefined>;
   updateWebhookConfig(config: Partial<InsertWebhookConfig>): Promise<WebhookConfig>;
+
+  // Campaign operations
+  getCampaigns(): Promise<CampaignWithMessages[]>;
+  getCampaign(id: number): Promise<CampaignWithMessages | undefined>;
+  getActiveCampaigns(): Promise<CampaignWithMessages[]>;
+  createCampaign(campaign: InsertCampaign): Promise<Campaign>;
+  updateCampaign(id: number, campaign: Partial<InsertCampaign>): Promise<Campaign | undefined>;
+  deleteCampaign(id: number): Promise<boolean>;
+  toggleCampaignStatus(id: number): Promise<Campaign | undefined>;
+  
+  // Campaign message operations
+  getCampaignMessages(campaignId: number): Promise<CampaignMessage[]>;
+  createCampaignMessage(message: InsertCampaignMessage): Promise<CampaignMessage>;
+  updateCampaignMessage(id: number, message: Partial<InsertCampaignMessage>): Promise<CampaignMessage | undefined>;
+  deleteCampaignMessage(id: number): Promise<boolean>;
+  toggleCampaignMessageStatus(id: number): Promise<CampaignMessage | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -2136,6 +2160,321 @@ export class DatabaseStorage implements IStorage {
         updatedAt: newConfig.updated_at
       };
     }
+  }
+
+  // Campaign operations
+  async getCampaigns(): Promise<CampaignWithMessages[]> {
+    const result = await pool.query(`
+      SELECT c.*, 
+        COALESCE(json_agg(
+          json_build_object(
+            'id', cm.id,
+            'campaignId', cm.campaign_id,
+            'title', cm.title,
+            'body', cm.body,
+            'isActive', cm.is_active,
+            'displayOrder', cm.display_order,
+            'createdAt', cm.created_at
+          ) ORDER BY cm.display_order
+        ) FILTER (WHERE cm.id IS NOT NULL), '[]') as messages
+      FROM campaigns c
+      LEFT JOIN campaign_messages cm ON c.id = cm.campaign_id
+      GROUP BY c.id
+      ORDER BY c.display_order, c.created_at DESC
+    `);
+    
+    return result.rows.map((row: any) => ({
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      status: row.status,
+      randomize: row.randomize,
+      displayOrder: row.display_order,
+      startDate: row.start_date,
+      endDate: row.end_date,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      messages: row.messages
+    }));
+  }
+
+  async getCampaign(id: number): Promise<CampaignWithMessages | undefined> {
+    const result = await pool.query(`
+      SELECT c.*, 
+        COALESCE(json_agg(
+          json_build_object(
+            'id', cm.id,
+            'campaignId', cm.campaign_id,
+            'title', cm.title,
+            'body', cm.body,
+            'isActive', cm.is_active,
+            'displayOrder', cm.display_order,
+            'createdAt', cm.created_at
+          ) ORDER BY cm.display_order
+        ) FILTER (WHERE cm.id IS NOT NULL), '[]') as messages
+      FROM campaigns c
+      LEFT JOIN campaign_messages cm ON c.id = cm.campaign_id
+      WHERE c.id = $1
+      GROUP BY c.id
+    `, [id]);
+    
+    if (result.rows.length === 0) return undefined;
+    
+    const row = result.rows[0];
+    return {
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      status: row.status,
+      randomize: row.randomize,
+      displayOrder: row.display_order,
+      startDate: row.start_date,
+      endDate: row.end_date,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      messages: row.messages
+    };
+  }
+
+  async getActiveCampaigns(): Promise<CampaignWithMessages[]> {
+    const now = new Date().toISOString();
+    const result = await pool.query(`
+      SELECT c.*, 
+        COALESCE(json_agg(
+          json_build_object(
+            'id', cm.id,
+            'campaignId', cm.campaign_id,
+            'title', cm.title,
+            'body', cm.body,
+            'isActive', cm.is_active,
+            'displayOrder', cm.display_order,
+            'createdAt', cm.created_at
+          ) ORDER BY cm.display_order
+        ) FILTER (WHERE cm.id IS NOT NULL AND cm.is_active = true), '[]') as messages
+      FROM campaigns c
+      LEFT JOIN campaign_messages cm ON c.id = cm.campaign_id
+      WHERE c.status = 'active'
+        AND (c.start_date IS NULL OR c.start_date <= $1)
+        AND (c.end_date IS NULL OR c.end_date >= $1)
+      GROUP BY c.id
+      ORDER BY c.display_order
+    `, [now]);
+    
+    return result.rows.map((row: any) => ({
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      status: row.status,
+      randomize: row.randomize,
+      displayOrder: row.display_order,
+      startDate: row.start_date,
+      endDate: row.end_date,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      messages: row.messages
+    }));
+  }
+
+  async createCampaign(campaign: InsertCampaign): Promise<Campaign> {
+    const result = await pool.query(`
+      INSERT INTO campaigns (name, description, status, randomize, display_order, start_date, end_date, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+      RETURNING *
+    `, [
+      campaign.name,
+      campaign.description || null,
+      campaign.status || 'inactive',
+      campaign.randomize ?? true,
+      campaign.displayOrder || 0,
+      campaign.startDate || null,
+      campaign.endDate || null
+    ]);
+    
+    const row = result.rows[0];
+    return {
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      status: row.status,
+      randomize: row.randomize,
+      displayOrder: row.display_order,
+      startDate: row.start_date,
+      endDate: row.end_date,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    };
+  }
+
+  async updateCampaign(id: number, campaign: Partial<InsertCampaign>): Promise<Campaign | undefined> {
+    const existing = await this.getCampaign(id);
+    if (!existing) return undefined;
+    
+    const result = await pool.query(`
+      UPDATE campaigns SET
+        name = COALESCE($1, name),
+        description = COALESCE($2, description),
+        status = COALESCE($3, status),
+        randomize = COALESCE($4, randomize),
+        display_order = COALESCE($5, display_order),
+        start_date = $6,
+        end_date = $7,
+        updated_at = NOW()
+      WHERE id = $8
+      RETURNING *
+    `, [
+      campaign.name,
+      campaign.description,
+      campaign.status,
+      campaign.randomize,
+      campaign.displayOrder,
+      campaign.startDate !== undefined ? campaign.startDate : existing.startDate,
+      campaign.endDate !== undefined ? campaign.endDate : existing.endDate,
+      id
+    ]);
+    
+    if (result.rows.length === 0) return undefined;
+    
+    const row = result.rows[0];
+    return {
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      status: row.status,
+      randomize: row.randomize,
+      displayOrder: row.display_order,
+      startDate: row.start_date,
+      endDate: row.end_date,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    };
+  }
+
+  async deleteCampaign(id: number): Promise<boolean> {
+    const result = await pool.query('DELETE FROM campaigns WHERE id = $1', [id]);
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async toggleCampaignStatus(id: number): Promise<Campaign | undefined> {
+    const result = await pool.query(`
+      UPDATE campaigns SET 
+        status = CASE WHEN status = 'active' THEN 'inactive' ELSE 'active' END,
+        updated_at = NOW()
+      WHERE id = $1
+      RETURNING *
+    `, [id]);
+    
+    if (result.rows.length === 0) return undefined;
+    
+    const row = result.rows[0];
+    return {
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      status: row.status,
+      randomize: row.randomize,
+      displayOrder: row.display_order,
+      startDate: row.start_date,
+      endDate: row.end_date,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    };
+  }
+
+  // Campaign message operations
+  async getCampaignMessages(campaignId: number): Promise<CampaignMessage[]> {
+    const result = await pool.query(`
+      SELECT * FROM campaign_messages WHERE campaign_id = $1 ORDER BY display_order
+    `, [campaignId]);
+    
+    return result.rows.map((row: any) => ({
+      id: row.id,
+      campaignId: row.campaign_id,
+      title: row.title,
+      body: row.body,
+      isActive: row.is_active,
+      displayOrder: row.display_order,
+      createdAt: row.created_at
+    }));
+  }
+
+  async createCampaignMessage(message: InsertCampaignMessage): Promise<CampaignMessage> {
+    const result = await pool.query(`
+      INSERT INTO campaign_messages (campaign_id, title, body, is_active, display_order, created_at)
+      VALUES ($1, $2, $3, $4, $5, NOW())
+      RETURNING *
+    `, [
+      message.campaignId,
+      message.title || null,
+      message.body,
+      message.isActive ?? true,
+      message.displayOrder || 0
+    ]);
+    
+    const row = result.rows[0];
+    return {
+      id: row.id,
+      campaignId: row.campaign_id,
+      title: row.title,
+      body: row.body,
+      isActive: row.is_active,
+      displayOrder: row.display_order,
+      createdAt: row.created_at
+    };
+  }
+
+  async updateCampaignMessage(id: number, message: Partial<InsertCampaignMessage>): Promise<CampaignMessage | undefined> {
+    const result = await pool.query(`
+      UPDATE campaign_messages SET
+        title = COALESCE($1, title),
+        body = COALESCE($2, body),
+        is_active = COALESCE($3, is_active),
+        display_order = COALESCE($4, display_order)
+      WHERE id = $5
+      RETURNING *
+    `, [
+      message.title,
+      message.body,
+      message.isActive,
+      message.displayOrder,
+      id
+    ]);
+    
+    if (result.rows.length === 0) return undefined;
+    
+    const row = result.rows[0];
+    return {
+      id: row.id,
+      campaignId: row.campaign_id,
+      title: row.title,
+      body: row.body,
+      isActive: row.is_active,
+      displayOrder: row.display_order,
+      createdAt: row.created_at
+    };
+  }
+
+  async deleteCampaignMessage(id: number): Promise<boolean> {
+    const result = await pool.query('DELETE FROM campaign_messages WHERE id = $1', [id]);
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async toggleCampaignMessageStatus(id: number): Promise<CampaignMessage | undefined> {
+    const result = await pool.query(`
+      UPDATE campaign_messages SET is_active = NOT is_active WHERE id = $1 RETURNING *
+    `, [id]);
+    
+    if (result.rows.length === 0) return undefined;
+    
+    const row = result.rows[0];
+    return {
+      id: row.id,
+      campaignId: row.campaign_id,
+      title: row.title,
+      body: row.body,
+      isActive: row.is_active,
+      displayOrder: row.display_order,
+      createdAt: row.created_at
+    };
   }
 }
 

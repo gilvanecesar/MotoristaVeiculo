@@ -3416,6 +3416,270 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===============================
+  // CAMPAIGN MANAGEMENT (Admin)
+  // ===============================
+
+  // Listar todas as campanhas (admin)
+  app.get("/api/admin/campaigns", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const campaigns = await storage.getCampaigns();
+      res.json(campaigns);
+    } catch (error) {
+      console.error("Erro ao listar campanhas:", error);
+      res.status(500).json({ message: "Erro ao listar campanhas" });
+    }
+  });
+
+  // Obter campanha específica (admin)
+  app.get("/api/admin/campaigns/:id", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const campaignId = parseInt(req.params.id);
+      if (!campaignId || isNaN(campaignId)) {
+        return res.status(400).json({ message: "ID da campanha inválido" });
+      }
+      
+      const campaign = await storage.getCampaign(campaignId);
+      if (!campaign) {
+        return res.status(404).json({ message: "Campanha não encontrada" });
+      }
+      
+      res.json(campaign);
+    } catch (error) {
+      console.error("Erro ao obter campanha:", error);
+      res.status(500).json({ message: "Erro ao obter campanha" });
+    }
+  });
+
+  // Criar nova campanha (admin)
+  app.post("/api/admin/campaigns", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const { name, description, status, randomize, displayOrder, startDate, endDate } = req.body;
+      
+      if (!name) {
+        return res.status(400).json({ message: "Nome da campanha é obrigatório" });
+      }
+      
+      const campaign = await storage.createCampaign({
+        name,
+        description,
+        status: status || 'inactive',
+        randomize: randomize ?? true,
+        displayOrder: displayOrder || 0,
+        startDate: startDate ? new Date(startDate) : null,
+        endDate: endDate ? new Date(endDate) : null
+      });
+      
+      res.status(201).json(campaign);
+    } catch (error) {
+      console.error("Erro ao criar campanha:", error);
+      res.status(500).json({ message: "Erro ao criar campanha" });
+    }
+  });
+
+  // Atualizar campanha (admin)
+  app.put("/api/admin/campaigns/:id", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const campaignId = parseInt(req.params.id);
+      if (!campaignId || isNaN(campaignId)) {
+        return res.status(400).json({ message: "ID da campanha inválido" });
+      }
+      
+      const { name, description, status, randomize, displayOrder, startDate, endDate } = req.body;
+      
+      const campaign = await storage.updateCampaign(campaignId, {
+        name,
+        description,
+        status,
+        randomize,
+        displayOrder,
+        startDate: startDate ? new Date(startDate) : undefined,
+        endDate: endDate ? new Date(endDate) : undefined
+      });
+      
+      if (!campaign) {
+        return res.status(404).json({ message: "Campanha não encontrada" });
+      }
+      
+      res.json(campaign);
+    } catch (error) {
+      console.error("Erro ao atualizar campanha:", error);
+      res.status(500).json({ message: "Erro ao atualizar campanha" });
+    }
+  });
+
+  // Excluir campanha (admin)
+  app.delete("/api/admin/campaigns/:id", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const campaignId = parseInt(req.params.id);
+      if (!campaignId || isNaN(campaignId)) {
+        return res.status(400).json({ message: "ID da campanha inválido" });
+      }
+      
+      const deleted = await storage.deleteCampaign(campaignId);
+      if (!deleted) {
+        return res.status(404).json({ message: "Campanha não encontrada" });
+      }
+      
+      res.json({ message: "Campanha excluída com sucesso" });
+    } catch (error) {
+      console.error("Erro ao excluir campanha:", error);
+      res.status(500).json({ message: "Erro ao excluir campanha" });
+    }
+  });
+
+  // Toggle status da campanha (admin)
+  app.post("/api/admin/campaigns/:id/toggle", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const campaignId = parseInt(req.params.id);
+      if (!campaignId || isNaN(campaignId)) {
+        return res.status(400).json({ message: "ID da campanha inválido" });
+      }
+      
+      const campaign = await storage.toggleCampaignStatus(campaignId);
+      if (!campaign) {
+        return res.status(404).json({ message: "Campanha não encontrada" });
+      }
+      
+      res.json(campaign);
+    } catch (error) {
+      console.error("Erro ao alterar status da campanha:", error);
+      res.status(500).json({ message: "Erro ao alterar status da campanha" });
+    }
+  });
+
+  // ===============================
+  // CAMPAIGN MESSAGES (Admin)
+  // ===============================
+
+  // Listar mensagens de uma campanha
+  app.get("/api/admin/campaigns/:campaignId/messages", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const campaignId = parseInt(req.params.campaignId);
+      if (!campaignId || isNaN(campaignId)) {
+        return res.status(400).json({ message: "ID da campanha inválido" });
+      }
+      
+      const messages = await storage.getCampaignMessages(campaignId);
+      res.json(messages);
+    } catch (error) {
+      console.error("Erro ao listar mensagens da campanha:", error);
+      res.status(500).json({ message: "Erro ao listar mensagens" });
+    }
+  });
+
+  // Criar mensagem de campanha
+  app.post("/api/admin/campaigns/:campaignId/messages", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const campaignId = parseInt(req.params.campaignId);
+      if (!campaignId || isNaN(campaignId)) {
+        return res.status(400).json({ message: "ID da campanha inválido" });
+      }
+      
+      const { title, body, isActive, displayOrder } = req.body;
+      
+      if (!body) {
+        return res.status(400).json({ message: "Texto da mensagem é obrigatório" });
+      }
+      
+      const message = await storage.createCampaignMessage({
+        campaignId,
+        title,
+        body,
+        isActive: isActive ?? true,
+        displayOrder: displayOrder || 0
+      });
+      
+      res.status(201).json(message);
+    } catch (error) {
+      console.error("Erro ao criar mensagem da campanha:", error);
+      res.status(500).json({ message: "Erro ao criar mensagem" });
+    }
+  });
+
+  // Atualizar mensagem de campanha
+  app.put("/api/admin/campaigns/messages/:id", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const messageId = parseInt(req.params.id);
+      if (!messageId || isNaN(messageId)) {
+        return res.status(400).json({ message: "ID da mensagem inválido" });
+      }
+      
+      const { title, body, isActive, displayOrder } = req.body;
+      
+      const message = await storage.updateCampaignMessage(messageId, {
+        title,
+        body,
+        isActive,
+        displayOrder
+      });
+      
+      if (!message) {
+        return res.status(404).json({ message: "Mensagem não encontrada" });
+      }
+      
+      res.json(message);
+    } catch (error) {
+      console.error("Erro ao atualizar mensagem:", error);
+      res.status(500).json({ message: "Erro ao atualizar mensagem" });
+    }
+  });
+
+  // Excluir mensagem de campanha
+  app.delete("/api/admin/campaigns/messages/:id", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const messageId = parseInt(req.params.id);
+      if (!messageId || isNaN(messageId)) {
+        return res.status(400).json({ message: "ID da mensagem inválido" });
+      }
+      
+      const deleted = await storage.deleteCampaignMessage(messageId);
+      if (!deleted) {
+        return res.status(404).json({ message: "Mensagem não encontrada" });
+      }
+      
+      res.json({ message: "Mensagem excluída com sucesso" });
+    } catch (error) {
+      console.error("Erro ao excluir mensagem:", error);
+      res.status(500).json({ message: "Erro ao excluir mensagem" });
+    }
+  });
+
+  // Toggle status da mensagem
+  app.post("/api/admin/campaigns/messages/:id/toggle", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const messageId = parseInt(req.params.id);
+      if (!messageId || isNaN(messageId)) {
+        return res.status(400).json({ message: "ID da mensagem inválido" });
+      }
+      
+      const message = await storage.toggleCampaignMessageStatus(messageId);
+      if (!message) {
+        return res.status(404).json({ message: "Mensagem não encontrada" });
+      }
+      
+      res.json(message);
+    } catch (error) {
+      console.error("Erro ao alterar status da mensagem:", error);
+      res.status(500).json({ message: "Erro ao alterar status da mensagem" });
+    }
+  });
+
+  // ===============================
+  // PUBLIC CAMPAIGN API (for WhatsApp sharing)
+  // ===============================
+
+  // Obter campanhas ativas (para uso no frontend)
+  app.get("/api/whatsapp-campaigns/active", async (req: Request, res: Response) => {
+    try {
+      const campaigns = await storage.getActiveCampaigns();
+      res.json(campaigns);
+    } catch (error) {
+      console.error("Erro ao obter campanhas ativas:", error);
+      res.status(500).json({ message: "Erro ao obter campanhas" });
+    }
+  });
+
   // Rota de teste para verificar conexão com banco de dados
   app.get("/api/test/db", async (req, res) => {
     try {
