@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -18,13 +18,19 @@ export default function AdminPage() {
   const [_, navigate] = useLocation();
 
   // Verificar se o usuário é um administrador
-  if (user?.profileType !== "admin") {
-    navigate("/home");
-    toast({
-      title: "Acesso restrito",
-      description: "Você não tem permissão para acessar esta página",
-      variant: "destructive",
-    });
+  useEffect(() => {
+    if (user && user.profileType !== "admin") {
+      toast({
+        title: "Acesso restrito",
+        description: "Você não tem permissão para acessar esta página",
+        variant: "destructive",
+      });
+      navigate("/home");
+    }
+  }, [user, navigate, toast]);
+
+  // Não renderizar nada enquanto verifica ou se não for admin
+  if (!user || user.profileType !== "admin") {
     return null;
   }
 
