@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/ui/icons";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Megaphone } from "lucide-react";
 import UsersManagement from "./users-management";
 import DataManagement from "./data-management";
 
@@ -130,6 +130,16 @@ export default function AdminPage() {
                   <Button onClick={() => navigate("/admin/n8n")} className="bg-purple-600 hover:bg-purple-700">
                     <Icons.settings className="mr-2 h-4 w-4" />
                     Configurar N8N
+                  </Button>
+                </div>
+                <div className="bg-orange-50 dark:bg-orange-950 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
+                  <h3 className="font-medium mb-2 text-orange-900 dark:text-orange-100">Campanhas WhatsApp</h3>
+                  <p className="text-sm text-orange-700 dark:text-orange-300 mb-4">
+                    Gerencie mensagens promocionais exibidas no compartilhamento de fretes.
+                  </p>
+                  <Button onClick={() => navigate("/admin/campaigns")} className="bg-orange-600 hover:bg-orange-700" data-testid="button-admin-campaigns">
+                    <Megaphone className="mr-2 h-4 w-4" />
+                    Gerenciar Campanhas
                   </Button>
                 </div>
                 <div>
