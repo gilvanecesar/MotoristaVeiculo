@@ -1036,3 +1036,44 @@ export type CampaignStatus = typeof CAMPAIGN_STATUS[keyof typeof CAMPAIGN_STATUS
 
 // Tipo para campanha com mensagens
 export type CampaignWithMessages = Campaign & { messages: CampaignMessage[] };
+
+// ============ FREIGHT ENGAGEMENT ANALYTICS ============
+
+// Tipos de eventos de engajamento
+export const ENGAGEMENT_EVENT_TYPES = {
+  VIEW: "view",
+  WHATSAPP_CLICK: "whatsapp_click",
+  PHONE_CLICK: "phone_click",
+  SHARE_CLICK: "share_click",
+} as const;
+
+export type EngagementEventType = typeof ENGAGEMENT_EVENT_TYPES[keyof typeof ENGAGEMENT_EVENT_TYPES];
+
+// Tabela de eventos de engajamento de fretes
+export const freightEngagementEvents = pgTable("freight_engagement_events", {
+  id: serial("id").primaryKey(),
+  freightId: integer("freight_id").notNull().references(() => freights.id, { onDelete: "cascade" }),
+  userId: integer("user_id").references(() => users.id),
+  eventType: text("event_type").notNull(),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Insert schema para eventos de engajamento
+export const insertFreightEngagementEventSchema = createInsertSchema(freightEngagementEvents)
+  .omit({ id: true, createdAt: true });
+
+// Tipos de eventos de engajamento
+export type FreightEngagementEvent = typeof freightEngagementEvents.$inferSelect;
+export type InsertFreightEngagementEvent = z.infer<typeof insertFreightEngagementEventSchema>;
+
+// Tipo para estatísticas de engajamento de um frete
+export type FreightEngagementStats = {
+  freightId: number;
+  totalViews: number;
+  uniqueViews: number;
+  whatsappClicks: number;
+  phoneClicks: number;
+  shareClicks: number;
+};
