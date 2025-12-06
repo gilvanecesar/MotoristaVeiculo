@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-// Removida dependência circular do useClientAuth
-import { FreightWithDestinations, Client } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
+import { FreightWithDestinations, Client, FreightEngagementStats } from "@shared/schema";
 import { 
   getVehicleCategory, 
   formatMultipleVehicleTypes, 
@@ -23,7 +23,9 @@ import {
   AlertCircle,
   Share2,
   Phone,
-  MessageSquare
+  MessageSquare,
+  Eye,
+  BarChart3
 } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
@@ -69,6 +71,10 @@ export default function FreightDetailPage() {
     return false;
   };
   const freightId = params?.id;
+  const viewRecorded = useRef(false);
+  
+  // Verificar se usuário é admin
+  const isAdmin = user?.profileType === 'admin' || user?.profileType === 'administrador';
 
   // Buscar detalhes do frete
   const { data: freight, isLoading: isLoadingFreight, error } = useQuery<FreightWithDestinations>({
@@ -80,6 +86,31 @@ export default function FreightDetailPage() {
   const { data: clients = [] } = useQuery<Client[]>({
     queryKey: ["/api/clients"],
   });
+
+  // Buscar estatísticas de engajamento (apenas para admins)
+  const { data: engagementStats } = useQuery<FreightEngagementStats>({
+    queryKey: ['/api/admin/freights', freightId, 'engagement'],
+    enabled: !!freightId && isAdmin,
+  });
+
+  // Registrar visualização do frete (apenas uma vez)
+  useEffect(() => {
+    if (freightId && !viewRecorded.current) {
+      viewRecorded.current = true;
+      apiRequest('POST', `/api/freights/${freightId}/engagement`, { eventType: 'view' })
+        .catch(err => console.error('Erro ao registrar visualização:', err));
+    }
+  }, [freightId]);
+
+  // Função para registrar evento de engajamento
+  const recordEngagement = async (eventType: 'whatsapp_click' | 'phone_click' | 'share_click') => {
+    if (!freightId) return;
+    try {
+      await apiRequest('POST', `/api/freights/${freightId}/engagement`, { eventType });
+    } catch (err) {
+      console.error('Erro ao registrar evento:', err);
+    }
+  };
 
   // Função para verificar se um frete está expirado
   const isExpired = (expirationDate: string | Date): boolean => {
@@ -193,6 +224,7 @@ ${destinosText}
 
   const shareViaWhatsApp = (e: React.MouseEvent) => {
     e.preventDefault();
+    recordEngagement('share_click');
     const message = formatWhatsAppMessage();
     window.open(`https://wa.me/?text=${message}`, '_blank');
   };
@@ -272,6 +304,71 @@ ${destinosText}
             </Button>
           </div>
         </div>
+        
+        {/* Estatísticas de Engajamento (apenas para admins) */}
+        {isAdmin && engagementStats && (
+          <Card className="bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-900/30 border-blue-200 dark:border-blue-800">
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                <CardTitle className="text-base text-blue-900 dark:text-blue-100">Estatísticas de Engajamento</CardTitle>
+              </div>
+              <CardDescription className="text-blue-700/70 dark:text-blue-300/70">
+                Métricas de interação com este frete
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div className="bg-white dark:bg-slate-800 rounded-lg p-3 shadow-sm">
+                  <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 mb-1">
+                    <Eye className="h-4 w-4" />
+                    <span className="text-xs font-medium">Visualizações</span>
+                  </div>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">{engagementStats.totalViews}</p>
+                  <p className="text-xs text-slate-500">{engagementStats.uniqueViews} únicas</p>
+                </div>
+                
+                <div className="bg-white dark:bg-slate-800 rounded-lg p-3 shadow-sm">
+                  <div className="flex items-center gap-2 text-green-600 dark:text-green-400 mb-1">
+                    <FaWhatsapp className="h-4 w-4" />
+                    <span className="text-xs font-medium">WhatsApp</span>
+                  </div>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">{engagementStats.whatsappClicks}</p>
+                  <p className="text-xs text-slate-500">cliques</p>
+                </div>
+                
+                <div className="bg-white dark:bg-slate-800 rounded-lg p-3 shadow-sm">
+                  <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 mb-1">
+                    <Phone className="h-4 w-4" />
+                    <span className="text-xs font-medium">Telefone</span>
+                  </div>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">{engagementStats.phoneClicks}</p>
+                  <p className="text-xs text-slate-500">cliques</p>
+                </div>
+                
+                <div className="bg-white dark:bg-slate-800 rounded-lg p-3 shadow-sm">
+                  <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400 mb-1">
+                    <Share2 className="h-4 w-4" />
+                    <span className="text-xs font-medium">Compartilhamentos</span>
+                  </div>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">{engagementStats.shareClicks}</p>
+                  <p className="text-xs text-slate-500">cliques</p>
+                </div>
+                
+                <div className="bg-white dark:bg-slate-800 rounded-lg p-3 shadow-sm">
+                  <div className="flex items-center gap-2 text-orange-600 dark:text-orange-400 mb-1">
+                    <MessageSquare className="h-4 w-4" />
+                    <span className="text-xs font-medium">Interações</span>
+                  </div>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                    {engagementStats.whatsappClicks + engagementStats.phoneClicks + engagementStats.shareClicks}
+                  </p>
+                  <p className="text-xs text-slate-500">total</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
         
         {/* Card principal */}
         <Card>
@@ -425,16 +522,31 @@ ${destinosText}
                 
                 <div>
                   <h4 className="text-sm font-medium text-slate-500">Telefone</h4>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <p>{freight.contactPhone}</p>
                     <Button 
                       variant="outline"
                       size="sm"
                       className="h-8 gap-1"
-                      onClick={() => window.open(`https://wa.me/55${freight.contactPhone.replace(/\D/g, '')}`, '_blank')}
+                      onClick={() => {
+                        recordEngagement('phone_click');
+                        window.open(`tel:+55${freight.contactPhone.replace(/\D/g, '')}`, '_self');
+                      }}
+                    >
+                      <Phone className="h-4 w-4 text-blue-500" />
+                      <span>Ligar</span>
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      size="sm"
+                      className="h-8 gap-1"
+                      onClick={() => {
+                        recordEngagement('whatsapp_click');
+                        window.open(`https://wa.me/55${freight.contactPhone.replace(/\D/g, '')}`, '_blank');
+                      }}
                     >
                       <FaWhatsapp className="h-4 w-4 text-green-500" />
-                      <span>Contatar</span>
+                      <span>WhatsApp</span>
                     </Button>
                   </div>
                 </div>
@@ -480,14 +592,29 @@ ${destinosText}
               <ArrowLeft className="h-4 w-4 mr-2" /> Voltar
             </Button>
             
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Button 
                 variant="outline"
-                onClick={() => window.open(`https://wa.me/55${freight.contactPhone.replace(/\D/g, '')}`, '_blank')}
+                onClick={() => {
+                  recordEngagement('phone_click');
+                  window.open(`tel:+55${freight.contactPhone.replace(/\D/g, '')}`, '_self');
+                }}
+                className="gap-2"
+              >
+                <Phone className="h-4 w-4 text-blue-500" />
+                Ligar
+              </Button>
+              
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  recordEngagement('whatsapp_click');
+                  window.open(`https://wa.me/55${freight.contactPhone.replace(/\D/g, '')}`, '_blank');
+                }}
                 className="gap-2"
               >
                 <FaWhatsapp className="h-4 w-4 text-green-500" />
-                Contatar
+                WhatsApp
               </Button>
               
               <Button onClick={shareViaWhatsApp}>
