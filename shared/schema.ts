@@ -975,3 +975,64 @@ export const insertPhoneVerificationCodeSchema = createInsertSchema(phoneVerific
 // Tipos de código de verificação
 export type PhoneVerificationCode = typeof phoneVerificationCodes.$inferSelect;
 export type InsertPhoneVerificationCode = z.infer<typeof insertPhoneVerificationCodeSchema>;
+
+// Status de campanhas
+export const CAMPAIGN_STATUS = {
+  ACTIVE: "active",
+  INACTIVE: "inactive"
+} as const;
+
+// Tabela de campanhas promocionais para WhatsApp
+export const campaigns = pgTable("campaigns", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  status: text("status").notNull().default(CAMPAIGN_STATUS.INACTIVE),
+  randomize: boolean("randomize").default(true),
+  displayOrder: integer("display_order").default(0),
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Tabela de mensagens das campanhas
+export const campaignMessages = pgTable("campaign_messages", {
+  id: serial("id").primaryKey(),
+  campaignId: integer("campaign_id").notNull().references(() => campaigns.id, { onDelete: "cascade" }),
+  title: text("title"),
+  body: text("body").notNull(),
+  isActive: boolean("is_active").default(true),
+  displayOrder: integer("display_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Insert schemas para campanhas
+export const insertCampaignSchema = createInsertSchema(campaigns)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+
+export const insertCampaignMessageSchema = createInsertSchema(campaignMessages)
+  .omit({ id: true, createdAt: true });
+
+// Validators para campanhas
+export const campaignValidator = insertCampaignSchema.extend({
+  name: z.string().min(1, "Nome da campanha é obrigatório"),
+  status: z.enum([CAMPAIGN_STATUS.ACTIVE, CAMPAIGN_STATUS.INACTIVE]),
+  startDate: z.coerce.date().optional().nullable(),
+  endDate: z.coerce.date().optional().nullable(),
+});
+
+export const campaignMessageValidator = insertCampaignMessageSchema.extend({
+  campaignId: z.coerce.number().positive("ID da campanha é obrigatório"),
+  body: z.string().min(1, "Texto da mensagem é obrigatório"),
+});
+
+// Tipos de campanhas
+export type Campaign = typeof campaigns.$inferSelect;
+export type InsertCampaign = z.infer<typeof insertCampaignSchema>;
+export type CampaignMessage = typeof campaignMessages.$inferSelect;
+export type InsertCampaignMessage = z.infer<typeof insertCampaignMessageSchema>;
+export type CampaignStatus = typeof CAMPAIGN_STATUS[keyof typeof CAMPAIGN_STATUS];
+
+// Tipo para campanha com mensagens
+export type CampaignWithMessages = Campaign & { messages: CampaignMessage[] };
