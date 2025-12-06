@@ -160,57 +160,34 @@ export default function FreightDetailPage() {
   const formatWhatsAppMessage = () => {
     if (!freight) return "";
     
-    const clientFound = clients.find((client: Client) => client.id === freight.clientId);
-    const clientName = clientFound ? clientFound.name : "Cliente não encontrado";
-    
     // URL fixa do sistema QUERO FRETES
     const baseUrl = "https://querofretes.com.br";
     // URL específica do frete
-    const freightUrl = `${window.location.origin}/freight/${freight.id}`;
+    const freightUrl = `${baseUrl}/freights/${freight.id}`;
     
     // Formatação dos destinos
-    let destinosText = `🏁 Destino: ${freight.destination}, ${freight.destinationState}`;
+    let destinosText = `🏁 Destino: ${freight.destination} - ${freight.destinationState}, ${freight.destinationState}`;
     
     if (freight.destination1) {
-      destinosText += `\n🏁 Destino 2: ${freight.destination1}, ${freight.destinationState1}`;
+      destinosText += `\n🏁 Destino 2: ${freight.destination1} - ${freight.destinationState1}, ${freight.destinationState1}`;
     }
     
     if (freight.destination2) {
-      destinosText += `\n🏁 Destino 3: ${freight.destination2}, ${freight.destinationState2}`;
-    }
-    
-    // Obter mensagem promocional das campanhas ativas
-    const promoData = getPromoTextFromCampaigns();
-    
-    // Construir seção promocional apenas se houver campanha ativa
-    let promoSection = "";
-    if (promoData) {
-      promoSection = `
-━━━━━━━━━━━━━━━━━━━━━━
-
-${promoData.body}
-
-━━━━━━━━━━━━━━━━━━━━━━`;
+      destinosText += `\n🏁 Destino 3: ${freight.destination2} - ${freight.destinationState2}, ${freight.destinationState2}`;
     }
     
     return encodeURIComponent(`🚛 FRETE DISPONÍVEL 🚛
 
+CLIQUE AQUI PARA VER O FRETE
 🔗 Link do frete: ${freightUrl}
 
-🏢 ${clientName}
-📍 Origem: ${freight.origin}, ${freight.originState}
+📍 Origem: ${freight.origin} - ${freight.originState}, ${freight.originState}
 ${destinosText}
 
 🚚 Veículo: ${formatMultipleVehicleTypes(freight)}
 🚐 Carroceria: ${formatMultipleBodyTypes(freight)}
 
-⚖️ Peso: ${freight.cargoWeight} Kg
 
-💵 Valor: ${formatCurrency(freight.freightValue)}
-
-👤 Contato: ${freight.contactName}
-📞 Telefone: ${freight.contactPhone}
-${freight.observations ? `📝 Observações: ${freight.observations}\n` : ''}${promoSection}
 🌐 Sistema QUERO FRETES: ${baseUrl}`);
   };
 
