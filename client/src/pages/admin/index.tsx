@@ -18,8 +18,10 @@ export default function AdminPage() {
   const [_, navigate] = useLocation();
 
   // Verificar se o usuário é um administrador
+  const isAdmin = user?.profileType === "admin" || user?.profileType === "administrador";
+  
   useEffect(() => {
-    if (user && user.profileType !== "admin") {
+    if (user && !isAdmin) {
       toast({
         title: "Acesso restrito",
         description: "Você não tem permissão para acessar esta página",
@@ -27,10 +29,10 @@ export default function AdminPage() {
       });
       navigate("/home");
     }
-  }, [user, navigate, toast]);
+  }, [user, isAdmin, navigate, toast]);
 
   // Não renderizar nada enquanto verifica ou se não for admin
-  if (!user || user.profileType !== "admin") {
+  if (!user || !isAdmin) {
     return null;
   }
 
