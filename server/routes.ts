@@ -3680,6 +3680,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===============================
+  // FREIGHT ENGAGEMENT ANALYTICS API
+  // ===============================
+
+  // Registrar evento de engajamento (visualização, clique, etc.) - público
+  app.post("/api/freights/:id/engagement", async (req: Request, res: Response) => {
+    try {
+      const freightId = parseInt(req.params.id);
+      const { eventType } = req.body;
+      
+      if (!eventType || !['view', 'whatsapp_click', 'phone_click', 'share_click'].includes(eventType)) {
+        return res.status(400).json({ message: "Tipo de evento inválido" });
+      }
+
+      const userId = req.user?.id;
+      const ipAddress = req.ip || req.connection?.remoteAddress;
+      const userAgent = req.headers['user-agent'];
+
+      await storage.recordFreightEngagementEvent(freightId, eventType, userId, ipAddress, userAgent);
+      
+      res.status(201).json({ message: "Evento registrado com sucesso" });
+    } catch (error) {
+      console.error("Erro ao registrar evento de engajamento:", error);
+      res.status(500).json({ message: "Erro ao registrar evento" });
+    }
+  });
+
+  // Obter estatísticas de engajamento de um frete (apenas admin)
+  app.get("/api/admin/freights/:id/engagement", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const freightId = parseInt(req.params.id);
+      const stats = await storage.getFreightEngagementStats(freightId);
+      res.json(stats);
+    } catch (error) {
+      console.error("Erro ao obter estatísticas de engajamento:", error);
+      res.status(500).json({ message: "Erro ao obter estatísticas" });
+    }
+  });
+
+  // Obter estatísticas de engajamento de todos os fretes (apenas admin)
+  app.get("/api/admin/freights/engagement/all", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const stats = await storage.getAllFreightsEngagementStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Erro ao obter estatísticas de engajamento:", error);
+      res.status(500).json({ message: "Erro ao obter estatísticas" });
+    }
+  });
+
   // Rota de teste para verificar conexão com banco de dados
   app.get("/api/test/db", async (req, res) => {
     try {
