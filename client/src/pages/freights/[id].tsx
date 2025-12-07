@@ -39,6 +39,14 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export default function FreightDetailPage() {
   const [match, params] = useRoute("/freights/:id");
@@ -285,6 +293,64 @@ ${destinosText}
           </Button>
           
           <div className="flex flex-col sm:flex-row gap-2">
+            {/* Botão de estatísticas - apenas para admins */}
+            {isAdmin && (
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="outline"
+                    className="text-sm gap-2"
+                    data-testid="button-stats"
+                  >
+                    <BarChart3 className="h-4 w-4" /> Estatísticas
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <BarChart3 className="h-5 w-5 text-blue-600" />
+                      Estatísticas de Engajamento
+                    </DialogTitle>
+                    <DialogDescription>
+                      Métricas de interação com este frete
+                    </DialogDescription>
+                  </DialogHeader>
+                  {engagementStats ? (
+                    <div className="grid grid-cols-2 gap-4 py-4">
+                      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 text-center">
+                        <Eye className="h-6 w-6 mx-auto mb-2 text-slate-600" />
+                        <p className="text-2xl font-bold">{engagementStats.totalViews}</p>
+                        <p className="text-sm text-slate-500">Visualizações</p>
+                        <p className="text-xs text-slate-400">{engagementStats.uniqueViews} únicas</p>
+                      </div>
+                      
+                      <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 text-center">
+                        <FaWhatsapp className="h-6 w-6 mx-auto mb-2 text-green-600" />
+                        <p className="text-2xl font-bold">{engagementStats.whatsappClicks}</p>
+                        <p className="text-sm text-slate-500">WhatsApp</p>
+                      </div>
+                      
+                      <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 text-center">
+                        <Phone className="h-6 w-6 mx-auto mb-2 text-blue-600" />
+                        <p className="text-2xl font-bold">{engagementStats.phoneClicks}</p>
+                        <p className="text-sm text-slate-500">Ligações</p>
+                      </div>
+                      
+                      <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 text-center">
+                        <Share2 className="h-6 w-6 mx-auto mb-2 text-purple-600" />
+                        <p className="text-2xl font-bold">{engagementStats.shareClicks}</p>
+                        <p className="text-sm text-slate-500">Compartilhamentos</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="py-8 text-center text-slate-500">
+                      Carregando estatísticas...
+                    </div>
+                  )}
+                </DialogContent>
+              </Dialog>
+            )}
+            
             {isClientAuthorized(freight.clientId, freight.userId) && (
               <Button 
                 variant="outline"
@@ -304,71 +370,6 @@ ${destinosText}
             </Button>
           </div>
         </div>
-        
-        {/* Estatísticas de Engajamento (apenas para admins) */}
-        {isAdmin && engagementStats && (
-          <Card className="bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-900/30 border-blue-200 dark:border-blue-800">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                <CardTitle className="text-base text-blue-900 dark:text-blue-100">Estatísticas de Engajamento</CardTitle>
-              </div>
-              <CardDescription className="text-blue-700/70 dark:text-blue-300/70">
-                Métricas de interação com este frete
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <div className="bg-white dark:bg-slate-800 rounded-lg p-3 shadow-sm">
-                  <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 mb-1">
-                    <Eye className="h-4 w-4" />
-                    <span className="text-xs font-medium">Visualizações</span>
-                  </div>
-                  <p className="text-2xl font-bold text-slate-900 dark:text-white">{engagementStats.totalViews}</p>
-                  <p className="text-xs text-slate-500">{engagementStats.uniqueViews} únicas</p>
-                </div>
-                
-                <div className="bg-white dark:bg-slate-800 rounded-lg p-3 shadow-sm">
-                  <div className="flex items-center gap-2 text-green-600 dark:text-green-400 mb-1">
-                    <FaWhatsapp className="h-4 w-4" />
-                    <span className="text-xs font-medium">WhatsApp</span>
-                  </div>
-                  <p className="text-2xl font-bold text-slate-900 dark:text-white">{engagementStats.whatsappClicks}</p>
-                  <p className="text-xs text-slate-500">cliques</p>
-                </div>
-                
-                <div className="bg-white dark:bg-slate-800 rounded-lg p-3 shadow-sm">
-                  <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 mb-1">
-                    <Phone className="h-4 w-4" />
-                    <span className="text-xs font-medium">Telefone</span>
-                  </div>
-                  <p className="text-2xl font-bold text-slate-900 dark:text-white">{engagementStats.phoneClicks}</p>
-                  <p className="text-xs text-slate-500">cliques</p>
-                </div>
-                
-                <div className="bg-white dark:bg-slate-800 rounded-lg p-3 shadow-sm">
-                  <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400 mb-1">
-                    <Share2 className="h-4 w-4" />
-                    <span className="text-xs font-medium">Compartilhamentos</span>
-                  </div>
-                  <p className="text-2xl font-bold text-slate-900 dark:text-white">{engagementStats.shareClicks}</p>
-                  <p className="text-xs text-slate-500">cliques</p>
-                </div>
-                
-                <div className="bg-white dark:bg-slate-800 rounded-lg p-3 shadow-sm">
-                  <div className="flex items-center gap-2 text-orange-600 dark:text-orange-400 mb-1">
-                    <MessageSquare className="h-4 w-4" />
-                    <span className="text-xs font-medium">Interações</span>
-                  </div>
-                  <p className="text-2xl font-bold text-slate-900 dark:text-white">
-                    {engagementStats.whatsappClicks + engagementStats.phoneClicks + engagementStats.shareClicks}
-                  </p>
-                  <p className="text-xs text-slate-500">total</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
         
         {/* Card principal */}
         <Card>
