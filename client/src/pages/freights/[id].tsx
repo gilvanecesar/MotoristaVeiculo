@@ -97,7 +97,7 @@ export default function FreightDetailPage() {
 
   // Buscar estatísticas de engajamento (apenas para admins)
   const { data: engagementStats } = useQuery<FreightEngagementStats>({
-    queryKey: ['/api/admin/freights', freightId, 'engagement'],
+    queryKey: [`/api/admin/freights/${freightId}/engagement`],
     enabled: !!freightId && isAdmin,
   });
 
