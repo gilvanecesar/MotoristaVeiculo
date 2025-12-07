@@ -1015,6 +1015,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const freightData = req.body;
       
+      // Validar campos obrigatórios
+      const requiredFields = [
+        { field: 'origin', name: 'Origem' },
+        { field: 'originState', name: 'Estado de origem' },
+        { field: 'destination', name: 'Destino' },
+        { field: 'destinationState', name: 'Estado de destino' },
+      ];
+      
+      for (const { field, name } of requiredFields) {
+        const value = freightData[field];
+        if (!value || (typeof value === 'string' && value.trim().length < 2)) {
+          return res.status(400).json({ message: `${name} é obrigatório e deve ter pelo menos 2 caracteres` });
+        }
+        // Limpar espaços extras
+        if (typeof value === 'string') {
+          freightData[field] = value.trim();
+        }
+      }
+      
       // Associar o user ID atual
       freightData.userId = req.user?.id || null;
       
